@@ -1,0 +1,26 @@
+{
+  "task_id": "task_002",
+  "repo_name": "sample_repo",
+  "repo_path": "benchmarks/repos/sample_repo",
+  "issue_title": "Handle empty list safely in parse_items",
+  "issue_text": "The parser assumes items[0] exists. When parse_items([]) is called, it crashes. Return an empty list for empty input.",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "The empty-input test passes and all target parser tests succeed.",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "empty-input",
+    "dev-set"
+  ],
+  "target_files_hint": [
+    "sample_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "ParseItemsTests.test_empty_input_returns_empty_list",
+  "max_retries": 2,
+  "metadata": {
+    "phase_introduced": "phase_4",
+    "notes": "用于 Phase 4 批量运行演示的第二条开发任务，复用相同 benchmark repo。"
+  }
+}

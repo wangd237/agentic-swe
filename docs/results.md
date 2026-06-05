@@ -1,0 +1,115 @@
+# 结果记录
+
+## 当前状态
+
+- 当前阶段：`Phase 6`
+- 当前已完成单任务 patch 闭环
+- 当前已完成最小 batch run 验证
+- 当前已完成最小 baseline eval 验证
+- 当前已完成 baseline vs improved 自动 compare 报告
+
+## 当前可展示结果
+
+### 单任务结果
+
+- `task_001` 已可自动修复成功
+- 参考运行：
+  - `logs/trajectories/task_001/run_007/`
+
+### 批量结果
+
+- 当前批量运行：
+  - `logs/summaries/batch_run_001.json`
+  - `logs/summaries/batch_run_001.md`
+- 当前结果：
+  - task_count: `2`
+  - success_count: `2`
+  - success_rate: `1.0`
+
+### baseline eval 结果
+
+- 当前评测输出：
+  - `logs/summaries/batch_eval_001.json`
+  - `logs/summaries/batch_eval_001.md`
+- 当前指标：
+  - success_rate: `1.0`
+  - test_pass_rate: `1.0`
+  - partial_fix_rate: `0.0`
+  - average_steps: `9.0`
+  - average_tool_calls: `9.0`
+  - average_duration_sec: `0.5406`
+  - average_modified_files: `1.0`
+  - key_file_read_rate: `1.0`
+  - test_execution_rate: `1.0`
+  - repeated_search_rate: `0.0`
+  - reasonable_finish_rate: `1.0`
+
+### 当前评测结论
+
+- baseline eval 链路已经跑通
+- 当前开发任务集全部成功，因此 taxonomy 未命中任何错误标签
+- 下一步需要通过更有区分度的任务集和 improved 版本，制造真正有分析价值的对比
+
+### baseline vs improved 对比
+
+- baseline：
+  - `logs/summaries/batch_eval_baseline_001.json`
+- improved：
+  - `logs/summaries/batch_eval_improved_001.json`
+- compare：
+  - `logs/summaries/batch_compare_phase6_002.json`
+  - `logs/summaries/batch_compare_phase6_002.md`
+
+当前对比结果：
+
+- `success_rate`
+  - baseline: `0.5`
+  - improved: `1.0`
+- `test_pass_rate`
+  - baseline: `0.5`
+  - improved: `1.0`
+- `partial_fix_rate`
+  - baseline: `0.5`
+  - improved: `0.0`
+- `average_steps`
+  - baseline: `9.0`
+  - improved: `9.0`
+- `average_tool_calls`
+  - baseline: `9.0`
+  - improved: `9.0`
+
+### 自动对比报告能额外回答什么
+
+当前 compare 报告除了复述核心指标，还会自动给出：
+
+- 每项 metric 的 delta
+- 每项 metric 是 `improved / regressed / unchanged`
+- taxonomy 的数量变化
+- 每个 task 的错误标签是否发生变化
+
+当前关键变化：
+
+- `Patch Incorrect`
+  - baseline: `1`
+  - improved: `0`
+- `task_003`
+  - baseline: `Patch Incorrect`
+  - improved: `无错误标签`
+
+### 当前优化结论
+
+- improved policy 在不增加额外步骤成本的前提下，提升了成功率
+- 关键改动是让 patch 逻辑除了空输入保护，还能处理 `None` 元素过滤
+- compare 报告已经可以作为后续每轮优化的标准化对比产物
+- 详细过程与文件级改动见：
+  - `docs/optimization_log.md`
+
+## 后续将记录
+
+- baseline 结果
+- improved 结果
+- compare 结果
+- 核心指标对比
+- 代表性成功案例
+- 代表性失败案例
+- 未来引入 GitHub 真实仓库 issue 后的外部评测结果

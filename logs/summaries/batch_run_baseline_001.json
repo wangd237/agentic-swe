@@ -1,0 +1,35 @@
+{
+  "batch_run_id": "batch_run_baseline_001",
+  "policy_id": "baseline_v1",
+  "started_at": "2026-06-05T10:58:10.686200+00:00",
+  "finished_at": "2026-06-05T10:58:11.635545+00:00",
+  "task_count": 2,
+  "success_count": 1,
+  "success_rate": 0.5,
+  "tasks": [
+    {
+      "task_id": "task_001",
+      "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_001.json",
+      "run_id": "run_20260605T105810686654Z_4646",
+      "final_status": "success",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_20260605T105810686654Z_4646\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_20260605T105810686654Z_4646\\trace.json",
+      "summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_20260605T105810686654Z_4646\\summary.md",
+      "patch_applied": true,
+      "post_test_exit_code": 0,
+      "policy_id": "baseline_v1"
+    },
+    {
+      "task_id": "task_003",
+      "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_003.json",
+      "run_id": "run_20260605T105811156609Z_6459",
+      "final_status": "failed",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_003\\run_20260605T105811156609Z_6459\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_003\\run_20260605T105811156609Z_6459\\trace.json",
+      "summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_003\\run_20260605T105811156609Z_6459\\summary.md",
+      "patch_applied": true,
+      "post_test_exit_code": 1,
+      "policy_id": "baseline_v1"
+    }
+  ]
+}

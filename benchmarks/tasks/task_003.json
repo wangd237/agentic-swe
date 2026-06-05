@@ -1,0 +1,27 @@
+{
+  "task_id": "task_003",
+  "repo_name": "multi_bug_repo",
+  "repo_path": "benchmarks/repos/multi_bug_repo",
+  "issue_title": "Handle empty input and None items in parse_items",
+  "issue_text": "parse_items([]) currently crashes, and parse_items([' A ', None, 'B ']) also raises because None values are not filtered. The function should return [] for empty input and ignore None items during normalization.",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "All parser tests pass, including empty input and None-item handling.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "empty-input",
+    "none-handling",
+    "report-set"
+  ],
+  "target_files_hint": [
+    "multi_bug_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "ParseItemsTests.test_none_items_are_ignored",
+  "max_retries": 2,
+  "metadata": {
+    "phase_introduced": "phase_6",
+    "notes": "用于区分 baseline 与 improved policy 的任务。"
+  }
+}

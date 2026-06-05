@@ -1,0 +1,8 @@
+{
+  "manifest_id": "dev_tasks_v1",
+  "description": "Phase 4 用于联调 batch runner 的开发任务清单。",
+  "tasks": [
+    "benchmarks/tasks/task_001.json",
+    "benchmarks/tasks/task_002.json"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "policy_id": "baseline_v1",
+  "description": "最小规则型 patch 策略，只处理空输入保护。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "baseline"
+}

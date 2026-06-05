@@ -1,0 +1,8 @@
+{
+  "manifest_id": "report_tasks_v1",
+  "description": "Phase 6 用于 baseline vs improved 对比的正式任务清单。",
+  "tasks": [
+    "benchmarks/tasks/task_001.json",
+    "benchmarks/tasks/task_003.json"
+  ]
+}

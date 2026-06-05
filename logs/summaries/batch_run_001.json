@@ -1,0 +1,32 @@
+{
+  "batch_run_id": "batch_run_001",
+  "started_at": "2026-06-05T09:17:14.630006+00:00",
+  "finished_at": "2026-06-05T09:17:15.713849+00:00",
+  "task_count": 2,
+  "success_count": 2,
+  "success_rate": 1.0,
+  "tasks": [
+    {
+      "task_id": "task_001",
+      "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_001.json",
+      "run_id": "run_008",
+      "final_status": "success",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_008\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_008\\trace.json",
+      "summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_001\\run_008\\summary.md",
+      "patch_applied": true,
+      "post_test_exit_code": 0
+    },
+    {
+      "task_id": "task_002",
+      "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_002.json",
+      "run_id": "run_001",
+      "final_status": "success",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_002\\run_001\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_002\\run_001\\trace.json",
+      "summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_002\\run_001\\summary.md",
+      "patch_applied": true,
+      "post_test_exit_code": 0
+    }
+  ]
+}

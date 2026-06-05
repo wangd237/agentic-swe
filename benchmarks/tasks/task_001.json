@@ -1,0 +1,25 @@
+{
+  "task_id": "task_001",
+  "repo_name": "sample_repo",
+  "repo_path": "benchmarks/repos/sample_repo",
+  "issue_title": "Fix empty input handling in parse_items",
+  "issue_text": "Calling parse_items([]) raises an IndexError. It should return an empty list instead.",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "All target tests pass and parse_items([]) returns an empty list.",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "empty-input"
+  ],
+  "target_files_hint": [
+    "sample_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "ParseItemsTests.test_empty_input_returns_empty_list",
+  "max_retries": 2,
+  "metadata": {
+    "phase_introduced": "phase_0",
+    "notes": "当前测试命令使用 pytest，测试文件保持 unittest 风格以便兼容两种执行方式。"
+  }
+}
