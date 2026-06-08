@@ -55,6 +55,14 @@ optimization/   # prompt / policy / 训练增强预留目录
 scripts/        # 入口脚本
 ```
 
+其中任务定义当前已经支持 `source_type`：
+
+- `synthetic`
+- `semi_real`
+- `real_issue`
+
+这让后续从本地联调集逐步过渡到 GitHub 真实 issue 集时，不需要重做任务结构。
+
 ## 快速体验
 
 ### 1. 运行 Patch 闭环
@@ -128,6 +136,18 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
 - 生成追加式 compare JSON 与 Markdown
 - 为后续优化迭代保留可回溯的对比产物
 
+### 6. 校验任务定义与真实 issue 候选清单
+
+```bash
+python scripts/validate_tasks.py
+```
+
+这个命令当前会完成：
+
+- 校验 `benchmarks/tasks/` 下的任务 JSON 是否符合 schema
+- 校验 `source_type` 是否合法
+- 校验未来真实 issue 候选清单的最小结构
+
 ## 当前 benchmark 任务
 
 当前 benchmark 已分成三层：
@@ -142,6 +162,7 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
   - 用途：执行 `baseline vs improved` 的正式对比
 - `Future GitHub Real-Issue Set`
   - 当前未接入仓库内
+  - 当前候选清单文件：`benchmarks/real_world_candidates.json`
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果

@@ -579,6 +579,20 @@ scripts/
 - 缺陷模式：首元素 `None`
 - 代表能力：不仅处理中间 `None`，还要在归一化前做全量清洗
 
+### 6. 真实 issue 接入前的基础设施
+
+当前已经补充：
+
+- `Task.source_type`
+- `benchmarks/real_world_candidates.json`
+- `scripts/validate_tasks.py`
+
+它们的作用是：
+
+- 让任务来源显式区分 `synthetic / semi_real / real_issue`
+- 先维护一份 GitHub 真实 issue 候选清单
+- 在真实任务真正接入前，先把格式与校验入口固定下来
+
 ## 你现在可以怎么体验
 
 ### 方式 1：运行 Patch 闭环
@@ -663,6 +677,20 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
 - success_rate_delta
 - test_pass_rate_delta
 - 对比报告文件路径
+
+### 方式 6：校验任务与真实 issue 候选清单
+
+在仓库根目录执行：
+
+```bash
+python scripts/validate_tasks.py
+```
+
+你会看到：
+
+- 任务 schema 是否通过
+- `source_type` 是否合法
+- 真实 issue 候选清单结构是否通过
 
 ## 当前实现中的环境偏差
 

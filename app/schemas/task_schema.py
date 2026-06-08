@@ -23,6 +23,7 @@ class Task(BaseModel):
     target_files_hint: list[str] = Field(default_factory=list)
     expected_failure_test: str | None = None
     max_retries: int | None = None
+    source_type: str = "synthetic"
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-当前处于 `Phase 5`，本文件先记录系统的目标分层与职责边界，后续随着实现推进补充详细流程图与运行时说明。
+当前处于 `Phase 6`，本文件先记录系统的目标分层与职责边界，后续随着实现推进补充详细流程图与运行时说明。
 
 ## 分层约定
 
@@ -29,10 +29,25 @@
 - 批量运行脚本与批量汇总器
 - metrics / taxonomy / batch eval
 - 首版 harness 运行时骨架
+- 任务来源字段 `source_type`
+- 真实 issue 候选清单入口
 
 当前尚未完成：
 
-- improved 对比实验
+- 真实 GitHub issue 任务的正式接入与运行验证
+
+## 任务数据分层
+
+当前任务 schema 已明确区分三类来源：
+
+- `synthetic`
+  - 完全自造，用于联调和早期策略实验
+- `semi_real`
+  - 基于真实 issue 改写，但本地 repo 和测试经过了最小重构
+- `real_issue`
+  - 尽量直接对应 GitHub 上的真实仓库与真实 issue
+
+当前项目里的本地任务仍以 `synthetic` 为主，但已经为后续引入 `semi_real` / `real_issue` 做好了字段预留。
 
 ## Harness 设计原则
 

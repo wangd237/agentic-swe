@@ -572,3 +572,63 @@
 - 当前 patch 仍然是规则型，不具备通用代码理解能力
 - report set 仍然偏小
 - 下一步应该逐步接入 GitHub 真实 issue 任务
+
+## Iteration 4：Real-Issue Task Infrastructure（future_real_issue_v1）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 为后续接入 GitHub 真实 issue 补齐任务结构与校验入口
+- 避免未来引入真实任务时临时修改 schema 和 benchmark 规范
+
+### 改动类型
+
+- `schema`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- `Task` schema 新增：
+  - `source_type`
+- 当前支持的来源类型：
+  - `synthetic`
+  - `semi_real`
+  - `real_issue`
+- 新增候选清单：
+  - `benchmarks/real_world_candidates.json`
+- 新增校验脚本：
+  - `scripts/validate_tasks.py`
+- 现有任务全部显式补齐：
+  - `source_type: synthetic`
+
+### 主要涉及文件
+
+- `app/schemas/task_schema.py`
+- `benchmarks/tasks/task_001.json`
+- `benchmarks/tasks/task_002.json`
+- `benchmarks/tasks/task_003.json`
+- `benchmarks/tasks/task_004.json`
+- `benchmarks/real_world_candidates.json`
+- `scripts/validate_tasks.py`
+- `docs/benchmark.md`
+- `docs/architecture.md`
+
+### 结论
+
+- 当前项目已经不只是“口头上计划以后接入真实 issue”
+- 真实 issue 的候选入口、来源字段和校验逻辑都已经落地
+- 后续从 synthetic 过渡到 semi_real / real_issue 时，不需要重做任务结构
+
+### 剩余问题
+
+- 候选清单目前仍是占位结构，尚未填入真实仓库
+- 真实 issue 任务导入脚本还未实现
+- 真实仓库的测试环境适配仍需要后续逐仓库验证

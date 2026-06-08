@@ -20,6 +20,7 @@
   ],
   "expected_failure_test": "ParseItemsTests.test_none_items_are_ignored",
   "max_retries": 2,
+  "source_type": "synthetic",
   "metadata": {
     "phase_introduced": "phase_6",
     "notes": "用于区分 baseline 与 improved policy 的任务。"

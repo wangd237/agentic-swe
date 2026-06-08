@@ -18,6 +18,7 @@
   ],
   "expected_failure_test": "ParseItemsTests.test_empty_input_returns_empty_list",
   "max_retries": 2,
+  "source_type": "synthetic",
   "metadata": {
     "phase_introduced": "phase_0",
     "notes": "当前测试命令使用 pytest，测试文件保持 unittest 风格以便兼容两种执行方式。"

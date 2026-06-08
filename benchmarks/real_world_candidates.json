@@ -1,0 +1,25 @@
+{
+  "dataset_id": "future_github_real_issue_candidates_v1",
+  "description": "用于后续接入 GitHub 真实 issue 的候选清单。当前只记录结构和筛选标准，不直接进入正式 report set。",
+  "selection_criteria": [
+    "仓库规模尽量小或中小型",
+    "测试命令明确且尽量容易运行",
+    "issue 边界清晰，优先单 bug / 单函数 / 单模块修复",
+    "优先 Python 仓库",
+    "允许先从真实 issue 改写成半真实任务，再逐步接入纯真实任务"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "placeholder_001",
+      "repo_full_name": "",
+      "repo_url": "",
+      "issue_number": null,
+      "issue_title": "",
+      "issue_url": "",
+      "language": "python",
+      "difficulty": "unknown",
+      "status": "to_review",
+      "notes": "占位样例，后续替换成真实候选。"
+    }
+  ]
+}

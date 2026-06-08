@@ -8,6 +8,7 @@
 - 当前已完成最小 baseline eval 验证
 - 当前已完成 baseline vs improved 自动 compare 报告
 - 当前已完成 `improved_v2` 新一轮 report-set 对比
+- 当前已补充真实 issue 接入前的任务校验基础设施
 
 ## 当前可展示结果
 
@@ -129,6 +130,7 @@
 - 关键改动是让 patch 逻辑除了空输入保护，还能处理 `None` 元素过滤
 - `improved_v2` 进一步把“只处理部分 None”升级为“归一化前全量过滤 None”
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
+- 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：
   - `docs/optimization_log.md`
 

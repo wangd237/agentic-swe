@@ -19,6 +19,7 @@
   ],
   "expected_failure_test": "ParseItemsTests.test_empty_input_returns_empty_list",
   "max_retries": 2,
+  "source_type": "synthetic",
   "metadata": {
     "phase_introduced": "phase_4",
     "notes": "用于 Phase 4 批量运行演示的第二条开发任务，复用相同 benchmark repo。"

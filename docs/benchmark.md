@@ -54,12 +54,25 @@
 当前状态：
 
 - 暂未纳入仓库内的正式 manifest
+- 已新增候选清单文件：
+  - `benchmarks/real_world_candidates.json`
 
 后续规划：
 
 - 选择 GitHub 上体量较小、测试可运行、issue 边界清晰的真实仓库
 - 将真实 issue 转成结构化任务定义
 - 作为项目后期更正式、更有说服力的外部评测集
+
+当前建议的任务来源类型：
+
+- `synthetic`
+  - 完全自造联调任务
+- `semi_real`
+  - 基于真实 issue 改写的半真实任务
+- `real_issue`
+  - 直接对应 GitHub 真实 issue 的任务
+
+后续接入真实 issue 时，建议优先从 `semi_real` 过渡到 `real_issue`，避免一开始就被复杂环境拖慢主线。
 
 这部分会在项目主链路更稳定后逐步接入。
 

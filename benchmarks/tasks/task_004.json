@@ -21,6 +21,7 @@
   ],
   "expected_failure_test": "ParseItemsTests.test_leading_none_items_are_ignored",
   "max_retries": 2,
+  "source_type": "synthetic",
   "metadata": {
     "phase_introduced": "phase_6",
     "notes": "用于区分 improved_v1 与 improved_v2 对首元素 None 场景的处理能力。"
