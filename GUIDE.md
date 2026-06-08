@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v1 -> improved_v2` 两轮策略迭代，并补上自动 compare 报告链路 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v4` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -593,7 +593,7 @@ scripts/
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
-- 当前已成功导入首条候选：`psf/requests#6432`
+- 当前已成功导入两条候选：`psf/requests#6432`、`psf/requests#7234`
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -606,9 +606,26 @@ scripts/
 - 读取 GitHub issue 元数据
 - 追加到 `benchmarks/real_world_candidates.json`
 - 可选生成 `real_issue` task 草稿
+- 保留已有候选状态并按时间追加备注
 - 把“候选收集”和“任务补全”拆成两步，避免一次性要求把所有字段都补齐
 
-### 8. 首条真实 issue 已推进到可运行 semi_real 任务
+### 8. 真实 issue 草稿到 semi_real 的脚手架入口已可用
+
+当前已经新增：
+
+- `scripts/scaffold_semi_real_task.py`
+
+当前能力如下：
+
+- 从 `real_issue` 草稿生成 `semi_real` 任务骨架
+- 自动创建本地 repo 目录、包文件、模块文件、测试文件和 README
+- 自动维护候选状态：
+  - `drafted`
+  - `scaffolded`
+  - `accepted`
+- 在 `--ready` 模式下自动把任务追加到 `benchmarks/manifests/real_issue_tasks.json`
+
+### 9. 真实 issue 已推进到可运行 semi_real 任务
 
 当前已经完成：
 
@@ -749,7 +766,28 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000
 
 如果再加 `--draft-task`，还会额外生成一个 `real_issue` task 草稿文件。
 
-### 方式 8：运行首条真实 issue 派生任务
+### 方式 8：从 real_issue 草稿生成 semi_real 脚手架
+
+在仓库根目录执行：
+
+```bash
+python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007.json --semi-repo-name requests_encoding_repo --module-path requests_encoding_repo/utils.py --test-path tests/test_utils.py --ready --success-criteria "Quoted 和 unquoted charset 都能正确解析，且测试全部通过。" --expected-failure-test "HeaderEncodingTests.test_double_quoted_charset_is_detected" --tag header-parsing --tag charset
+```
+
+你会看到：
+
+- 新生成的 `semi_real_task` 路径
+- scaffold 目标 repo 路径
+- 模块文件与测试文件路径
+- 当前是否以 `ready` 模式生成
+
+如果不加 `--ready`：
+
+- 候选状态会更新为 `scaffolded`
+- 任务 metadata 会带 `draft_status`
+- 适合先做人工缩题和最小复现
+
+### 方式 9：运行首条真实 issue 派生任务
 
 在仓库根目录执行：
 
@@ -763,7 +801,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy
 - 修改文件是 `setup.py`
 - patch 原因是放宽 urllib3 依赖上界
 
-### 方式 9：运行第 2 条真实 issue 派生任务
+### 方式 10：运行第 2 条真实 issue 派生任务
 
 在仓库根目录执行：
 

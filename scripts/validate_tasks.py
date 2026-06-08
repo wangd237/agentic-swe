@@ -69,9 +69,11 @@ def validate_candidate_file(candidate_path: Path) -> list[str]:
             "accepted",
             "rejected",
             "drafted",
+            "scaffolded",
         }:
             errors.append(
-                f"candidate #{index}: status 必须是 to_review / accepted / rejected / drafted 之一。"
+                "candidate "
+                f"#{index}: status 必须是 to_review / accepted / rejected / drafted / scaffolded 之一。"
             )
     return errors
 

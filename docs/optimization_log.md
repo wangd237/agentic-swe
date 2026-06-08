@@ -905,3 +905,83 @@
 - 真实 issue 仍以派生任务形式为主
 - 还没有把真实仓库直接同步到本地运行
 - 当前 patch 策略仍然以规则法为主
+
+## Iteration 8：Semi-Real Scaffold Entry（real_issue_scaffold_v1）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `real_issue -> semi_real` 的中间层标准化
+- 降低后续接入第 3 条、第 4 条真实 issue 时的手工拼装成本
+- 让候选状态和推进记录保持追加式演进
+
+### 改动类型
+
+- `benchmark`
+- `runtime`
+- `docs`
+
+### 改动摘要
+
+- 新增脚手架脚本：
+  - `scripts/scaffold_semi_real_task.py`
+- 当前能力：
+  - 从 `real_issue` 草稿生成 `semi_real` 任务骨架
+  - 自动创建 repo 目录、包文件、模块文件、测试文件、README
+  - 自动维护候选状态：
+    - `drafted`
+    - `scaffolded`
+    - `accepted`
+  - `--ready` 模式下自动追加到 `benchmarks/manifests/real_issue_tasks.json`
+- 优化 `scripts/import_github_issue.py`：
+  - 重复导入时保留已有状态
+  - 备注改为按时间追加，而不是覆盖
+- 为脚手架入口补充独立回归测试
+- 固化 `pytest` 的 `basetemp` 到仓库内，避免系统临时目录权限干扰测试
+
+### 主要涉及文件
+
+- `scripts/scaffold_semi_real_task.py`
+- `scripts/import_github_issue.py`
+- `scripts/validate_tasks.py`
+- `tests/test_scaffold_semi_real_task.py`
+- `pytest.ini`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+
+### baseline 运行
+
+- 无新增 batch 基线；这一轮属于真实 issue 入口工程增强
+
+### improved 运行
+
+- `python -m pytest tests/test_scaffold_semi_real_task.py -q`
+- `python scripts/validate_tasks.py`
+
+### 指标对比
+
+- 本轮不产出新的 success_rate / test_pass_rate 对比
+- 当前收益主要体现在：
+  - 新 issue 接入步骤更标准化
+  - 候选状态流更清晰
+  - 记录方式更符合追加式演进要求
+
+### 结论
+
+- 真实 issue 入口现在不只是“导入候选 -> 人工手搓 semi_real”
+- 已经具备可复用的脚手架层，后续扩展真实 issue 集会更稳
+- 入口脚本本身已有测试保护，后续可以放心继续演化
+
+### 剩余问题
+
+- 还没有把脚手架直接连接到真实仓库快照同步
+- 当前 semi_real 的缩题过程仍需要人工判断
+- 后续可以继续补一个“从 draft 到 ready 的检查清单”工具

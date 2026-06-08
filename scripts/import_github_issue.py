@@ -7,6 +7,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -36,6 +37,19 @@ def load_candidate_dataset(path: Path) -> dict:
 
 def write_candidate_dataset(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def timestamp_note(message: str) -> str:
+    # 统一给候选备注补时间戳，后面回看筛选和推进过程更直观。
+    return f"{datetime.now().isoformat(timespec='seconds')}: {message}"
+
+
+def append_note(existing_notes: str, message: str) -> str:
+    # 备注采用追加式记录，避免重复导入时把之前的人工结论覆盖掉。
+    note_line = timestamp_note(message)
+    if not existing_notes.strip():
+        return note_line
+    return f"{existing_notes.rstrip()}\n{note_line}"
 
 
 def build_candidate_id(repo_full_name: str, issue_number: int) -> str:
@@ -68,7 +82,7 @@ def build_candidate(repo_full_name: str, issue_payload: dict) -> dict:
             issue_payload.get("body", "") or "",
         ),
         "status": "to_review",
-        "notes": "由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+        "notes": timestamp_note("由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。"),
         "labels": [label["name"] for label in issue_payload.get("labels", [])],
         "state": issue_payload.get("state", "open"),
         "created_at": issue_payload.get("createdAt"),
@@ -82,6 +96,12 @@ def upsert_candidate(dataset_path: Path, candidate: dict) -> dict:
 
     for index, item in enumerate(candidates):
         if item["candidate_id"] == candidate["candidate_id"]:
+            # 重复导入时保留人工维护状态，并把这次同步动作追加进备注。
+            candidate["status"] = item.get("status", candidate["status"])
+            candidate["notes"] = append_note(
+                item.get("notes", ""),
+                "重新同步 GitHub issue 元数据。",
+            )
             candidates[index] = candidate
             write_candidate_dataset(dataset_path, payload)
             return candidate
@@ -96,7 +116,10 @@ def mark_candidate_as_drafted(dataset_path: Path, candidate_id: str) -> None:
     for candidate in payload["candidates"]:
         if candidate["candidate_id"] == candidate_id:
             candidate["status"] = "drafted"
-            candidate["notes"] = "已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。"
+            candidate["notes"] = append_note(
+                candidate.get("notes", ""),
+                "已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。",
+            )
             break
     write_candidate_dataset(dataset_path, payload)
 

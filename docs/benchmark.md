@@ -58,11 +58,14 @@
 
 当前状态：
 
-- 暂未纳入仓库内的正式 manifest
+- 已接入 manifest：
+  - `benchmarks/manifests/real_issue_tasks.json`
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
 - 已新增导入脚本：
   - `scripts/import_github_issue.py`
+- 已新增脚手架脚本：
+  - `scripts/scaffold_semi_real_task.py`
 
 后续规划：
 
@@ -86,11 +89,21 @@
 1. 用 `scripts/import_github_issue.py` 把 issue 先导入候选清单
 2. 审查 issue 是否满足小仓库、测试清晰、边界明确等条件
 3. 如适合继续推进，再生成 `real_issue` task 草稿
-4. 人工补齐：
+4. 用 `scripts/scaffold_semi_real_task.py` 生成 `semi_real` 脚手架
+5. 人工补齐：
    - 本地 repo_path
    - test_command
    - target_files_hint
    - success_criteria
+6. 缩题完成后再以 `--ready` 模式加入 `real_issue_tasks` manifest
+
+当前候选状态建议按下面流转：
+
+- `to_review`
+- `drafted`
+- `scaffolded`
+- `accepted`
+- `rejected`
 
 这部分会在项目主链路更稳定后逐步接入。
 

@@ -30,6 +30,7 @@
   - 已完成 `improved_v2` 策略迭代，补充首元素 `None` 场景修复
   - 已将 `psf/requests#6432` 推进为 `task_005` 草稿与 `task_006` 可运行 semi_real 任务
   - 已将 `psf/requests#7234` 推进为 `task_007` 草稿与 `task_008` 可运行 semi_real 任务
+  - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
 ## 项目目标
@@ -161,6 +162,7 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000
 - 通过 `gh issue view` 拉取 issue 元数据
 - 追加或更新 `benchmarks/real_world_candidates.json`
 - 自动生成候选的 `candidate_id`
+- 保留已有候选状态，并按时间追加导入备注
 - 先把候选沉淀下来，后续再决定是否升级成正式任务
 
 如果你想同时生成 task 草稿：
@@ -176,6 +178,27 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
 - target_files_hint
 - success_criteria
 
+### 8. 从 real_issue 草稿生成 semi_real 脚手架
+
+```bash
+python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007.json --semi-repo-name requests_encoding_repo --module-path requests_encoding_repo/utils.py --test-path tests/test_utils.py --ready --success-criteria "Quoted 和 unquoted charset 都能正确解析，且测试全部通过。" --expected-failure-test "HeaderEncodingTests.test_double_quoted_charset_is_detected" --tag header-parsing --tag charset
+```
+
+这个命令当前会完成：
+
+- 基于 `real_issue` 草稿生成新的 `semi_real` 任务
+- 自动创建最小 repo 骨架：
+  - 包目录
+  - 模块文件
+  - 测试文件
+  - repo README
+- 自动维护候选状态：
+  - `drafted -> scaffolded`
+  - 如果带 `--ready`，则更新为 `accepted`
+- 在 `--ready` 模式下把任务追加到 `benchmarks/manifests/real_issue_tasks.json`
+
+如果不加 `--ready`，脚本会生成一个待人工补齐的 semi_real 草稿，更适合先做 issue 缩减和最小复现。
+
 ## 当前 benchmark 任务
 
 当前 benchmark 已分成三层：
@@ -189,7 +212,7 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
   - tasks: `task_001`、`task_003`、`task_004`
   - 用途：执行 `baseline vs improved` 的正式对比
 - `Future GitHub Real-Issue Set`
-  - 当前未接入仓库内
+  - 当前已接入 manifest：`benchmarks/manifests/real_issue_tasks.json`
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
   - 当前已导入 2 条候选：
     - `psf/requests#6432`
@@ -241,13 +264,14 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
 
 - manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
-- improved_v2：
-  - `logs/summaries/batch_eval_realissuev2_001.json`
 - improved_v3：
-  - `logs/summaries/batch_eval_realissuev3_001.json`
+  - `logs/summaries/batch_eval_realissuev3r2_001.json`
+- improved_v4：
+  - `logs/summaries/batch_eval_realissuev4_001.json`
 - compare：
-  - `logs/summaries/batch_compare_realissue_step1_001.json`
   - `logs/summaries/batch_compare_realissue_step2_001.json`
+  - `success_rate: 0.5 -> 1.0`
+  - `test_pass_rate: 0.5 -> 1.0`
 
 ## Harness 设计方向
 
