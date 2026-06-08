@@ -38,6 +38,7 @@
 - `benchmarks/tasks/task_003.json`
 - `benchmarks/tasks/task_004.json`
 - `benchmarks/tasks/task_006.json`
+- `benchmarks/tasks/task_008.json`
 
 当前 repo：
 
@@ -45,6 +46,7 @@
 - `benchmarks/repos/multi_bug_repo`
 - `benchmarks/repos/leading_none_repo`
 - `benchmarks/repos/requests_compat_repo`
+- `benchmarks/repos/requests_encoding_repo`
 
 用途：
 
@@ -157,6 +159,26 @@
 
 - `setup.py`
 - `tests/test_setup.py`
+
+### `requests_encoding_repo`
+
+来源：
+
+- `psf/requests#7234`
+
+主要问题：
+
+- `get_encoding_from_headers` 遇到带引号的 charset 会返回 `None`
+- 未带引号的 charset 仍然工作正常
+
+正确行为：
+
+- 无论 charset 是否被单引号或双引号包裹，都应返回去引号后的编码值
+
+相关文件：
+
+- `requests_encoding_repo/utils.py`
+- `tests/test_utils.py`
 
 ## 当前为什么要分层
 

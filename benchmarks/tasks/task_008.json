@@ -1,0 +1,32 @@
+{
+  "task_id": "task_008",
+  "repo_name": "requests_encoding_repo",
+  "repo_path": "benchmarks/repos/requests_encoding_repo",
+  "issue_title": "Detect quoted charset values in get_encoding_from_headers",
+  "issue_text": "This semi-real task is derived from psf/requests#7234. The current implementation of get_encoding_from_headers returns None when the charset value is wrapped in single or double quotes. Update the parsing logic so quoted charset values are unquoted and returned correctly, while unquoted behavior remains unchanged.",
+  "test_command": "python -m pytest tests/test_utils.py -q",
+  "success_criteria": "Quoted and unquoted charset values are parsed correctly, and all encoding regression tests pass.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "header-parsing",
+    "charset"
+  ],
+  "target_files_hint": [
+    "requests_encoding_repo/utils.py",
+    "tests/test_utils.py"
+  ],
+  "expected_failure_test": "HeaderEncodingTests.test_double_quoted_charset_is_detected",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "phase_introduced": "phase_6",
+    "repo_url": "https://github.com/psf/requests",
+    "issue_url": "https://github.com/psf/requests/issues/7234",
+    "candidate_id": "psf_requests_issue_7234",
+    "derived_from_task": "task_007",
+    "notes": "从真实 issue 提炼出的半真实可运行任务，聚焦 quoted charset 解析。"
+  }
+}

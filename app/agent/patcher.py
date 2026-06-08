@@ -73,6 +73,22 @@ def _relax_urllib3_upper_bound(content: str) -> str | None:
     return content.replace(target_line, replacement, 1)
 
 
+def _handle_quoted_charset(content: str) -> str | None:
+    # improved_v4 处理 quoted charset 的引号清洗。
+    target_block = (
+        '            if value.startswith(\'"\') or value.startswith("\'"):\n'
+        "                return None\n"
+        "            return value"
+    )
+    if target_block not in content:
+        return None
+    if "return value.strip(\"\\\"'\")" in content:
+        return None
+
+    replacement = "            return value.strip(\"\\\"'\")"
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -125,6 +141,27 @@ def apply_rule_based_patch(
                     if improved_content is not None:
                         updated_content = improved_content
                         patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v4":
+            improved_v4_content = _handle_quoted_charset(original_content)
+            if improved_v4_content is not None:
+                updated_content = improved_v4_content
+                patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+            else:
+                improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                if improved_v3_content is not None:
+                    updated_content = improved_v3_content
+                    patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                else:
+                    improved_v2_content = _handle_leading_none_item(original_content)
+                    if improved_v2_content is not None:
+                        updated_content = improved_v2_content
+                        patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                    else:
+                        improved_content = _handle_none_items(updated_content)
+                        if improved_content is not None:
+                            updated_content = improved_content
+                            patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

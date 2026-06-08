@@ -619,8 +619,17 @@ scripts/
   - 类型：`semi_real`
   - 来源：`psf/requests#6432`
   - 状态：已可运行
+- `task_007`
+  - 类型：`real_issue`
+  - 状态：草稿，仍需人工补齐本地 repo_path 与测试命令
+- `task_008`
+  - 类型：`semi_real`
+  - 来源：`psf/requests#7234`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
+- `optimization/policy_versions/improved_v4.json`
+  - 作用：新增 quoted charset 去引号修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -754,6 +763,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy
 - 修改文件是 `setup.py`
 - patch 原因是放宽 urllib3 依赖上界
 
+### 方式 9：运行第 2 条真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_008.json --policy optimization/policy_versions/improved_v4.json
+```
+
+你会看到：
+
+- `task_008` 被成功修复
+- 修改文件是 `requests_encoding_repo/utils.py`
+- patch 原因是给 quoted charset 增加去引号逻辑
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -852,6 +875,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy
 - 已把优化过程沉淀到 `docs/optimization_log.md`
 - 已补充 `task_004` 与 `improved_v2`
 - 已补充 `task_005` / `task_006` 与 `improved_v3`
+- 已补充 `task_007` / `task_008` 与 `improved_v4`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7

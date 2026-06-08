@@ -1,0 +1,29 @@
+{
+  "task_id": "task_007",
+  "repo_name": "requests",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Quoted charset values are not detected by `get_encoding_from_headers`",
+  "issue_text": " `requests.utils.get_encoding_from_headers` fails to detect charset values when they are surrounded by single or double quotes in the Content-Type header. In such cases, the function returns `None` instead of the correct encoding string.\nUnquoted charset values continue to behave correctly.\n\n## Expected Result\n\nWhen a quoted charset is present in the `Content-Type` header, the function should return the unquoted charset value.\nExample:\n   `\nheaders = {\n    \"Content-Type\": 'text/html; charset=\"ut",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "psf/requests",
+    "repo_url": "https://github.com/psf/requests",
+    "issue_number": 7234,
+    "issue_url": "https://github.com/psf/requests/issues/7234",
+    "candidate_id": "psf_requests_issue_7234",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

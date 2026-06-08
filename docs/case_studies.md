@@ -37,6 +37,19 @@
 - 结果：
   - `task_006` 从失败变为完全通过
 
+## 成功案例 4：`task_008`
+
+- repo：`requests_encoding_repo`
+- 来源：`psf/requests#7234`
+- 代表版本：`improved_v4`
+- 现象：
+  - `improved_v3` 还不具备 quoted charset 的解析修复能力
+  - `task_008` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v4` 新增 quoted charset 去引号策略
+- 结果：
+  - `task_008` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -66,3 +79,13 @@
   - 虽然读到了 `setup.py`，但没有形成任何修改
 - 后续改进：
   - 升级为 `improved_v3`
+
+## 失败案例 4：`task_008` 在 `improved_v3`
+
+- 失败版本：`improved_v3`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器不理解 quoted charset 场景
+  - 读到了目标函数，但没有形成补丁
+- 后续改进：
+  - 升级为 `improved_v4`

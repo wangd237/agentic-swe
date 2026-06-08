@@ -24,6 +24,22 @@
       "state": "CLOSED",
       "created_at": "2023-04-26T17:53:09Z",
       "body_excerpt": "## The latest version of ``requests`` (``2.29.0``) does not support ``urllib3`` ``2.0.0``\r\n\r\n``urllib3`` ``2.0.0`` was just released: https://github.com/urllib3/urllib3/releases/tag/2.0.0\r\n\r\nBut currently ``requests`` ``2.29.0`` has a range bound on it: ``<1.27 and >=1.21.1`` for ``urllib3``.\r\n\r\nIf you try to install a package that has ``urllib3==2.0.0`` as a dependency (while using the latest version of ``requests``), there will be errors:\r\n\r\n```\r\n<PACKAGE> depends on urllib3==2.0.0\r\nrequests 2"
+    },
+    {
+      "candidate_id": "psf_requests_issue_7234",
+      "repo_full_name": "psf/requests",
+      "repo_url": "https://github.com/psf/requests",
+      "issue_number": 7234,
+      "issue_title": "Quoted charset values are not detected by `get_encoding_from_headers`",
+      "issue_url": "https://github.com/psf/requests/issues/7234",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "drafted",
+      "notes": "已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2026-03-01T19:31:14Z",
+      "body_excerpt": " `requests.utils.get_encoding_from_headers` fails to detect charset values when they are surrounded by single or double quotes in the Content-Type header. In such cases, the function returns `None` instead of the correct encoding string.\nUnquoted charset values continue to behave correctly.\n\n## Expected Result\n\nWhen a quoted charset is present in the `Content-Type` header, the function should return the unquoted charset value.\nExample:\n   `\nheaders = {\n    \"Content-Type\": 'text/html; charset=\"ut"
     }
   ]
 }

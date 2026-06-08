@@ -12,6 +12,8 @@
 - 当前已补充真实 issue 候选导入脚本
 - 当前已成功导入首条真实 issue 候选并生成 `task_005` 草稿
 - 当前已补充 `task_006`，并在真实 issue 派生任务上完成 `improved_v2 -> improved_v3` 对比
+- 当前已成功导入第 2 条真实 issue 候选并生成 `task_007` 草稿
+- 当前已补充 `task_008`，并在真实 issue 派生任务集上完成 `improved_v3 -> improved_v4` 对比
 
 ## 当前可展示结果
 
@@ -148,12 +150,34 @@
   - improved_v2: `Premature Finish = 1`
   - improved_v3: `无错误标签`
 
+扩充到 2 条真实派生任务后的结果：
+
+- realissuev3r2：
+  - `logs/summaries/batch_eval_realissuev3r2_001.json`
+- realissuev4：
+  - `logs/summaries/batch_eval_realissuev4_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step2_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v3: `0.5`
+  - improved_v4: `1.0`
+- `test_pass_rate`
+  - improved_v3: `0.5`
+  - improved_v4: `1.0`
+- taxonomy
+  - improved_v3: `Premature Finish = 1`
+  - improved_v4: `无错误标签`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
 - 关键改动是让 patch 逻辑除了空输入保护，还能处理 `None` 元素过滤
 - `improved_v2` 进一步把“只处理部分 None”升级为“归一化前全量过滤 None”
 - `improved_v3` 进一步覆盖了真实 issue 派生出来的依赖约束修复场景
+- `improved_v4` 进一步覆盖了真实 issue 派生出来的 header charset 解析场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：

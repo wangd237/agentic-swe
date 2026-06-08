@@ -797,3 +797,111 @@
 - 真实 issue 仍然主要以派生任务形式落地
 - 还没有把真实仓库直接同步进本地 benchmark
 - 复杂依赖和多文件修复仍需后续能力增强
+
+## Iteration 7：Quoted Charset Parsing from Real Issue（improved_v3 -> improved_v4）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 继续扩充真实 issue 派生任务集
+- 增加一个更贴近函数级解析 bug 的 semi_real 任务
+- 验证 `improved_v3` 到 `improved_v4` 的收益
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `eval`
+- `docs`
+
+### 改动摘要
+
+- 新增真实候选：
+  - `psf/requests#7234`
+- 新增草稿任务：
+  - `task_007`
+- 新增可运行 semi_real 任务：
+  - `task_008`
+- 新增 benchmark repo：
+  - `benchmarks/repos/requests_encoding_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v4.json`
+- patch 生成器新增能力：
+  - quoted charset 去引号修复
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_007.json`
+- `benchmarks/tasks/task_008.json`
+- `benchmarks/repos/requests_encoding_repo/requests_encoding_repo/utils.py`
+- `benchmarks/repos/requests_encoding_repo/tests/test_utils.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v4.json`
+- `app/agent/patcher.py`
+
+### improved_v3 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev3r2_001.json`
+
+### improved_v4 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev4_001.json`
+
+### compare 运行
+
+- compare：
+  - `logs/summaries/batch_compare_realissue_step2_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v3: `0.5`
+  - improved_v4: `1.0`
+- `test_pass_rate`
+  - improved_v3: `0.5`
+  - improved_v4: `1.0`
+- `taxonomy`
+  - improved_v3: `Premature Finish = 1`
+  - improved_v4: `无错误标签`
+
+### 关键案例
+
+#### improved_v3 失败案例：`task_008`
+
+- 运行结果：
+  - `logs/trajectories/task_008/run_20260608T071833050400Z_5253/result.json`
+- 现象：
+  - 已读取 `requests_encoding_repo/utils.py`
+  - 但没有匹配到 quoted charset 的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v4 成功案例：`task_008`
+
+- 运行结果：
+  - `logs/trajectories/task_008/run_20260608T071832844825Z_6236/result.json`
+- 现象：
+  - 自动把 quoted charset 值去引号
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 2 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v2`：只覆盖 task_006 之前的能力
+  - `improved_v3`：覆盖依赖约束修复
+  - `improved_v4`：进一步覆盖 quoted charset 解析修复
+
+### 剩余问题
+
+- 真实 issue 仍以派生任务形式为主
+- 还没有把真实仓库直接同步到本地运行
+- 当前 patch 策略仍然以规则法为主
