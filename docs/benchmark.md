@@ -30,18 +30,21 @@
 当前 manifest：
 
 - `benchmarks/manifests/report_tasks.json`
+- `benchmarks/manifests/real_issue_tasks.json`
 
 当前任务：
 
 - `benchmarks/tasks/task_001.json`
 - `benchmarks/tasks/task_003.json`
 - `benchmarks/tasks/task_004.json`
+- `benchmarks/tasks/task_006.json`
 
 当前 repo：
 
 - `benchmarks/repos/sample_repo`
 - `benchmarks/repos/multi_bug_repo`
 - `benchmarks/repos/leading_none_repo`
+- `benchmarks/repos/requests_compat_repo`
 
 用途：
 
@@ -133,6 +136,27 @@
 
 - `leading_none_repo/parser.py`
 - `tests/test_parser.py`
+
+### `requests_compat_repo`
+
+来源：
+
+- `psf/requests#6432`
+
+主要问题：
+
+- 依赖约束仍将 `urllib3` 固定在 `<1.27`
+- 对 Python 3.7+ 而言，这会阻止 `urllib3 2.x` 安装
+
+正确行为：
+
+- 将 urllib3 上界放宽到允许 `2.x`
+- 其余核心依赖保持存在
+
+相关文件：
+
+- `setup.py`
+- `tests/test_setup.py`
 
 ## 当前为什么要分层
 

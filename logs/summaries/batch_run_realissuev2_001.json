@@ -1,0 +1,23 @@
+{
+  "batch_run_id": "batch_run_realissuev2_001",
+  "policy_id": "improved_v2",
+  "started_at": "2026-06-08T06:55:21.900119+00:00",
+  "finished_at": "2026-06-08T06:55:22.445542+00:00",
+  "task_count": 1,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "tasks": [
+    {
+      "task_id": "task_006",
+      "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_006.json",
+      "run_id": "run_20260608T065521900673Z_7553",
+      "final_status": "failed",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_006\\run_20260608T065521900673Z_7553\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_006\\run_20260608T065521900673Z_7553\\trace.json",
+      "summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_006\\run_20260608T065521900673Z_7553\\summary.md",
+      "patch_applied": false,
+      "post_test_exit_code": 1,
+      "policy_id": "improved_v2"
+    }
+  ]
+}

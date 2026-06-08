@@ -1,0 +1,32 @@
+{
+  "task_id": "task_006",
+  "repo_name": "requests_compat_repo",
+  "repo_path": "benchmarks/repos/requests_compat_repo",
+  "issue_title": "Allow urllib3 2.x for Python 3.7+ in requests dependency constraints",
+  "issue_text": "This semi-real task is derived from psf/requests#6432. The current dependency configuration still pins urllib3 to <1.27, which prevents urllib3 2.x from being installed on Python 3.7+. Update the dependency constraint so urllib3 2.x is allowed while keeping the rest of the requirements intact.",
+  "test_command": "python -m pytest tests/test_setup.py -q",
+  "success_criteria": "The urllib3 dependency constraint allows urllib3 2.x, and all setup regression tests pass.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "dependency-constraint",
+    "urllib3",
+    "semi-real"
+  ],
+  "target_files_hint": [
+    "setup.py",
+    "tests/test_setup.py"
+  ],
+  "expected_failure_test": "DependencyConstraintTests.test_urllib3_v2_is_allowed_for_python37_plus",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "phase_introduced": "phase_6",
+    "repo_url": "https://github.com/psf/requests",
+    "issue_url": "https://github.com/psf/requests/issues/6432",
+    "candidate_id": "psf_requests_issue_6432",
+    "derived_from_task": "task_005",
+    "notes": "从真实 issue 提炼出的半真实可运行任务，聚焦 urllib3 上界约束修复。"
+  }
+}

@@ -695,3 +695,105 @@
 - 当前状态：
   - candidate 已切换为 `drafted`
   - task 草稿仍需人工补齐真实 repo_path 与测试命令
+
+## Iteration 6：Semi-Real Runnable Task from Real Issue（improved_v2 -> improved_v3）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 不只停留在真实 issue 候选导入
+- 把首条真实 issue 推进成可运行的 semi_real 任务
+- 验证策略能否覆盖依赖约束类修复
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `eval`
+- `docs`
+
+### 改动摘要
+
+- 保留：
+  - `task_005` 作为 `real_issue` 草稿
+- 新增：
+  - `benchmarks/repos/requests_compat_repo`
+  - `benchmarks/tasks/task_006.json`
+  - `benchmarks/manifests/real_issue_tasks.json`
+  - `optimization/policy_versions/improved_v3.json`
+- patch 生成器新增能力：
+  - 将 `urllib3>=1.21.1,<1.27` 放宽为 `urllib3>=1.21.1,<3`
+
+### 主要涉及文件
+
+- `benchmarks/repos/requests_compat_repo/setup.py`
+- `benchmarks/repos/requests_compat_repo/tests/test_setup.py`
+- `benchmarks/tasks/task_006.json`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v3.json`
+- `app/agent/patcher.py`
+
+### improved_v2 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev2_001.json`
+
+### improved_v3 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev3_001.json`
+
+### compare 运行
+
+- compare：
+  - `logs/summaries/batch_compare_realissue_step1_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v2: `0.0`
+  - improved_v3: `1.0`
+- `test_pass_rate`
+  - improved_v2: `0.0`
+  - improved_v3: `1.0`
+- `taxonomy`
+  - improved_v2: `Premature Finish = 1`
+  - improved_v3: `无错误标签`
+
+### 关键案例
+
+#### improved_v2 失败案例：`task_006`
+
+- 运行结果：
+  - `logs/trajectories/task_006/run_20260608T065502481610Z_9951/result.json`
+- 现象：
+  - 已读取 `setup.py`
+  - 但没有匹配到可修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v3 成功案例：`task_006`
+
+- 运行结果：
+  - `logs/trajectories/task_006/run_20260608T065502466819Z_5588/result.json`
+- 现象：
+  - 自动把 urllib3 上界放宽到 `3`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 入口现在已经不只是候选收集，而是能推进到可运行 semi_real 任务
+- `improved_v3` 证明当前系统开始具备跨缺陷类型扩展能力
+- 这条链路比纯 toy parser bug 更接近真实工程维护问题
+
+### 剩余问题
+
+- 真实 issue 仍然主要以派生任务形式落地
+- 还没有把真实仓库直接同步进本地 benchmark
+- 复杂依赖和多文件修复仍需后续能力增强

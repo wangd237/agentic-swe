@@ -28,6 +28,7 @@
   - 已完成首轮 baseline vs improved policy 对比
   - 已支持自动生成 baseline vs improved 对比报告
   - 已完成 `improved_v2` 策略迭代，补充首元素 `None` 场景修复
+  - 已将 `psf/requests#6432` 推进为 `task_005` 草稿与 `task_006` 可运行 semi_real 任务
   - 已补充项目说明文档与阶段指南
 
 ## 项目目标
@@ -190,6 +191,9 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
   - 当前未接入仓库内
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
   - 当前已导入首条候选：`psf/requests#6432`
+  - 当前已生成：
+    - `task_005`：真实 issue 草稿
+    - `task_006`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -227,6 +231,17 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
   - `logs/summaries/batch_eval_improvedv2_001.json`
 - compare：
   - `logs/summaries/batch_compare_phase6v2_step2_001.json`
+
+真实 issue 派生链路的最新对比产物：
+
+- manifest：
+  - `benchmarks/manifests/real_issue_tasks.json`
+- improved_v2：
+  - `logs/summaries/batch_eval_realissuev2_001.json`
+- improved_v3：
+  - `logs/summaries/batch_eval_realissuev3_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step1_001.json`
 
 ## Harness 设计方向
 

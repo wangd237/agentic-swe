@@ -62,6 +62,17 @@ def _handle_leading_none_item(content: str) -> str | None:
     return content.replace(original_block, replacement, 1)
 
 
+def _relax_urllib3_upper_bound(content: str) -> str | None:
+    # improved_v3 处理依赖约束任务，把 urllib3 上界从 1.x 放宽到 3。
+    target_line = '    "urllib3>=1.21.1,<1.27",'
+    if target_line not in content:
+        return None
+    if '"urllib3>=1.21.1,<3",' in content:
+        return None
+    replacement = '    "urllib3>=1.21.1,<3",'
+    return content.replace(target_line, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -98,6 +109,22 @@ def apply_rule_based_patch(
                 if improved_content is not None:
                     updated_content = improved_content
                     patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v3":
+            improved_v3_content = _relax_urllib3_upper_bound(original_content)
+            if improved_v3_content is not None:
+                updated_content = improved_v3_content
+                patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+            else:
+                improved_v2_content = _handle_leading_none_item(original_content)
+                if improved_v2_content is not None:
+                    updated_content = improved_v2_content
+                    patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                else:
+                    improved_content = _handle_none_items(updated_content)
+                    if improved_content is not None:
+                        updated_content = improved_content
+                        patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

@@ -608,6 +608,22 @@ scripts/
 - 可选生成 `real_issue` task 草稿
 - 把“候选收集”和“任务补全”拆成两步，避免一次性要求把所有字段都补齐
 
+### 8. 首条真实 issue 已推进到可运行 semi_real 任务
+
+当前已经完成：
+
+- `task_005`
+  - 类型：`real_issue`
+  - 状态：草稿，仍需人工补齐本地 repo_path 与测试命令
+- `task_006`
+  - 类型：`semi_real`
+  - 来源：`psf/requests#6432`
+  - 状态：已可运行
+- `optimization/policy_versions/improved_v3.json`
+  - 作用：新增 urllib3 依赖上界放宽修复能力
+
+当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
+
 ## 你现在可以怎么体验
 
 ### 方式 1：运行 Patch 闭环
@@ -724,6 +740,20 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000
 
 如果再加 `--draft-task`，还会额外生成一个 `real_issue` task 草稿文件。
 
+### 方式 8：运行首条真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy optimization/policy_versions/improved_v3.json
+```
+
+你会看到：
+
+- `task_006` 被成功修复
+- 修改文件是 `setup.py`
+- patch 原因是放宽 urllib3 依赖上界
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -821,6 +851,7 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000
 - 已补充自动 compare 报告
 - 已把优化过程沉淀到 `docs/optimization_log.md`
 - 已补充 `task_004` 与 `improved_v2`
+- 已补充 `task_005` / `task_006` 与 `improved_v3`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7
