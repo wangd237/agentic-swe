@@ -35,11 +35,13 @@
 
 - `benchmarks/tasks/task_001.json`
 - `benchmarks/tasks/task_003.json`
+- `benchmarks/tasks/task_004.json`
 
 当前 repo：
 
 - `benchmarks/repos/sample_repo`
 - `benchmarks/repos/multi_bug_repo`
+- `benchmarks/repos/leading_none_repo`
 
 用途：
 
@@ -88,6 +90,22 @@
 相关文件：
 
 - `multi_bug_repo/parser.py`
+- `tests/test_parser.py`
+
+### `leading_none_repo`
+
+主要问题：
+
+- `parse_items([])` 会抛出异常
+- `parse_items([None, ' A ', 'B '])` 会因为首元素 `None` 失败
+- `parse_items([' A ', None, 'B '])` 也应忽略中间 `None`
+- 正确行为应为：
+  - 空输入返回空列表
+  - 归一化前先过滤所有 `None`
+
+相关文件：
+
+- `leading_none_repo/parser.py`
 - `tests/test_parser.py`
 
 ## 当前为什么要分层

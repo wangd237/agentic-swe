@@ -10,6 +10,7 @@
 - batch run
 - baseline eval
 - baseline vs improved 首轮 policy 对比
+- `improved_v2` 第二轮 policy 对比
 
 这意味着下一阶段可以正式开始：
 

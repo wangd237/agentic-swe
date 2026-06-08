@@ -1,0 +1,29 @@
+{
+  "source_batch_run_id": "batch_run_improvedv2_001",
+  "policy_id": "improved_v2",
+  "metrics": {
+    "task_count": 3,
+    "success_count": 3,
+    "success_rate": 1.0,
+    "test_pass_count": 3,
+    "test_pass_rate": 1.0,
+    "partial_fix_count": 0,
+    "partial_fix_rate": 0.0,
+    "average_steps": 9.0,
+    "average_tool_calls": 9.0,
+    "average_duration_sec": 0.5025,
+    "average_modified_files": 1.0,
+    "key_file_read_rate": 1.0,
+    "test_execution_rate": 1.0,
+    "repeated_search_rate": 0.0,
+    "reasonable_finish_rate": 1.0
+  },
+  "taxonomy": {
+    "label_counts": {},
+    "task_labels": {
+      "task_001": [],
+      "task_003": [],
+      "task_004": []
+    }
+  }
+}

@@ -7,6 +7,7 @@
 - 当前已完成最小 batch run 验证
 - 当前已完成最小 baseline eval 验证
 - 当前已完成 baseline vs improved 自动 compare 报告
+- 当前已完成 `improved_v2` 新一轮 report-set 对比
 
 ## 当前可展示结果
 
@@ -52,6 +53,8 @@
 
 ### baseline vs improved 对比
 
+第一轮对比：
+
 - baseline：
   - `logs/summaries/batch_eval_baseline_001.json`
 - improved：
@@ -60,7 +63,7 @@
   - `logs/summaries/batch_compare_phase6_002.json`
   - `logs/summaries/batch_compare_phase6_002.md`
 
-当前对比结果：
+第一轮结果：
 
 - `success_rate`
   - baseline: `0.5`
@@ -68,15 +71,33 @@
 - `test_pass_rate`
   - baseline: `0.5`
   - improved: `1.0`
+
+第二轮对比：
+
+- baseline_v1：
+  - `logs/summaries/batch_eval_baselinev2_001.json`
+- improved_v1：
+  - `logs/summaries/batch_eval_improvedv1r2_001.json`
+- improved_v2：
+  - `logs/summaries/batch_eval_improvedv2_001.json`
+- compare：
+  - `logs/summaries/batch_compare_phase6v2_step1_001.json`
+  - `logs/summaries/batch_compare_phase6v2_step2_001.json`
+
+第二轮结果：
+
+- `success_rate`
+  - baseline_v1: `0.3333`
+  - improved_v1: `0.6667`
+  - improved_v2: `1.0`
+- `test_pass_rate`
+  - baseline_v1: `0.3333`
+  - improved_v1: `0.6667`
+  - improved_v2: `1.0`
 - `partial_fix_rate`
-  - baseline: `0.5`
-  - improved: `0.0`
-- `average_steps`
-  - baseline: `9.0`
-  - improved: `9.0`
-- `average_tool_calls`
-  - baseline: `9.0`
-  - improved: `9.0`
+  - baseline_v1: `0.6667`
+  - improved_v1: `0.3333`
+  - improved_v2: `0.0`
 
 ### 自动对比报告能额外回答什么
 
@@ -96,10 +117,17 @@
   - baseline: `Patch Incorrect`
   - improved: `无错误标签`
 
+第二轮关键变化：
+
+- `task_004`
+  - improved_v1: `Patch Incorrect`
+  - improved_v2: `无错误标签`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
 - 关键改动是让 patch 逻辑除了空输入保护，还能处理 `None` 元素过滤
+- `improved_v2` 进一步把“只处理部分 None”升级为“归一化前全量过滤 None”
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 详细过程与文件级改动见：
   - `docs/optimization_log.md`

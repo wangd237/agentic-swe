@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成首轮 baseline / improved policy 对比，并补上自动 compare 报告链路 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v1 -> improved_v2` 两轮策略迭代，并补上自动 compare 报告链路 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -520,10 +520,11 @@ scripts/
 - 不再只验证“系统能不能跑通”
 - 而是验证“优化前后是否真的有差异”
 
-当前 report set 的两条任务是：
+当前 report set 的任务是：
 
 - `task_001`
 - `task_003`
+- `task_004`
 
 ### 3. 自动 compare 报告已可用
 
@@ -543,10 +544,12 @@ scripts/
 
 - `logs/summaries/batch_compare_phase6_002.json`
 - `logs/summaries/batch_compare_phase6_002.md`
+- `logs/summaries/batch_compare_phase6v2_step1_001.json`
+- `logs/summaries/batch_compare_phase6v2_step2_001.json`
 
 ### 4. 当前 Phase 6 的结论
 
-当前首轮优化结果已经明确说明：
+当前第一轮优化结果已经明确说明：
 
 - `success_rate: 0.5 -> 1.0`
 - `test_pass_rate: 0.5 -> 1.0`
@@ -557,7 +560,24 @@ scripts/
 - `average_steps` 保持 `9.0`
 - `average_tool_calls` 保持 `9.0`
 
-这说明 improved policy 的收益不是靠增加额外步骤换来的。
+这说明 improved_v1 的收益不是靠增加额外步骤换来的。
+
+### 5. 当前新增的 improved_v2 结论
+
+本轮继续扩充 report set 后，新的结果是：
+
+- `baseline_v1`
+  - success_rate: `0.3333`
+- `improved_v1`
+  - success_rate: `0.6667`
+- `improved_v2`
+  - success_rate: `1.0`
+
+新增差异点来自：
+
+- `task_004`
+- 缺陷模式：首元素 `None`
+- 代表能力：不仅处理中间 `None`，还要在归一化前做全量清洗
 
 ## 你现在可以怎么体验
 
@@ -740,6 +760,7 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
 - 已建立 report set
 - 已补充自动 compare 报告
 - 已把优化过程沉淀到 `docs/optimization_log.md`
+- 已补充 `task_004` 与 `improved_v2`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7

@@ -1,0 +1,28 @@
+{
+  "task_id": "task_004",
+  "repo_name": "leading_none_repo",
+  "repo_path": "benchmarks/repos/leading_none_repo",
+  "issue_title": "Handle empty input and leading None items in parse_items",
+  "issue_text": "parse_items([]) currently crashes, parse_items([None, ' A ', 'B ']) also raises because the first element can be None, and parse_items([' A ', None, 'B ']) should ignore None values during normalization. The function should return [] for empty input and skip None items no matter where they appear.",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "All parser tests pass, including empty input, leading None handling, and middle None handling.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "empty-input",
+    "none-handling",
+    "leading-none",
+    "report-set"
+  ],
+  "target_files_hint": [
+    "leading_none_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "ParseItemsTests.test_leading_none_items_are_ignored",
+  "max_retries": 2,
+  "metadata": {
+    "phase_introduced": "phase_6",
+    "notes": "用于区分 improved_v1 与 improved_v2 对首元素 None 场景的处理能力。"
+  }
+}

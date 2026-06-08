@@ -420,3 +420,155 @@
 - compare 仍然基于当前最小指标集合，后续可继续扩展更多质量维度
 - 当前 report set 样本数仍偏少
 - 真实 GitHub issue 评测集还未正式接入
+
+## Iteration 3：Leading-None Handling（improved_v1 -> improved_v2）
+
+### 时间
+
+- 2026-06-06
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 继续扩充 report set
+- 增加一个更接近真实数据清洗的缺陷模式
+- 验证 `improved_v1` 到 `improved_v2` 的收益是否真实存在
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `eval`
+- `docs`
+
+### 改动摘要
+
+- 新增 benchmark repo：
+  - `benchmarks/repos/leading_none_repo`
+- 新增任务：
+  - `benchmarks/tasks/task_004.json`
+- report set 扩充为 3 条任务：
+  - `task_001`
+  - `task_003`
+  - `task_004`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v2.json`
+- patch 生成器新增能力：
+  - 在归一化前先过滤所有 `None`
+  - 同时覆盖：
+    - 空输入
+    - 首元素 `None`
+    - 中间 `None`
+
+### 主要涉及文件
+
+- `benchmarks/repos/leading_none_repo/leading_none_repo/parser.py`
+- `benchmarks/repos/leading_none_repo/tests/test_parser.py`
+- `benchmarks/tasks/task_004.json`
+- `benchmarks/manifests/report_tasks.json`
+- `optimization/policy_versions/improved_v2.json`
+- `app/agent/patcher.py`
+- `docs/case_studies.md`
+- `docs/results.md`
+
+### baseline 运行
+
+- batch run：
+  - `logs/summaries/batch_run_baselinev2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_baselinev2_001.json`
+
+### improved_v1 运行
+
+- batch run：
+  - `logs/summaries/batch_run_improvedv1r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_improvedv1r2_001.json`
+
+### improved_v2 运行
+
+- batch run：
+  - `logs/summaries/batch_run_improvedv2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_improvedv2_001.json`
+
+### compare 运行
+
+- `baseline_v1 -> improved_v1`
+  - `logs/summaries/batch_compare_phase6v2_step1_001.json`
+- `improved_v1 -> improved_v2`
+  - `logs/summaries/batch_compare_phase6v2_step2_001.json`
+
+### 指标对比
+
+#### 扩充后 report set 的整体结果
+
+- `success_rate`
+  - baseline_v1: `0.3333`
+  - improved_v1: `0.6667`
+  - improved_v2: `1.0`
+- `test_pass_rate`
+  - baseline_v1: `0.3333`
+  - improved_v1: `0.6667`
+  - improved_v2: `1.0`
+- `partial_fix_rate`
+  - baseline_v1: `0.6667`
+  - improved_v1: `0.3333`
+  - improved_v2: `0.0`
+
+#### improved_v1 -> improved_v2
+
+- `success_rate`
+  - `0.6667 -> 1.0`
+- `test_pass_rate`
+  - `0.6667 -> 1.0`
+- `partial_fix_rate`
+  - `0.3333 -> 0.0`
+
+### taxonomy
+
+- baseline_v1：
+  - `Patch Incorrect = 2`
+- improved_v1：
+  - `Patch Incorrect = 1`
+- improved_v2：
+  - 无错误标签
+
+### 关键案例
+
+#### improved_v1 失败案例：`task_004`
+
+- 运行结果：
+  - `logs/trajectories/task_004/run_20260606T063355750903Z_6189/result.json`
+- 现象：
+  - `improved_v1` 修掉了空输入问题
+  - 也能处理循环中的 `None`
+  - 但 `first_item` 仍然可能是 `None`
+  - 修复后测试失败在 `leading_none_repo/parser.py:9 (AttributeError)`
+
+#### improved_v2 成功案例：`task_004`
+
+- 运行结果：
+  - `logs/trajectories/task_004/run_20260606T063355735782Z_2513/result.json`
+- 现象：
+  - `improved_v2` 在归一化前先构造 `cleaned_items`
+  - 空输入与所有 `None` 场景都能统一处理
+  - 修复后测试全部通过
+
+### 结论
+
+- `improved_v2` 的收益是真实的，不是只在旧任务集上“刷分”
+- 通过新增 `task_004`，report set 从 2 条扩到了 3 条
+- 当前策略演进链路已经形成：
+  - `baseline_v1`：只处理空输入
+  - `improved_v1`：处理空输入 + 中间 `None`
+  - `improved_v2`：处理空输入 + 全量 `None`
+
+### 剩余问题
+
+- 当前 patch 仍然是规则型，不具备通用代码理解能力
+- report set 仍然偏小
+- 下一步应该逐步接入 GitHub 真实 issue 任务

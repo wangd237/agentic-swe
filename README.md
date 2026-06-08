@@ -27,6 +27,7 @@
   - 已支持对 batch run 输出 baseline 评测报告
   - 已完成首轮 baseline vs improved policy 对比
   - 已支持自动生成 baseline vs improved 对比报告
+  - 已完成 `improved_v2` 策略迭代，补充首元素 `None` 场景修复
   - 已补充项目说明文档与阶段指南
 
 ## 项目目标
@@ -137,7 +138,7 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
   - 用途：联调单任务闭环、batch runner 与基础评测链路
 - `Report Set`
   - manifest: `benchmarks/manifests/report_tasks.json`
-  - tasks: `task_001`、`task_003`
+  - tasks: `task_001`、`task_003`、`task_004`
   - 用途：执行 `baseline vs improved` 的正式对比
 - `Future GitHub Real-Issue Set`
   - 当前未接入仓库内
@@ -155,16 +156,29 @@ python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline
 
 ## 当前 improved 对比结果
 
-- baseline：
-  - `logs/summaries/batch_eval_baseline_001.json`
-- improved：
-  - `logs/summaries/batch_eval_improved_001.json`
-- compare：
-  - `logs/summaries/batch_compare_phase6_002.json`
-- 当前对比：
+当前 Phase 6 已经形成两段式优化：
+
+- `baseline_v1 -> improved_v1`
+  - report set: `task_001`、`task_003`
   - success_rate: `0.5 -> 1.0`
   - test_pass_rate: `0.5 -> 1.0`
   - partial_fix_rate: `0.5 -> 0.0`
+- `improved_v1 -> improved_v2`
+  - report set: `task_001`、`task_003`、`task_004`
+  - success_rate: `0.6667 -> 1.0`
+  - test_pass_rate: `0.6667 -> 1.0`
+  - partial_fix_rate: `0.3333 -> 0.0`
+
+当前最新对比产物：
+
+- baselinev2：
+  - `logs/summaries/batch_eval_baselinev2_001.json`
+- improved_v1：
+  - `logs/summaries/batch_eval_improvedv1r2_001.json`
+- improved_v2：
+  - `logs/summaries/batch_eval_improvedv2_001.json`
+- compare：
+  - `logs/summaries/batch_compare_phase6v2_step2_001.json`
 
 ## Harness 设计方向
 

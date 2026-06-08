@@ -37,6 +37,31 @@ def _handle_none_items(content: str) -> str | None:
     return content.replace(target_loop, replacement, 1)
 
 
+def _handle_leading_none_item(content: str) -> str | None:
+    # improved_v2 额外把首元素为 None 的情况改成统一过滤后再归一化。
+    original_block = (
+        "    first_item = items[0]\n"
+        "    normalized_items = [first_item.strip().lower()]\n\n"
+        "    for item in items[1:]:\n"
+        "        normalized_items.append(item.strip().lower())"
+    )
+    if original_block not in content:
+        return None
+    if "cleaned_items = [item for item in items if item is not None]" in content:
+        return None
+
+    replacement = (
+        "    cleaned_items = [item for item in items if item is not None]\n"
+        "    if not cleaned_items:\n"
+        "        return []\n"
+        "    first_item = cleaned_items[0]\n"
+        "    normalized_items = [first_item.strip().lower()]\n\n"
+        "    for item in cleaned_items[1:]:\n"
+        "        normalized_items.append(item.strip().lower())"
+    )
+    return content.replace(original_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -62,6 +87,17 @@ def apply_rule_based_patch(
             if improved_content is not None:
                 updated_content = improved_content
                 patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v2":
+            improved_v2_content = _handle_leading_none_item(original_content)
+            if improved_v2_content is not None:
+                updated_content = improved_v2_content
+                patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+            else:
+                improved_content = _handle_none_items(updated_content)
+                if improved_content is not None:
+                    updated_content = improved_content
+                    patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None
