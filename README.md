@@ -148,6 +148,32 @@ python scripts/validate_tasks.py
 - 校验 `source_type` 是否合法
 - 校验未来真实 issue 候选清单的最小结构
 
+### 7. 导入 GitHub 真实 issue 候选
+
+```bash
+python scripts/import_github_issue.py --repo psf/requests --issue 10000
+```
+
+这个命令当前会完成：
+
+- 通过 `gh issue view` 拉取 issue 元数据
+- 追加或更新 `benchmarks/real_world_candidates.json`
+- 自动生成候选的 `candidate_id`
+- 先把候选沉淀下来，后续再决定是否升级成正式任务
+
+如果你想同时生成 task 草稿：
+
+```bash
+python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-task
+```
+
+这样会额外生成一个 `real_issue` 类型的 task 草稿，但仍需要人工补齐：
+
+- 本地 repo_path
+- test_command
+- target_files_hint
+- success_criteria
+
 ## 当前 benchmark 任务
 
 当前 benchmark 已分成三层：
@@ -163,6 +189,7 @@ python scripts/validate_tasks.py
 - `Future GitHub Real-Issue Set`
   - 当前未接入仓库内
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
+  - 当前已导入首条候选：`psf/requests#6432`
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果

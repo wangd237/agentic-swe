@@ -586,12 +586,27 @@ scripts/
 - `Task.source_type`
 - `benchmarks/real_world_candidates.json`
 - `scripts/validate_tasks.py`
+- `scripts/import_github_issue.py`
 
 它们的作用是：
 
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
+- 当前已成功导入首条候选：`psf/requests#6432`
+
+### 7. 真实 issue 导入入口已可用
+
+当前已经新增：
+
+- `scripts/import_github_issue.py`
+
+当前能力如下：
+
+- 读取 GitHub issue 元数据
+- 追加到 `benchmarks/real_world_candidates.json`
+- 可选生成 `real_issue` task 草稿
+- 把“候选收集”和“任务补全”拆成两步，避免一次性要求把所有字段都补齐
 
 ## 你现在可以怎么体验
 
@@ -691,6 +706,23 @@ python scripts/validate_tasks.py
 - 任务 schema 是否通过
 - `source_type` 是否合法
 - 真实 issue 候选清单结构是否通过
+
+### 方式 7：导入一个真实 GitHub issue 候选
+
+在仓库根目录执行：
+
+```bash
+python scripts/import_github_issue.py --repo psf/requests --issue 10000
+```
+
+你会看到：
+
+- candidate_id
+- issue_title
+- issue_url
+- 更新后的 candidate_file 路径
+
+如果再加 `--draft-task`，还会额外生成一个 `real_issue` task 草稿文件。
 
 ## 当前实现中的环境偏差
 

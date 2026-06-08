@@ -50,9 +50,29 @@ def validate_candidate_file(candidate_path: Path) -> list[str]:
         return errors
 
     for index, candidate in enumerate(payload["candidates"], start=1):
-        for key in ["candidate_id", "language", "status", "notes"]:
+        for key in [
+            "candidate_id",
+            "repo_full_name",
+            "repo_url",
+            "issue_number",
+            "issue_title",
+            "issue_url",
+            "language",
+            "status",
+            "notes",
+        ]:
             if key not in candidate:
                 errors.append(f"candidate #{index}: 缺少字段 `{key}`。")
+
+        if candidate.get("status") not in {
+            "to_review",
+            "accepted",
+            "rejected",
+            "drafted",
+        }:
+            errors.append(
+                f"candidate #{index}: status 必须是 to_review / accepted / rejected / drafted 之一。"
+            )
     return errors
 
 

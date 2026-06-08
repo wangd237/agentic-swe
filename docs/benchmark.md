@@ -56,6 +56,8 @@
 - 暂未纳入仓库内的正式 manifest
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
+- 已新增导入脚本：
+  - `scripts/import_github_issue.py`
 
 后续规划：
 
@@ -73,6 +75,17 @@
   - 直接对应 GitHub 真实 issue 的任务
 
 后续接入真实 issue 时，建议优先从 `semi_real` 过渡到 `real_issue`，避免一开始就被复杂环境拖慢主线。
+
+当前建议的导入步骤：
+
+1. 用 `scripts/import_github_issue.py` 把 issue 先导入候选清单
+2. 审查 issue 是否满足小仓库、测试清晰、边界明确等条件
+3. 如适合继续推进，再生成 `real_issue` task 草稿
+4. 人工补齐：
+   - 本地 repo_path
+   - test_command
+   - target_files_hint
+   - success_criteria
 
 这部分会在项目主链路更稳定后逐步接入。
 

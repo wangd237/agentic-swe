@@ -632,3 +632,66 @@
 - 候选清单目前仍是占位结构，尚未填入真实仓库
 - 真实 issue 任务导入脚本还未实现
 - 真实仓库的测试环境适配仍需要后续逐仓库验证
+
+## Iteration 5：GitHub Issue Import Entry（real_issue_import_v1）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把真实 issue 入口从“数据结构预留”升级成“可执行导入链路”
+- 让候选收集与 task 草稿生成都可以通过脚本完成
+
+### 改动类型
+
+- `benchmark`
+- `tooling`
+- `docs`
+
+### 改动摘要
+
+- 新增脚本：
+  - `scripts/import_github_issue.py`
+- 当前能力：
+  - 通过 `gh issue view` 拉取 issue 元数据
+  - 追加或更新 `benchmarks/real_world_candidates.json`
+  - 可选生成 `real_issue` task 草稿
+- 候选清单从占位样例改为空列表模板
+- 校验脚本补充了候选字段与状态合法性检查
+
+### 主要涉及文件
+
+- `scripts/import_github_issue.py`
+- `scripts/validate_tasks.py`
+- `benchmarks/real_world_candidates.json`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+
+### 结论
+
+- 真实 issue 入口现在已经不是概念规划，而是可执行脚本
+- 后续只要提供 GitHub 仓库和 issue 编号，就能先把候选导入本地数据集
+- 生成 task 草稿后，再人工补齐 repo_path 和测试命令即可进入下一步实验
+
+### 剩余问题
+
+- 还没有填入第一条真实候选
+- 还没有实现“clone/同步真实仓库到 benchmarks”这一步
+- 真实仓库的测试环境适配仍需要人工判断
+
+### 当前验证结果补充
+
+- 已成功导入：
+  - `psf/requests#6432`
+- 已生成：
+  - `benchmarks/tasks/task_005.json`
+- 当前状态：
+  - candidate 已切换为 `drafted`
+  - task 草稿仍需人工补齐真实 repo_path 与测试命令

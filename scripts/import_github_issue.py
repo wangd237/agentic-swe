@@ -1,0 +1,242 @@
+"""从 GitHub issue 导入候选信息，并可生成 task 草稿。"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def run_gh_command(args: list[str]) -> dict:
+    # 统一从仓库根目录调用 gh，便于后续复用环境配置。
+    result = subprocess.run(
+        ["gh", *args],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        stdout = result.stdout.strip()
+        detail = stderr or stdout or "未知错误"
+        raise RuntimeError(f"gh 命令失败：{detail}")
+    return json.loads(result.stdout)
+
+
+def load_candidate_dataset(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_candidate_dataset(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def build_candidate_id(repo_full_name: str, issue_number: int) -> str:
+    normalized_repo = repo_full_name.replace("/", "_").replace("-", "_")
+    return f"{normalized_repo}_issue_{issue_number}"
+
+
+def guess_difficulty(labels: list[str], title: str, body: str) -> str:
+    # 先用简单启发式，后续可继续细化。
+    joined = " ".join(labels + [title, body]).lower()
+    if any(keyword in joined for keyword in ["easy", "good first issue", "beginner"]):
+        return "easy"
+    if any(keyword in joined for keyword in ["refactor", "multiple files", "complex"]):
+        return "hard"
+    return "medium"
+
+
+def build_candidate(repo_full_name: str, issue_payload: dict) -> dict:
+    return {
+        "candidate_id": build_candidate_id(repo_full_name, issue_payload["number"]),
+        "repo_full_name": repo_full_name,
+        "repo_url": issue_payload["repository_url"],
+        "issue_number": issue_payload["number"],
+        "issue_title": issue_payload["title"],
+        "issue_url": issue_payload["url"],
+        "language": "python",
+        "difficulty": guess_difficulty(
+            [label["name"] for label in issue_payload.get("labels", [])],
+            issue_payload["title"],
+            issue_payload.get("body", "") or "",
+        ),
+        "status": "to_review",
+        "notes": "由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+        "labels": [label["name"] for label in issue_payload.get("labels", [])],
+        "state": issue_payload.get("state", "open"),
+        "created_at": issue_payload.get("createdAt"),
+        "body_excerpt": (issue_payload.get("body", "") or "")[:500],
+    }
+
+
+def upsert_candidate(dataset_path: Path, candidate: dict) -> dict:
+    payload = load_candidate_dataset(dataset_path)
+    candidates = payload["candidates"]
+
+    for index, item in enumerate(candidates):
+        if item["candidate_id"] == candidate["candidate_id"]:
+            candidates[index] = candidate
+            write_candidate_dataset(dataset_path, payload)
+            return candidate
+
+    candidates.append(candidate)
+    write_candidate_dataset(dataset_path, payload)
+    return candidate
+
+
+def mark_candidate_as_drafted(dataset_path: Path, candidate_id: str) -> None:
+    payload = load_candidate_dataset(dataset_path)
+    for candidate in payload["candidates"]:
+        if candidate["candidate_id"] == candidate_id:
+            candidate["status"] = "drafted"
+            candidate["notes"] = "已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。"
+            break
+    write_candidate_dataset(dataset_path, payload)
+
+
+def slugify(text: str) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "_", text.strip().lower()).strip("_")
+    return normalized or "real_issue"
+
+
+def next_task_index(tasks_dir: Path) -> int:
+    existing_numbers: list[int] = []
+    for path in tasks_dir.glob("task_*.json"):
+        suffix = path.stem.removeprefix("task_")
+        if suffix.isdigit():
+            existing_numbers.append(int(suffix))
+    return max(existing_numbers, default=0) + 1
+
+
+def build_task_payload(candidate: dict, repo_path: str, test_command: str) -> dict:
+    task_index = next_task_index(REPO_ROOT / "benchmarks" / "tasks")
+    task_id = f"task_{task_index:03d}"
+    issue_title = candidate["issue_title"]
+    issue_text = candidate.get("body_excerpt") or issue_title
+    return {
+        "task_id": task_id,
+        "repo_name": candidate["repo_full_name"].split("/")[-1],
+        "repo_path": repo_path,
+        "issue_title": issue_title,
+        "issue_text": issue_text,
+        "test_command": test_command,
+        "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+        "difficulty": candidate.get("difficulty", "medium"),
+        "tags": [
+            "bugfix",
+            "python",
+            "real-issue",
+            "draft",
+        ],
+        "target_files_hint": [],
+        "expected_failure_test": None,
+        "max_retries": 2,
+        "source_type": "real_issue",
+        "metadata": {
+            "repo_full_name": candidate["repo_full_name"],
+            "repo_url": candidate["repo_url"],
+            "issue_number": candidate["issue_number"],
+            "issue_url": candidate["issue_url"],
+            "candidate_id": candidate["candidate_id"],
+            "draft_status": "needs_manual_completion",
+            "imported_from": "scripts/import_github_issue.py",
+        },
+    }
+
+
+def import_issue(repo_full_name: str, issue_number: int) -> dict:
+    issue_payload = run_gh_command(
+        [
+            "issue",
+            "view",
+            str(issue_number),
+            "--repo",
+            repo_full_name,
+            "--json",
+            "number,title,body,url,labels,state,createdAt",
+        ]
+    )
+    return {
+        "number": issue_payload["number"],
+        "title": issue_payload["title"],
+        "body": issue_payload.get("body", ""),
+        "url": issue_payload["url"],
+        "labels": issue_payload.get("labels", []),
+        "state": issue_payload.get("state", "open"),
+        "createdAt": issue_payload.get("createdAt"),
+        "repository_url": f"https://github.com/{repo_full_name}",
+    }
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="从 GitHub issue 导入候选信息并生成 task 草稿。")
+    parser.add_argument("--repo", required=True, help="GitHub 仓库名，例如 psf/requests")
+    parser.add_argument("--issue", required=True, type=int, help="Issue 编号")
+    parser.add_argument(
+        "--candidate-file",
+        default="benchmarks/real_world_candidates.json",
+        help="候选清单文件路径",
+    )
+    parser.add_argument(
+        "--draft-task",
+        action="store_true",
+        help="是否同时生成 real_issue task 草稿",
+    )
+    parser.add_argument(
+        "--repo-path",
+        default="benchmarks/repos/real_issue_repo_placeholder",
+        help="生成 task 草稿时使用的 repo_path 占位值",
+    )
+    parser.add_argument(
+        "--test-command",
+        default="python -m pytest -q",
+        help="生成 task 草稿时使用的测试命令占位值",
+    )
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    candidate_path = (REPO_ROOT / args.candidate_file).resolve()
+
+    issue_payload = import_issue(args.repo, args.issue)
+    candidate = build_candidate(args.repo, issue_payload)
+    upsert_candidate(candidate_path, candidate)
+
+    print("=== Candidate Imported ===")
+    print(f"candidate_id: {candidate['candidate_id']}")
+    print(f"issue_title: {candidate['issue_title']}")
+    print(f"issue_url: {candidate['issue_url']}")
+    print(f"candidate_file: {candidate_path}")
+
+    if not args.draft_task:
+        return 0
+
+    task_payload = build_task_payload(candidate, args.repo_path, args.test_command)
+    task_path = REPO_ROOT / "benchmarks" / "tasks" / f"{task_payload['task_id']}.json"
+    task_path.write_text(
+        json.dumps(task_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    mark_candidate_as_drafted(candidate_path, candidate["candidate_id"])
+
+    print("=== Draft Task Generated ===")
+    print(f"task_id: {task_payload['task_id']}")
+    print(f"task_path: {task_path}")
+    print("draft_status: needs_manual_completion")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except RuntimeError as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(1)

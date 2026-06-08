@@ -1,0 +1,29 @@
+{
+  "task_id": "task_005",
+  "repo_name": "requests",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "The latest version of requests (2.29.0) does not support urllib3 2.0.0",
+  "issue_text": "## The latest version of ``requests`` (``2.29.0``) does not support ``urllib3`` ``2.0.0``\r\n\r\n``urllib3`` ``2.0.0`` was just released: https://github.com/urllib3/urllib3/releases/tag/2.0.0\r\n\r\nBut currently ``requests`` ``2.29.0`` has a range bound on it: ``<1.27 and >=1.21.1`` for ``urllib3``.\r\n\r\nIf you try to install a package that has ``urllib3==2.0.0`` as a dependency (while using the latest version of ``requests``), there will be errors:\r\n\r\n```\r\n<PACKAGE> depends on urllib3==2.0.0\r\nrequests 2",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "psf/requests",
+    "repo_url": "https://github.com/psf/requests",
+    "issue_number": 6432,
+    "issue_url": "https://github.com/psf/requests/issues/6432",
+    "candidate_id": "psf_requests_issue_6432",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

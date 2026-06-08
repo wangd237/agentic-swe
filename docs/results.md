@@ -9,6 +9,8 @@
 - 当前已完成 baseline vs improved 自动 compare 报告
 - 当前已完成 `improved_v2` 新一轮 report-set 对比
 - 当前已补充真实 issue 接入前的任务校验基础设施
+- 当前已补充真实 issue 候选导入脚本
+- 当前已成功导入首条真实 issue 候选并生成 `task_005` 草稿
 
 ## 当前可展示结果
 
