@@ -63,6 +63,19 @@
 - 结果：
   - `task_010` 从失败变为完全通过
 
+## 成功案例 6：`task_013`
+
+- repo：`rich_handler_repo`
+- 来源：`Textualize/rich#3877`
+- 代表版本：`improved_v6`
+- 现象：
+  - `improved_v5` 还不具备 RichHandler 时区偏移保留能力
+  - `task_013` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v6` 让时间格式化显式使用时区信息
+- 结果：
+  - `task_013` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -112,3 +125,12 @@
   - 但并不理解 CRLF 行尾在 ANSI 拆分后会退化成空白行这一模式
 - 后续改进：
   - 升级为 `improved_v5`
+
+## 失败案例 6：`task_013` 在 `improved_v5`
+
+- 失败版本：`improved_v5`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器能看懂 ANSI 行尾问题，但不懂 RichHandler 的时区格式化问题
+- 后续改进：
+  - 升级为 `improved_v6`

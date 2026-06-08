@@ -1,0 +1,37 @@
+{
+  "task_id": "task_013",
+  "repo_name": "rich_handler_repo",
+  "repo_path": "benchmarks/repos/rich_handler_repo",
+  "issue_title": "[BUG] RichHandler ignores `%z` time zone format specifier",
+  "issue_text": "RichHandler sseems to ignore or cut off the `%z` timezone (or uses time objects where that info is not attached). I.e. with `\"log_time_format\": \"%Y-%m-%dT%H:%M:%S%z\"`, for me, it prints:\n\n```\n2025-07-04T19:14:40 DEBUG    debug message                                                                                                                                           main.py:26\n2025-07-04T19:14:41 INFO     info message                                                                           ",
+  "test_command": "python -m pytest tests/test_logging.py -q",
+  "success_criteria": "RichHandler 的时间格式化应保留时区偏移，%z 不再被忽略，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "logging",
+    "timezone",
+    "format-time"
+  ],
+  "target_files_hint": [
+    "rich_handler_repo/logging.py",
+    "tests/test_logging.py"
+  ],
+  "expected_failure_test": "RichHandlerTimezoneTests.test_timezone_offset_is_rendered",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "Textualize/rich",
+    "repo_url": "https://github.com/Textualize/rich",
+    "issue_number": 3877,
+    "issue_url": "https://github.com/Textualize/rich/issues/3877",
+    "candidate_id": "Textualize_rich_issue_3877",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_012",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

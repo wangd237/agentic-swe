@@ -1093,3 +1093,110 @@
 - 真实 issue 仍以派生任务形式为主
 - 还没有直接接入 rich 原仓库快照
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
+## Iteration 10：RichHandler Timezone from Real Issue（improved_v5 -> improved_v6）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把第 4 条真实 issue 候选推进成可运行任务
+- 验证 `improved_v5` 到 `improved_v6` 是否能覆盖 RichHandler 的时区偏移保留场景
+- 继续扩充真实 issue 派生任务集的覆盖面
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增真实候选：
+  - `Textualize/rich#3877`
+- 新增草稿任务：
+  - `task_012`
+- 新增可运行 semi_real 任务：
+  - `task_013`
+- 新增 benchmark repo：
+  - `benchmarks/repos/rich_handler_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v6.json`
+- patch 生成器新增能力：
+  - 将 `datetime.fromtimestamp(created)` 改为 `datetime.fromtimestamp(created, tz=self.time_zone)`，让 `%z` 能保留偏移信息
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_012.json`
+- `benchmarks/tasks/task_013.json`
+- `benchmarks/repos/rich_handler_repo/rich_handler_repo/logging.py`
+- `benchmarks/repos/rich_handler_repo/tests/test_logging.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v6.json`
+- `app/agent/patcher.py`
+
+### improved_v5 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev5r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev5r2_001.json`
+
+### improved_v6 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev6_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev6_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step4_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v5: `0.75`
+  - improved_v6: `1.0`
+- `test_pass_rate`
+  - improved_v5: `0.75`
+  - improved_v6: `1.0`
+- `taxonomy`
+  - improved_v5: `Premature Finish = 1`
+  - improved_v6: `无错误标签`
+
+### 关键案例
+
+#### improved_v5 失败案例：`task_013`
+
+- 运行结果：
+  - `logs/trajectories/task_013/run_20260608T091039932929Z_8751/result.json`
+- 现象：
+  - 已读取 `rich_handler_repo/logging.py`
+  - 但没有匹配到时区偏移保留修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v6 成功案例：`task_013`
+
+- 运行结果：
+  - `logs/trajectories/task_013/run_20260608T091342750273Z_4466/result.json`
+- 现象：
+  - 自动把 `datetime.fromtimestamp(created)` 改为带 `tz=` 的版本
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 4 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v5`：覆盖 ANSI 文本 CRLF 行尾拆分修复
+  - `improved_v6`：进一步覆盖 RichHandler 时区偏移保留修复
+
+### 剩余问题
+
+- 真实 issue 仍以派生任务形式为主
+- 还没有直接接入 rich 原仓库快照
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力

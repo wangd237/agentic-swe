@@ -31,7 +31,9 @@
   - 已将 `psf/requests#6432` 推进为 `task_005` 草稿与 `task_006` 可运行 semi_real 任务
   - 已将 `psf/requests#7234` 推进为 `task_007` 草稿与 `task_008` 可运行 semi_real 任务
   - 已将 `Textualize/rich#4090` 推进为 `task_009` 草稿与 `task_010` 可运行 semi_real 任务
+  - 已将 `Textualize/rich#3877` 推进为 `task_012` 草稿与 `task_013` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
+  - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -216,10 +218,11 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 - `Future GitHub Real-Issue Set`
   - 当前已接入 manifest：`benchmarks/manifests/real_issue_tasks.json`
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
-  - 当前已导入 3 条候选：
+  - 当前已导入 4 条候选：
     - `psf/requests#6432`
     - `psf/requests#7234`
     - `Textualize/rich#4090`
+    - `Textualize/rich#3877`
   - 当前已生成：
     - `task_005`：真实 issue 草稿
     - `task_006`：可运行的 semi_real 派生任务
@@ -227,6 +230,8 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
     - `task_008`：可运行的 semi_real 派生任务
     - `task_009`：真实 issue 草稿
     - `task_010`：可运行的 semi_real 派生任务
+    - `task_012`：真实 issue 草稿
+    - `task_013`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -272,11 +277,13 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 - improved_v4：
   - `logs/summaries/batch_eval_realissuev4r2_001.json`
 - improved_v5：
-  - `logs/summaries/batch_eval_realissuev5_001.json`
+  - `logs/summaries/batch_eval_realissuev5r2_001.json`
+- improved_v6：
+  - `logs/summaries/batch_eval_realissuev6_001.json`
 - compare：
-  - `logs/summaries/batch_compare_realissue_step3_001.json`
-  - `success_rate: 0.6667 -> 1.0`
-  - `test_pass_rate: 0.6667 -> 1.0`
+  - `logs/summaries/batch_compare_realissue_step4_001.json`
+  - `success_rate: 0.75 -> 1.0`
+  - `test_pass_rate: 0.75 -> 1.0`
 
 ## Harness 设计方向
 

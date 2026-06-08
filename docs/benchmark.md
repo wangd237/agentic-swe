@@ -40,6 +40,7 @@
 - `benchmarks/tasks/task_006.json`
 - `benchmarks/tasks/task_008.json`
 - `benchmarks/tasks/task_010.json`
+- `benchmarks/tasks/task_013.json`
 
 当前 repo：
 
@@ -49,6 +50,7 @@
 - `benchmarks/repos/requests_compat_repo`
 - `benchmarks/repos/requests_encoding_repo`
 - `benchmarks/repos/rich_ansi_repo`
+- `benchmarks/repos/rich_handler_repo`
 
 用途：
 
@@ -215,6 +217,27 @@
 
 - `rich_ansi_repo/ansi.py`
 - `tests/test_ansi.py`
+
+### `rich_handler_repo`
+
+来源：
+
+- `Textualize/rich#3877`
+
+主要问题：
+
+- `RichHandler` 的时间格式化会忽略时区偏移
+- 当 `log_time_format` 包含 `%z` 时，输出没有按预期保留 `+0200` 一类偏移
+
+正确行为：
+
+- 时间格式化应显式保留时区偏移
+- `%z` 应输出可预测的偏移字符串
+
+相关文件：
+
+- `rich_handler_repo/logging.py`
+- `tests/test_logging.py`
 
 ## 当前为什么要分层
 

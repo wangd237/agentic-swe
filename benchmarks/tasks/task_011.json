@@ -1,0 +1,29 @@
+{
+  "task_id": "task_011",
+  "repo_name": "pytest",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "get_closest_marker is working unexpectedly",
+  "issue_text": "<!--\nThanks for submitting an issue!\n\nQuick check-list while reporting bugs:\n-->\n\n- [x] a detailed description of the bug or problem you are having\n- [ ] output of `pip list` from the virtual environment you are using\n- [x] pytest and operating system versions\n- [x] minimal example if possible\n\nDescription:\n`get_closest_marker` is working unexpectedly for me\nI redefine the mark on the class in which the test is defined, but I get the mark of the parent of the class, i.e. a deeper mark than expec",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pytest-dev/pytest",
+    "repo_url": "https://github.com/pytest-dev/pytest",
+    "issue_number": 14329,
+    "issue_url": "https://github.com/pytest-dev/pytest/issues/14329",
+    "candidate_id": "pytest_dev_pytest_issue_14329",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

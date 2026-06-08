@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v6",
+  "description": "增强规则型 patch 策略，额外支持 RichHandler 时区偏移保留修复。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v6"
+}
