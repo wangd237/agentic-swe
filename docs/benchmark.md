@@ -39,6 +39,7 @@
 - `benchmarks/tasks/task_004.json`
 - `benchmarks/tasks/task_006.json`
 - `benchmarks/tasks/task_008.json`
+- `benchmarks/tasks/task_010.json`
 
 当前 repo：
 
@@ -47,6 +48,7 @@
 - `benchmarks/repos/leading_none_repo`
 - `benchmarks/repos/requests_compat_repo`
 - `benchmarks/repos/requests_encoding_repo`
+- `benchmarks/repos/rich_ansi_repo`
 
 用途：
 
@@ -192,6 +194,27 @@
 
 - `requests_encoding_repo/utils.py`
 - `tests/test_utils.py`
+
+### `rich_ansi_repo`
+
+来源：
+
+- `Textualize/rich#4090`
+
+主要问题：
+
+- `Text.from_ansi` 在输入带 `\r\n` 行尾时会退化成空白行
+- 普通 `\n` 行尾仍然工作正常
+
+正确行为：
+
+- CRLF 输入不应再解析成 `\n\n`
+- 允许统一归一化到 LF，只要文本内容不丢失
+
+相关文件：
+
+- `rich_ansi_repo/ansi.py`
+- `tests/test_ansi.py`
 
 ## 当前为什么要分层
 

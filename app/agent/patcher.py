@@ -89,6 +89,34 @@ def _handle_quoted_charset(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_crlf_ansi_lines(content: str) -> str | None:
+    # improved_v5 处理 CRLF 行尾在 ANSI 拆分后退化成空白行的问题。
+    target_block = (
+        '        for line in re.split(r"(?<=\\n)", terminal_text):\n'
+        "            if not line:\n"
+        "                continue\n"
+        '            has_newline = line.endswith("\\n")\n'
+        '            decoded_line = self.decode_line(line.rstrip("\\n"))\n'
+        "            parts.append(decoded_line)\n"
+        "            if has_newline:\n"
+        '                parts.append("\\n")'
+    )
+    if target_block not in content:
+        return None
+    if 'for line in terminal_text.splitlines(keepends=True):' in content:
+        return None
+
+    replacement = (
+        "        for line in terminal_text.splitlines(keepends=True):\n"
+        '            has_newline = line.endswith(("\\r", "\\n"))\n'
+        '            decoded_line = self.decode_line(line.rstrip("\\r\\n"))\n'
+        "            parts.append(decoded_line)\n"
+        "            if has_newline:\n"
+        '                parts.append("\\n")'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -162,6 +190,32 @@ def apply_rule_based_patch(
                         if improved_content is not None:
                             updated_content = improved_content
                             patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v5":
+            improved_v5_content = _handle_crlf_ansi_lines(original_content)
+            if improved_v5_content is not None:
+                updated_content = improved_v5_content
+                patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+            else:
+                improved_v4_content = _handle_quoted_charset(original_content)
+                if improved_v4_content is not None:
+                    updated_content = improved_v4_content
+                    patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                else:
+                    improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                    if improved_v3_content is not None:
+                        updated_content = improved_v3_content
+                        patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                    else:
+                        improved_v2_content = _handle_leading_none_item(original_content)
+                        if improved_v2_content is not None:
+                            updated_content = improved_v2_content
+                            patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                        else:
+                            improved_content = _handle_none_items(updated_content)
+                            if improved_content is not None:
+                                updated_content = improved_content
+                                patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

@@ -50,6 +50,19 @@
 - 结果：
   - `task_008` 从失败变为完全通过
 
+## 成功案例 5：`task_010`
+
+- repo：`rich_ansi_repo`
+- 来源：`Textualize/rich#4090`
+- 代表版本：`improved_v5`
+- 现象：
+  - `improved_v4` 还不具备 ANSI 文本 CRLF 行尾拆分修复能力
+  - `task_010` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v5` 新增 CRLF 兼容的 `splitlines(keepends=True)` 修复策略
+- 结果：
+  - `task_010` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -89,3 +102,13 @@
   - 读到了目标函数，但没有形成补丁
 - 后续改进：
   - 升级为 `improved_v4`
+
+## 失败案例 5：`task_010` 在 `improved_v4`
+
+- 失败版本：`improved_v4`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器虽然定位到了 `rich_ansi_repo/ansi.py`
+  - 但并不理解 CRLF 行尾在 ANSI 拆分后会退化成空白行这一模式
+- 后续改进：
+  - 升级为 `improved_v5`

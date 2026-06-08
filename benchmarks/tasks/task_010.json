@@ -1,0 +1,37 @@
+{
+  "task_id": "task_010",
+  "repo_name": "rich_ansi_repo",
+  "repo_path": "benchmarks/repos/rich_ansi_repo",
+  "issue_title": "[BUG] Text.from_ansi leaves empty lines when input string has CRLF line endings",
+  "issue_text": "- [x] I've checked [docs](https://rich.readthedocs.io/en/latest/introduction.html) and [closed issues](https://github.com/Textualize/rich/issues?q=is%3Aissue+is%3Aclosed) for possible solutions.\n- [x] I can't find my issue in the [FAQ](https://github.com/Textualize/rich/blob/master/FAQ.md).\n\n**Describe the bug**\n\nWhen `Text.from_ansi` is given an input string with CRLF (`\\r\\n`) line endings the result is just empty lines:\n\n```\nPython 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0] on linux    ",
+  "test_command": "python -m pytest tests/test_ansi.py -q",
+  "success_criteria": "CRLF 和 LF 行尾都能被正确保留，ANSI 文本转换结果不再产生空白行，且全部回归测试通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "ansi",
+    "line-endings",
+    "crlf"
+  ],
+  "target_files_hint": [
+    "rich_ansi_repo/ansi.py",
+    "tests/test_ansi.py"
+  ],
+  "expected_failure_test": "AnsiDecodeTests.test_crlf_line_endings_are_preserved",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "Textualize/rich",
+    "repo_url": "https://github.com/Textualize/rich",
+    "issue_number": 4090,
+    "issue_url": "https://github.com/Textualize/rich/issues/4090",
+    "candidate_id": "Textualize_rich_issue_4090",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_009",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

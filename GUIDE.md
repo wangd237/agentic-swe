@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v4` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v5` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -593,7 +593,7 @@ scripts/
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
-- 当前已成功导入两条候选：`psf/requests#6432`、`psf/requests#7234`
+- 当前已成功导入三条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -643,10 +643,19 @@ scripts/
   - 类型：`semi_real`
   - 来源：`psf/requests#7234`
   - 状态：已可运行
+- `task_009`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `Textualize/rich#4090` 的真实入口记录
+- `task_010`
+  - 类型：`semi_real`
+  - 来源：`Textualize/rich#4090`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
   - 作用：新增 quoted charset 去引号修复能力
+- `optimization/policy_versions/improved_v5.json`
+  - 作用：新增 ANSI 文本 CRLF 行尾拆分修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -815,6 +824,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_008.json --policy
 - 修改文件是 `requests_encoding_repo/utils.py`
 - patch 原因是给 quoted charset 增加去引号逻辑
 
+### 方式 11：运行第 3 条真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/improved_v5.json
+```
+
+你会看到：
+
+- `task_010` 被成功修复
+- 修改文件是 `rich_ansi_repo/ansi.py`
+- patch 原因是把 ANSI 文本拆分逻辑改为兼容 CRLF 的流程
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -914,6 +937,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_008.json --policy
 - 已补充 `task_004` 与 `improved_v2`
 - 已补充 `task_005` / `task_006` 与 `improved_v3`
 - 已补充 `task_007` / `task_008` 与 `improved_v4`
+- 已补充 `task_009` / `task_010` 与 `improved_v5`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7

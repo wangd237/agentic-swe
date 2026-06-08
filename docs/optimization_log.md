@@ -985,3 +985,111 @@
 - 还没有把脚手架直接连接到真实仓库快照同步
 - 当前 semi_real 的缩题过程仍需要人工判断
 - 后续可以继续补一个“从 draft 到 ready 的检查清单”工具
+
+## Iteration 9：ANSI CRLF Parsing from Real Issue（improved_v4 -> improved_v5）
+
+### 时间
+
+- 2026-06-08
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把第 3 条真实 issue 候选推进成可运行任务
+- 验证 `improved_v4` 到 `improved_v5` 是否能覆盖 ANSI 文本 CRLF 行尾解析场景
+- 继续扩充真实 issue 派生任务集的多样性
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增真实候选：
+  - `Textualize/rich#4090`
+- 新增草稿任务：
+  - `task_009`
+- 新增可运行 semi_real 任务：
+  - `task_010`
+- 新增 benchmark repo：
+  - `benchmarks/repos/rich_ansi_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v5.json`
+- patch 生成器新增能力：
+  - 将 ANSI 文本拆分逻辑从 `re.split(r"(?<=\\n)", terminal_text)` 升级为兼容 CRLF 的 `splitlines(keepends=True)` 流程
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_009.json`
+- `benchmarks/tasks/task_010.json`
+- `benchmarks/repos/rich_ansi_repo/rich_ansi_repo/ansi.py`
+- `benchmarks/repos/rich_ansi_repo/tests/test_ansi.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v5.json`
+- `app/agent/patcher.py`
+
+### improved_v4 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev4r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev4r2_001.json`
+
+### improved_v5 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev5_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev5_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step3_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v4: `0.6667`
+  - improved_v5: `1.0`
+- `test_pass_rate`
+  - improved_v4: `0.6667`
+  - improved_v5: `1.0`
+- `taxonomy`
+  - improved_v4: `Premature Finish = 1`
+  - improved_v5: `无错误标签`
+
+### 关键案例
+
+#### improved_v4 失败案例：`task_010`
+
+- 运行结果：
+  - `logs/trajectories/task_010/run_20260608T082525352281Z_4909/result.json`
+- 现象：
+  - 已读取 `rich_ansi_repo/ansi.py`
+  - 但没有匹配到 CRLF 行尾拆分修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v5 成功案例：`task_010`
+
+- 运行结果：
+  - `logs/trajectories/task_010/run_20260608T082657180742Z_8552/result.json`
+- 现象：
+  - 自动把 ANSI 文本拆分逻辑改成兼容 CRLF 的流程
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 3 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v3`：覆盖依赖约束修复
+  - `improved_v4`：覆盖 quoted charset 解析修复
+  - `improved_v5`：进一步覆盖 ANSI 文本 CRLF 行尾拆分修复
+
+### 剩余问题
+
+- 真实 issue 仍以派生任务形式为主
+- 还没有直接接入 rich 原仓库快照
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力

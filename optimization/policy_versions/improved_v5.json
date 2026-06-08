@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v5",
+  "description": "增强规则型 patch 策略，额外支持 ANSI 文本中 CRLF 行尾拆分修复。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v5"
+}
