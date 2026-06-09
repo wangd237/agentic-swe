@@ -1,0 +1,29 @@
+{
+  "task_id": "task_014",
+  "repo_name": "pydantic",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Model validator is ignored during inheritance",
+  "issue_text": "### Initial Checks\r\n\r\n- [X] I confirm that I'm using Pydantic V2\r\n\r\n### Description\r\n\r\nWhen I have a parent and child class that both implement `model_validator`, the parent's model validator is ignored in the child class. \r\n\r\nThis can be a source of bugs as one might expect the parent's validation to run together with the child's validation.\r\n\r\n### Example Code\r\n\r\n```Python\r\nfrom pydantic import BaseModel, model_validator\r\n\r\nclass Sub(BaseModel):\r\n    positive: int\r\n\r\n    @model_validator(mode=",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pydantic/pydantic",
+    "repo_url": "https://github.com/pydantic/pydantic",
+    "issue_number": 9582,
+    "issue_url": "https://github.com/pydantic/pydantic/issues/9582",
+    "candidate_id": "pydantic_pydantic_issue_9582",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

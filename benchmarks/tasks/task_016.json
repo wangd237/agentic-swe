@@ -1,0 +1,37 @@
+{
+  "task_id": "task_016",
+  "repo_name": "click_flag_repo",
+  "repo_path": "benchmarks/repos/click_flag_repo",
+  "issue_title": "New \"default\" behaviour in Click 8.3.x is broken for negative boolean flags",
+  "issue_text": "The behaviour of `default=...` for flag values changed in Click 8.3.0, as documented in [the release notes](https://click.palletsprojects.com/en/stable/changes/#version-8-3-0). The new behaviour is broken for negative flags, unless I am holding it wrong. Here's a minimal reproducer (put this in `foo.py`):\n\n```python\nimport click\n\n@click.command('foo')\n@click.option('--without-xyz', 'enable_xyz',\n              help=\"Disable xyz\", flag_value=False, default=True, show_default=True)\ndef foo(enable_x",
+  "test_command": "python -m pytest tests/test_flags.py -q",
+  "success_criteria": "负向布尔 flag 在 default=True 且 flag_value=False 时，默认行为与显式传入行为都应正确，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "cli",
+    "boolean-flags",
+    "default"
+  ],
+  "target_files_hint": [
+    "click_flag_repo/core.py",
+    "tests/test_flags.py"
+  ],
+  "expected_failure_test": "NegativeFlagTests.test_default_true_does_not_force_flag_value",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3111,
+    "issue_url": "https://github.com/pallets/click/issues/3111",
+    "candidate_id": "pallets_click_issue_3111",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_015",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

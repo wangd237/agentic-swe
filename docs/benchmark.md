@@ -41,6 +41,7 @@
 - `benchmarks/tasks/task_008.json`
 - `benchmarks/tasks/task_010.json`
 - `benchmarks/tasks/task_013.json`
+- `benchmarks/tasks/task_016.json`
 
 当前 repo：
 
@@ -51,6 +52,7 @@
 - `benchmarks/repos/requests_encoding_repo`
 - `benchmarks/repos/rich_ansi_repo`
 - `benchmarks/repos/rich_handler_repo`
+- `benchmarks/repos/click_flag_repo`
 
 用途：
 
@@ -238,6 +240,27 @@
 
 - `rich_handler_repo/logging.py`
 - `tests/test_logging.py`
+
+### `click_flag_repo`
+
+来源：
+
+- `pallets/click#3111`
+
+主要问题：
+
+- 负向布尔 flag 在 `default=True` 且 `flag_value=False` 时会被错误特殊处理
+- 默认情况下也会直接返回 `False`
+
+正确行为：
+
+- 未显式提供 flag 时，应保留 `default=True`
+- 显式提供负向 flag 时，才应返回 `flag_value=False`
+
+相关文件：
+
+- `click_flag_repo/core.py`
+- `tests/test_flags.py`
 
 ## 当前为什么要分层
 

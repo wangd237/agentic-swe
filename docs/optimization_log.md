@@ -1094,6 +1094,116 @@
 - 还没有直接接入 rich 原仓库快照
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pallets/click#3111` 推进成可运行任务
+- 验证 `improved_v6` 到 `improved_v7` 是否能覆盖负向 boolean flag 的默认值场景
+- 继续扩充真实 issue 派生任务集的语义多样性
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增真实候选：
+  - `pydantic/pydantic#9582`
+  - `pallets/click#3111`
+- 新增草稿任务：
+  - `task_014`
+  - `task_015`
+- 新增可运行 semi_real 任务：
+  - `task_016`
+- 新增 benchmark repo：
+  - `benchmarks/repos/click_flag_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v7.json`
+- patch 生成器新增能力：
+  - 修正负向 boolean flag 在 `default=True` 且 `flag_value=False` 时被错误覆盖的问题
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_014.json`
+- `benchmarks/tasks/task_015.json`
+- `benchmarks/tasks/task_016.json`
+- `benchmarks/repos/click_flag_repo/click_flag_repo/core.py`
+- `benchmarks/repos/click_flag_repo/tests/test_flags.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v7.json`
+- `app/agent/patcher.py`
+
+### improved_v6 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev6r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev6r2_001.json`
+
+### improved_v7 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev7_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev7_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step5_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v6: `0.8`
+  - improved_v7: `1.0`
+- `test_pass_rate`
+  - improved_v6: `0.8`
+  - improved_v7: `1.0`
+- `taxonomy`
+  - improved_v6: `Premature Finish = 1`
+  - improved_v7: `无错误标签`
+
+### 关键案例
+
+#### improved_v6 失败案例：`task_016`
+
+- 运行结果：
+  - `logs/trajectories/task_016/run_20260608T093353125642Z_4116/result.json`
+- 现象：
+  - 已读取 `click_flag_repo/core.py`
+  - 但没有匹配到负向 boolean flag 默认值修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v7 成功案例：`task_016`
+
+- 运行结果：
+  - `logs/trajectories/task_016/run_20260608T093522264692Z_8052/result.json`
+- 现象：
+  - 自动移除了错误的 `default=True -> flag_value=False` 特殊处理
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 5 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v6`：覆盖 RichHandler 时区偏移保留修复
+  - `improved_v7`：进一步覆盖负向 boolean flag 默认值修复
+
+### 剩余问题
+
+- `pydantic/pydantic#9582` 目前仍停留在草稿阶段
+- 真实 issue 仍以派生任务形式为主
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 10：RichHandler Timezone from Real Issue（improved_v5 -> improved_v6）
 
 ### 时间

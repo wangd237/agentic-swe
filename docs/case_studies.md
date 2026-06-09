@@ -76,6 +76,19 @@
 - 结果：
   - `task_013` 从失败变为完全通过
 
+## 成功案例 7：`task_016`
+
+- repo：`click_flag_repo`
+- 来源：`pallets/click#3111`
+- 代表版本：`improved_v7`
+- 现象：
+  - `improved_v6` 还不具备负向 boolean flag 默认值修复能力
+  - `task_016` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v7` 修正了 `default=True` 在负向 flag 场景下被错误覆盖的问题
+- 结果：
+  - `task_016` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -134,3 +147,12 @@
   - 当前 patch 生成器能看懂 ANSI 行尾问题，但不懂 RichHandler 的时区格式化问题
 - 后续改进：
   - 升级为 `improved_v6`
+
+## 失败案例 7：`task_016` 在 `improved_v6`
+
+- 失败版本：`improved_v6`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器能覆盖时区与行尾问题，但还不理解负向 boolean flag 的 default 语义
+- 后续改进：
+  - 升级为 `improved_v7`

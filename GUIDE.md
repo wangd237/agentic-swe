@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v6` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v7` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -593,7 +593,7 @@ scripts/
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
-- 当前已成功导入四条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`Textualize/rich#3877`
+- 当前已成功导入六条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`Textualize/rich#3877`、`pydantic/pydantic#9582`、`pallets/click#3111`
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -657,6 +657,16 @@ scripts/
   - 类型：`semi_real`
   - 来源：`Textualize/rich#3877`
   - 状态：已可运行
+- `task_014`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pydantic/pydantic#9582` 的真实入口记录
+- `task_015`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pallets/click#3111` 的真实入口记录
+- `task_016`
+  - 类型：`semi_real`
+  - 来源：`pallets/click#3111`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -665,6 +675,8 @@ scripts/
   - 作用：新增 ANSI 文本 CRLF 行尾拆分修复能力
 - `optimization/policy_versions/improved_v6.json`
   - 作用：新增 RichHandler 时区偏移保留修复能力
+- `optimization/policy_versions/improved_v7.json`
+  - 作用：新增负向 boolean flag 默认值修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -861,6 +873,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_013.json --policy
 - 修改文件是 `rich_handler_repo/logging.py`
 - patch 原因是让 RichHandler 的时间格式化显式保留时区信息
 
+### 方式 13：运行第 5 条真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_016.json --policy optimization/policy_versions/improved_v7.json
+```
+
+你会看到：
+
+- `task_016` 被成功修复
+- 修改文件是 `click_flag_repo/core.py`
+- patch 原因是修正负向 boolean flag 的 `default=True` 默认行为
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -962,6 +988,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_013.json --policy
 - 已补充 `task_007` / `task_008` 与 `improved_v4`
 - 已补充 `task_009` / `task_010` 与 `improved_v5`
 - 已补充 `task_012` / `task_013` 与 `improved_v6`
+- 已补充 `task_015` / `task_016` 与 `improved_v7`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7

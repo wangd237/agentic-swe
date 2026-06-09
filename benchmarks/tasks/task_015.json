@@ -1,0 +1,29 @@
+{
+  "task_id": "task_015",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "New \"default\" behaviour in Click 8.3.x is broken for negative boolean flags",
+  "issue_text": "The behaviour of `default=...` for flag values changed in Click 8.3.0, as documented in [the release notes](https://click.palletsprojects.com/en/stable/changes/#version-8-3-0). The new behaviour is broken for negative flags, unless I am holding it wrong. Here's a minimal reproducer (put this in `foo.py`):\n\n```python\nimport click\n\n@click.command('foo')\n@click.option('--without-xyz', 'enable_xyz',\n              help=\"Disable xyz\", flag_value=False, default=True, show_default=True)\ndef foo(enable_x",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3111,
+    "issue_url": "https://github.com/pallets/click/issues/3111",
+    "candidate_id": "pallets_click_issue_3111",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
