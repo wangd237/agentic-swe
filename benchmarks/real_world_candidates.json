@@ -68,8 +68,8 @@
       "issue_url": "https://github.com/pytest-dev/pytest/issues/14329",
       "language": "python",
       "difficulty": "medium",
-      "status": "drafted",
-      "notes": "2026-06-08T17:04:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-08T17:04:28: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-08T17:04:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-08T17:04:28: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-09T09:40:13: 已生成 semi_real 可运行任务 task_017，仓库目录为 benchmarks/repos/pytest_marker_repo。",
       "labels": [
         "type: bug",
         "topic: marks"

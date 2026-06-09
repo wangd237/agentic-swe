@@ -42,6 +42,7 @@
 - `benchmarks/tasks/task_010.json`
 - `benchmarks/tasks/task_013.json`
 - `benchmarks/tasks/task_016.json`
+- `benchmarks/tasks/task_017.json`
 
 当前 repo：
 
@@ -53,6 +54,7 @@
 - `benchmarks/repos/rich_ansi_repo`
 - `benchmarks/repos/rich_handler_repo`
 - `benchmarks/repos/click_flag_repo`
+- `benchmarks/repos/pytest_marker_repo`
 
 用途：
 
@@ -261,6 +263,27 @@
 
 - `click_flag_repo/core.py`
 - `tests/test_flags.py`
+
+### `pytest_marker_repo`
+
+来源：
+
+- `pytest-dev/pytest#14329`
+
+主要问题：
+
+- `get_closest_marker` 会错误地优先返回继承链中更早的 marker
+- 当子类重新定义同名 marker 时，返回值仍然落到父类 marker
+
+正确行为：
+
+- 子类覆盖的 marker 应优先返回
+- 只有子类未定义时，才回退到父类 marker
+
+相关文件：
+
+- `pytest_marker_repo/markers.py`
+- `tests/test_markers.py`
 
 ## 当前为什么要分层
 

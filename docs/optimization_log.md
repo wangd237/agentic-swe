@@ -1094,6 +1094,119 @@
 - 还没有直接接入 rich 原仓库快照
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 12：Closest Marker Override from Real Issue（improved_v7 -> improved_v8）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pytest-dev/pytest#14329` 推进成可运行任务
+- 验证 `improved_v7` 到 `improved_v8` 是否能覆盖最近 marker 覆盖优先场景
+- 继续扩充真实 issue 派生任务集，并保留追加式对比记录
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增可运行 semi_real 任务：
+  - `task_017`
+- 新增 benchmark repo：
+  - `benchmarks/repos/pytest_marker_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v8.json`
+- patch 生成器新增能力：
+  - 将 `get_closest_marker` 的查找顺序调整为优先返回继承链中最近定义的 marker
+- 候选清单同步记录：
+  - `pytest-dev/pytest#14329` 已从草稿推进为 accepted
+- 明确保留 `pydantic/pydantic#9582` 为草稿：
+  - 当前更适合作为行为说明或文档澄清，不进入可运行 bugfix benchmark
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_017.json`
+- `benchmarks/repos/pytest_marker_repo/pytest_marker_repo/markers.py`
+- `benchmarks/repos/pytest_marker_repo/tests/test_markers.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v8.json`
+- `app/agent/patcher.py`
+
+### improved_v7 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev7r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev7r2_001.json`
+
+### improved_v8 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev8_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev8_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step6_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v7: `0.8333`
+  - improved_v8: `1.0`
+- `test_pass_rate`
+  - improved_v7: `0.8333`
+  - improved_v8: `1.0`
+- `average_steps`
+  - improved_v7: `9.6667`
+  - improved_v8: `9.6667`
+- `average_duration_sec`
+  - improved_v7: `0.6157`
+  - improved_v8: `0.6148`
+- `taxonomy`
+  - improved_v7: `Premature Finish = 1`
+  - improved_v8: `无错误标签`
+
+### 关键案例
+
+#### improved_v7 失败案例：`task_017`
+
+- 运行结果：
+  - `logs/trajectories/task_017/run_20260609T014410944207Z_8734/result.json`
+- 现象：
+  - 已读取 `pytest_marker_repo/markers.py`
+  - 但没有匹配到 marker 继承覆盖的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v8 成功案例：`task_017`
+
+- 运行结果：
+  - `logs/trajectories/task_017/run_20260609T014626085779Z_4927/result.json`
+- 现象：
+  - 自动把 marker 查找顺序调整为反向遍历
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 6 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v7`：覆盖负向 boolean flag 默认值修复
+  - `improved_v8`：进一步覆盖最近 marker 覆盖优先修复
+
+### 剩余问题
+
+- `pydantic/pydantic#9582` 目前仍更适合作为草稿与说明案例
+- 真实 issue 仍以派生任务形式为主
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

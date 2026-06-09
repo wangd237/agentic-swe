@@ -163,6 +163,32 @@ def _handle_negative_boolean_default(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_closest_marker_inheritance(content: str) -> str | None:
+    # improved_v8 处理继承链中应优先返回最近 marker 的问题。
+    target_block = (
+        "def get_closest_marker(markers: list[Marker], marker_name: str) -> Marker | None:\n"
+        "    # 这里故意保留回归：错误地优先返回继承链中更早的 marker。\n"
+        "    for marker in markers:\n"
+        "        if marker.name == marker_name:\n"
+        "            return marker\n"
+        "    return None"
+    )
+    if target_block not in content:
+        return None
+    if "for marker in reversed(markers):" in content:
+        return None
+
+    replacement = (
+        "def get_closest_marker(markers: list[Marker], marker_name: str) -> Marker | None:\n"
+        "    # 子类重定义 marker 时，应优先返回继承链中最近的那个。\n"
+        "    for marker in reversed(markers):\n"
+        "        if marker.name == marker_name:\n"
+        "            return marker\n"
+        "    return None"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -329,6 +355,47 @@ def apply_rule_based_patch(
                                     if improved_content is not None:
                                         updated_content = improved_content
                                         patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v8":
+            improved_v8_content = _handle_closest_marker_inheritance(original_content)
+            if improved_v8_content is not None:
+                updated_content = improved_v8_content
+                patch_reason_parts = ["让 get_closest_marker 优先返回继承链中最近的 marker"]
+            else:
+                improved_v7_content = _handle_negative_boolean_default(original_content)
+                if improved_v7_content is not None:
+                    updated_content = improved_v7_content
+                    patch_reason_parts = ["修正负向布尔 flag 的 default=True 默认行为"]
+                else:
+                    improved_v6_content = _handle_richhandler_timezone(original_content)
+                    if improved_v6_content is not None:
+                        updated_content = improved_v6_content
+                        patch_reason_parts = ["让 RichHandler 的时间格式化显式保留时区信息"]
+                    else:
+                        improved_v5_content = _handle_crlf_ansi_lines(original_content)
+                        if improved_v5_content is not None:
+                            updated_content = improved_v5_content
+                            patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+                        else:
+                            improved_v4_content = _handle_quoted_charset(original_content)
+                            if improved_v4_content is not None:
+                                updated_content = improved_v4_content
+                                patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                            else:
+                                improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                                if improved_v3_content is not None:
+                                    updated_content = improved_v3_content
+                                    patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                                else:
+                                    improved_v2_content = _handle_leading_none_item(original_content)
+                                    if improved_v2_content is not None:
+                                        updated_content = improved_v2_content
+                                        patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                                    else:
+                                        improved_content = _handle_none_items(updated_content)
+                                        if improved_content is not None:
+                                            updated_content = improved_content
+                                            patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

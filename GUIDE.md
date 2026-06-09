@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v7` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v8` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -593,7 +593,7 @@ scripts/
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
-- 当前已成功导入六条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`Textualize/rich#3877`、`pydantic/pydantic#9582`、`pallets/click#3111`
+- 当前已成功导入七条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`pytest-dev/pytest#14329`、`Textualize/rich#3877`、`pydantic/pydantic#9582`、`pallets/click#3111`
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -650,6 +650,9 @@ scripts/
   - 类型：`semi_real`
   - 来源：`Textualize/rich#4090`
   - 状态：已可运行
+- `task_011`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pytest-dev/pytest#14329` 的真实入口记录
 - `task_012`
   - 类型：`real_issue`
   - 状态：草稿，已作为 `Textualize/rich#3877` 的真实入口记录
@@ -667,6 +670,10 @@ scripts/
   - 类型：`semi_real`
   - 来源：`pallets/click#3111`
   - 状态：已可运行
+- `task_017`
+  - 类型：`semi_real`
+  - 来源：`pytest-dev/pytest#14329`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -677,6 +684,8 @@ scripts/
   - 作用：新增 RichHandler 时区偏移保留修复能力
 - `optimization/policy_versions/improved_v7.json`
   - 作用：新增负向 boolean flag 默认值修复能力
+- `optimization/policy_versions/improved_v8.json`
+  - 作用：新增最近 marker 覆盖优先修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -887,6 +896,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_016.json --policy
 - 修改文件是 `click_flag_repo/core.py`
 - patch 原因是修正负向 boolean flag 的 `default=True` 默认行为
 
+### 方式 14：运行第 6 条真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_017.json --policy optimization/policy_versions/improved_v8.json
+```
+
+你会看到：
+
+- `task_017` 被成功修复
+- 修改文件是 `pytest_marker_repo/markers.py`
+- patch 原因是把 marker 查找顺序改为优先返回继承链中最近的定义
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -989,6 +1012,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_016.json --policy
 - 已补充 `task_009` / `task_010` 与 `improved_v5`
 - 已补充 `task_012` / `task_013` 与 `improved_v6`
 - 已补充 `task_015` / `task_016` 与 `improved_v7`
+- 已补充 `task_011` / `task_017` 与 `improved_v8`
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7
@@ -1018,4 +1042,5 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_016.json --policy
 - improved prompt / policy / grader 版本
 - 扩充 report set
 - 逐步引入 GitHub 真实仓库 issue 作为正式评测候选
+- 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
 - 继续追加优化前后差异说明

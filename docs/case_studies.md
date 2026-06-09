@@ -89,6 +89,19 @@
 - 结果：
   - `task_016` 从失败变为完全通过
 
+## 成功案例 8：`task_017`
+
+- repo：`pytest_marker_repo`
+- 来源：`pytest-dev/pytest#14329`
+- 代表版本：`improved_v8`
+- 现象：
+  - `improved_v7` 还不具备最近 marker 覆盖优先修复能力
+  - `task_017` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v8` 把 marker 查找顺序改成从继承链尾部反向查找
+- 结果：
+  - `task_017` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -156,3 +169,13 @@
   - 当前 patch 生成器能覆盖时区与行尾问题，但还不理解负向 boolean flag 的 default 语义
 - 后续改进：
   - 升级为 `improved_v7`
+
+## 失败案例 8：`task_017` 在 `improved_v7`
+
+- 失败版本：`improved_v7`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 marker 继承覆盖的查找顺序问题
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v8`

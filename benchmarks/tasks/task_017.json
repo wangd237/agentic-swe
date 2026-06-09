@@ -1,0 +1,37 @@
+{
+  "task_id": "task_017",
+  "repo_name": "pytest_marker_repo",
+  "repo_path": "benchmarks/repos/pytest_marker_repo",
+  "issue_title": "get_closest_marker is working unexpectedly",
+  "issue_text": "<!--\nThanks for submitting an issue!\n\nQuick check-list while reporting bugs:\n-->\n\n- [x] a detailed description of the bug or problem you are having\n- [ ] output of `pip list` from the virtual environment you are using\n- [x] pytest and operating system versions\n- [x] minimal example if possible\n\nDescription:\n`get_closest_marker` is working unexpectedly for me\nI redefine the mark on the class in which the test is defined, but I get the mark of the parent of the class, i.e. a deeper mark than expec",
+  "test_command": "python -m pytest tests/test_markers.py -q",
+  "success_criteria": "子类覆盖的 marker 应被 get_closest_marker 返回，父类 marker 只在子类未定义时回退，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "markers",
+    "inheritance",
+    "collection"
+  ],
+  "target_files_hint": [
+    "pytest_marker_repo/markers.py",
+    "tests/test_markers.py"
+  ],
+  "expected_failure_test": "ClosestMarkerTests.test_child_marker_overrides_parent_marker",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pytest-dev/pytest",
+    "repo_url": "https://github.com/pytest-dev/pytest",
+    "issue_number": 14329,
+    "issue_url": "https://github.com/pytest-dev/pytest/issues/14329",
+    "candidate_id": "pytest_dev_pytest_issue_14329",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_011",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}
