@@ -132,6 +132,54 @@
       "state": "CLOSED",
       "created_at": "2025-10-16T18:12:54Z",
       "body_excerpt": "The behaviour of `default=...` for flag values changed in Click 8.3.0, as documented in [the release notes](https://click.palletsprojects.com/en/stable/changes/#version-8-3-0). The new behaviour is broken for negative flags, unless I am holding it wrong. Here's a minimal reproducer (put this in `foo.py`):\n\n```python\nimport click\n\n@click.command('foo')\n@click.option('--without-xyz', 'enable_xyz',\n              help=\"Disable xyz\", flag_value=False, default=True, show_default=True)\ndef foo(enable_x"
+    },
+    {
+      "candidate_id": "dateutil_dateutil_issue_1442",
+      "repo_full_name": "dateutil/dateutil",
+      "repo_url": "https://github.com/dateutil/dateutil",
+      "issue_number": 1442,
+      "issue_title": "default parser fails to parse 9-digit time string as HHMMSSmmm format",
+      "issue_url": "https://github.com/dateutil/dateutil/issues/1442",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-09T10:19:33: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-10-16T03:50:48Z",
+      "body_excerpt": "### Description\nWhen using `dateutil.parser.parse()` to parse a datetime string that includes microseconds, the parser incorrectly interprets a 9-digit sequence as a year rather than recognizing it as hour-minute-second-microsecond format.\n\n### Code Example\n```\nfrom dateutil import parser\n\n# expected datetime.datetime(2001, 2, 3, 4, 5, 6, 789000)\ndt2=parser.parse(\"20010203 040506789\")\n# dateutil.parser._parser.ParserError: Unknown string format: 20010203 040506007\n```\nwhen using `strptime` it wo"
+    },
+    {
+      "candidate_id": "dateutil_dateutil_issue_1432",
+      "repo_full_name": "dateutil/dateutil",
+      "repo_url": "https://github.com/dateutil/dateutil",
+      "issue_number": 1432,
+      "issue_title": "TypeError in tzstr when parsing \"UTC\" or \"GMT\" without offset",
+      "issue_url": "https://github.com/dateutil/dateutil/issues/1432",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-09T10:19:34: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-07-04T23:51:00Z",
+      "body_excerpt": "### Description\nVersion: `python-dateutil(2.9.0.post0)`.\nWhen calling \n```python\ntztsr(\"GMT\")\n``` \nwithout an explicit offset, the following error is thrown:\n```python\nTypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'\n```\n### Reproduce\n```python\nfrom dateutil.tz import tzstr \ntzstr(\"GMT\")\n```\nOutput:\n```python\nunsupported operand type(s) for *=: 'NoneType' and 'int'\nTraceback (most recent call last):\n  File \"D:/Python/Lib/site-packages/dateutil/tz/_factories.py\", line 69, in __"
+    },
+    {
+      "candidate_id": "python_attrs_attrs_issue_1479",
+      "repo_full_name": "python-attrs/attrs",
+      "repo_url": "https://github.com/python-attrs/attrs",
+      "issue_number": 1479,
+      "issue_title": "Alias not available during field transformation",
+      "issue_url": "https://github.com/python-attrs/attrs/issues/1479",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-09T10:20:47: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2025-10-13T19:30:05Z",
+      "body_excerpt": "Hi, I'm not sure if this is a bug or a \"feature\" that is documented somewhere. At least, I haven't encountered it before, so I thought I'd better double-check.\n\nIs it expected that the `alias` property is `None` during field transformation? Has this something to do with the fact that the class is not yet fully built at this stage? But since all information is pretty much already available at this point, I'm wondering if this is unintended ... 🤔 \n\n```python\nfrom attrs import define, field, fields"
     }
   ]
 }

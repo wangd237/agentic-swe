@@ -19,16 +19,16 @@ def run_gh_command(args: list[str]) -> dict:
     result = subprocess.run(
         ["gh", *args],
         cwd=REPO_ROOT,
-        text=True,
         capture_output=True,
         check=False,
     )
     if result.returncode != 0:
-        stderr = result.stderr.strip()
-        stdout = result.stdout.strip()
+        stderr = result.stderr.decode("utf-8", errors="replace").strip()
+        stdout = result.stdout.decode("utf-8", errors="replace").strip()
         detail = stderr or stdout or "未知错误"
         raise RuntimeError(f"gh 命令失败：{detail}")
-    return json.loads(result.stdout)
+    stdout_text = result.stdout.decode("utf-8", errors="replace")
+    return json.loads(stdout_text)
 
 
 def load_candidate_dataset(path: Path) -> dict:

@@ -1264,6 +1264,61 @@
 - 还没有把“候选筛选建议 -> 自动导入”做成半自动流程
 - 后续可以继续补一个 issue shortlist 到 candidate 文件的辅助入口
 
+## Iteration 14：Expand New Real-Issue Candidate Pool
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 不再只复用当前仓库已收录来源，开始扩展新的真实 GitHub issue 候选来源
+- 修复 `import_github_issue.py` 在 Windows + `gh` 输出场景下的编码兼容问题
+- 让候选池继续保持追加式增长，而不是手工零散维护
+
+### 改动类型
+
+- `benchmark`
+- `runtime`
+- `docs`
+
+### 改动摘要
+
+- 修复 `scripts/import_github_issue.py`：
+  - `gh` 输出改为按 bytes 读取
+  - 统一按 `utf-8` + `errors=\"replace\"` 解码
+  - 避免 Windows 默认编码导致 JSON 解析失败
+- 新导入 3 条新来源候选：
+  - `dateutil/dateutil#1442`
+  - `dateutil/dateutil#1432`
+  - `python-attrs/attrs#1479`
+- 候选清单规模从 `7` 扩充到 `10`
+- README / GUIDE 同步更新候选数量与来源
+
+### 主要涉及文件
+
+- `scripts/import_github_issue.py`
+- `benchmarks/real_world_candidates.json`
+- `README.md`
+- `GUIDE.md`
+
+### 当前结论
+
+- 候选池现在已经不只覆盖 `requests / rich / pytest / click / pydantic`
+- 也开始扩展到 `dateutil` 与 `attrs` 这样的新来源
+- `dateutil/dateutil#1432` 和 `#1442` 都很像适合继续缩题成 `semi_real` 的函数级 bug
+- `python-attrs/attrs#1479` 已导入，但从 issue 文案看仍需再判断它究竟是 bug 还是行为预期
+
+### 剩余问题
+
+- 新导入候选还没有完成人工筛选结论
+- 还没有把最优新来源 issue 推进成新的 draft task
+- 后续建议优先审查 `dateutil/dateutil#1432` 与 `#1442`
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

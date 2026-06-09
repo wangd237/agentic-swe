@@ -237,7 +237,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `Future GitHub Real-Issue Set`
   - 当前已接入 manifest：`benchmarks/manifests/real_issue_tasks.json`
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
-  - 当前已导入 7 条候选：
+  - 当前已导入 10 条候选：
     - `psf/requests#6432`
     - `psf/requests#7234`
     - `Textualize/rich#4090`
@@ -245,6 +245,9 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `Textualize/rich#3877`
     - `pydantic/pydantic#9582`
     - `pallets/click#3111`
+    - `dateutil/dateutil#1442`
+    - `dateutil/dateutil#1432`
+    - `python-attrs/attrs#1479`
   - 当前已生成：
     - `task_005`：真实 issue 草稿
     - `task_006`：可运行的 semi_real 派生任务
