@@ -1654,6 +1654,141 @@
 - 新来源候选还可以继续扩展到更多模板、序列化或配置类项目
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 18：Jinja Slice Fill-With Boundary（improved_v11 -> improved_v12）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pallets/jinja#2118` 推进成可运行任务
+- 验证 `improved_v11` 到 `improved_v12` 是否能覆盖 slice filter 的补位边界场景
+- 继续扩展真实 issue 候选来源到 `jinja / tomlkit / packaging`
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增真实候选：
+  - `pallets/jinja#2118`
+  - `python-poetry/tomlkit#494`
+  - `python-poetry/tomlkit#495`
+  - `pypa/packaging#873`
+- 新增草稿任务：
+  - `task_025`
+- 新增可运行 semi_real 任务：
+  - `task_026`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jinja_slice_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v12.json`
+- patch 生成器新增能力：
+  - 仅在存在余数时才为 slice 的尾部分片补入 `fill_with`
+- 同步补充：
+  - `docs/issue_sourcing_spec.md`
+  - 历史候选状态校正，确保已正式落地的 requests 候选显示为 `accepted`
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_025.json`
+- `benchmarks/tasks/task_026.json`
+- `benchmarks/repos/jinja_slice_repo/jinja_slice_repo/filters.py`
+- `benchmarks/repos/jinja_slice_repo/tests/test_filters.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v12.json`
+- `app/agent/patcher.py`
+- `docs/issue_sourcing_spec.md`
+
+### improved_v11 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev11_001.json`
+- 单任务失败运行：
+  - `logs/trajectories/task_026/run_20260609T082829222606Z_4753/result.json`
+
+### improved_v12 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev12_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev12_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step10_001.json`
+- 单任务成功运行：
+  - `logs/trajectories/task_026/run_20260609T082829222608Z_9275/result.json`
+
+### 指标对比
+
+- 说明：
+  - 这一轮 compare 的 baseline 是 9 条任务集上的 `improved_v11`
+  - improved 是扩充到 10 条任务后的 `improved_v12`
+  - 因此更适合看“扩容后是否维持成功率，以及平均效率是否下降”
+- `task_count`
+  - improved_v11: `9`
+  - improved_v12: `10`
+- `success_count`
+  - improved_v11: `9`
+  - improved_v12: `10`
+- `success_rate`
+  - improved_v11: `1.0`
+  - improved_v12: `1.0`
+- `test_pass_rate`
+  - improved_v11: `1.0`
+  - improved_v12: `1.0`
+- `average_steps`
+  - improved_v11: `9.5556`
+  - improved_v12: `9.5`
+- `average_duration_sec`
+  - improved_v11: `0.5872`
+  - improved_v12: `0.5526`
+- `taxonomy`
+  - improved_v11: `无错误标签`
+  - improved_v12: `无错误标签`
+
+### 关键案例
+
+#### improved_v11 失败案例：`task_026`
+
+- 运行结果：
+  - `logs/trajectories/task_026/run_20260609T082829222606Z_4753/result.json`
+- 现象：
+  - 已读取 `jinja_slice_repo/filters.py`
+  - 但没有匹配到 slice 补位边界修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v12 成功案例：`task_026`
+
+- 运行结果：
+  - `logs/trajectories/task_026/run_20260609T082829222608Z_9275/result.json`
+- 现象：
+  - 自动识别整除场景下不应再追加 `fill_with`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 10 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v11`：覆盖模板变量控制流分析修复
+  - `improved_v12`：进一步覆盖 slice filter 填充值边界修复
+- 在任务集扩容的情况下，`improved_v12` 仍保持 `100%` 成功率与 `100%` 测试通过率
+- 平均耗时和平均步骤数没有恶化，反而略有改善
+
+### 剩余问题
+
+- `tomlkit` 与 `packaging` 的新候选还需要继续筛选并推进成正式 semi_real 任务
+- 当前 compare 主要是“逐轮扩容保持成功率”的证据链，后面也可以补同集合对比实验
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

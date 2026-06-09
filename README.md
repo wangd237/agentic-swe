@@ -38,6 +38,7 @@
   - 已将 `dateutil/dateutil#1432` 推进为 `task_018` 草稿与 `task_019` 可运行 semi_real 任务
   - 已将 `dateutil/dateutil#1442` 推进为 `task_021` 草稿与 `task_022` 可运行 semi_real 任务
   - 已将 `pallets/jinja#2069` 推进为 `task_023` 草稿与 `task_024` 可运行 semi_real 任务
+  - 已将 `pallets/jinja#2118` 推进为 `task_025` 草稿与 `task_026` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
   - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
@@ -45,6 +46,7 @@
   - 已完成 `improved_v9` 策略迭代，补充 tzstr 在 UTC/GMT 无 offset 场景下的零偏移回落修复
   - 已完成 `improved_v10` 策略迭代，补充 9 位时间串按 HHMMSSmmm 解析修复
   - 已完成 `improved_v11` 策略迭代，补充模板分析中所有分支已赋值变量不再被判定为 undeclared
+  - 已完成 `improved_v12` 策略迭代，补充 Jinja slice filter 在整除场景下不应错误补入 `fill_with`
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -243,7 +245,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `Future GitHub Real-Issue Set`
   - 当前已接入 manifest：`benchmarks/manifests/real_issue_tasks.json`
   - 当前候选清单文件：`benchmarks/real_world_candidates.json`
-  - 当前已导入 10 条候选：
+  - 当前已导入 15 条候选：
     - `psf/requests#6432`
     - `psf/requests#7234`
     - `Textualize/rich#4090`
@@ -254,6 +256,11 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `dateutil/dateutil#1442`
     - `dateutil/dateutil#1432`
     - `python-attrs/attrs#1479`
+    - `pallets/jinja#2069`
+    - `pallets/jinja#2118`
+    - `python-poetry/tomlkit#494`
+    - `python-poetry/tomlkit#495`
+    - `pypa/packaging#873`
   - 当前已生成：
     - `task_005`：真实 issue 草稿
     - `task_006`：可运行的 semi_real 派生任务
@@ -274,6 +281,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `task_022`：可运行的 semi_real 派生任务
     - `task_023`：真实 issue 草稿
     - `task_024`：可运行的 semi_real 派生任务
+    - `task_025`：真实 issue 草稿
+    - `task_026`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -332,11 +341,16 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev10_001.json`
 - improved_v11：
   - `logs/summaries/batch_eval_realissuev11_001.json`
+- improved_v12：
+  - `logs/summaries/batch_eval_realissuev12_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
-  - `success_rate: 0.8889 -> 1.0`
-  - `test_pass_rate: 0.8889 -> 1.0`
+  - `logs/summaries/batch_compare_realissue_step10_001.json`
+  - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
+  - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
   - `task_024` 从 `Premature Finish` 变为完全通过
+  - `task_026` 在扩容后的任务集上保持完全通过
 
 ## Harness 设计方向
 
@@ -349,6 +363,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 工作副本隔离优先于“直接改 benchmark 原仓库”
 
 更细的设计见 [docs/harness.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/harness.md)。
+
+真实 issue 的筛选标准见 [docs/issue_sourcing_spec.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/issue_sourcing_spec.md)。
 
 ## 下一步
 

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_026",
+  "repo_name": "jinja_slice_repo",
+  "repo_path": "benchmarks/repos/jinja_slice_repo",
+  "issue_title": "Slice returns one extra item when slice count is a divisor of iterable length and fill_with not none",
+  "issue_text": "The slice filter returns one extra item when the slice count can divide the iterable length completely and a fill_with value is used.\n<!--\nDescribe how to replicate the bug.\n\nInclude a minimal reproducible example that demonstrates the bug.\nInclude the full traceback if there was an exception.\n-->\n\nExample:\n\n```\n{% set a = [1, 2, 3, 4] %}\n{{ a|slice(4, 'foo')|list }}\n```\n\nOutput:\n\n```[[1, 'foo'], [2, 'foo'], [3, 'foo'], [4, 'foo']]```\n\nExpected output:\n\n```[[1], [2], [3], [4]]```\n\nEnvironment:\n\n",
+  "test_command": "python -m pytest tests/test_filters.py -q",
+  "success_criteria": "当可迭代对象长度能被切片数整除且 fill_with 非空时，slice 不应额外补出一个元素，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "template-filter",
+    "slice",
+    "fill-with"
+  ],
+  "target_files_hint": [
+    "jinja_slice_repo/filters.py",
+    "tests/test_filters.py"
+  ],
+  "expected_failure_test": "SliceTests.test_fill_with_does_not_append_extra_item_when_evenly_divisible",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2118,
+    "issue_url": "https://github.com/pallets/jinja/issues/2118",
+    "candidate_id": "pallets_jinja_issue_2118",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_025",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

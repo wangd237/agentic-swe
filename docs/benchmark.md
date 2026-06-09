@@ -46,6 +46,7 @@
 - `benchmarks/tasks/task_019.json`
 - `benchmarks/tasks/task_022.json`
 - `benchmarks/tasks/task_024.json`
+- `benchmarks/tasks/task_026.json`
 
 当前 repo：
 
@@ -61,6 +62,7 @@
 - `benchmarks/repos/dateutil_tz_repo`
 - `benchmarks/repos/dateutil_parser_repo_v2`
 - `benchmarks/repos/jinja_meta_repo`
+- `benchmarks/repos/jinja_slice_repo`
 
 用途：
 
@@ -353,6 +355,27 @@
 
 - `jinja_meta_repo/meta.py`
 - `tests/test_meta.py`
+
+### `jinja_slice_repo`
+
+来源：
+
+- `pallets/jinja#2118`
+
+主要问题：
+
+- 当可迭代对象长度能被切片数整除时
+- 即便所有分片长度已经一致，`slice` 仍错误补入 `fill_with`
+
+正确行为：
+
+- 只有存在余数时，尾部较短分片才需要补入 `fill_with`
+- 整除场景下不应再额外追加填充值
+
+相关文件：
+
+- `jinja_slice_repo/filters.py`
+- `tests/test_filters.py`
 
 ## 当前为什么要分层
 

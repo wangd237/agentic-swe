@@ -141,6 +141,19 @@
 - 结果：
   - `task_024` 从失败变为完全通过
 
+## 成功案例 12：`task_026`
+
+- repo：`jinja_slice_repo`
+- 来源：`pallets/jinja#2118`
+- 代表版本：`improved_v12`
+- 现象：
+  - 当切片数能整除输入长度时
+  - 旧策略还不具备 `fill_with` 边界补位修复能力
+- 改进点：
+  - `improved_v12` 让 `fill_with` 只在存在余数时才补入尾部分片
+- 结果：
+  - `task_026` 在扩容后的真实任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -248,3 +261,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v11`
+
+## 失败案例 12：`task_026` 在 `improved_v11`
+
+- 失败版本：`improved_v11`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 `slice` 在整除场景下不应补入 `fill_with`
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v12`
