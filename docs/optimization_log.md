@@ -1430,6 +1430,119 @@
 - `python-attrs/attrs#1479` 仍需先判断其性质是否适合作为 bugfix benchmark
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 16：Dateutil Nine-Digit Time Parsing（improved_v9 -> improved_v10）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `dateutil/dateutil#1442` 推进成可运行任务
+- 验证 `improved_v9` 到 `improved_v10` 是否能覆盖 9 位时间串解析场景
+- 继续扩充真实 issue 派生任务集的时间解析覆盖面
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增草稿任务：
+  - `task_021`
+- 新增可运行 semi_real 任务：
+  - `task_022`
+- 新增 benchmark repo：
+  - `benchmarks/repos/dateutil_parser_repo_v2`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v10.json`
+- patch 生成器新增能力：
+  - 让 9 位时间串按 `HHMMSSmmm` 直接解析，而不是继续抛出格式错误
+- 更正记录：
+  - `task_020` 是一次误生成的探索脚手架，不纳入正式 `real_issue_tasks` manifest
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_021.json`
+- `benchmarks/tasks/task_022.json`
+- `benchmarks/repos/dateutil_parser_repo_v2/dateutil_parser_repo_v2/parser.py`
+- `benchmarks/repos/dateutil_parser_repo_v2/tests/test_parser.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v10.json`
+- `app/agent/patcher.py`
+
+### improved_v9 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev9r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev9r2_001.json`
+
+### improved_v10 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev10_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev10_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step8_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v9: `0.875`
+  - improved_v10: `1.0`
+- `test_pass_rate`
+  - improved_v9: `0.875`
+  - improved_v10: `1.0`
+- `average_steps`
+  - improved_v9: `9.625`
+  - improved_v10: `9.625`
+- `average_duration_sec`
+  - improved_v9: `0.5334`
+  - improved_v10: `0.5302`
+- `taxonomy`
+  - improved_v9: `Premature Finish = 1`
+  - improved_v10: `无错误标签`
+
+### 关键案例
+
+#### improved_v9 失败案例：`task_022`
+
+- 运行结果：
+  - `logs/trajectories/task_022/run_20260609T031630923827Z_5315/result.json`
+- 现象：
+  - 已读取 `dateutil_parser_repo_v2/parser.py`
+  - 但没有匹配到 9 位时间串的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v10 成功案例：`task_022`
+
+- 运行结果：
+  - `logs/trajectories/task_022/run_20260609T031631019752Z_0565/result.json`
+- 现象：
+  - 自动把 9 位时间串接到 `HHMMSSmmm` 解析路径
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 8 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v9`：覆盖 UTC/GMT 无 offset 时区解析修复
+  - `improved_v10`：进一步覆盖 9 位时间串解析修复
+
+### 剩余问题
+
+- `python-attrs/attrs#1479` 仍需先判断其性质是否适合作为 bugfix benchmark
+- 新来源候选还没有继续扩大到更多项目
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

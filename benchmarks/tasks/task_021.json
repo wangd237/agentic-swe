@@ -1,0 +1,29 @@
+{
+  "task_id": "task_021",
+  "repo_name": "dateutil",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "default parser fails to parse 9-digit time string as HHMMSSmmm format",
+  "issue_text": "### Description\nWhen using `dateutil.parser.parse()` to parse a datetime string that includes microseconds, the parser incorrectly interprets a 9-digit sequence as a year rather than recognizing it as hour-minute-second-microsecond format.\n\n### Code Example\n```\nfrom dateutil import parser\n\n# expected datetime.datetime(2001, 2, 3, 4, 5, 6, 789000)\ndt2=parser.parse(\"20010203 040506789\")\n# dateutil.parser._parser.ParserError: Unknown string format: 20010203 040506007\n```\nwhen using `strptime` it wo",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 1442,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/1442",
+    "candidate_id": "dateutil_dateutil_issue_1442",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

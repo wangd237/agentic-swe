@@ -115,6 +115,19 @@
 - 结果：
   - `task_019` 从失败变为完全通过
 
+## 成功案例 10：`task_022`
+
+- repo：`dateutil_parser_repo_v2`
+- 来源：`dateutil/dateutil#1442`
+- 代表版本：`improved_v10`
+- 现象：
+  - `improved_v9` 还不具备 9 位时间串按 HHMMSSmmm 解析的修复能力
+  - `task_022` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v10` 让 9 位时间串直接走时间解析路径，而不是继续抛出格式错误
+- 结果：
+  - `task_022` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -202,3 +215,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v9`
+
+## 失败案例 10：`task_022` 在 `improved_v9`
+
+- 失败版本：`improved_v9`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 9 位时间串应被识别为 `HHMMSSmmm`
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v10`

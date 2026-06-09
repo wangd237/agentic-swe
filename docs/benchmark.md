@@ -44,6 +44,7 @@
 - `benchmarks/tasks/task_016.json`
 - `benchmarks/tasks/task_017.json`
 - `benchmarks/tasks/task_019.json`
+- `benchmarks/tasks/task_022.json`
 
 当前 repo：
 
@@ -57,6 +58,7 @@
 - `benchmarks/repos/click_flag_repo`
 - `benchmarks/repos/pytest_marker_repo`
 - `benchmarks/repos/dateutil_tz_repo`
+- `benchmarks/repos/dateutil_parser_repo_v2`
 
 用途：
 
@@ -307,6 +309,27 @@
 
 - `dateutil_tz_repo/tz.py`
 - `tests/test_tz.py`
+
+### `dateutil_parser_repo_v2`
+
+来源：
+
+- `dateutil/dateutil#1442`
+
+主要问题：
+
+- 9 位时间串本应按 `HHMMSSmmm` 解释
+- 当前却被错误当成不支持格式，无法得到正确的时间解析结果
+
+正确行为：
+
+- `040506789` 应被解析为 `04:05:06.789`
+- 带空格的等价 9 位时间串也应得到相同结果
+
+相关文件：
+
+- `dateutil_parser_repo_v2/parser.py`
+- `tests/test_parser.py`
 
 ## 当前为什么要分层
 

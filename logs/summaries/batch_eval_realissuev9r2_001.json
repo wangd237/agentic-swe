@@ -1,0 +1,38 @@
+{
+  "source_batch_run_id": "batch_run_realissuev9r2_001",
+  "policy_id": "improved_v9",
+  "metrics": {
+    "task_count": 8,
+    "success_count": 7,
+    "success_rate": 0.875,
+    "test_pass_count": 7,
+    "test_pass_rate": 0.875,
+    "partial_fix_count": 0,
+    "partial_fix_rate": 0.0,
+    "average_steps": 9.625,
+    "average_tool_calls": 9.5,
+    "average_duration_sec": 0.5334,
+    "average_modified_files": 0.875,
+    "key_file_read_rate": 1.0,
+    "test_execution_rate": 1.0,
+    "repeated_search_rate": 0.0,
+    "reasonable_finish_rate": 1.0
+  },
+  "taxonomy": {
+    "label_counts": {
+      "Premature Finish": 1
+    },
+    "task_labels": {
+      "task_006": [],
+      "task_008": [],
+      "task_010": [],
+      "task_013": [],
+      "task_016": [],
+      "task_017": [],
+      "task_019": [],
+      "task_022": [
+        "Premature Finish"
+      ]
+    }
+  }
+}
