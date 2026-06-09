@@ -1,0 +1,37 @@
+{
+  "task_id": "task_030",
+  "repo_name": "tomlkit_inline_table_repo",
+  "repo_path": "benchmarks/repos/tomlkit_inline_table_repo",
+  "issue_title": "adding to a dotted inline table produces corrupt output",
+  "issue_text": "```python\nimport tomlkit\n\nsrc = \"a = {b.c = 1}\\n\"\n\ndoc = tomlkit.parse(src)\nassert doc == {\"a\": {\"b\": {\"c\": 1}}}, \"src is valid TOML\"\n\ndoc[\"a\"][\"b\"][\"d\"] = 2\n\nout = tomlkit.dumps(doc)\nprint(out)\n```\noutput\n```\na = {b.c = 1d = 2\n}\n```\nwhich is not good",
+  "test_command": "python -m pytest tests/test_formatter.py -q",
+  "success_criteria": "当 dotted inline table 追加新键时，输出应保持合法的 inline table 结构，不应把新键黏连到旧值后面，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "toml",
+    "serializer",
+    "inline-table"
+  ],
+  "target_files_hint": [
+    "tomlkit_inline_table_repo/formatter.py",
+    "tests/test_formatter.py"
+  ],
+  "expected_failure_test": "InlineTableFormatterTests.test_append_key_preserves_spacing_in_dotted_inline_table",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 495,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/495",
+    "candidate_id": "python_poetry_tomlkit_issue_495",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_029",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

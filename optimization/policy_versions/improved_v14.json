@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v14",
+  "description": "增强规则型 patch 策略，额外支持 tomlkit dotted inline table 追加新键时补上必要分隔，避免输出损坏。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v14"
+}

@@ -167,6 +167,19 @@
 - 结果：
   - `task_028` 在扩容后的真实任务集上完全通过
 
+## 成功案例 14：`task_030`
+
+- repo：`tomlkit_inline_table_repo`
+- 来源：`python-poetry/tomlkit#495`
+- 代表版本：`improved_v14`
+- 现象：
+  - dotted inline table 追加新键时
+  - 旧策略还不具备 inline table 分隔修复能力
+- 改进点：
+  - `improved_v14` 为新增键值对补上逗号和空格分隔，避免结构被黏连破坏
+- 结果：
+  - `task_030` 在扩容后的真实任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -294,3 +307,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v13`
+
+## 失败案例 14：`task_030` 在 `improved_v13`
+
+- 失败版本：`improved_v13`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 dotted inline table 追加键值对时的分隔修复模式
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v14`

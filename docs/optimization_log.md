@@ -1917,6 +1917,134 @@
 - `pypa/packaging#873` 仍值得保留，但落题时要注意规范与实现边界
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 20：Tomlkit Dotted Inline Table Append（improved_v13 -> improved_v14）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-poetry/tomlkit#495` 推进成可运行任务
+- 验证 `improved_v13` 到 `improved_v14` 是否能覆盖 dotted inline table 追加新键场景
+- 继续扩展配置序列化类真实任务的覆盖面
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-poetry/tomlkit#495`
+- 新增草稿任务：
+  - `task_029`
+- 新增可运行 semi_real 任务：
+  - `task_030`
+- 新增 benchmark repo：
+  - `benchmarks/repos/tomlkit_inline_table_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v14.json`
+- patch 生成器新增能力：
+  - 为 dotted inline table 追加新键值对时补上逗号和空格分隔，避免输出黏连损坏
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_029.json`
+- `benchmarks/tasks/task_030.json`
+- `benchmarks/repos/tomlkit_inline_table_repo/tomlkit_inline_table_repo/formatter.py`
+- `benchmarks/repos/tomlkit_inline_table_repo/tests/test_formatter.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v14.json`
+- `app/agent/patcher.py`
+
+### improved_v13 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev13_001.json`
+- 单任务失败运行：
+  - `logs/trajectories/task_030/run_20260609T103930077307Z_3328/result.json`
+
+### improved_v14 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev14_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev14_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step12_001.json`
+- 单任务成功运行：
+  - `logs/trajectories/task_030/run_20260609T103930007671Z_9522/result.json`
+
+### 指标对比
+
+- 说明：
+  - 这一轮 compare 的 baseline 是 11 条任务集上的 `improved_v13`
+  - improved 是扩充到 12 条任务后的 `improved_v14`
+  - 因此仍然更适合看“扩容后是否维持成功率，以及平均效率是否变化”
+- `task_count`
+  - improved_v13: `11`
+  - improved_v14: `12`
+- `success_count`
+  - improved_v13: `11`
+  - improved_v14: `12`
+- `success_rate`
+  - improved_v13: `1.0`
+  - improved_v14: `1.0`
+- `test_pass_rate`
+  - improved_v13: `1.0`
+  - improved_v14: `1.0`
+- `average_steps`
+  - improved_v13: `9.3636`
+  - improved_v14: `9.25`
+- `average_duration_sec`
+  - improved_v13: `0.5512`
+  - improved_v14: `0.5811`
+- `taxonomy`
+  - improved_v13: `无错误标签`
+  - improved_v14: `无错误标签`
+
+### 关键案例
+
+#### improved_v13 失败案例：`task_030`
+
+- 运行结果：
+  - `logs/trajectories/task_030/run_20260609T103930077307Z_3328/result.json`
+- 现象：
+  - 已读取 `tomlkit_inline_table_repo/formatter.py`
+  - 但没有匹配到 dotted inline table 分隔修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v14 成功案例：`task_030`
+
+- 运行结果：
+  - `logs/trajectories/task_030/run_20260609T103930007671Z_9522/result.json`
+- 现象：
+  - 自动识别 inline table 追加键值对时需要补上逗号和空格分隔
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 12 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v13`：覆盖数组下一行逗号风格 append 修复
+  - `improved_v14`：进一步覆盖 dotted inline table 追加键值对修复
+- 在任务集扩容的情况下，`improved_v14` 仍保持 `100%` 成功率与 `100%` 测试通过率
+- 平均步骤数继续下降，但平均耗时从 `0.5512` 小幅回升到 `0.5811`，这需要后续继续观察
+
+### 剩余问题
+
+- 现在候选池里高优先级的下一条主要剩 `pypa/packaging#873`
+- 当前 compare 主要是“逐轮扩容保持成功率”的证据链，后面也可以补同集合冻结对比
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

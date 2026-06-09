@@ -48,6 +48,7 @@
 - `benchmarks/tasks/task_024.json`
 - `benchmarks/tasks/task_026.json`
 - `benchmarks/tasks/task_028.json`
+- `benchmarks/tasks/task_030.json`
 
 当前 repo：
 
@@ -65,6 +66,7 @@
 - `benchmarks/repos/jinja_meta_repo`
 - `benchmarks/repos/jinja_slice_repo`
 - `benchmarks/repos/tomlkit_array_repo`
+- `benchmarks/repos/tomlkit_inline_table_repo`
 
 用途：
 
@@ -398,6 +400,27 @@
 相关文件：
 
 - `tomlkit_array_repo/formatter.py`
+- `tests/test_formatter.py`
+
+### `tomlkit_inline_table_repo`
+
+来源：
+
+- `python-poetry/tomlkit#495`
+
+主要问题：
+
+- dotted inline table 追加新键后
+- 新键直接黏连到旧值末尾，导致输出结构损坏
+
+正确行为：
+
+- 追加新键值对时应补上合法的分隔符
+- 输出仍应保持一行 inline table 结构
+
+相关文件：
+
+- `tomlkit_inline_table_repo/formatter.py`
 - `tests/test_formatter.py`
 
 ## 当前为什么要分层

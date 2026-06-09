@@ -24,6 +24,7 @@
 - 当前已补充 `task_024`，并在真实 issue 派生任务集上完成 `improved_v10 -> improved_v11` 对比
 - 当前已补充 `task_026`，并在真实 issue 派生任务集上完成 `improved_v11 -> improved_v12` 扩容对比
 - 当前已补充 `task_028`，并在真实 issue 派生任务集上完成 `improved_v12 -> improved_v13` 扩容对比
+- 当前已补充 `task_030`，并在真实 issue 派生任务集上完成 `improved_v13 -> improved_v14` 扩容对比
 
 ## 当前可展示结果
 
@@ -388,6 +389,32 @@
 - changed task
   - `task_028`: 新增任务，在 `improved_v13` 下完全通过
 
+扩充到 12 条真实派生任务后的结果：
+
+- realissuev13：
+  - `logs/summaries/batch_eval_realissuev13_001.json`
+- realissuev14：
+  - `logs/summaries/batch_eval_realissuev14_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step12_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v13: `1.0`
+  - improved_v14: `1.0`
+- `test_pass_rate`
+  - improved_v13: `1.0`
+  - improved_v14: `1.0`
+- `average_steps`
+  - improved_v13: `9.3636`
+  - improved_v14: `9.25`
+- `average_duration_sec`
+  - improved_v13: `0.5512`
+  - improved_v14: `0.5811`
+- changed task
+  - `task_030`: 新增任务，在 `improved_v14` 下完全通过
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
@@ -404,6 +431,7 @@
 - `improved_v11` 进一步覆盖了真实 issue 派生出来的模板变量控制流分析场景
 - `improved_v12` 进一步覆盖了真实 issue 派生出来的 Jinja slice filter 填充值边界场景
 - `improved_v13` 进一步覆盖了真实 issue 派生出来的数组序列化重复逗号场景
+- `improved_v14` 进一步覆盖了真实 issue 派生出来的 dotted inline table 分隔损坏场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：
