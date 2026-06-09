@@ -49,6 +49,7 @@
 - `benchmarks/tasks/task_026.json`
 - `benchmarks/tasks/task_028.json`
 - `benchmarks/tasks/task_030.json`
+- `benchmarks/tasks/task_032.json`
 
 当前 repo：
 
@@ -67,6 +68,7 @@
 - `benchmarks/repos/jinja_slice_repo`
 - `benchmarks/repos/tomlkit_array_repo`
 - `benchmarks/repos/tomlkit_inline_table_repo`
+- `benchmarks/repos/packaging_wheel_repo`
 
 用途：
 
@@ -422,6 +424,27 @@
 
 - `tomlkit_inline_table_repo/formatter.py`
 - `tests/test_formatter.py`
+
+### `packaging_wheel_repo`
+
+来源：
+
+- `pypa/packaging#873`
+
+主要问题：
+
+- wheel 文件名中的版本号即便不是 normalized 形式
+- 当前也会被错误接受
+
+正确行为：
+
+- 未 normalized 的版本号应直接拒绝
+- 合法 normalized 版本号仍应正常解析
+
+相关文件：
+
+- `packaging_wheel_repo/utils.py`
+- `tests/test_utils.py`
 
 ## 当前为什么要分层
 

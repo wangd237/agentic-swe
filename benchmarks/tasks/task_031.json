@@ -1,0 +1,29 @@
+{
+  "task_id": "task_031",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Bug: `parse_wheel_filename` permits non-normalized versions.",
+  "issue_text": "https://packaging.python.org/en/latest/specifications/binary-distribution-format/ says:\n\n> Version numbers should be normalised according to the [Version specifier specification](https://packaging.python.org/en/latest/specifications/version-specifiers/#version-specifiers).\n\nCurrently, `parse_wheel_filename` will raise `InvalidWheelFilename` for some invalid filenames, but https://packaging.python.org/en/latest/specifications/version-specifiers/#normalization has a long list of version normalizat",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 873,
+    "issue_url": "https://github.com/pypa/packaging/issues/873",
+    "candidate_id": "pypa_packaging_issue_873",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

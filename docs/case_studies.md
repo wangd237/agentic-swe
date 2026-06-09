@@ -180,6 +180,19 @@
 - 结果：
   - `task_030` 在扩容后的真实任务集上完全通过
 
+## 成功案例 15：`task_032`
+
+- repo：`packaging_wheel_repo`
+- 来源：`pypa/packaging#873`
+- 代表版本：`improved_v15`
+- 现象：
+  - wheel 文件名中的未 normalized 版本号
+  - 旧策略还不具备拒绝逻辑
+- 改进点：
+  - `improved_v15` 为非 normalized 版本号增加显式拒绝分支
+- 结果：
+  - `task_032` 在扩容后的真实任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -317,3 +330,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v14`
+
+## 失败案例 15：`task_032` 在 `improved_v14`
+
+- 失败版本：`improved_v14`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 wheel 版本号 normalization 校验模式
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v15`

@@ -41,6 +41,7 @@
   - 已将 `pallets/jinja#2118` 推进为 `task_025` 草稿与 `task_026` 可运行 semi_real 任务
   - 已将 `python-poetry/tomlkit#494` 推进为 `task_027` 草稿与 `task_028` 可运行 semi_real 任务
   - 已将 `python-poetry/tomlkit#495` 推进为 `task_029` 草稿与 `task_030` 可运行 semi_real 任务
+  - 已将 `pypa/packaging#873` 推进为 `task_031` 草稿与 `task_032` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
   - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
@@ -51,6 +52,7 @@
   - 已完成 `improved_v12` 策略迭代，补充 Jinja slice filter 在整除场景下不应错误补入 `fill_with`
   - 已完成 `improved_v13` 策略迭代，补充 tomlkit 数组下一行逗号风格下 append 后不应生成双逗号
   - 已完成 `improved_v14` 策略迭代，补充 tomlkit dotted inline table 追加新键时不应破坏分隔结构
+  - 已完成 `improved_v15` 策略迭代，补充 packaging wheel 文件名中的未 normalized 版本号应被拒绝
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -291,6 +293,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `task_028`：可运行的 semi_real 派生任务
     - `task_029`：真实 issue 草稿
     - `task_030`：可运行的 semi_real 派生任务
+    - `task_031`：真实 issue 草稿
+    - `task_032`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -355,11 +359,14 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev13_001.json`
 - improved_v14：
   - `logs/summaries/batch_eval_realissuev14_001.json`
+- improved_v15：
+  - `logs/summaries/batch_eval_realissuev15_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
   - `logs/summaries/batch_compare_realissue_step11_001.json`
   - `logs/summaries/batch_compare_realissue_step12_001.json`
+  - `logs/summaries/batch_compare_realissue_step13_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -368,10 +375,14 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - 扩充到 12 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 12 条任务后：`average_steps: 9.3636 -> 9.25`
   - 扩充到 12 条任务后：`average_duration_sec: 0.5512 -> 0.5811`
+  - 扩充到 13 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 13 条任务后：`average_steps: 9.25 -> 9.2308`
+  - 扩充到 13 条任务后：`average_duration_sec: 0.5811 -> 0.552`
   - `task_024` 从 `Premature Finish` 变为完全通过
   - `task_026` 在扩容后的任务集上保持完全通过
   - `task_028` 在扩容后的任务集上保持完全通过
   - `task_030` 在扩容后的任务集上保持完全通过
+  - `task_032` 在扩容后的任务集上保持完全通过
 
 ## Harness 设计方向
 

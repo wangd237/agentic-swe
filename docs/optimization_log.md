@@ -2045,6 +2045,134 @@
 - 当前 compare 主要是“逐轮扩容保持成功率”的证据链，后面也可以补同集合冻结对比
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 21：Packaging Wheel Version Normalization（improved_v14 -> improved_v15）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pypa/packaging#873` 推进成可运行任务
+- 验证 `improved_v14` 到 `improved_v15` 是否能覆盖 wheel 文件名版本号 normalization 校验场景
+- 继续扩展解析与规范校验类真实任务的覆盖面
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `pypa/packaging#873`
+- 新增草稿任务：
+  - `task_031`
+- 新增可运行 semi_real 任务：
+  - `task_032`
+- 新增 benchmark repo：
+  - `benchmarks/repos/packaging_wheel_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v15.json`
+- patch 生成器新增能力：
+  - 拒绝未 normalized 的 wheel 文件名版本号
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_031.json`
+- `benchmarks/tasks/task_032.json`
+- `benchmarks/repos/packaging_wheel_repo/packaging_wheel_repo/utils.py`
+- `benchmarks/repos/packaging_wheel_repo/tests/test_utils.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v15.json`
+- `app/agent/patcher.py`
+
+### improved_v14 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev14_001.json`
+- 单任务失败运行：
+  - `logs/trajectories/task_032/run_20260609T113004718414Z_9988/result.json`
+
+### improved_v15 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev15_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev15_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step13_001.json`
+- 单任务成功运行：
+  - `logs/trajectories/task_032/run_20260609T113004713415Z_6758/result.json`
+
+### 指标对比
+
+- 说明：
+  - 这一轮 compare 的 baseline 是 12 条任务集上的 `improved_v14`
+  - improved 是扩充到 13 条任务后的 `improved_v15`
+  - 因此仍然更适合看“扩容后是否维持成功率，以及平均效率是否变化”
+- `task_count`
+  - improved_v14: `12`
+  - improved_v15: `13`
+- `success_count`
+  - improved_v14: `12`
+  - improved_v15: `13`
+- `success_rate`
+  - improved_v14: `1.0`
+  - improved_v15: `1.0`
+- `test_pass_rate`
+  - improved_v14: `1.0`
+  - improved_v15: `1.0`
+- `average_steps`
+  - improved_v14: `9.25`
+  - improved_v15: `9.2308`
+- `average_duration_sec`
+  - improved_v14: `0.5811`
+  - improved_v15: `0.552`
+- `taxonomy`
+  - improved_v14: `无错误标签`
+  - improved_v15: `无错误标签`
+
+### 关键案例
+
+#### improved_v14 失败案例：`task_032`
+
+- 运行结果：
+  - `logs/trajectories/task_032/run_20260609T113004718414Z_9988/result.json`
+- 现象：
+  - 已读取 `packaging_wheel_repo/utils.py`
+  - 但没有匹配到 wheel 版本号 normalization 校验策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v15 成功案例：`task_032`
+
+- 运行结果：
+  - `logs/trajectories/task_032/run_20260609T113004713415Z_6758/result.json`
+- 现象：
+  - 自动识别未 normalized 的 wheel 版本号需要被拒绝
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 13 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v14`：覆盖 dotted inline table 分隔修复
+  - `improved_v15`：进一步覆盖 wheel 版本号 normalization 校验
+- 在任务集扩容的情况下，`improved_v15` 仍保持 `100%` 成功率与 `100%` 测试通过率
+- 平均步骤数继续小幅下降，平均耗时也从上一轮回落到了更健康的区间
+
+### 剩余问题
+
+- 目前高质量外部候选池已经基本吃完，需要继续扩新来源
+- 当前 compare 主要是“逐轮扩容保持成功率”的证据链，后面建议补一次冻结同集合对比
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间
