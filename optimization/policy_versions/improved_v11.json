@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v11",
+  "description": "增强规则型 patch 策略，额外支持模板分析中所有分支已赋值变量不再被判定为 undeclared。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v11"
+}

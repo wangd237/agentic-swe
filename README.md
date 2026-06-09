@@ -37,12 +37,14 @@
   - 已将 `pytest-dev/pytest#14329` 推进为 `task_011` 草稿与 `task_017` 可运行 semi_real 任务
   - 已将 `dateutil/dateutil#1432` 推进为 `task_018` 草稿与 `task_019` 可运行 semi_real 任务
   - 已将 `dateutil/dateutil#1442` 推进为 `task_021` 草稿与 `task_022` 可运行 semi_real 任务
+  - 已将 `pallets/jinja#2069` 推进为 `task_023` 草稿与 `task_024` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
   - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
   - 已完成 `improved_v8` 策略迭代，补充最近 marker 覆盖优先修复
   - 已完成 `improved_v9` 策略迭代，补充 tzstr 在 UTC/GMT 无 offset 场景下的零偏移回落修复
   - 已完成 `improved_v10` 策略迭代，补充 9 位时间串按 HHMMSSmmm 解析修复
+  - 已完成 `improved_v11` 策略迭代，补充模板分析中所有分支已赋值变量不再被判定为 undeclared
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -270,6 +272,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `task_019`：可运行的 semi_real 派生任务
     - `task_021`：真实 issue 草稿
     - `task_022`：可运行的 semi_real 派生任务
+    - `task_023`：真实 issue 草稿
+    - `task_024`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -326,11 +330,13 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev9_001.json`
 - improved_v10：
   - `logs/summaries/batch_eval_realissuev10_001.json`
+- improved_v11：
+  - `logs/summaries/batch_eval_realissuev11_001.json`
 - compare：
-  - `logs/summaries/batch_compare_realissue_step8_001.json`
-  - `success_rate: 0.875 -> 1.0`
-  - `test_pass_rate: 0.875 -> 1.0`
-  - `task_022` 从 `Premature Finish` 变为完全通过
+  - `logs/summaries/batch_compare_realissue_step9_001.json`
+  - `success_rate: 0.8889 -> 1.0`
+  - `test_pass_rate: 0.8889 -> 1.0`
+  - `task_024` 从 `Premature Finish` 变为完全通过
 
 ## Harness 设计方向
 

@@ -1543,6 +1543,117 @@
 - 新来源候选还没有继续扩大到更多项目
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 17：Jinja Branch-Assigned Undeclared Analysis（improved_v10 -> improved_v11）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pallets/jinja#2069` 推进成可运行任务
+- 验证 `improved_v10` 到 `improved_v11` 是否能覆盖模板变量控制流分析场景
+- 继续把真实 issue 来源从解析类 bug 扩展到模板静态分析类 bug
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增草稿任务：
+  - `task_023`
+- 新增可运行 semi_real 任务：
+  - `task_024`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jinja_meta_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v11.json`
+- patch 生成器新增能力：
+  - 让模板分析中所有分支都已赋值的变量不再被判定为 undeclared
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_023.json`
+- `benchmarks/tasks/task_024.json`
+- `benchmarks/repos/jinja_meta_repo/jinja_meta_repo/meta.py`
+- `benchmarks/repos/jinja_meta_repo/tests/test_meta.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v11.json`
+- `app/agent/patcher.py`
+
+### improved_v10 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev10r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev10r2_001.json`
+
+### improved_v11 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev11_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev11_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step9_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v10: `0.8889`
+  - improved_v11: `1.0`
+- `test_pass_rate`
+  - improved_v10: `0.8889`
+  - improved_v11: `1.0`
+- `average_steps`
+  - improved_v10: `9.5556`
+  - improved_v11: `9.5556`
+- `average_duration_sec`
+  - improved_v10: `0.5804`
+  - improved_v11: `0.5872`
+- `taxonomy`
+  - improved_v10: `Premature Finish = 1`
+  - improved_v11: `无错误标签`
+
+### 关键案例
+
+#### improved_v10 失败案例：`task_024`
+
+- 运行结果：
+  - `logs/trajectories/task_024/run_20260609T073418949787Z_3262/result.json`
+- 现象：
+  - 已读取 `jinja_meta_repo/meta.py`
+  - 但没有匹配到模板变量控制流分析修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v11 成功案例：`task_024`
+
+- 运行结果：
+  - `logs/trajectories/task_024/run_20260609T073420436230Z_3587/result.json`
+- 现象：
+  - 自动识别“所有分支都已赋值”的变量不应再被标记为 undeclared
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 9 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v10`：覆盖 9 位时间串解析修复
+  - `improved_v11`：进一步覆盖模板变量控制流分析修复
+
+### 剩余问题
+
+- `python-attrs/attrs#1479` 仍需先判断其性质是否适合作为 bugfix benchmark
+- 新来源候选还可以继续扩展到更多模板、序列化或配置类项目
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

@@ -45,6 +45,7 @@
 - `benchmarks/tasks/task_017.json`
 - `benchmarks/tasks/task_019.json`
 - `benchmarks/tasks/task_022.json`
+- `benchmarks/tasks/task_024.json`
 
 当前 repo：
 
@@ -59,6 +60,7 @@
 - `benchmarks/repos/pytest_marker_repo`
 - `benchmarks/repos/dateutil_tz_repo`
 - `benchmarks/repos/dateutil_parser_repo_v2`
+- `benchmarks/repos/jinja_meta_repo`
 
 用途：
 
@@ -330,6 +332,27 @@
 
 - `dateutil_parser_repo_v2/parser.py`
 - `tests/test_parser.py`
+
+### `jinja_meta_repo`
+
+来源：
+
+- `pallets/jinja#2069`
+
+主要问题：
+
+- 模板分析中，某个变量即便在 `if / elif / else` 所有分支都被 `set`
+- 当前仍被错误地判定为 undeclared variable
+
+正确行为：
+
+- 所有分支都已赋值的变量不应再被判定为 undeclared
+- 真正未赋值的控制变量仍应保留在 undeclared 集合中
+
+相关文件：
+
+- `jinja_meta_repo/meta.py`
+- `tests/test_meta.py`
 
 ## 当前为什么要分层
 

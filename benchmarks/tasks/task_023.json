@@ -1,0 +1,29 @@
+{
+  "task_id": "task_023",
+  "repo_name": "jinja",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "meta.find_undeclared_variables returning variables set in if blocks as of 3.1.5",
+  "issue_text": "I've observed a change in behaviour between 3.1.4 and 3.1.5 where `meta.find_undeclared_variables` is now returning variables that are `set` in all branches of an `if` statement.\r\n\r\nFor example with the following:\r\n\r\n```python\r\nfrom jinja2 import Environment, meta\r\n\r\nenv = Environment()\r\n\r\ntemplate = \"\"\"\\\r\n{% if control == 'something' %}\r\n    {% set output = 1 %}\r\n{% elif control == 'something else' %}\r\n    {% set output = 2 %}\r\n{% else %}\r\n    {% set output = 3 %}\r\n{% endif %}\r\n{{ output }}\r\n\"\"",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2069,
+    "issue_url": "https://github.com/pallets/jinja/issues/2069",
+    "candidate_id": "pallets_jinja_issue_2069",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

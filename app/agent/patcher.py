@@ -257,6 +257,44 @@ def _handle_nine_digit_time_string(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_branch_assigned_undeclared(content: str) -> str | None:
+    # improved_v11 处理所有分支都 set 的变量仍被错误判定为 undeclared 的问题。
+    target_block = (
+        'def find_undeclared_variables(branch_assigned: dict[str, list[str]], used_variables: list[str]) -> set[str]:\n'
+        '    """返回被使用但未声明的变量集合。"""\n'
+        "    assigned_variables: set[str] = set()\n"
+        "    for branch_variables in branch_assigned.values():\n"
+        "        assigned_variables.update(branch_variables)\n\n"
+        "    # 这里故意保留回归：即便变量在所有分支都被 set，也仍然错误地把它当成 undeclared。\n"
+        "    undeclared = {name for name in used_variables if name not in assigned_variables}\n"
+        "    for variable_name in used_variables:\n"
+        "        if variable_name in assigned_variables:\n"
+        "            undeclared.add(variable_name)\n"
+        "    return undeclared"
+    )
+    if target_block not in content:
+        return None
+    if "all_branch_assigned" in content:
+        return None
+
+    replacement = (
+        'def find_undeclared_variables(branch_assigned: dict[str, list[str]], used_variables: list[str]) -> set[str]:\n'
+        '    """返回被使用但未声明的变量集合。"""\n'
+        "    assigned_variables: set[str] = set()\n"
+        "    for branch_variables in branch_assigned.values():\n"
+        "        assigned_variables.update(branch_variables)\n\n"
+        "    all_branch_assigned = set.intersection(\n"
+        "        *(set(branch_variables) for branch_variables in branch_assigned.values())\n"
+        "    ) if branch_assigned else set()\n"
+        "    undeclared = {name for name in used_variables if name not in assigned_variables}\n"
+        "    for variable_name in list(undeclared):\n"
+        "        if variable_name in all_branch_assigned:\n"
+        "            undeclared.discard(variable_name)\n"
+        "    return undeclared"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -561,6 +599,62 @@ def apply_rule_based_patch(
                                                 if improved_content is not None:
                                                     updated_content = improved_content
                                                     patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v11":
+            improved_v11_content = _handle_branch_assigned_undeclared(original_content)
+            if improved_v11_content is not None:
+                updated_content = improved_v11_content
+                patch_reason_parts = ["让所有分支都已赋值的变量不再被判定为 undeclared"]
+            else:
+                improved_v10_content = _handle_nine_digit_time_string(original_content)
+                if improved_v10_content is not None:
+                    updated_content = improved_v10_content
+                    patch_reason_parts = ["让 9 位时间串按 HHMMSSmmm 解析"]
+                else:
+                    improved_v9_content = _handle_tzstr_zero_offset(original_content)
+                    if improved_v9_content is not None:
+                        updated_content = improved_v9_content
+                        patch_reason_parts = ["让 UTC 和 GMT 在未显式提供 offset 时回落为零偏移"]
+                    else:
+                        improved_v8_content = _handle_closest_marker_inheritance(original_content)
+                        if improved_v8_content is not None:
+                            updated_content = improved_v8_content
+                            patch_reason_parts = ["让 get_closest_marker 优先返回继承链中最近的 marker"]
+                        else:
+                            improved_v7_content = _handle_negative_boolean_default(original_content)
+                            if improved_v7_content is not None:
+                                updated_content = improved_v7_content
+                                patch_reason_parts = ["修正负向布尔 flag 的 default=True 默认行为"]
+                            else:
+                                improved_v6_content = _handle_richhandler_timezone(original_content)
+                                if improved_v6_content is not None:
+                                    updated_content = improved_v6_content
+                                    patch_reason_parts = ["让 RichHandler 的时间格式化显式保留时区信息"]
+                                else:
+                                    improved_v5_content = _handle_crlf_ansi_lines(original_content)
+                                    if improved_v5_content is not None:
+                                        updated_content = improved_v5_content
+                                        patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+                                    else:
+                                        improved_v4_content = _handle_quoted_charset(original_content)
+                                        if improved_v4_content is not None:
+                                            updated_content = improved_v4_content
+                                            patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                                        else:
+                                            improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                                            if improved_v3_content is not None:
+                                                updated_content = improved_v3_content
+                                                patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                                            else:
+                                                improved_v2_content = _handle_leading_none_item(original_content)
+                                                if improved_v2_content is not None:
+                                                    updated_content = improved_v2_content
+                                                    patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                                                else:
+                                                    improved_content = _handle_none_items(updated_content)
+                                                    if improved_content is not None:
+                                                        updated_content = improved_content
+                                                        patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

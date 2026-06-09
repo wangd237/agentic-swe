@@ -1,0 +1,37 @@
+{
+  "task_id": "task_024",
+  "repo_name": "jinja_meta_repo",
+  "repo_path": "benchmarks/repos/jinja_meta_repo",
+  "issue_title": "meta.find_undeclared_variables returning variables set in if blocks as of 3.1.5",
+  "issue_text": "I've observed a change in behaviour between 3.1.4 and 3.1.5 where `meta.find_undeclared_variables` is now returning variables that are `set` in all branches of an `if` statement.\r\n\r\nFor example with the following:\r\n\r\n```python\r\nfrom jinja2 import Environment, meta\r\n\r\nenv = Environment()\r\n\r\ntemplate = \"\"\"\\\r\n{% if control == 'something' %}\r\n    {% set output = 1 %}\r\n{% elif control == 'something else' %}\r\n    {% set output = 2 %}\r\n{% else %}\r\n    {% set output = 3 %}\r\n{% endif %}\r\n{{ output }}\r\n\"\"",
+  "test_command": "python -m pytest tests/test_meta.py -q",
+  "success_criteria": "在 if/elif/else 所有分支都 set 的变量，不应再被 find_undeclared_variables 判定为 undeclared，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "template-analysis",
+    "undeclared",
+    "control-flow"
+  ],
+  "target_files_hint": [
+    "jinja_meta_repo/meta.py",
+    "tests/test_meta.py"
+  ],
+  "expected_failure_test": "MetaTests.test_branch_assigned_variable_is_not_undeclared",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2069,
+    "issue_url": "https://github.com/pallets/jinja/issues/2069",
+    "candidate_id": "pallets_jinja_issue_2069",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_023",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

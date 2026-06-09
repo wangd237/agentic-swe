@@ -688,6 +688,13 @@ scripts/
   - 类型：`semi_real`
   - 来源：`dateutil/dateutil#1442`
   - 状态：已可运行
+- `task_023`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pallets/jinja#2069` 的真实入口记录
+- `task_024`
+  - 类型：`semi_real`
+  - 来源：`pallets/jinja#2069`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -704,6 +711,8 @@ scripts/
   - 作用：新增 tzstr 在 UTC/GMT 无 offset 场景下回落为零偏移的修复能力
 - `optimization/policy_versions/improved_v10.json`
   - 作用：新增 9 位时间串按 HHMMSSmmm 解析的修复能力
+- `optimization/policy_versions/improved_v11.json`
+  - 作用：新增模板分析中所有分支都已赋值的变量不再被判定为 undeclared 的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -972,6 +981,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_022.json --policy
 - 修改文件是 `dateutil_parser_repo_v2/parser.py`
 - patch 原因是让 9 位时间串按 HHMMSSmmm 解析
 
+### 方式 18：运行 jinja 模板变量分析真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_024.json --policy optimization/policy_versions/improved_v11.json
+```
+
+你会看到：
+
+- `task_024` 被成功修复
+- 修改文件是 `jinja_meta_repo/meta.py`
+- patch 原因是让所有分支都已赋值的变量不再被判定为 undeclared
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1077,6 +1100,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_022.json --policy
 - 已补充 `task_011` / `task_017` 与 `improved_v8`
 - 已补充 `task_018` / `task_019` 与 `improved_v9`
 - 已补充 `task_021` / `task_022` 与 `improved_v10`
+- 已补充 `task_023` / `task_024` 与 `improved_v11`
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

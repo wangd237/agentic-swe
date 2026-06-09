@@ -128,6 +128,19 @@
 - 结果：
   - `task_022` 从失败变为完全通过
 
+## 成功案例 11：`task_024`
+
+- repo：`jinja_meta_repo`
+- 来源：`pallets/jinja#2069`
+- 代表版本：`improved_v11`
+- 现象：
+  - `improved_v10` 还不具备模板变量控制流分析修复能力
+  - `task_024` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v11` 让所有分支都已赋值的变量不再被判定为 undeclared
+- 结果：
+  - `task_024` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -225,3 +238,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v10`
+
+## 失败案例 11：`task_024` 在 `improved_v10`
+
+- 失败版本：`improved_v10`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解模板分析里“所有分支都赋值”这一控制流模式
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v11`

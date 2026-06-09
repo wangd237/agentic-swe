@@ -180,6 +180,22 @@
       "state": "CLOSED",
       "created_at": "2025-10-13T19:30:05Z",
       "body_excerpt": "Hi, I'm not sure if this is a bug or a \"feature\" that is documented somewhere. At least, I haven't encountered it before, so I thought I'd better double-check.\n\nIs it expected that the `alias` property is `None` during field transformation? Has this something to do with the fact that the class is not yet fully built at this stage? But since all information is pretty much already available at this point, I'm wondering if this is unintended ... 🤔 \n\n```python\nfrom attrs import define, field, fields"
+    },
+    {
+      "candidate_id": "pallets_jinja_issue_2069",
+      "repo_full_name": "pallets/jinja",
+      "repo_url": "https://github.com/pallets/jinja",
+      "issue_number": 2069,
+      "issue_title": "meta.find_undeclared_variables returning variables set in if blocks as of 3.1.5",
+      "issue_url": "https://github.com/pallets/jinja/issues/2069",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-09T12:39:08: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-09T12:39:09: 重新同步 GitHub issue 元数据。\n2026-06-09T12:39:09: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-09T15:30:16: 已生成 semi_real 可运行任务 task_024，仓库目录为 benchmarks/repos/jinja_meta_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-01-10T14:41:35Z",
+      "body_excerpt": "I've observed a change in behaviour between 3.1.4 and 3.1.5 where `meta.find_undeclared_variables` is now returning variables that are `set` in all branches of an `if` statement.\r\n\r\nFor example with the following:\r\n\r\n```python\r\nfrom jinja2 import Environment, meta\r\n\r\nenv = Environment()\r\n\r\ntemplate = \"\"\"\\\r\n{% if control == 'something' %}\r\n    {% set output = 1 %}\r\n{% elif control == 'something else' %}\r\n    {% set output = 2 %}\r\n{% else %}\r\n    {% set output = 3 %}\r\n{% endif %}\r\n{{ output }}\r\n\"\""
     }
   ]
 }
