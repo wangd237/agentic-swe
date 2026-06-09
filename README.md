@@ -208,6 +208,20 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 
 如果不加 `--ready`，脚本会生成一个待人工补齐的 semi_real 草稿，更适合先做 issue 缩减和最小复现。
 
+### 9. 一键运行真实 issue 评测流水线
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v8.json --run-label realissuev8 --compare-against-eval logs/summaries/batch_eval_realissuev7r2_001.json --compare-label realissue_step6
+```
+
+这个命令当前会完成：
+
+- 读取 `real_issue_tasks` manifest
+- 批量运行真实 issue 派生任务集
+- 自动生成对应的 batch eval 报告
+- 如提供 baseline eval，则自动生成 compare 报告
+- 同时输出当前候选状态统计，方便回看 `accepted / drafted / scaffolded`
+
 ## 当前 benchmark 任务
 
 当前 benchmark 已分成三层：

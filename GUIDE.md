@@ -910,6 +910,22 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_017.json --policy
 - 修改文件是 `pytest_marker_repo/markers.py`
 - patch 原因是把 marker 查找顺序改为优先返回继承链中最近的定义
 
+### 方式 15：一键运行真实 issue 评测流水线
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v8.json --run-label realissuev8 --compare-against-eval logs/summaries/batch_eval_realissuev7r2_001.json --compare-label realissue_step6
+```
+
+你会看到：
+
+- 真实 issue manifest 的任务总数
+- 当前 `semi_real / real_issue / synthetic` 任务计数
+- 本轮 batch summary 路径
+- 本轮 eval summary 路径
+- 如果提供 baseline eval，还会自动产出 compare 报告路径
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1013,6 +1029,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_017.json --policy
 - 已补充 `task_012` / `task_013` 与 `improved_v6`
 - 已补充 `task_015` / `task_016` 与 `improved_v7`
 - 已补充 `task_011` / `task_017` 与 `improved_v8`
+- 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 
 ### Phase 7

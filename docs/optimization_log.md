@@ -1207,6 +1207,63 @@
 - 真实 issue 仍以派生任务形式为主
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 13：Real-Issue Eval Pipeline Consolidation
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把真实 issue 任务集的评测步骤从多命令手工串联，收敛成一条统一入口
+- 让后续引入新 issue 后，更容易稳定复跑 batch / eval / compare
+- 为将来接入更真实的 GitHub 仓库评测做脚本边界准备
+
+### 改动类型
+
+- `runtime`
+- `eval`
+- `docs`
+- `tests`
+
+### 改动摘要
+
+- 新增统一脚本：
+  - `scripts/run_real_issue_eval.py`
+- 新脚本能力：
+  - 读取 `benchmarks/manifests/real_issue_tasks.json`
+  - 运行真实 issue 任务集 batch run
+  - 自动生成 batch eval
+  - 在提供 baseline eval 时自动生成 compare
+  - 汇总当前 candidate 状态分布
+- 新增测试：
+  - `tests/test_run_real_issue_eval.py`
+- 文档补充：
+  - 在 `README.md` 与 `GUIDE.md` 增加一键运行真实 issue 评测流水线的体验入口
+
+### 主要涉及文件
+
+- `scripts/run_real_issue_eval.py`
+- `tests/test_run_real_issue_eval.py`
+- `README.md`
+- `GUIDE.md`
+
+### 当前结论
+
+- 真实 issue 入口现在不只是“候选导入 -> 草稿 -> semi_real 脚手架”
+- 也具备了“manifest -> batch run -> eval -> compare”的统一执行入口
+- 后续接入新的真实 issue 候选时，可以更稳定地复用同一条评测链路
+
+### 剩余问题
+
+- 当前仍依赖人工指定 policy 和 compare baseline
+- 还没有把“候选筛选建议 -> 自动导入”做成半自动流程
+- 后续可以继续补一个 issue shortlist 到 candidate 文件的辅助入口
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间
