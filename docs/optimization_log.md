@@ -1789,6 +1789,134 @@
 - 当前 compare 主要是“逐轮扩容保持成功率”的证据链，后面也可以补同集合对比实验
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## Iteration 19：Tomlkit Next-Line Comma Append（improved_v12 -> improved_v13）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-poetry/tomlkit#494` 推进成可运行任务
+- 验证 `improved_v12` 到 `improved_v13` 是否能覆盖数组下一行逗号风格下的 append 场景
+- 继续扩展真实任务集的序列化与格式保真能力
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-poetry/tomlkit#494`
+- 新增草稿任务：
+  - `task_027`
+- 新增可运行 semi_real 任务：
+  - `task_028`
+- 新增 benchmark repo：
+  - `benchmarks/repos/tomlkit_array_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v13.json`
+- patch 生成器新增能力：
+  - 保留数组“下一行逗号”原始风格，避免 append 后生成双逗号
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_027.json`
+- `benchmarks/tasks/task_028.json`
+- `benchmarks/repos/tomlkit_array_repo/tomlkit_array_repo/formatter.py`
+- `benchmarks/repos/tomlkit_array_repo/tests/test_formatter.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v13.json`
+- `app/agent/patcher.py`
+
+### improved_v12 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev12_001.json`
+- 单任务失败运行：
+  - `logs/trajectories/task_028/run_20260609T094333654294Z_6340/result.json`
+
+### improved_v13 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev13_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev13_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step11_001.json`
+- 单任务成功运行：
+  - `logs/trajectories/task_028/run_20260609T094333623016Z_0883/result.json`
+
+### 指标对比
+
+- 说明：
+  - 这一轮 compare 的 baseline 是 10 条任务集上的 `improved_v12`
+  - improved 是扩充到 11 条任务后的 `improved_v13`
+  - 因此仍然更适合看“扩容后是否维持成功率，以及平均效率是否下降”
+- `task_count`
+  - improved_v12: `10`
+  - improved_v13: `11`
+- `success_count`
+  - improved_v12: `10`
+  - improved_v13: `11`
+- `success_rate`
+  - improved_v12: `1.0`
+  - improved_v13: `1.0`
+- `test_pass_rate`
+  - improved_v12: `1.0`
+  - improved_v13: `1.0`
+- `average_steps`
+  - improved_v12: `9.5`
+  - improved_v13: `9.3636`
+- `average_duration_sec`
+  - improved_v12: `0.5526`
+  - improved_v13: `0.5512`
+- `taxonomy`
+  - improved_v12: `无错误标签`
+  - improved_v13: `无错误标签`
+
+### 关键案例
+
+#### improved_v12 失败案例：`task_028`
+
+- 运行结果：
+  - `logs/trajectories/task_028/run_20260609T094333654294Z_6340/result.json`
+- 现象：
+  - 已读取 `tomlkit_array_repo/formatter.py`
+  - 但没有匹配到数组下一行逗号风格的追加修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v13 成功案例：`task_028`
+
+- 运行结果：
+  - `logs/trajectories/task_028/run_20260609T094333623016Z_0883/result.json`
+- 现象：
+  - 自动识别“下一行开头逗号”的原始风格不应再被重复补逗号
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 11 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v12`：覆盖 Jinja slice filter 填充值边界修复
+  - `improved_v13`：进一步覆盖 toml 数组序列化重复逗号修复
+- 在任务集扩容的情况下，`improved_v13` 仍保持 `100%` 成功率与 `100%` 测试通过率
+- 平均步骤数和平均耗时继续保持轻微改善
+
+### 剩余问题
+
+- `python-poetry/tomlkit#495` 仍可作为下一条高优先级候选继续推进
+- `pypa/packaging#873` 仍值得保留，但落题时要注意规范与实现边界
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

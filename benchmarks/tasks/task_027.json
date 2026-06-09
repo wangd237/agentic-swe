@@ -1,0 +1,29 @@
+{
+  "task_id": "task_027",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "tomlkit inserts an invalid comma when appending to unusually formatted array",
+  "issue_text": "Bit of an edge case: but I found it so I might as well tell you about it.\n```python\nimport tomlkit\n\nsrc = \"\"\"\n a = [\n       1 # comma is on the next line\n      ,2\n     ]\n\"\"\"\n\ndoc = tomlkit.parse(src)\nassert doc == {\"a\": [1, 2]}, \"src is valid TOML\"\n\ndoc[\"a\"].append(99)\n\nout = tomlkit.dumps(doc)\nprint(out)\n```\noutput:\n```\n a = [\n       1 # comma is on the next line\n      ,2,\n      ,99\n     ]\n```\nwhich has too many commas between the 2 and the 99.",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 494,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/494",
+    "candidate_id": "python_poetry_tomlkit_issue_494",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v12` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v13` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -702,6 +702,13 @@ scripts/
   - 类型：`semi_real`
   - 来源：`pallets/jinja#2118`
   - 状态：已可运行
+- `task_027`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `python-poetry/tomlkit#494` 的真实入口记录
+- `task_028`
+  - 类型：`semi_real`
+  - 来源：`python-poetry/tomlkit#494`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -722,6 +729,8 @@ scripts/
   - 作用：新增模板分析中所有分支都已赋值的变量不再被判定为 undeclared 的修复能力
 - `optimization/policy_versions/improved_v12.json`
   - 作用：新增 Jinja slice filter 在整除场景下不应错误补入 `fill_with` 的修复能力
+- `optimization/policy_versions/improved_v13.json`
+  - 作用：新增 toml 数组下一行逗号风格下 append 后不应生成双逗号的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1018,6 +1027,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_026.json --policy
 - 修改文件是 `jinja_slice_repo/filters.py`
 - patch 原因是只在存在余数时才给 slice 尾部分片补入 `fill_with`
 
+### 方式 20：运行 tomlkit 数组下一行逗号风格真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_028.json --policy optimization/policy_versions/improved_v13.json
+```
+
+你会看到：
+
+- `task_028` 被成功修复
+- 修改文件是 `tomlkit_array_repo/formatter.py`
+- patch 原因是保留原始下一行逗号风格，避免 append 后生成双逗号
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1125,6 +1148,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_026.json --policy
 - 已补充 `task_021` / `task_022` 与 `improved_v10`
 - 已补充 `task_023` / `task_024` 与 `improved_v11`
 - 已补充 `task_025` / `task_026` 与 `improved_v12`
+- 已补充 `task_027` / `task_028` 与 `improved_v13`
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_028",
+  "repo_name": "tomlkit_array_repo",
+  "repo_path": "benchmarks/repos/tomlkit_array_repo",
+  "issue_title": "tomlkit inserts an invalid comma when appending to unusually formatted array",
+  "issue_text": "Bit of an edge case: but I found it so I might as well tell you about it.\n```python\nimport tomlkit\n\nsrc = \"\"\"\n a = [\n       1 # comma is on the next line\n      ,2\n     ]\n\"\"\"\n\ndoc = tomlkit.parse(src)\nassert doc == {\"a\": [1, 2]}, \"src is valid TOML\"\n\ndoc[\"a\"].append(99)\n\nout = tomlkit.dumps(doc)\nprint(out)\n```\noutput:\n```\n a = [\n       1 # comma is on the next line\n      ,2,\n      ,99\n     ]\n```\nwhich has too many commas between the 2 and the 99.",
+  "test_command": "python -m pytest tests/test_formatter.py -q",
+  "success_criteria": "当数组原始格式把逗号放在下一行时，追加新元素后输出不应生成重复逗号，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "toml",
+    "serializer",
+    "array-formatting"
+  ],
+  "target_files_hint": [
+    "tomlkit_array_repo/formatter.py",
+    "tests/test_formatter.py"
+  ],
+  "expected_failure_test": "ArrayFormatterTests.test_append_preserves_single_comma_for_next_line_style",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 494,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/494",
+    "candidate_id": "python_poetry_tomlkit_issue_494",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_027",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

@@ -47,6 +47,7 @@
 - `benchmarks/tasks/task_022.json`
 - `benchmarks/tasks/task_024.json`
 - `benchmarks/tasks/task_026.json`
+- `benchmarks/tasks/task_028.json`
 
 当前 repo：
 
@@ -63,6 +64,7 @@
 - `benchmarks/repos/dateutil_parser_repo_v2`
 - `benchmarks/repos/jinja_meta_repo`
 - `benchmarks/repos/jinja_slice_repo`
+- `benchmarks/repos/tomlkit_array_repo`
 
 用途：
 
@@ -376,6 +378,27 @@
 
 - `jinja_slice_repo/filters.py`
 - `tests/test_filters.py`
+
+### `tomlkit_array_repo`
+
+来源：
+
+- `python-poetry/tomlkit#494`
+
+主要问题：
+
+- 原始数组格式把逗号放在下一行时
+- append 新元素后错误生成了重复逗号
+
+正确行为：
+
+- 应保留原始“下一行开头带逗号”的风格
+- 但不应在追加元素时再补出第二个逗号
+
+相关文件：
+
+- `tomlkit_array_repo/formatter.py`
+- `tests/test_formatter.py`
 
 ## 当前为什么要分层
 
