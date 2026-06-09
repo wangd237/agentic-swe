@@ -1319,6 +1319,117 @@
 - 还没有把最优新来源 issue 推进成新的 draft task
 - 后续建议优先审查 `dateutil/dateutil#1432` 与 `#1442`
 
+## Iteration 15：Dateutil tzstr Zero-Offset Fallback（improved_v8 -> improved_v9）
+
+### 时间
+
+- 2026-06-09
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `dateutil/dateutil#1432` 推进成可运行任务
+- 验证 `improved_v8` 到 `improved_v9` 是否能覆盖 UTC/GMT 无 offset 的时区解析场景
+- 继续扩充真实 issue 派生任务集的来源多样性
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 新增草稿任务：
+  - `task_018`
+- 新增可运行 semi_real 任务：
+  - `task_019`
+- 新增 benchmark repo：
+  - `benchmarks/repos/dateutil_tz_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v9.json`
+- patch 生成器新增能力：
+  - 让 `tzstr("UTC")` / `tzstr("GMT")` 在无 offset 时回落为零偏移，而不是继续对 `None` 做符号变换
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_018.json`
+- `benchmarks/tasks/task_019.json`
+- `benchmarks/repos/dateutil_tz_repo/dateutil_tz_repo/tz.py`
+- `benchmarks/repos/dateutil_tz_repo/tests/test_tz.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v9.json`
+- `app/agent/patcher.py`
+
+### improved_v8 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev8r2_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev8r2_001.json`
+
+### improved_v9 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev9_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev9_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step7_001.json`
+
+### 指标对比
+
+- `success_rate`
+  - improved_v8: `0.8571`
+  - improved_v9: `1.0`
+- `test_pass_rate`
+  - improved_v8: `0.8571`
+  - improved_v9: `1.0`
+- `average_steps`
+  - improved_v8: `9.7143`
+  - improved_v9: `9.7143`
+- `average_duration_sec`
+  - improved_v8: `0.5962`
+  - improved_v9: `0.5928`
+- `taxonomy`
+  - improved_v8: `Premature Finish = 1`
+  - improved_v9: `无错误标签`
+
+### 关键案例
+
+#### improved_v8 失败案例：`task_019`
+
+- 运行结果：
+  - `logs/trajectories/task_019/run_20260609T024638741956Z_7113/result.json`
+- 现象：
+  - 已读取 `dateutil_tz_repo/tz.py`
+  - 但没有匹配到 UTC/GMT 无 offset 的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v9 成功案例：`task_019`
+
+- 运行结果：
+  - `logs/trajectories/task_019/run_20260609T024638741954Z_4984/result.json`
+- 现象：
+  - 自动把无 offset 时的 `None` 处理改成零偏移回落
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 7 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v8`：覆盖最近 marker 覆盖优先修复
+  - `improved_v9`：进一步覆盖 UTC/GMT 无 offset 时区解析修复
+
+### 剩余问题
+
+- `dateutil/dateutil#1442` 还没有继续推进成新的 semi_real 任务
+- `python-attrs/attrs#1479` 仍需先判断其性质是否适合作为 bugfix benchmark
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ## Iteration 11：Negative Boolean Flag Default from Real Issue（improved_v6 -> improved_v7）
 
 ### 时间

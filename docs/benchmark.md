@@ -43,6 +43,7 @@
 - `benchmarks/tasks/task_013.json`
 - `benchmarks/tasks/task_016.json`
 - `benchmarks/tasks/task_017.json`
+- `benchmarks/tasks/task_019.json`
 
 当前 repo：
 
@@ -55,6 +56,7 @@
 - `benchmarks/repos/rich_handler_repo`
 - `benchmarks/repos/click_flag_repo`
 - `benchmarks/repos/pytest_marker_repo`
+- `benchmarks/repos/dateutil_tz_repo`
 
 用途：
 
@@ -284,6 +286,27 @@
 
 - `pytest_marker_repo/markers.py`
 - `tests/test_markers.py`
+
+### `dateutil_tz_repo`
+
+来源：
+
+- `dateutil/dateutil#1432`
+
+主要问题：
+
+- `tzstr("UTC")` 或 `tzstr("GMT")` 在未显式提供 offset 时会触发 `TypeError`
+- 根因是内部继续对 `None` 做符号变换
+
+正确行为：
+
+- UTC / GMT 在没有 offset 时应回落到零偏移
+- 不应再抛出 `TypeError`
+
+相关文件：
+
+- `dateutil_tz_repo/tz.py`
+- `tests/test_tz.py`
 
 ## 当前为什么要分层
 

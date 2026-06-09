@@ -102,6 +102,19 @@
 - 结果：
   - `task_017` 从失败变为完全通过
 
+## 成功案例 9：`task_019`
+
+- repo：`dateutil_tz_repo`
+- 来源：`dateutil/dateutil#1432`
+- 代表版本：`improved_v9`
+- 现象：
+  - `improved_v8` 还不具备 UTC/GMT 无 offset 时的零偏移回落修复能力
+  - `task_019` 会以 `Premature Finish` 失败
+- 改进点：
+  - `improved_v9` 让 `tzstr` 在未显式提供 offset 时回落为 `0`
+- 结果：
+  - `task_019` 从失败变为完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -179,3 +192,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v8`
+
+## 失败案例 9：`task_019` 在 `improved_v8`
+
+- 失败版本：`improved_v8`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 UTC/GMT 无 offset 时应回落到零偏移的模式
+  - 虽然读到了目标函数，但没有形成任何补丁
+- 后续改进：
+  - 升级为 `improved_v9`

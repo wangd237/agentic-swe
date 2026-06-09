@@ -1,0 +1,37 @@
+{
+  "task_id": "task_019",
+  "repo_name": "dateutil_tz_repo",
+  "repo_path": "benchmarks/repos/dateutil_tz_repo",
+  "issue_title": "TypeError in tzstr when parsing \"UTC\" or \"GMT\" without offset",
+  "issue_text": "### Description\nVersion: `python-dateutil(2.9.0.post0)`.\nWhen calling \n```python\ntztsr(\"GMT\")\n``` \nwithout an explicit offset, the following error is thrown:\n```python\nTypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'\n```\n### Reproduce\n```python\nfrom dateutil.tz import tzstr \ntzstr(\"GMT\")\n```\nOutput:\n```python\nunsupported operand type(s) for *=: 'NoneType' and 'int'\nTraceback (most recent call last):\n  File \"D:/Python/Lib/site-packages/dateutil/tz/_factories.py\", line 69, in __",
+  "test_command": "python -m pytest tests/test_tz.py -q",
+  "success_criteria": "tzstr 在解析不带 offset 的 UTC 和 GMT 时不应抛出 TypeError，应返回零偏移时区对象，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "timezone",
+    "parser",
+    "tzstr"
+  ],
+  "target_files_hint": [
+    "dateutil_tz_repo/tz.py",
+    "tests/test_tz.py"
+  ],
+  "expected_failure_test": "TzStrTests.test_gmt_without_offset_returns_zero_offset",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 1432,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/1432",
+    "candidate_id": "dateutil_dateutil_issue_1432",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_018",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

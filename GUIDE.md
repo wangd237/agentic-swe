@@ -670,9 +670,16 @@ scripts/
   - 类型：`semi_real`
   - 来源：`pallets/click#3111`
   - 状态：已可运行
+- `task_018`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `dateutil/dateutil#1432` 的真实入口记录
 - `task_017`
   - 类型：`semi_real`
   - 来源：`pytest-dev/pytest#14329`
+  - 状态：已可运行
+- `task_019`
+  - 类型：`semi_real`
+  - 来源：`dateutil/dateutil#1432`
   - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
@@ -686,6 +693,8 @@ scripts/
   - 作用：新增负向 boolean flag 默认值修复能力
 - `optimization/policy_versions/improved_v8.json`
   - 作用：新增最近 marker 覆盖优先修复能力
+- `optimization/policy_versions/improved_v9.json`
+  - 作用：新增 tzstr 在 UTC/GMT 无 offset 场景下回落为零偏移的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -926,6 +935,20 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 本轮 eval summary 路径
 - 如果提供 baseline eval，还会自动产出 compare 报告路径
 
+### 方式 16：运行 dateutil tzstr 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_019.json --policy optimization/policy_versions/improved_v9.json
+```
+
+你会看到：
+
+- `task_019` 被成功修复
+- 修改文件是 `dateutil_tz_repo/tz.py`
+- patch 原因是让 UTC 和 GMT 在未显式提供 offset 时回落为零偏移
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1029,6 +1052,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 已补充 `task_012` / `task_013` 与 `improved_v6`
 - 已补充 `task_015` / `task_016` 与 `improved_v7`
 - 已补充 `task_011` / `task_017` 与 `improved_v8`
+- 已补充 `task_018` / `task_019` 与 `improved_v9`
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

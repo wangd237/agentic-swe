@@ -189,6 +189,41 @@ def _handle_closest_marker_inheritance(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_tzstr_zero_offset(content: str) -> str | None:
+    # improved_v9 处理 UTC / GMT 未显式给 offset 时对 None 做符号变换的问题。
+    target_block = (
+        'def tzstr(zone: str) -> FixedOffsetTZ:\n'
+        '    """解析最小化的时区字符串。"""\n'
+        "    normalized_zone = zone.strip().upper()\n"
+        "    offset = None\n\n"
+        '    if normalized_zone not in {"UTC", "GMT"}:\n'
+        '        raise ValueError(f"Unsupported zone: {zone}")\n\n'
+        "    # 这里故意保留真实 issue 中的缺陷：没有 offset 时仍对 None 做符号变换。\n"
+        "    offset *= -1\n"
+        "    return FixedOffsetTZ(normalized_zone, offset)"
+    )
+    if target_block not in content:
+        return None
+    if "if offset is None:" in content:
+        return None
+
+    replacement = (
+        'def tzstr(zone: str) -> FixedOffsetTZ:\n'
+        '    """解析最小化的时区字符串。"""\n'
+        "    normalized_zone = zone.strip().upper()\n"
+        "    offset = None\n\n"
+        '    if normalized_zone not in {"UTC", "GMT"}:\n'
+        '        raise ValueError(f"Unsupported zone: {zone}")\n\n'
+        "    # UTC / GMT 在未显式提供 offset 时，应回落到零偏移而不是继续对 None 做运算。\n"
+        "    if offset is None:\n"
+        "        offset = 0\n"
+        "    else:\n"
+        "        offset *= -1\n"
+        "    return FixedOffsetTZ(normalized_zone, offset)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -396,6 +431,52 @@ def apply_rule_based_patch(
                                         if improved_content is not None:
                                             updated_content = improved_content
                                             patch_reason_parts.append("加入 None 元素过滤逻辑")
+
+        if policy_config.patch_strategy == "improved_v9":
+            improved_v9_content = _handle_tzstr_zero_offset(original_content)
+            if improved_v9_content is not None:
+                updated_content = improved_v9_content
+                patch_reason_parts = ["让 UTC 和 GMT 在未显式提供 offset 时回落为零偏移"]
+            else:
+                improved_v8_content = _handle_closest_marker_inheritance(original_content)
+                if improved_v8_content is not None:
+                    updated_content = improved_v8_content
+                    patch_reason_parts = ["让 get_closest_marker 优先返回继承链中最近的 marker"]
+                else:
+                    improved_v7_content = _handle_negative_boolean_default(original_content)
+                    if improved_v7_content is not None:
+                        updated_content = improved_v7_content
+                        patch_reason_parts = ["修正负向布尔 flag 的 default=True 默认行为"]
+                    else:
+                        improved_v6_content = _handle_richhandler_timezone(original_content)
+                        if improved_v6_content is not None:
+                            updated_content = improved_v6_content
+                            patch_reason_parts = ["让 RichHandler 的时间格式化显式保留时区信息"]
+                        else:
+                            improved_v5_content = _handle_crlf_ansi_lines(original_content)
+                            if improved_v5_content is not None:
+                                updated_content = improved_v5_content
+                                patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+                            else:
+                                improved_v4_content = _handle_quoted_charset(original_content)
+                                if improved_v4_content is not None:
+                                    updated_content = improved_v4_content
+                                    patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                                else:
+                                    improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                                    if improved_v3_content is not None:
+                                        updated_content = improved_v3_content
+                                        patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                                    else:
+                                        improved_v2_content = _handle_leading_none_item(original_content)
+                                        if improved_v2_content is not None:
+                                            updated_content = improved_v2_content
+                                            patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                                        else:
+                                            improved_content = _handle_none_items(updated_content)
+                                            if improved_content is not None:
+                                                updated_content = improved_content
+                                                patch_reason_parts.append("加入 None 元素过滤逻辑")
 
         if updated_content == original_content:
             updated_content = None

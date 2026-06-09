@@ -1,0 +1,29 @@
+{
+  "task_id": "task_018",
+  "repo_name": "dateutil",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "TypeError in tzstr when parsing \"UTC\" or \"GMT\" without offset",
+  "issue_text": "### Description\nVersion: `python-dateutil(2.9.0.post0)`.\nWhen calling \n```python\ntztsr(\"GMT\")\n``` \nwithout an explicit offset, the following error is thrown:\n```python\nTypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'\n```\n### Reproduce\n```python\nfrom dateutil.tz import tzstr \ntzstr(\"GMT\")\n```\nOutput:\n```python\nunsupported operand type(s) for *=: 'NoneType' and 'int'\nTraceback (most recent call last):\n  File \"D:/Python/Lib/site-packages/dateutil/tz/_factories.py\", line 69, in __",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 1432,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/1432",
+    "candidate_id": "dateutil_dateutil_issue_1432",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
