@@ -263,6 +263,286 @@
       "state": "OPEN",
       "created_at": "2026-06-08T18:23:30Z",
       "body_excerpt": "```python\nimport tomlkit\n\nsrc = \"a = {b.c = 1}\\n\"\n\ndoc = tomlkit.parse(src)\nassert doc == {\"a\": {\"b\": {\"c\": 1}}}, \"src is valid TOML\"\n\ndoc[\"a\"][\"b\"][\"d\"] = 2\n\nout = tomlkit.dumps(doc)\nprint(out)\n```\noutput\n```\na = {b.c = 1d = 2\n}\n```\nwhich is not good"
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1157",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1157,
+      "issue_title": "additionalItems can blow up when rendering a message for a non-homogeneous array",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1157",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:20: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T14:24:29: 重新同步 GitHub issue 元数据。\n2026-06-10T14:24:29: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T14:25:10: 已生成 semi_real 可运行任务 task_034，仓库目录为 benchmarks/repos/jsonschema_extras_repo。",
+      "labels": [
+        "Bug",
+        "Error Reporting"
+      ],
+      "state": "CLOSED",
+      "created_at": "2023-09-05T11:04:30Z",
+      "body_excerpt": "The [`extras_msg` function](https://github.com/python-jsonschema/jsonschema/blob/ccfbc8c32ddcd0e6a13a30371e5a9b1f2036c0ba/jsonschema/_utils.py#L88-L94) sometimes throws an exception when everything in extras is not the same type because sorting fails.\r\n\r\nAssuming the specific sort order is not terribly important, changing from\r\n\r\n```python\r\n        return \", \".join(repr(extra) for extra in sorted(extras)), verb\r\n```\r\n\r\nto\r\n\r\n```python\r\n        return \", \".join(extra for extra in sorted(map(repr,"
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1159",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1159,
+      "issue_title": "Instance validates if `multipleOf` is an integer, but fails if it's a float",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1159",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:20: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "Bug"
+      ],
+      "state": "OPEN",
+      "created_at": "2023-09-10T22:20:02Z",
+      "body_excerpt": "```python\r\nfrom jsonschema import validate\r\n\r\ninstance = 9007199254740995\r\nvalidate(instance, schema={\"type\": \"integer\", \"multipleOf\": 11})    # passes\r\nvalidate(instance, schema={\"type\": \"integer\", \"multipleOf\": 11.0})  # fails\r\n```\r\nI'm pretty sure that this is a bug, on the basis that [the spec says all integer-valued numbers should be treated as integers](https://json-schema.org/draft/2020-12/json-schema-core.html#name-mathematical-integers).\r\n\r\nFound via https://github.com/python-jsonschema"
+    },
+    {
+      "candidate_id": "pypa_packaging_issue_810",
+      "repo_full_name": "pypa/packaging",
+      "repo_url": "https://github.com/pypa/packaging",
+      "issue_number": 810,
+      "issue_title": "`Specifier` Greater than comparison returns incorrect result for a version with dev+local parts",
+      "issue_url": "https://github.com/pypa/packaging/issues/810",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:21: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "packaging.specifiers"
+      ],
+      "state": "CLOSED",
+      "created_at": "2024-06-04T14:45:24Z",
+      "body_excerpt": "When a using a `Specifier` with a `>` comparison, comparing returns an incorrect result for the following situation:\r\n- the base version of the specifier and compared version are equal\r\n- the compared version includes a `local` segment\r\n- the compared version differs in its `dev` segment.\r\n\r\nMy understanding from PEP440 is that the entire public portion of the version (including the dev segment) should be included in the comparison? I think this is due to this line: https://github.com/pypa/packa"
+    },
+    {
+      "candidate_id": "pypa_packaging_issue_845",
+      "repo_full_name": "pypa/packaging",
+      "repo_url": "https://github.com/pypa/packaging",
+      "issue_number": 845,
+      "issue_title": "Inconsistent `extra` normalisation in `Requirement.__str__`",
+      "issue_url": "https://github.com/pypa/packaging/issues/845",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:22: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "packaging.requirements"
+      ],
+      "state": "CLOSED",
+      "created_at": "2024-10-22T17:13:11Z",
+      "body_excerpt": "I noticed what seems to be an inconsistent normalisation when running the following:\r\n\r\n```python\r\n$ pipx run --python python3.12 -- pip-run 'packaging==24.1'\r\n# Python 3.12.7 (main, Oct  1 2024, 08:52:11) [GCC 9.4.0] on linux\r\n# Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.\r\n>>> from packaging.requirements import Requirement\r\n>>> req1 = Requirement('mariadb>=1.0.1; extra == \"mariadb_connector\"')\r\n>>> str(req1)\r\n'mariadb>=1.0.1; extra == \"mariadb-connector\"'\r\n>>> req2 = "
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1328",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1328,
+      "issue_title": "The return of `__iter__()` and `__contains__()` change after accessing of an index with no error",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1328",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:23: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "Bug"
+      ],
+      "state": "OPEN",
+      "created_at": "2025-01-22T06:26:20Z",
+      "body_excerpt": "The following example illustrate that accessing of an index in an `ErrorTree` object that has no error can added the index to the collection of indices considered having errors.\n\n```python\nfrom jsonschema import Draft202012Validator\nfrom jsonschema.exceptions import ErrorTree\n\nschema = {\n    \"type\" : \"array\",\n    \"items\" : {\"type\" : \"number\", \"enum\" : [1, 2, 3]},\n    \"minItems\" : 3,\n}\ninstance = [\"spam\", 2]\n\nv = Draft202012Validator(schema)\nfor error in sorted(v.iter_errors(instance), key=str):\n"
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1125",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1125,
+      "issue_title": "extend() doesn't copy applicable_validators",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1125",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:24: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "Bug"
+      ],
+      "state": "CLOSED",
+      "created_at": "2023-07-12T20:02:20Z",
+      "body_excerpt": "It seems the `applicable_validators` property from c6b0fc454d9c3d5c3f2f27c8dc851cd9691ec9ff never made it to [`extend`](https://github.com/python-jsonschema/jsonschema/blob/main/jsonschema/validators.py#L493).\r\n\r\nThis means that `extend`ing `Draft4Validator` (or other legacy validators) makes it consider properties next to `$ref` again. (This made `connexion` break OpenAPI 3.0 spec - spec-first/connexion#1721)\r\n\r\n### Steps to reproduce\r\n\r\n```python\r\nimport jsonschema\r\n\r\nschema = {\r\n  \"$defs\": { "
+    },
+    {
+      "candidate_id": "simonw_sqlite_utils_issue_159",
+      "repo_full_name": "simonw/sqlite-utils",
+      "repo_url": "https://github.com/simonw/sqlite-utils",
+      "issue_number": 159,
+      "issue_title": ".delete_where() does not auto-commit (unlike .insert() or .upsert())",
+      "issue_url": "https://github.com/simonw/sqlite-utils/issues/159",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:25: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "python-library"
+      ],
+      "state": "OPEN",
+      "created_at": "2020-09-16T01:55:52Z",
+      "body_excerpt": "When you use the delete_where() function on a table, it never commits....\r\n\r\nIs that intentional?"
+    },
+    {
+      "candidate_id": "pallets_click_issue_2402",
+      "repo_full_name": "pallets/click",
+      "repo_url": "https://github.com/pallets/click",
+      "issue_number": 2402,
+      "issue_title": "resolve_command fails if cmd is None",
+      "issue_url": "https://github.com/pallets/click/issues/2402",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug"
+      ],
+      "state": "OPEN",
+      "created_at": "2022-11-09T13:07:57Z",
+      "body_excerpt": "On the documentation, an example is given for how to implement [AliasedGroups](https://click.palletsprojects.com/en/8.1.x/advanced/#command-aliases)\r\n\r\nWe have a command, which is intended to be run like this\r\n\r\n```console\r\naxii workspace add\r\n```\r\n\r\ntab completion should then suggest the package names, which works. However, if there is a typo in the command, the command errors out with an ugly stack-trace if implemented according to the documentation.\r\n\r\n```console\r\naxii workspaceTYPO add\r\n```\r"
+    },
+    {
+      "candidate_id": "dateutil_dateutil_issue_1191",
+      "repo_full_name": "dateutil/dateutil",
+      "repo_url": "https://github.com/dateutil/dateutil",
+      "issue_number": 1191,
+      "issue_title": "Incorrect year is returned when parsing a date string such as \"may15,2021\"",
+      "issue_url": "https://github.com/dateutil/dateutil/issues/1191",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "state": "OPEN",
+      "created_at": "2022-02-08T15:36:22Z",
+      "body_excerpt": ">> from dateutil import parser\r\n>> parser.parse(\"may15,2021\")\r\ndatetime.datetime(2022, 5, 15, 0, 0)\r\n\r\n\r\nhowever, padding space around comma, gives correct result\r\n>> parser.parse(\"may15,2021\".replace(\",\", \" , \"))\r\ndatetime.datetime(2021, 5, 15, 0, 0)"
+    },
+    {
+      "candidate_id": "simonw_sqlite_utils_issue_488",
+      "repo_full_name": "simonw/sqlite-utils",
+      "repo_url": "https://github.com/simonw/sqlite-utils",
+      "issue_number": 488,
+      "issue_title": "`sqlite-utils transform` should set empty strings to null when converting text columns to integer/float",
+      "issue_url": "https://github.com/simonw/sqlite-utils/issues/488",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:27: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "enhancement",
+        "python-library",
+        "cli-tool"
+      ],
+      "state": "OPEN",
+      "created_at": "2022-09-14T15:51:30Z",
+      "body_excerpt": "```\r\n/tmp % echo \"id,age,weight\\n1,3,2.5\\n2,,\" | sqlite-utils insert test.db test - --csv\r\n/tmp % sqlite-utils schema test.db                                                  \r\nCREATE TABLE [test] (\r\n   [id] TEXT,\r\n   [age] TEXT,\r\n   [weight] TEXT\r\n);\r\n/tmp % sqlite-utils transform test.db test --type age integer --type weight float   \r\n/tmp % sqlite-utils schema test.db                                               \r\nCREATE TABLE \"test\" (\r\n   [id] TEXT,\r\n   [age] INTEGER,\r\n   [weight] FLOAT\r\n);"
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1162",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1162,
+      "issue_title": "Hostname format check does not allow single labels",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1162",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "Bug"
+      ],
+      "state": "CLOSED",
+      "created_at": "2023-09-12T13:04:51Z",
+      "body_excerpt": "The hostname format checker currently does not allow hostnames without a domain part, hence a single label like `localhost` is rejected as invalid hostname.\r\nThis is caused by class `FQDN` from `fqdn` assuming a minimum of two labels.\r\n\r\nAFAIK, single labels are not excluded by the RFC 1123 and class `FQDN` can be forced to accept also single labels in its constructor (`min_labels=1`).\r\n\r\nIf rejecting single labels is not the intended behavior, I will send a PR."
+    },
+    {
+      "candidate_id": "dateutil_dateutil_issue_384",
+      "repo_full_name": "dateutil/dateutil",
+      "repo_url": "https://github.com/dateutil/dateutil",
+      "issue_number": 384,
+      "issue_title": "parser fails to parse MM.YYYY",
+      "issue_url": "https://github.com/dateutil/dateutil/issues/384",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:29: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "state": "OPEN",
+      "created_at": "2017-05-24T09:48:43Z",
+      "body_excerpt": "When I try to parse MM.YYYY the parser returns wrong results.\r\n\r\n`In [4]: dateutil.parser.parse('05.2016')`\r\n`Out[4]: datetime.datetime(2017, 5, 5, 0, 0)`\r\n\r\n`In [5]: dateutil.parser.parse('04.2014')`\r\n`Out[5]: datetime.datetime(2017, 5, 4, 0, 0)`\r\n\r\nHowever, it succeeds when I pass is MM/YYYY\r\n\r\n`In [6]: dateutil.parser.parse('04/2014')`\r\n`Out[6]: datetime.datetime(2014, 4, 24, 0, 0)`\r\n\r\nI am using version 2.6"
+    },
+    {
+      "candidate_id": "simonw_sqlite_utils_issue_186",
+      "repo_full_name": "simonw/sqlite-utils",
+      "repo_url": "https://github.com/simonw/sqlite-utils",
+      "issue_number": 186,
+      "issue_title": ".extract() shouldn't extract null values",
+      "issue_url": "https://github.com/simonw/sqlite-utils/issues/186",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:30: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug"
+      ],
+      "state": "OPEN",
+      "created_at": "2020-10-16T02:41:08Z",
+      "body_excerpt": "This almost works, but it creates a rogue `type` record with a value of None.\r\n```\r\nIn [1]: import sqlite_utils\r\nIn [2]: db = sqlite_utils.Database(memory=True)\r\nIn [5]: db[\"creatures\"].insert_all([\r\n    {\"id\": 1, \"name\": \"Simon\", \"type\": None},\r\n    {\"id\": 2, \"name\": \"Natalie\", \"type\": None},\r\n    {\"id\": 3, \"name\": \"Cleo\", \"type\": \"dog\"}], pk=\"id\")\r\nOut[5]: <Table creatures (id, name, type)>\r\nIn [7]: db[\"creatures\"].extract(\"type\")\r\nOut[7]: <Table creatures (id, name, type_id)>\r\nIn [8]: list(db"
+    },
+    {
+      "candidate_id": "python_jsonschema_jsonschema_issue_1121",
+      "repo_full_name": "python-jsonschema/jsonschema",
+      "repo_url": "https://github.com/python-jsonschema/jsonschema",
+      "issue_number": 1121,
+      "issue_title": "hostname format checker might raise ValueError",
+      "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1121",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:30: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "Bug",
+        "Needs Test Upstream"
+      ],
+      "state": "CLOSED",
+      "created_at": "2023-07-10T18:22:40Z",
+      "body_excerpt": "At least on empty string `format: hostname` validator raises `ValueError` and not the expected `ValidationError`.\r\n\r\n```\r\n>>> from jsonschema.validators import validator_for\r\n>>> schema = {\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"string\", \"format\": \"hostname\"}\r\n>>> vcls = validator_for(schema)\r\n>>> validator = vcls(schema, format_checker=vcls.FORMAT_CHECKER)\r\n>>> validator.validate(\"\")\r\n....\r\n    for error in errors:\r\n  File \".../jsonschema/_validators.py\", line 238, i"
+    },
+    {
+      "candidate_id": "PyCQA_isort_issue_1815",
+      "repo_full_name": "PyCQA/isort",
+      "repo_url": "https://github.com/PyCQA/isort",
+      "issue_number": 1815,
+      "issue_title": "Tuple sorting doesn't consider profile",
+      "issue_url": "https://github.com/PyCQA/isort/issues/1815",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "to_review",
+      "notes": "2026-06-10T14:23:31: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "labels": [
+        "bug"
+      ],
+      "state": "OPEN",
+      "created_at": "2021-09-24T09:47:05Z",
+      "body_excerpt": "The tuple, list, etc sorting options don't consider the profile option.\r\n\r\nCode:\r\n```python\r\n# isort: tuple\r\ndata = (\"therearesuperlong\", \"therearesuperlong\", \"therearesuperlong\", \"therearesuperlong\", \"therearesuperlong\")\r\n```\r\n\r\n`isort dummy.py --profile black`\r\n```python\r\n# isort: tuple\r\ndata = ('therearesuperlong', 'therearesuperlong', 'therearesuperlong', 'therearesuperlong',\r\n 'therearesuperlong')\r\n```\r\n\r\n`black dummy.py`\r\n```python\r\n# isort: tuple\r\ndata = (\r\n    \"therearesuperlong\",\r\n    \""
     }
   ]
 }

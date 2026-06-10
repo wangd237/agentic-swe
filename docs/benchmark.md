@@ -50,6 +50,7 @@
 - `benchmarks/tasks/task_028.json`
 - `benchmarks/tasks/task_030.json`
 - `benchmarks/tasks/task_032.json`
+- `benchmarks/tasks/task_034.json`
 
 当前 repo：
 
@@ -69,6 +70,7 @@
 - `benchmarks/repos/tomlkit_array_repo`
 - `benchmarks/repos/tomlkit_inline_table_repo`
 - `benchmarks/repos/packaging_wheel_repo`
+- `benchmarks/repos/jsonschema_extras_repo`
 
 用途：
 
@@ -433,17 +435,38 @@
 
 主要问题：
 
-- wheel 文件名中的版本号即便不是 normalized 形式
-- 当前也会被错误接受
+- wheel 文件名中的版本号即便没有经过 normalization
+- 当前仍会被错误接受
 
 正确行为：
 
-- 未 normalized 的版本号应直接拒绝
-- 合法 normalized 版本号仍应正常解析
+- 非 normalized 版本号应被显式拒绝
+- 合法 normalized 版本号仍应继续通过解析
 
 相关文件：
 
 - `packaging_wheel_repo/utils.py`
+- `tests/test_utils.py`
+
+### `jsonschema_extras_repo`
+
+来源：
+
+- `python-jsonschema/jsonschema#1157`
+
+主要问题：
+
+- `extras_msg` 在 `extras` 同时包含 `bool` 和 `str` 等不同类型时
+- 当前会在 `sorted(extras)` 阶段抛出 `TypeError`
+
+正确行为：
+
+- mixed-type extras 不应再因为排序失败而中断错误消息生成
+- 同类型 extras 仍应优先保留稳定排序输出
+
+相关文件：
+
+- `jsonschema_extras_repo/utils.py`
 - `tests/test_utils.py`
 
 ## 当前为什么要分层

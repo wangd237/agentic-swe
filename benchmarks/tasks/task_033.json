@@ -1,0 +1,29 @@
+{
+  "task_id": "task_033",
+  "repo_name": "jsonschema",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "additionalItems can blow up when rendering a message for a non-homogeneous array",
+  "issue_text": "The [`extras_msg` function](https://github.com/python-jsonschema/jsonschema/blob/ccfbc8c32ddcd0e6a13a30371e5a9b1f2036c0ba/jsonschema/_utils.py#L88-L94) sometimes throws an exception when everything in extras is not the same type because sorting fails.\r\n\r\nAssuming the specific sort order is not terribly important, changing from\r\n\r\n```python\r\n        return \", \".join(repr(extra) for extra in sorted(extras)), verb\r\n```\r\n\r\nto\r\n\r\n```python\r\n        return \", \".join(extra for extra in sorted(map(repr,",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1157,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1157",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1157",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

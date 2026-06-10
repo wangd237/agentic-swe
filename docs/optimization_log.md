@@ -2389,3 +2389,144 @@
 - 真实 issue 仍以派生任务形式为主
 - 还没有直接接入 rich 原仓库快照
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
+## Iteration 22：Jsonschema Mixed-Type Extras Message Fallback（improved_v15 -> improved_v16）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-jsonschema/jsonschema#1157` 推进成可运行任务
+- 验证 `improved_v15` 到 `improved_v16` 是否能覆盖 mixed-type extras 错误消息渲染场景
+- 把用户提供的候选 issue 文件导入到候选池，继续扩充下一批 benchmark 来源
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+
+### 改动摘要
+
+- 从外部文件 `D:\Learning_Project\agentic_swe_benchmark_issues.txt` 追加导入 15 条候选 issue
+- 候选池总量从 15 条扩充到 30 条
+- 候选状态汇总更新为：
+  - `accepted = 14`
+  - `drafted = 1`
+  - `to_review = 15`
+- 重新同步并推进真实候选：
+  - `python-jsonschema/jsonschema#1157`
+- 新增草稿任务：
+  - `task_033`
+- 新增可运行 semi_real 任务：
+  - `task_034`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jsonschema_extras_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v16.json`
+- patch 生成器新增能力：
+  - mixed-type extras 在排序失败时回落到原顺序渲染
+  - 避免错误消息生成阶段直接抛出 `TypeError`
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_033.json`
+- `benchmarks/tasks/task_034.json`
+- `benchmarks/repos/jsonschema_extras_repo/jsonschema_extras_repo/utils.py`
+- `benchmarks/repos/jsonschema_extras_repo/tests/test_utils.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v16.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+
+### improved_v15 运行
+
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev15_001.json`
+- 单任务失败运行：
+  - `logs/trajectories/task_034/run_20260610T062805245249Z_0514/result.json`
+
+### improved_v16 运行
+
+- batch run：
+  - `logs/summaries/batch_run_realissuev16_001.json`
+- batch eval：
+  - `logs/summaries/batch_eval_realissuev16_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step14_001.json`
+- 单任务成功运行：
+  - `logs/trajectories/task_034/run_20260610T062805232250Z_3601/result.json`
+
+### 指标对比
+
+- 说明：
+  - 这一轮 compare 的 baseline 是 13 条任务集上的 `improved_v15`
+  - improved 是扩充到 14 条任务后的 `improved_v16`
+  - 因此仍然更适合看“扩容后是否维持成功率，以及平均效率是否变化”
+- `task_count`
+  - improved_v15: `13`
+  - improved_v16: `14`
+- `success_count`
+  - improved_v15: `13`
+  - improved_v16: `14`
+- `success_rate`
+  - improved_v15: `1.0`
+  - improved_v16: `1.0`
+- `test_pass_rate`
+  - improved_v15: `1.0`
+  - improved_v16: `1.0`
+- `average_steps`
+  - improved_v15: `9.2308`
+  - improved_v16: `9.3571`
+- `average_duration_sec`
+  - improved_v15: `0.552`
+  - improved_v16: `0.5792`
+- `taxonomy`
+  - improved_v15: `无错误标签`
+  - improved_v16: `无错误标签`
+
+### 关键案例
+
+#### improved_v15 失败案例：`task_034`
+
+- 运行结果：
+  - `logs/trajectories/task_034/run_20260610T062805245249Z_0514/result.json`
+- 现象：
+  - 已读取 `jsonschema_extras_repo/utils.py`
+  - 但没有匹配到 mixed-type extras 排序失败的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v16 成功案例：`task_034`
+
+- 运行结果：
+  - `logs/trajectories/task_034/run_20260610T062805232250Z_3601/result.json`
+- 现象：
+  - 自动识别 mixed-type extras 在 `sorted(extras)` 时会抛出 `TypeError`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 14 条
+- 候选池已经扩充到 30 条，下一阶段选题空间明显更大
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v15`：覆盖 wheel 版本号 normalization 校验
+  - `improved_v16`：进一步覆盖 mixed-type extras 错误消息渲染
+- 在任务集扩容的情况下，`improved_v16` 仍保持 `100%` 成功率与 `100%` 测试通过率
+- 这一轮没有带来效率提升，平均步骤数和平均耗时都有小幅回升，需要后续继续观察
+
+### 剩余问题
+
+- 当前 compare 仍然主要是“逐轮扩容保持成功率”的证据链，后面建议补一次冻结同集合对比
+- 候选池虽然扩大了，但 `to_review` 还有 15 条，仍需要继续筛选高质量 issue
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力

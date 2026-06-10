@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v16",
+  "description": "增强规则型 patch 策略，额外支持 jsonschema mixed-type extras 排序时的 TypeError 兜底。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v16"
+}

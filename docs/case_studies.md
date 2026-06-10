@@ -193,6 +193,20 @@
 - 结果：
   - `task_032` 在扩容后的真实任务集上完全通过
 
+## 成功案例 16：`task_034`
+
+- repo：`jsonschema_extras_repo`
+- 来源：`python-jsonschema/jsonschema#1157`
+- 代表版本：`improved_v16`
+- 现象：
+  - `extras_msg` 在 mixed-type extras 场景下
+  - 会因为 `sorted(extras)` 无法比较 `bool` 和 `str` 而直接抛出 `TypeError`
+- 改进点：
+  - `improved_v16` 在保持同类型 extras 排序输出的前提下
+  - 为 mixed-type extras 增加排序失败回落逻辑
+- 结果：
+  - `task_034` 在扩容后的真实任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -340,3 +354,13 @@
   - 虽然读到了目标函数，但没有形成任何补丁
 - 后续改进：
   - 升级为 `improved_v15`
+
+## 失败案例 16：`task_034` 在 `improved_v15`
+
+- 失败版本：`improved_v15`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 mixed-type extras 的排序失败模式
+  - 虽然读到了目标函数，但没有形成能够规避 `TypeError` 的补丁
+- 后续改进：
+  - 升级为 `improved_v16`

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_034",
+  "repo_name": "jsonschema_extras_repo",
+  "repo_path": "benchmarks/repos/jsonschema_extras_repo",
+  "issue_title": "additionalItems can blow up when rendering a message for a non-homogeneous array",
+  "issue_text": "The [`extras_msg` function](https://github.com/python-jsonschema/jsonschema/blob/ccfbc8c32ddcd0e6a13a30371e5a9b1f2036c0ba/jsonschema/_utils.py#L88-L94) sometimes throws an exception when everything in extras is not the same type because sorting fails.\r\n\r\nAssuming the specific sort order is not terribly important, changing from\r\n\r\n```python\r\n        return \", \".join(repr(extra) for extra in sorted(extras)), verb\r\n```\r\n\r\nto\r\n\r\n```python\r\n        return \", \".join(extra for extra in sorted(map(repr,",
+  "test_command": "python -m pytest tests/test_utils.py -q",
+  "success_criteria": "当 extras 同时包含 bool 和 str 时，错误消息生成不应再因排序抛出 TypeError；同类型 extras 的输出仍应稳定，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "error-message",
+    "mixed-types"
+  ],
+  "target_files_hint": [
+    "jsonschema_extras_repo/utils.py",
+    "tests/test_utils.py"
+  ],
+  "expected_failure_test": "ExtrasMessageTests.test_mixed_type_extras_do_not_raise_type_error",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1157,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1157",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1157",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_033",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}
