@@ -235,6 +235,34 @@
 - 结果：
   - `task_038` 在扩容到 16 条任务后的正式任务集上完全通过
 
+## 成功案例 19：`task_040`
+
+- repo：`packaging_requirement_repo`
+- 来源：`pypa/packaging#845`
+- 代表版本：`improved_v19`
+- 现象：
+  - 单独的 `extra == "mariadb_connector"` 会被规范化
+  - 但复合 marker 表达式里的 `extra` 仍保留下划线
+- 改进点：
+  - `improved_v19` 统一走 marker 表达式级别的 extra 规范化
+  - 不再只处理单独 extra marker 的特例
+- 结果：
+  - `task_040` 在扩容到 17 条任务后的正式任务集上完全通过
+
+## 成功案例 20：`task_042`
+
+- repo：`click_alias_repo`
+- 来源：`pallets/click#2402`
+- 代表版本：`improved_v20`
+- 现象：
+  - 缺失命令场景下，底层返回 `cmd=None`
+  - 旧逻辑仍直接访问 `cmd.name`，导致 `AttributeError`
+- 改进点：
+  - `improved_v20` 为 `cmd is None` 增加普通返回分支
+  - 保留已有命令场景的解析行为
+- 结果：
+  - `task_042` 在扩容到 18 条任务后的正式任务集和冻结 18 条同集合评测里都完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -412,3 +440,23 @@
   - 虽然读到了目标函数，但没有形成数值语义修复补丁
 - 后续改进：
   - 升级为 `improved_v18`
+
+## 失败案例 19：`task_040` 在 `improved_v18`
+
+- 失败版本：`improved_v18`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解复合 marker 表达式里的 extra 规范化问题
+  - 虽然读到了目标函数，但没有形成字符串规范化修复补丁
+- 后续改进：
+  - 升级为 `improved_v19`
+
+## 失败案例 20：`task_042` 在 `improved_v19`
+
+- 失败版本：`improved_v19`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 `cmd is None` 时应保留普通返回语义
+  - 虽然读到了目标函数，但没有形成异常回落修复补丁
+- 后续改进：
+  - 升级为 `improved_v20`

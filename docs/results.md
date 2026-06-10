@@ -29,7 +29,10 @@
 - 当前已补充 `task_034`，并在真实 issue 派生任务集上完成 `improved_v15 -> improved_v16` 扩容对比
 - 当前已补充 `task_036`，并在真实 issue 派生任务集上完成 `improved_v16 -> improved_v17` 扩容对比
 - 当前已补充 `task_038`，并在真实 issue 派生任务集上完成 `improved_v17 -> improved_v18` 扩容对比
+- 当前已补充 `task_040`，并在真实 issue 派生任务集上完成 `improved_v18 -> improved_v19` 扩容对比
+- 当前已补充 `task_042`，并在真实 issue 派生任务集上完成 `improved_v19 -> improved_v20` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
+- 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 
 ## 当前可展示结果
 
@@ -568,6 +571,105 @@
   - 这一轮 compare 仍属于任务集扩容对比
   - 在正式任务集扩充到 16 条后，成功率继续保持 `100%`
 
+扩充到 17 条真实派生任务后的结果：
+
+- realissuev18：
+  - `logs/summaries/batch_eval_realissuev18_001.json`
+- realissuev19：
+  - `logs/summaries/batch_eval_realissuev19_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step17_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v18: `16`
+  - improved_v19: `17`
+- `success_count`
+  - improved_v18: `16`
+  - improved_v19: `17`
+- `success_rate`
+  - improved_v18: `1.0`
+  - improved_v19: `1.0`
+- `test_pass_rate`
+  - improved_v18: `1.0`
+  - improved_v19: `1.0`
+- `average_steps`
+  - improved_v18: `9.1875`
+  - improved_v19: `9.3529`
+- `average_duration_sec`
+  - improved_v18: `0.5649`
+  - improved_v19: `0.6026`
+- changed task
+  - `task_040`: 新增任务，在 `improved_v19` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 在正式任务集扩充到 17 条后，成功率继续保持 `100%`
+
+扩充到 18 条真实派生任务后的结果：
+
+- realissuev19：
+  - `logs/summaries/batch_eval_realissuev19_001.json`
+- realissuev20：
+  - `logs/summaries/batch_eval_realissuev20_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step18_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v19: `17`
+  - improved_v20: `18`
+- `success_count`
+  - improved_v19: `17`
+  - improved_v20: `18`
+- `success_rate`
+  - improved_v19: `1.0`
+  - improved_v20: `1.0`
+- `test_pass_rate`
+  - improved_v19: `1.0`
+  - improved_v20: `1.0`
+- `average_steps`
+  - improved_v19: `9.3529`
+  - improved_v20: `9.3889`
+- `average_duration_sec`
+  - improved_v19: `0.6026`
+  - improved_v20: `0.5823`
+- changed task
+  - `task_042`: 新增任务，在 `improved_v20` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 在正式任务集扩充到 18 条后，成功率继续保持 `100%`
+
+冻结 18 条真实任务后的同集合结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen18v19_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen18v20_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen18_step1_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v19: `0.9444`
+  - improved_v20: `1.0`
+- `test_pass_rate`
+  - improved_v19: `0.9444`
+  - improved_v20: `1.0`
+- `average_steps`
+  - improved_v19: `9.3889`
+  - improved_v20: `9.3889`
+- `average_duration_sec`
+  - improved_v19: `0.5736`
+  - improved_v20: `0.5713`
+- taxonomy
+  - improved_v19: `Premature Finish = 1`
+  - improved_v20: `无错误标签`
+- changed task
+  - `task_042`: `Premature Finish -> 无错误标签`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
@@ -589,8 +691,10 @@
 - `improved_v16` 进一步覆盖了真实 issue 派生出来的 mixed-type extras 错误消息渲染场景
 - `improved_v17` 进一步覆盖了真实 issue 派生出来的 hostname 格式检查异常回落场景
 - `improved_v18` 进一步覆盖了真实 issue 派生出来的 integer-valued `multipleOf` 浮点数数值语义场景
+- `improved_v19` 进一步覆盖了真实 issue 派生出来的 Requirement extra 字符串规范化场景
+- `improved_v20` 进一步覆盖了真实 issue 派生出来的 CLI 命令解析异常回落场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
-- 冻结 manifest 让我们第一次拿到了同集合上的真实提升证据
+- 冻结 manifest 已经让我们拿到两组同集合上的真实提升证据
 - 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：
   - `docs/optimization_log.md`

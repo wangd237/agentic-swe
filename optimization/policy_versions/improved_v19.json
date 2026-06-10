@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v19",
+  "description": "增强规则型 patch 策略，额外支持 packaging Requirement.__str__ 在复合 marker 中统一规范化 extra 名称。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v19"
+}

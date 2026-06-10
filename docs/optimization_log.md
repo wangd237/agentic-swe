@@ -2849,3 +2849,326 @@
 - 这一轮仍是扩容对比，下一阶段需要继续补 `frozen_18` 或 `frozen_20` 的同集合证据
 - 候选池虽然仍然充足，但高质量 `to_review` issue 需要继续向可运行任务收敛
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 25：Packaging Requirement Extra Normalization（improved_v18 -> improved_v19）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pypa/packaging#845` 推进成可运行任务
+- 验证 `improved_v18` 到 `improved_v19` 是否能覆盖 Requirement 复合 marker 中的 extra 规范化问题
+- 在正式真实任务集扩容到 17 条后继续观察成功率和效率指标
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `pypa/packaging#845`
+- 候选状态汇总更新为：
+  - `accepted = 17`
+  - `drafted = 1`
+  - `to_review = 12`
+- 新增草稿任务：
+  - `task_039`
+- 新增可运行 semi_real 任务：
+  - `task_040`
+- 新增 benchmark repo：
+  - `benchmarks/repos/packaging_requirement_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v19.json`
+- patch 生成器新增能力：
+  - 识别 Requirement 复合 marker 表达式里的 `extra == "..."`
+  - 统一将 extra 名称规范化为连字符风格，而不是只处理单独 extra marker
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_039.json`
+- `benchmarks/tasks/task_040.json`
+- `benchmarks/repos/packaging_requirement_repo/packaging_requirement_repo/requirements.py`
+- `benchmarks/repos/packaging_requirement_repo/tests/test_requirements.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v19.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v18` 失败：
+  - `logs/trajectories/task_040/run_20260610T082655762905Z_1706/result.json`
+- `improved_v19` 成功：
+  - `logs/trajectories/task_040/run_20260610T082655778437Z_4902/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev18_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev19_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev19_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step17_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 16 条任务集上的 `improved_v18`
+  - improved 是扩充到 17 条任务后的 `improved_v19`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v18: `16`
+    - improved_v19: `17`
+  - `success_count`
+    - improved_v18: `16`
+    - improved_v19: `17`
+  - `success_rate`
+    - improved_v18: `1.0`
+    - improved_v19: `1.0`
+  - `test_pass_rate`
+    - improved_v18: `1.0`
+    - improved_v19: `1.0`
+  - `average_steps`
+    - improved_v18: `9.1875`
+    - improved_v19: `9.3529`
+  - `average_duration_sec`
+    - improved_v18: `0.5649`
+    - improved_v19: `0.6026`
+
+### 关键案例
+
+#### improved_v18 失败案例：`task_040`
+
+- 运行结果：
+  - `logs/trajectories/task_040/run_20260610T082655762905Z_1706/result.json`
+- 现象：
+  - 已读取 `packaging_requirement_repo/requirements.py`
+  - 但没有匹配到复合 marker 中 extra 规范化的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v19 成功案例：`task_040`
+
+- 运行结果：
+  - `logs/trajectories/task_040/run_20260610T082655778437Z_4902/result.json`
+- 现象：
+  - 自动识别复合 marker 表达式里的 extra 名称也需要统一规范化
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 17 条
+- 候选池里正式 accepted 任务提升到 17 条，`to_review` 降到 12 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v18`：覆盖 integer-valued `multipleOf` 浮点数数值语义
+  - `improved_v19`：进一步覆盖 Requirement extra 字符串规范化
+- 扩容对比中，`improved_v19` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 这一轮效率指标略有回升，需要在后续继续观察
+
+### 剩余问题
+
+- 这一轮仍是扩容对比，还没有为 `improved_v19` 补到同集合证据
+- 候选池虽然仍然充足，但高质量 `to_review` issue 需要继续向可运行任务收敛
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 26：Click resolve_command None Fallback and Frozen-18 Eval（improved_v19 -> improved_v20）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pallets/click#2402` 推进成可运行任务
+- 验证 `improved_v19` 到 `improved_v20` 是否能覆盖 `cmd is None` 场景下的 CLI 解析异常回落
+- 在正式真实任务集扩容到 18 条后补齐第二组冻结同集合评测
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `pallets/click#2402`
+- 候选状态汇总更新为：
+  - `accepted = 18`
+  - `drafted = 1`
+  - `to_review = 11`
+- 新增草稿任务：
+  - `task_041`
+- 新增可运行 semi_real 任务：
+  - `task_042`
+- 新增 benchmark repo：
+  - `benchmarks/repos/click_alias_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v20.json`
+- 新增冻结 manifest：
+  - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
+- patch 生成器新增能力：
+  - 识别 `resolve_command` 在 `cmd is None` 时仍直接访问 `cmd.name` 的模式
+  - 回落为普通返回语义，而不是继续抛出 `AttributeError`
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_041.json`
+- `benchmarks/tasks/task_042.json`
+- `benchmarks/repos/click_alias_repo/click_alias_repo/cli.py`
+- `benchmarks/repos/click_alias_repo/tests/test_cli.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v20.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v19` 失败：
+  - `logs/trajectories/task_042/run_20260610T082850769297Z_6577/result.json`
+- `improved_v20` 成功：
+  - `logs/trajectories/task_042/run_20260610T082850769921Z_3477/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev19_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev20_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev20_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step18_001.json`
+
+### 冻结同集合运行
+
+- baseline batch run：
+  - `logs/summaries/batch_run_frozen18v19_001.json`
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen18v19_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen18v20_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen18v20_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen18_step1_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 17 条任务集上的 `improved_v19`
+  - improved 是扩充到 18 条任务后的 `improved_v20`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v19: `17`
+    - improved_v20: `18`
+  - `success_count`
+    - improved_v19: `17`
+    - improved_v20: `18`
+  - `success_rate`
+    - improved_v19: `1.0`
+    - improved_v20: `1.0`
+  - `test_pass_rate`
+    - improved_v19: `1.0`
+    - improved_v20: `1.0`
+  - `average_steps`
+    - improved_v19: `9.3529`
+    - improved_v20: `9.3889`
+  - `average_duration_sec`
+    - improved_v19: `0.6026`
+    - improved_v20: `0.5823`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 18 条任务
+  - 因此这是当前第二组可直接解释为策略改进的同集合对比
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v19: `18`
+    - improved_v20: `18`
+  - `success_count`
+    - improved_v19: `17`
+    - improved_v20: `18`
+  - `success_rate`
+    - improved_v19: `0.9444`
+    - improved_v20: `1.0`
+  - `test_pass_rate`
+    - improved_v19: `0.9444`
+    - improved_v20: `1.0`
+  - `average_steps`
+    - improved_v19: `9.3889`
+    - improved_v20: `9.3889`
+  - `average_duration_sec`
+    - improved_v19: `0.5736`
+    - improved_v20: `0.5713`
+  - `taxonomy`
+    - improved_v19: `Premature Finish = 1`
+    - improved_v20: `无错误标签`
+
+### 关键案例
+
+#### improved_v19 失败案例：`task_042`
+
+- 运行结果：
+  - `logs/trajectories/task_042/run_20260610T082850769297Z_6577/result.json`
+- 现象：
+  - 已读取 `click_alias_repo/cli.py`
+  - 但没有匹配到 `cmd is None` 的异常回落修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v20 成功案例：`task_042`
+
+- 运行结果：
+  - `logs/trajectories/task_042/run_20260610T082850769921Z_3477/result.json`
+- 现象：
+  - 自动识别 `cmd is None` 时不应继续访问 `cmd.name`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 18 条
+- 候选池里正式 accepted 任务提升到 18 条，`to_review` 降到 11 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v19`：覆盖 Requirement extra 字符串规范化
+  - `improved_v20`：进一步覆盖 CLI 命令解析异常回落
+- 扩容对比中，`improved_v20` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 冻结同集合对比中，`improved_v20` 把 18 条同集合成功率从 `0.9444` 提升到 `1.0`
+
+### 剩余问题
+
+- 现在已经有 `frozen_15` 和 `frozen_18` 两组证据，下一阶段应继续朝 `frozen_20` 累积
+- 候选池虽然仍然充足，但 parser 类和容器状态污染类的高质量 issue 仍需优先推进
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

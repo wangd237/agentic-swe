@@ -53,6 +53,8 @@
 - `benchmarks/tasks/task_034.json`
 - `benchmarks/tasks/task_036.json`
 - `benchmarks/tasks/task_038.json`
+- `benchmarks/tasks/task_040.json`
+- `benchmarks/tasks/task_042.json`
 
 当前 repo：
 
@@ -72,9 +74,11 @@
 - `benchmarks/repos/tomlkit_array_repo`
 - `benchmarks/repos/tomlkit_inline_table_repo`
 - `benchmarks/repos/packaging_wheel_repo`
+- `benchmarks/repos/packaging_requirement_repo`
 - `benchmarks/repos/jsonschema_extras_repo`
 - `benchmarks/repos/jsonschema_hostname_repo`
 - `benchmarks/repos/jsonschema_multipleof_repo`
+- `benchmarks/repos/click_alias_repo`
 
 用途：
 
@@ -89,6 +93,7 @@
 - 已接入 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
+  - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
 - 已新增导入脚本：

@@ -329,8 +329,8 @@
       "issue_url": "https://github.com/pypa/packaging/issues/845",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:22: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:22: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T17:40:00: 已生成 real_issue task 草稿 task_039，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T17:44:00: 已生成 semi_real 可运行任务 task_040，仓库目录为 benchmarks/repos/packaging_requirement_repo。",
       "labels": [
         "bug",
         "packaging.requirements"
@@ -403,8 +403,8 @@
       "issue_url": "https://github.com/pallets/click/issues/2402",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T18:05:00: 已生成 real_issue task 草稿 task_041，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T18:09:00: 已生成 semi_real 可运行任务 task_042，仓库目录为 benchmarks/repos/click_alias_repo。",
       "labels": [
         "bug"
       ],

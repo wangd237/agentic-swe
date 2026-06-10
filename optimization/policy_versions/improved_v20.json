@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v20",
+  "description": "增强规则型 patch 策略，额外支持 click alias group 在 cmd 为 None 时保持普通返回语义。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v20"
+}

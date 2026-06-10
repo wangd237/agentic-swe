@@ -11,24 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `pypa/packaging#845`
-
-- 标题：
-  - `Inconsistent extra normalisation in Requirement.__str__`
-- 推荐级别：`high`
-- 为什么适合：
-  - 字符串规范化问题，边界明确
-  - 很适合最小化为单函数 `Requirement.__str__` 风格任务
-  - 与当前 `packaging_wheel_repo` 同仓库但缺陷类型不同
-- 预期目标文件：
-  - requirement 字符串输出逻辑
-- 预期测试形态：
-  - 1 个不一致例子
-  - 1 个正常例子
-- 主要风险：
-  - 要先选定“正确规范化方向”，避免变成规范讨论
-
-### 2. `dateutil/dateutil#384`
+### 1. `dateutil/dateutil#384`
 
 - 标题：
   - `parser fails to parse MM.YYYY`
@@ -45,26 +28,11 @@
 - 主要风险：
   - 需要决定默认 day 如何处理，最好缩题成“只断言年月”
 
-### 3. `pallets/click#2402`
-
-- 标题：
-  - `resolve_command fails if cmd is None`
-- 推荐级别：`medium-high`
-- 为什么适合：
-  - CLI 解析异常回落问题，和 `task_036` 的“异常应回落为普通失败”相近但不重复
-  - 可能只要一个保护分支
-- 预期目标文件：
-  - `resolve_command` 最小实现
-- 预期测试形态：
-  - typo / missing command 不应再抛 traceback
-- 主要风险：
-  - 需要把 CLI 行为缩成最小纯函数，避免带完整命令行环境
-
-### 4. `python-jsonschema/jsonschema#1162`
+### 2. `python-jsonschema/jsonschema#1162`
 
 - 标题：
   - `Hostname format check does not allow single labels`
-- 推荐级别：`medium-high`
+- 推荐级别：`high`
 - 为什么适合：
   - 与 `task_036` 同域但不是同一问题
   - 可形成 hostname 系列第二条任务
@@ -77,14 +45,14 @@
 - 主要风险：
   - 与 `task_036` 太相近，连续做会降低 benchmark 语义多样性
 
-### 5. `pypa/packaging#810`
+### 3. `pypa/packaging#810`
 
 - 标题：
   - ``Specifier` Greater than comparison returns incorrect result for a version with dev+local parts`
-- 推荐级别：`medium`
+- 推荐级别：`medium-high`
 - 为什么适合：
   - 版本比较边界问题，输入输出可明确收敛
-  - 与现有 `packaging#873` 同仓库但不重复
+  - 与现有 `packaging` 任务同仓库但语义不同
 - 预期目标文件：
   - specifier 比较逻辑
 - 预期测试形态：
@@ -92,6 +60,37 @@
   - 1 个普通比较回归例子
 - 主要风险：
   - 需要先确认最小可复现版本，避免引入完整版本比较矩阵
+
+### 4. `dateutil/dateutil#1191`
+
+- 标题：
+  - `Incorrect year is returned when parsing a date string such as "may15,2021"`
+- 推荐级别：`medium-high`
+- 为什么适合：
+  - 仍然是 parser 类 bug，但和 `MM.YYYY` 的 token 化路径不同
+  - 输入输出样例清晰，容易还原成 2 个回归测试
+- 预期目标文件：
+  - 日期 token 切分或逗号处理逻辑
+- 预期测试形态：
+  - `may15,2021 -> 2021-05-15`
+  - 加空格版本保持正确
+- 主要风险：
+  - 需要小心不要把问题缩得过度依赖具体 tokenizer 细节
+
+### 5. `python-jsonschema/jsonschema#1328`
+
+- 标题：
+  - `The return of __iter__() and __contains__() change after accessing of an index with no error`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 可以补“容器状态污染 / 惰性访问副作用”这一类目前较缺的缺陷
+  - 行为差异明确，适合做状态前后对照测试
+- 预期目标文件：
+  - 一个最小 `ErrorTree` 风格容器对象
+- 预期测试形态：
+  - 访问空索引前后，`__contains__` / `__iter__` 结果应保持一致
+- 主要风险：
+  - 需要缩题得足够小，避免把整个错误树结构都搬进 benchmark
 
 ## 暂不优先
 

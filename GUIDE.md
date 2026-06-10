@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v18` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v20` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -744,6 +744,20 @@ scripts/
   - 类型：`semi_real`
   - 来源：`python-jsonschema/jsonschema#1159`
   - 状态：已可运行
+- `task_039`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pypa/packaging#845` 的真实入口记录
+- `task_040`
+  - 类型：`semi_real`
+  - 来源：`pypa/packaging#845`
+  - 状态：已可运行
+- `task_041`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `pallets/click#2402` 的真实入口记录
+- `task_042`
+  - 类型：`semi_real`
+  - 来源：`pallets/click#2402`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -776,6 +790,10 @@ scripts/
   - 作用：新增 hostname 格式检查在空字符串场景下回落为普通校验失败的修复能力
 - `optimization/policy_versions/improved_v18.json`
   - 作用：新增 integer-valued `multipleOf` 浮点数按数学整数处理的修复能力
+- `optimization/policy_versions/improved_v19.json`
+  - 作用：新增 packaging `Requirement.__str__` 在复合 marker 中统一规范化 extra 名称的修复能力
+- `optimization/policy_versions/improved_v20.json`
+  - 作用：新增 click alias group 在 `cmd is None` 场景下保持普通返回语义的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1156,7 +1174,35 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_038.json --policy
 - 修改文件是 `jsonschema_multipleof_repo/validator.py`
 - patch 原因是整数值浮点数 `11.0` 不应走纯浮点误差路径，而应按数学整数 `11` 处理
 
-### 方式 26：运行冻结 15 条任务的同集合评测
+### 方式 26：运行 packaging Requirement extra normalisation 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_040.json --policy optimization/policy_versions/improved_v19.json
+```
+
+你会看到：
+
+- `task_040` 被成功修复
+- 修改文件是 `packaging_requirement_repo/requirements.py`
+- patch 原因是复合 marker 表达式里的 extra 名称也应统一规范化为连字符风格
+
+### 方式 27：运行 click resolve_command None 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_042.json --policy optimization/policy_versions/improved_v20.json
+```
+
+你会看到：
+
+- `task_042` 被成功修复
+- 修改文件是 `click_alias_repo/cli.py`
+- patch 原因是 `cmd is None` 时应保持普通返回语义，而不是直接访问 `cmd.name`
+
+### 方式 28：运行冻结 15 条任务的同集合评测
 
 在仓库根目录执行：
 
@@ -1170,6 +1216,21 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 冻结 manifest 始终固定为同一组 15 条任务
 - `improved_v16 -> improved_v17` 在同集合上从 `0.9333` 提升到 `1.0`
 - `task_036` 从 `Premature Finish` 变为完全通过
+
+### 方式 29：运行冻结 18 条任务的同集合评测
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_18_v1.json --policy optimization/policy_versions/improved_v19.json --run-label frozen18v19
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_18_v1.json --policy optimization/policy_versions/improved_v20.json --run-label frozen18v20 --compare-against-eval logs/summaries/batch_eval_frozen18v19_001.json --compare-label frozen18_step1
+```
+
+你会看到：
+
+- 冻结 manifest 始终固定为同一组 18 条任务
+- `improved_v19 -> improved_v20` 在同集合上从 `0.9444` 提升到 `1.0`
+- `task_042` 从 `Premature Finish` 变为完全通过
 
 ## 当前实现中的环境偏差
 
@@ -1284,7 +1345,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 已补充 `task_033` / `task_034` 与 `improved_v16`
 - 已补充 `task_035` / `task_036` 与 `improved_v17`
 - 已补充 `task_037` / `task_038` 与 `improved_v18`
+- 已补充 `task_039` / `task_040` 与 `improved_v19`
+- 已补充 `task_041` / `task_042` 与 `improved_v20`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
+- 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

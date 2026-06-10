@@ -1,0 +1,29 @@
+{
+  "task_id": "task_041",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "resolve_command fails if cmd is None",
+  "issue_text": "在文档示例风格的 `AliasedGroup.resolve_command()` 中，当前实现直接访问 `cmd.name`。当底层解析没有命中命令、返回的 `cmd` 为 `None` 时，这段逻辑会直接抛出异常，而不是保留普通的“未解析到命令”语义。当前真实 issue 需要让 `cmd is None` 场景安全返回。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 2402,
+    "issue_url": "https://github.com/pallets/click/issues/2402",
+    "candidate_id": "pallets_click_issue_2402",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

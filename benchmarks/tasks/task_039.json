@@ -1,0 +1,29 @@
+{
+  "task_id": "task_039",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Inconsistent `extra` normalisation in `Requirement.__str__`",
+  "issue_text": "在 `Requirement.__str__()` 中，`extra == \"mariadb_connector\"` 这类单独 marker 会被规范化为连字符风格，但当 `extra` 出现在复合 marker 表达式里时，输出又保留下划线，导致字符串化行为不一致。当前真实 issue 需要统一 `extra` 的规范化输出，无论它出现在简单还是复合 marker 中。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 845,
+    "issue_url": "https://github.com/pypa/packaging/issues/845",
+    "candidate_id": "pypa_packaging_issue_845",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

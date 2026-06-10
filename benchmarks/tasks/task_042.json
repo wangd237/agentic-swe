@@ -1,0 +1,37 @@
+{
+  "task_id": "task_042",
+  "repo_name": "click_alias_repo",
+  "repo_path": "benchmarks/repos/click_alias_repo",
+  "issue_title": "resolve_command fails if cmd is None",
+  "issue_text": "当前 `AliasedGroup.resolve_command()` 在拿到底层解析结果后，直接访问 `cmd.name`。当命令不存在、拼写错误，或底层返回 `cmd=None` 时，这会直接抛出异常。semi-real 任务要求：缺失命令场景应保持普通返回语义，不应因为 `cmd is None` 而崩溃；已有命令解析行为也要继续正确。",
+  "test_command": "python -m pytest tests/test_cli.py -q",
+  "success_criteria": "当底层未解析到命令时，`resolve_command()` 应返回 `(None, None, args)` 风格结果而不是抛出异常；已有命令解析行为保持正确，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "click",
+    "cli",
+    "command-resolution"
+  ],
+  "target_files_hint": [
+    "click_alias_repo/cli.py",
+    "tests/test_cli.py"
+  ],
+  "expected_failure_test": "ResolveCommandTests.test_missing_command_returns_none_tuple_without_crashing",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 2402,
+    "issue_url": "https://github.com/pallets/click/issues/2402",
+    "candidate_id": "pallets_click_issue_2402",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_041",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

@@ -9,8 +9,8 @@
 目标：
 
 - 从 `to_review` 候选里再挑 1 条高质量 issue
-- 形成新的 `task_039` 草稿和 `task_040` 可运行 `semi_real`
-- 新增 `improved_v19`
+- 形成新的 `task_043` 草稿和 `task_044` 可运行 `semi_real`
+- 新增 `improved_v21`
 
 完成标准：
 
@@ -18,14 +18,13 @@
 - 新任务进入正式 manifest
 - 跑一轮扩容对比
 
-### 2. 累积下一组冻结集合
+### 2. 规划 `frozen_20`
 
 目标：
 
-- 在正式任务数继续增长后，固化下一组冻结 manifest
+- 在正式任务数到 20 条后，固化下一组冻结 manifest
 - 建议命名方向：
-  - `real_issue_tasks_frozen_18_v1.json`
-  - 或 `real_issue_tasks_frozen_20_v1.json`
+  - `real_issue_tasks_frozen_20_v1.json`
 
 完成标准：
 
@@ -36,7 +35,7 @@
 
 目标：
 
-- 把 `to_review = 13` 继续收敛
+- 把 `to_review = 11` 继续收敛
 - 尽量把高质量候选推进为 `accepted`
 - 把明显不适合的候选明确标为 `rejected`
 
@@ -52,18 +51,18 @@
 4. 补 patch 规则与 policy
 5. 跑单任务分辨测试
 6. 跑扩容对比
-7. 如任务数量达到阶段阈值，再补冻结集合 compare
+7. 当任务数达到 20 条时，再补 `frozen_20` compare
 8. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
 优先级建议：
 
-1. `pypa/packaging#845`
-2. `dateutil/dateutil#384`
-3. `pallets/click#2402`
-4. `python-jsonschema/jsonschema#1162`
-5. `pypa/packaging#810`
+1. `dateutil/dateutil#384`
+2. `python-jsonschema/jsonschema#1162`
+3. `pypa/packaging#810`
+4. `dateutil/dateutil#1191`
+5. `python-jsonschema/jsonschema#1328`
 
 详细理由见：
 
