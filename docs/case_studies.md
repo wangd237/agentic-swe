@@ -345,6 +345,20 @@
 - 结果：
   - `task_054` 在扩容到 24 条任务后的正式任务集上完全通过
 
+## 成功案例 27：`task_056`
+
+- repo：`sqlite_delete_repo`
+- 来源：`simonw/sqlite-utils#159`
+- 代表版本：`improved_v27`
+- 现象：
+  - `insert()` 与 `upsert()` 都会自动提交事务
+  - 旧逻辑里 `delete_where()` 删除后没有提交
+  - 其他数据库连接因此看不到最新删除结果
+- 改进点：
+  - `improved_v27` 在 `delete_where()` 执行后补上 `self._connection.commit()`
+- 结果：
+  - `task_056` 在扩容到 25 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -602,3 +616,13 @@
   - 读到了 `extend()`，但没有形成把原始 `applicable_validators` 继续透传给 `create()` 的修复
 - 后续改进：
   - 升级为 `improved_v26`
+
+## 失败案例 27：`task_056` 在 `improved_v26`
+
+- 失败版本：`improved_v26`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解删除操作与其他写操作应共享自动提交语义
+  - 读到了 `delete_where()`，但没有形成删除后补 `commit()` 的修复
+- 后续改进：
+  - 升级为 `improved_v27`

@@ -37,6 +37,7 @@
 | `task_050` | `dateutil/dateutil#1191` | `dateutil_attached_comma_repo` | 年份前紧贴逗号时的 parser token 识别 | `improved_v24` | `-` |
 | `task_052` | `python-jsonschema/jsonschema#1328` | `jsonschema_error_tree_repo` | 访问缺失索引时的 ErrorTree 状态污染 | `improved_v25` | `-` |
 | `task_054` | `python-jsonschema/jsonschema#1125` | `jsonschema_extend_repo` | `extend()` 丢失 `applicable_validators` 语义 | `improved_v26` | `-` |
+| `task_056` | `simonw/sqlite-utils#159` | `sqlite_delete_repo` | `delete_where()` 删除后未提交事务 | `improved_v27` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -62,11 +63,11 @@
 - 紧贴标点时的日期年份 token 识别
 - 容器状态污染 / 惰性访问副作用
 - validator 扩展时的 legacy 关键字适用范围继承
+- 数据库多连接下的事务提交可见性
 - CLI 命令解析回落
 
 ## 当前仍相对欠缺的方向
 
-- 轻量数据库状态与提交语义问题
 - 对象定义阶段的 alias / 元数据可见性
 
 ## 相关文件

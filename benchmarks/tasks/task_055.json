@@ -1,0 +1,29 @@
+{
+  "task_id": "task_055",
+  "repo_name": "sqlite-utils",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": ".delete_where() does not auto-commit (unlike .insert() or .upsert())",
+  "issue_text": "当前 `delete_where()` 在删除记录后没有自动提交事务，导致其他连接看不到最新删除结果。当前真实 issue 需要让删除路径与 `insert()`、`upsert()` 一样，在完成写操作后立即提交事务。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "simonw/sqlite-utils",
+    "repo_url": "https://github.com/simonw/sqlite-utils",
+    "issue_number": 159,
+    "issue_url": "https://github.com/simonw/sqlite-utils/issues/159",
+    "candidate_id": "simonw_sqlite_utils_issue_159",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

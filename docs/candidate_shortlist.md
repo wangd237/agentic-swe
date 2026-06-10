@@ -11,23 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `simonw/sqlite-utils#159`
-
-- 标题：
-  - `.delete_where() does not auto-commit (unlike .insert() or .upsert())`
-- 推荐级别：`medium`
-- 为什么适合：
-  - 行为断言非常清楚
-  - 能补数据库状态与提交语义这一类目前较少覆盖的缺陷
-- 预期目标文件：
-  - `delete_where` 或事务提交逻辑
-- 预期测试形态：
-  - 删除后不显式提交也应对后续读取可见
-  - 插入 / 更新行为保持不变
-- 主要风险：
-  - 会天然引入数据库状态，缩题时要把依赖面压到最小
-
-### 2. `pydantic/pydantic#9582`
+### 1. `pydantic/pydantic#9582`
 
 - 标题：
   - `Model validator is ignored during inheritance`
@@ -43,7 +27,7 @@
 - 主要风险：
   - 需要把问题缩到足够小，避免引入完整框架生命周期
 
-### 3. `python-attrs/attrs#1479`
+### 2. `python-attrs/attrs#1479`
 
 - 标题：
   - `Alias not available during field transformation`
@@ -59,7 +43,7 @@
 - 主要风险：
   - 容易落到框架构建时序，缩题时要非常克制
 
-### 4. `simonw/sqlite-utils#488`
+### 3. `simonw/sqlite-utils#488`
 
 - 标题：
   - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
@@ -75,7 +59,7 @@
 - 主要风险：
   - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
 
-### 5. `simonw/sqlite-utils#186`
+### 4. `simonw/sqlite-utils#186`
 
 - 标题：
   - `.extract() shouldn't extract null values`
@@ -91,6 +75,23 @@
   - 非空字符串或对象保持原有抽取行为
 - 主要风险：
   - 要避免把真实 sqlite schema 细节整体搬进 benchmark
+
+### 5. `PyCQA/isort#1815`
+
+- 标题：
+  - `Tuple sorting doesn't consider profile`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 问题边界集中在排序策略选择
+  - 可望缩成单模块配置分派与输出断言
+  - 能补“配置 profile 影响行为”的 benchmark 类型
+- 预期目标文件：
+  - tuple 排序或 profile 分派逻辑
+- 预期测试形态：
+  - 指定 profile 后 tuple 排序应符合该 profile 语义
+  - 默认 profile 行为保持不回归
+- 主要风险：
+  - 要避免把完整格式化器行为整体搬进 benchmark
 
 ## 已从短名单移除
 
@@ -129,6 +130,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_053 / task_054`
+
+### `simonw/sqlite-utils#159`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_055 / task_056`
 
 ## 使用方式
 

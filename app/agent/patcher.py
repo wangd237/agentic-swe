@@ -615,6 +615,46 @@ def _handle_jsonschema_extend_copies_applicable_validators(content: str) -> str 
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_sqlite_delete_where_autocommit(content: str) -> str | None:
+    # improved_v27 处理 delete_where 删除后未提交事务，导致其他连接不可见的问题。
+    start_marker = "    def delete_where(self, where_clause: str, params: tuple[object, ...]) -> int:\n"
+    end_marker = "\n    def list_names(self) -> list[str]:\n"
+    if start_marker not in content or end_marker not in content:
+        return None
+
+    block_start = content.index(start_marker)
+    block_end = content.index(end_marker, block_start)
+    delete_block = content[block_start:block_end]
+
+    target_block = (
+        "    def delete_where(self, where_clause: str, params: tuple[object, ...]) -> int:\n"
+        '        """删除满足条件的记录，并返回删除行数。"""\n'
+        "        cursor = self._connection.execute(\n"
+        '            f"DELETE FROM items WHERE {where_clause}",\n'
+        "            params,\n"
+        "        )\n"
+        "        # 这里故意保留真实 issue 中的缺陷：删除后没有提交事务。\n"
+        "        return cursor.rowcount"
+    )
+    if target_block not in delete_block:
+        return None
+    if "self._connection.commit()" in delete_block:
+        return None
+
+    replacement = (
+        "    def delete_where(self, where_clause: str, params: tuple[object, ...]) -> int:\n"
+        '        """删除满足条件的记录，并返回删除行数。"""\n'
+        "        cursor = self._connection.execute(\n"
+        '            f"DELETE FROM items WHERE {where_clause}",\n'
+        "            params,\n"
+        "        )\n"
+        "        # 删除操作应与 insert / upsert 保持一致，完成后立即提交事务。\n"
+        "        self._connection.commit()\n"
+        "        return cursor.rowcount"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1811,9 +1851,21 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27"}:
             should_run_v25_chain = True
-            if policy_config.patch_strategy == "improved_v26":
+            if policy_config.patch_strategy == "improved_v27":
+                improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                if improved_v27_content is not None:
+                    updated_content = improved_v27_content
+                    patch_reason_parts = ["让 delete_where 在删除后提交事务，保证其他连接立即可见"]
+                    should_run_v25_chain = False
+                else:
+                    improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                    if improved_v26_content is not None:
+                        updated_content = improved_v26_content
+                        patch_reason_parts = ["让 extend 保留原始 applicable_validators，避免 legacy $ref 语义回归"]
+                        should_run_v25_chain = False
+            elif policy_config.patch_strategy == "improved_v26":
                 improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
                 if improved_v26_content is not None:
                     updated_content = improved_v26_content

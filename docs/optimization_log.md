@@ -4200,6 +4200,187 @@
 - 扩容对比中，`improved_v26` 继续保持 `100%` 成功率与 `100%` 测试通过率
 - `frozen_20` 对比中，`improved_v26` 保持固定任务集无回归，并把平均耗时从 `0.5584` 小幅改善到 `0.5567`
 
+## Iteration 33：Delete Auto-Commit Expansion（improved_v26 -> improved_v27）
+
+### 本轮目标
+
+- 验证 `improved_v26` 到 `improved_v27` 是否能覆盖 `simonw/sqlite-utils#159`
+- 把 `delete_where()` 删除后未提交事务的问题沉淀成正式 semi-real 任务
+- 继续在 `frozen_20` 上补一轮同集合验证，确认新增规则不破坏已有能力
+
+### 本轮新增输入
+
+- 新增候选推进：
+  - `simonw/sqlite-utils#159`
+- 候选池状态更新：
+  - `accepted = 25`
+  - `drafted = 1`
+  - `to_review = 4`
+- 新增任务：
+  - `task_055`
+  - `task_056`
+- 新增策略：
+  - `optimization/policy_versions/improved_v27.json`
+
+### 本轮新增文件
+
+- `benchmarks/tasks/task_055.json`
+- `benchmarks/tasks/task_056.json`
+- `benchmarks/repos/sqlite_delete_repo/README.md`
+- `benchmarks/repos/sqlite_delete_repo/sqlite_delete_repo/__init__.py`
+- `benchmarks/repos/sqlite_delete_repo/sqlite_delete_repo/table.py`
+- `benchmarks/repos/sqlite_delete_repo/tests/test_table.py`
+- `optimization/policy_versions/improved_v27.json`
+
+### 本轮修改文件
+
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/benchmark_registry.md`
+- `docs/candidate_shortlist.md`
+- `docs/case_studies.md`
+- `docs/next_actions.md`
+- `docs/project_memory.md`
+- `docs/results.md`
+
+### 本轮任务设计
+
+- `task_055`
+  - 类型：`real_issue`
+  - 来源：`simonw/sqlite-utils#159`
+  - 作用：保留真实 issue 的入口和元数据
+- `task_056`
+  - 类型：`semi_real`
+  - repo：`sqlite_delete_repo`
+  - 缺陷：`delete_where()` 删除后没有提交事务
+  - 目标：删除结果应立即对第二个数据库连接可见
+
+### 本轮策略改动
+
+- 新增 `_handle_sqlite_delete_where_autocommit`
+  - 命中 `sqlite_delete_repo/table.py` 中的 `delete_where()` 缺陷模板
+  - 修复方式：在删除执行后补上 `self._connection.commit()`
+- `improved_v27`
+  - 在 `improved_v26` 能力链之上增加删除自动提交修复
+
+### 单任务分辨运行
+
+- `improved_v26` 失败：
+  - `logs/trajectories/task_056/run_20260610T133235559561Z_0686/result.json`
+- `improved_v27` 成功：
+  - `logs/trajectories/task_056/run_20260610T133235548372Z_7214/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev26_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev27_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev27_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step25_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v26_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v27_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v27_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step6_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `24` 条任务集上的 `improved_v26`
+  - improved 是扩充到 `25` 条任务后的 `improved_v27`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v26: `24`
+    - improved_v27: `25`
+  - `success_count`
+    - improved_v26: `24`
+    - improved_v27: `25`
+  - `success_rate`
+    - improved_v26: `1.0`
+    - improved_v27: `1.0`
+  - `test_pass_rate`
+    - improved_v26: `1.0`
+    - improved_v27: `1.0`
+  - `average_steps`
+    - improved_v26: `9.375`
+    - improved_v27: `9.4`
+  - `average_duration_sec`
+    - improved_v26: `0.5699`
+    - improved_v27: `0.591`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增删除自动提交规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v26: `20`
+    - improved_v27: `20`
+  - `success_count`
+    - improved_v26: `20`
+    - improved_v27: `20`
+  - `success_rate`
+    - improved_v26: `1.0`
+    - improved_v27: `1.0`
+  - `test_pass_rate`
+    - improved_v26: `1.0`
+    - improved_v27: `1.0`
+  - `average_steps`
+    - improved_v26: `9.25`
+    - improved_v27: `9.25`
+  - `average_duration_sec`
+    - improved_v26: `0.5567`
+    - improved_v27: `0.5709`
+  - `taxonomy`
+    - improved_v26: `无错误标签`
+    - improved_v27: `无错误标签`
+
+### 关键案例
+
+#### improved_v26 失败案例：`task_056`
+
+- 运行结果：
+  - `logs/trajectories/task_056/run_20260610T133235559561Z_0686/result.json`
+- 现象：
+  - 已读取 `sqlite_delete_repo/table.py`
+  - 但没有匹配到删除后需要提交事务的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v27 成功案例：`task_056`
+
+- 运行结果：
+  - `logs/trajectories/task_056/run_20260610T133235548372Z_7214/result.json`
+- 现象：
+  - 自动识别删除操作与其他写操作应共享自动提交语义
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `25` 条
+- 候选池里正式 accepted 任务提升到 `25` 条，`to_review` 降到 `4` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v26`：覆盖 validator `extend()` 语义继承
+  - `improved_v27`：进一步覆盖删除事务提交可见性
+- 扩容对比中，`improved_v27` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 对比中，`improved_v27` 保持固定任务集无回归，但平均耗时从 `0.5567` 回升到 `0.5709`
+
+### 剩余问题
+
+- 最近几轮 `frozen_20` 主要提供无回归证据，而非新的同集合成功率提升
+- 对象定义阶段 alias 可见性、模型 validator 继承、数据转换中的空值语义仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ### 剩余问题
 
 - 最近几轮 `frozen_20` 主要提供无回归证据，而非新的同集合成功率提升
