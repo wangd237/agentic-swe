@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v28",
+  "description": "增强规则型 patch 策略，额外支持子类 model validator 追加执行父类 validator，避免继承链语义丢失。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v28"
+}

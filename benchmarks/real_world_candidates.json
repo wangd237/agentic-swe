@@ -105,8 +105,8 @@
       "issue_url": "https://github.com/pydantic/pydantic/issues/9582",
       "language": "python",
       "difficulty": "medium",
-      "status": "drafted",
-      "notes": "2026-06-08T17:29:35: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-08T17:29:35: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-08T17:29:35: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-08T17:29:35: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T22:02:29: 已生成 semi_real 可运行任务 task_057，仓库目录为 benchmarks/repos/pydantic_inheritance_repo。",
       "labels": [
         "documentation"
       ],

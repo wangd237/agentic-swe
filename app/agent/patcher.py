@@ -655,6 +655,29 @@ def _handle_sqlite_delete_where_autocommit(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_pydantic_inherited_model_validators(content: str) -> str | None:
+    # improved_v28 处理子类定义 model validator 后父类 validator 被错误忽略的问题。
+    target_block = (
+        "        inherited_after = list(getattr(cls, \"__model_validator_names__\", {}).get(\"after\", []))\n"
+        "        # 这里故意保留真实 issue 中的缺陷：子类只要定义了自己的 validator，\n"
+        "        # 就会把父类 validator 整体覆盖掉。\n"
+        "        merged_after = own_after or inherited_after\n"
+        "        cls.__model_validator_names__ = {\"after\": merged_after}"
+    )
+    if target_block not in content:
+        return None
+    if "merged_after = [*inherited_after, *own_after]" in content:
+        return None
+
+    replacement = (
+        "        inherited_after = list(getattr(cls, \"__model_validator_names__\", {}).get(\"after\", []))\n"
+        "        # 子类 validator 应追加在父类之后，而不是把父类整条链路覆盖掉。\n"
+        "        merged_after = [*inherited_after, *own_after] if own_after else inherited_after\n"
+        "        cls.__model_validator_names__ = {\"after\": merged_after}"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1851,9 +1874,27 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28"}:
             should_run_v25_chain = True
-            if policy_config.patch_strategy == "improved_v27":
+            if policy_config.patch_strategy == "improved_v28":
+                improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                if improved_v28_content is not None:
+                    updated_content = improved_v28_content
+                    patch_reason_parts = ["让子类 model validator 追加执行，保留父类 validator 继承链"]
+                    should_run_v25_chain = False
+                else:
+                    improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                    if improved_v27_content is not None:
+                        updated_content = improved_v27_content
+                        patch_reason_parts = ["让 delete_where 在删除后提交事务，保证其他连接立即可见"]
+                        should_run_v25_chain = False
+                    else:
+                        improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                        if improved_v26_content is not None:
+                            updated_content = improved_v26_content
+                            patch_reason_parts = ["让 extend 保留原始 applicable_validators，避免 legacy $ref 语义回归"]
+                            should_run_v25_chain = False
+            elif policy_config.patch_strategy == "improved_v27":
                 improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
                 if improved_v27_content is not None:
                     updated_content = improved_v27_content

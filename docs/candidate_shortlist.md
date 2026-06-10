@@ -9,25 +9,9 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 5
+## 当前 Top 4
 
-### 1. `pydantic/pydantic#9582`
-
-- 标题：
-  - `Model validator is ignored during inheritance`
-- 推荐级别：`medium`
-- 为什么适合：
-  - 属于继承链语义问题，但输入输出仍有明确现象
-  - 如果能缩成最小 validator 链路，会补到目前较少覆盖的模型继承行为
-- 预期目标文件：
-  - 最小 validator 分派逻辑
-- 预期测试形态：
-  - 父类 validator 继续运行
-  - 子类 validator 不应覆盖掉父类 validator
-- 主要风险：
-  - 需要把问题缩到足够小，避免引入完整框架生命周期
-
-### 2. `python-attrs/attrs#1479`
+### 1. `python-attrs/attrs#1479`
 
 - 标题：
   - `Alias not available during field transformation`
@@ -43,7 +27,7 @@
 - 主要风险：
   - 容易落到框架构建时序，缩题时要非常克制
 
-### 3. `simonw/sqlite-utils#488`
+### 2. `simonw/sqlite-utils#488`
 
 - 标题：
   - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
@@ -59,7 +43,7 @@
 - 主要风险：
   - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
 
-### 4. `simonw/sqlite-utils#186`
+### 3. `simonw/sqlite-utils#186`
 
 - 标题：
   - `.extract() shouldn't extract null values`
@@ -76,7 +60,7 @@
 - 主要风险：
   - 要避免把真实 sqlite schema 细节整体搬进 benchmark
 
-### 5. `PyCQA/isort#1815`
+### 4. `PyCQA/isort#1815`
 
 - 标题：
   - `Tuple sorting doesn't consider profile`
@@ -94,6 +78,12 @@
   - 要避免把完整格式化器行为整体搬进 benchmark
 
 ## 已从短名单移除
+
+### `pydantic/pydantic#9582`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_014 / task_057`
 
 ### `dateutil/dateutil#384`
 
@@ -141,6 +131,6 @@
 
 每次准备扩容时，优先按下面顺序使用：
 
-1. 先从本文件 Top 5 里选
+1. 先从本文件 Top 4 里选
 2. 如果都不合适，再回到完整候选池
 3. 一旦某条进入正式任务，就把它从 shortlist 中移除或下移

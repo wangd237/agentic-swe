@@ -1,0 +1,52 @@
+{
+  "source_batch_run_id": "batch_run_realissuev28_001",
+  "policy_id": "improved_v28",
+  "metrics": {
+    "task_count": 26,
+    "success_count": 26,
+    "success_rate": 1.0,
+    "test_pass_count": 26,
+    "test_pass_rate": 1.0,
+    "partial_fix_count": 0,
+    "partial_fix_rate": 0.0,
+    "average_steps": 9.4231,
+    "average_tool_calls": 9.4231,
+    "average_duration_sec": 0.5898,
+    "average_modified_files": 1.0,
+    "key_file_read_rate": 1.0,
+    "test_execution_rate": 1.0,
+    "repeated_search_rate": 0.0,
+    "reasonable_finish_rate": 1.0
+  },
+  "taxonomy": {
+    "label_counts": {},
+    "task_labels": {
+      "task_006": [],
+      "task_008": [],
+      "task_010": [],
+      "task_013": [],
+      "task_016": [],
+      "task_017": [],
+      "task_019": [],
+      "task_022": [],
+      "task_024": [],
+      "task_026": [],
+      "task_028": [],
+      "task_030": [],
+      "task_032": [],
+      "task_034": [],
+      "task_036": [],
+      "task_038": [],
+      "task_040": [],
+      "task_042": [],
+      "task_044": [],
+      "task_046": [],
+      "task_048": [],
+      "task_050": [],
+      "task_052": [],
+      "task_054": [],
+      "task_056": [],
+      "task_057": []
+    }
+  }
+}

@@ -359,6 +359,20 @@
 - 结果：
   - `task_056` 在扩容到 25 条任务后的正式任务集上完全通过
 
+## 成功案例 28：`task_057`
+
+- repo：`pydantic_inheritance_repo`
+- 来源：`pydantic/pydantic#9582`
+- 代表版本：`improved_v28`
+- 现象：
+  - 父类和子类都定义了 `model_validator`
+  - 旧逻辑里子类一旦声明自己的 validator，就会把父类整条校验链覆盖掉
+  - 结果是子类实例既丢失父类事件记录，也丢失父类拒绝条件
+- 改进点：
+  - `improved_v28` 把子类 `after` validator 改成追加到父类链路之后
+- 结果：
+  - `task_057` 在扩容到 26 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -626,3 +640,13 @@
   - 读到了 `delete_where()`，但没有形成删除后补 `commit()` 的修复
 - 后续改进：
   - 升级为 `improved_v27`
+
+## 失败案例 28：`task_057` 在 `improved_v27`
+
+- 失败版本：`improved_v27`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解子类 `model_validator` 需要在父类链路之后继续追加执行
+  - 读到了继承与 validator 定义，但没有形成父类 validator 名单与子类名单合并的修复
+- 后续改进：
+  - 升级为 `improved_v28`

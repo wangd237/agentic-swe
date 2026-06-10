@@ -32,7 +32,7 @@
   - 已将 `psf/requests#7234` 推进为 `task_007` 草稿与 `task_008` 可运行 semi_real 任务
   - 已将 `Textualize/rich#4090` 推进为 `task_009` 草稿与 `task_010` 可运行 semi_real 任务
   - 已将 `Textualize/rich#3877` 推进为 `task_012` 草稿与 `task_013` 可运行 semi_real 任务
-  - 已将 `pydantic/pydantic#9582` 推进为 `task_014` 草稿
+  - 已将 `pydantic/pydantic#9582` 推进为 `task_014` 草稿与 `task_057` 可运行 semi_real 任务
   - 已将 `pallets/click#3111` 推进为 `task_015` 草稿与 `task_016` 可运行 semi_real 任务
   - 已将 `pytest-dev/pytest#14329` 推进为 `task_011` 草稿与 `task_017` 可运行 semi_real 任务
   - 已将 `dateutil/dateutil#1432` 推进为 `task_018` 草稿与 `task_019` 可运行 semi_real 任务
@@ -77,6 +77,7 @@
   - 已完成 `improved_v25` 策略迭代，补充 ErrorTree 缺失索引访问应保持只读
   - 已完成 `improved_v26` 策略迭代，补充 `extend()` 保留 legacy validator 的 `applicable_validators`
   - 已完成 `improved_v27` 策略迭代，补充 `delete_where()` 删除后自动提交事务
+  - 已完成 `improved_v28` 策略迭代，补充父子 `model_validator` 继承链的追加执行
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -444,6 +445,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev26_001.json`
 - improved_v27：
   - `logs/summaries/batch_eval_realissuev27_001.json`
+- improved_v28：
+  - `logs/summaries/batch_eval_realissuev28_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
@@ -462,6 +465,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step23_001.json`
   - `logs/summaries/batch_compare_realissue_step24_001.json`
   - `logs/summaries/batch_compare_realissue_step25_001.json`
+  - `logs/summaries/batch_compare_realissue_step26_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -519,6 +523,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - 扩充到 25 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 25 条任务后：`average_steps: 9.375 -> 9.4`
   - 扩充到 25 条任务后：`average_duration_sec: 0.5699 -> 0.591`
+  - 扩充到 26 条任务后：`success_count: 25 -> 26`
+  - 扩充到 26 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 26 条任务后：`average_steps: 9.4 -> 9.4231`
+  - 扩充到 26 条任务后：`average_duration_sec: 0.591 -> 0.5898`
   - `task_024` 从 `Premature Finish` 变为完全通过
   - `task_026` 在扩容后的任务集上保持完全通过
   - `task_028` 在扩容后的任务集上保持完全通过
@@ -536,6 +544,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `task_052` 在扩容后的任务集上完全通过
   - `task_054` 在扩容后的任务集上完全通过
   - `task_056` 在扩容后的任务集上完全通过
+  - `task_057` 在扩容后的任务集上完全通过
 
 冻结 15 条真实任务后的同集合对比产物：
 

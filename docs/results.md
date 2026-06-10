@@ -38,6 +38,7 @@
 - 当前已补充 `task_052`，并在真实 issue 派生任务集上完成 `improved_v24 -> improved_v25` 扩容对比
 - 当前已补充 `task_054`，并在真实 issue 派生任务集上完成 `improved_v25 -> improved_v26` 扩容对比
 - 当前已补充 `task_056`，并在真实 issue 派生任务集上完成 `improved_v26 -> improved_v27` 扩容对比
+- 当前已补充 `task_057`，并在真实 issue 派生任务集上完成 `improved_v27 -> improved_v28` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
@@ -46,6 +47,7 @@
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v24 -> improved_v25`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v25 -> improved_v26`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v26 -> improved_v27`
+- 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v27 -> improved_v28`
 
 ## 当前可展示结果
 
@@ -846,6 +848,70 @@
 - changed task
   - `无`
 
+扩充到 26 条真实派生任务后的结果：
+
+- realissuev27：
+  - `logs/summaries/batch_eval_realissuev27_001.json`
+- realissuev28：
+  - `logs/summaries/batch_eval_realissuev28_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step26_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v27: `25`
+  - improved_v28: `26`
+- `success_count`
+  - improved_v27: `25`
+  - improved_v28: `26`
+- `success_rate`
+  - improved_v27: `1.0`
+  - improved_v28: `1.0`
+- `test_pass_rate`
+  - improved_v27: `1.0`
+  - improved_v28: `1.0`
+- `average_steps`
+  - improved_v27: `9.4`
+  - improved_v28: `9.4231`
+- `average_duration_sec`
+  - improved_v27: `0.591`
+  - improved_v28: `0.5898`
+- changed task
+  - `task_057`: 新增任务，在 `improved_v28` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 在正式任务集扩充到 26 条后，成功率继续保持 `100%`
+
+冻结 20 条真实任务上的最新一轮无回归结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v27_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v28_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step7_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v27: `1.0`
+  - improved_v28: `1.0`
+- `test_pass_rate`
+  - improved_v27: `1.0`
+  - improved_v28: `1.0`
+- `average_steps`
+  - improved_v27: `9.25`
+  - improved_v28: `9.25`
+- `average_duration_sec`
+  - improved_v27: `0.5709`
+  - improved_v28: `0.5675`
+- taxonomy
+  - improved_v27: `无错误标签`
+  - improved_v28: `无错误标签`
+- changed task
+  - `无`
+
 扩充到 22 条真实派生任务后的结果：
 
 - realissuev23：
@@ -1132,6 +1198,7 @@
 - `improved_v25` 进一步覆盖了真实 issue 派生出来的 ErrorTree 缺失索引访问状态污染场景
 - `improved_v26` 进一步覆盖了真实 issue 派生出来的 validator `extend()` 语义继承场景
 - `improved_v27` 进一步覆盖了真实 issue 派生出来的删除事务提交可见性场景
+- `improved_v28` 进一步覆盖了真实 issue 派生出来的 model validator 继承语义场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 冻结 manifest 已经让我们拿到三组同集合上的真实提升证据
 - 在最近一轮 `frozen_20` 验证里，新增规则也保持了固定任务集无回归

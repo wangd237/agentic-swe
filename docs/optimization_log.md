@@ -4392,3 +4392,182 @@
 - 当前最近三轮 `frozen_20` 结果都是无回归，而不是新的成功率提升
 - validator 扩展语义、轻量数据库提交语义、对象定义阶段元数据可见性仍值得优先推进
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 34：Model Validator Inheritance Expansion（improved_v27 -> improved_v28）
+
+### 本轮目标
+
+- 验证 `improved_v27` 到 `improved_v28` 是否能覆盖 `pydantic/pydantic#9582`
+- 把子类 `model_validator` 覆盖父类校验链的问题沉淀成正式 semi-real 任务
+- 继续在 `frozen_20` 上补一轮同集合验证，确认新增规则不破坏已有能力
+
+### 本轮新增输入
+
+- 新增候选推进：
+  - `pydantic/pydantic#9582`
+- 候选池状态更新：
+  - `accepted = 26`
+  - `drafted = 0`
+  - `to_review = 4`
+- 新增任务：
+  - `task_057`
+- 新增策略：
+  - `optimization/policy_versions/improved_v28.json`
+
+### 本轮新增文件
+
+- `benchmarks/tasks/task_057.json`
+- `benchmarks/repos/pydantic_inheritance_repo/README.md`
+- `benchmarks/repos/pydantic_inheritance_repo/pydantic_inheritance_repo/__init__.py`
+- `benchmarks/repos/pydantic_inheritance_repo/pydantic_inheritance_repo/models.py`
+- `benchmarks/repos/pydantic_inheritance_repo/tests/test_models.py`
+- `optimization/policy_versions/improved_v28.json`
+
+### 本轮修改文件
+
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/benchmark_registry.md`
+- `docs/candidate_shortlist.md`
+- `docs/case_studies.md`
+- `docs/next_actions.md`
+- `docs/project_memory.md`
+- `docs/results.md`
+
+### 本轮任务设计
+
+- `task_014`
+  - 类型：`real_issue`
+  - 来源：`pydantic/pydantic#9582`
+  - 作用：保留真实 issue 的草稿入口
+- `task_057`
+  - 类型：`semi_real`
+  - repo：`pydantic_inheritance_repo`
+  - 缺陷：子类定义自己的 `model_validator` 后覆盖掉父类校验链
+  - 目标：父类和子类 validator 都继续执行
+
+### 本轮策略改动
+
+- 新增 `_handle_pydantic_inherited_model_validators`
+  - 命中 `pydantic_inheritance_repo/models.py` 中的继承缺陷模板
+  - 修复方式：把子类 `after` validator 改成追加到父类 validator 名单之后
+- `improved_v28`
+  - 在 `improved_v27` 能力链之上增加 model validator 继承修复
+
+### 单任务分辨运行
+
+- `improved_v27` 失败：
+  - `logs/trajectories/task_057/run_20260610T140229242079Z_1281/result.json`
+- `improved_v28` 成功：
+  - `logs/trajectories/task_057/run_20260610T140229399114Z_2846/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev27_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev28_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev28_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step26_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v27_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v28_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v28_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step7_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `25` 条任务集上的 `improved_v27`
+  - improved 是扩充到 `26` 条任务后的 `improved_v28`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v27: `25`
+    - improved_v28: `26`
+  - `success_count`
+    - improved_v27: `25`
+    - improved_v28: `26`
+  - `success_rate`
+    - improved_v27: `1.0`
+    - improved_v28: `1.0`
+  - `test_pass_rate`
+    - improved_v27: `1.0`
+    - improved_v28: `1.0`
+  - `average_steps`
+    - improved_v27: `9.4`
+    - improved_v28: `9.4231`
+  - `average_duration_sec`
+    - improved_v27: `0.591`
+    - improved_v28: `0.5898`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 validator 继承规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v27: `20`
+    - improved_v28: `20`
+  - `success_count`
+    - improved_v27: `20`
+    - improved_v28: `20`
+  - `success_rate`
+    - improved_v27: `1.0`
+    - improved_v28: `1.0`
+  - `test_pass_rate`
+    - improved_v27: `1.0`
+    - improved_v28: `1.0`
+  - `average_steps`
+    - improved_v27: `9.25`
+    - improved_v28: `9.25`
+  - `average_duration_sec`
+    - improved_v27: `0.5709`
+    - improved_v28: `0.5675`
+  - `taxonomy`
+    - improved_v27: `无错误标签`
+    - improved_v28: `无错误标签`
+
+### 关键案例
+
+#### improved_v27 失败案例：`task_057`
+
+- 运行结果：
+  - `logs/trajectories/task_057/run_20260610T140229242079Z_1281/result.json`
+- 现象：
+  - 已读取 `pydantic_inheritance_repo/models.py`
+  - 但没有匹配到父类 validator 名单与子类 validator 名单合并的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v28 成功案例：`task_057`
+
+- 运行结果：
+  - `logs/trajectories/task_057/run_20260610T140229399114Z_2846/result.json`
+- 现象：
+  - 自动识别子类 `model_validator` 不应覆盖父类校验链
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `26` 条
+- 候选池里正式 accepted 任务提升到 `26` 条，`drafted` 清零，`to_review` 维持在 `4` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v27`：覆盖删除事务提交可见性
+  - `improved_v28`：进一步覆盖 model validator 继承语义
+- 扩容对比中，`improved_v28` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 对比中，`improved_v28` 保持固定任务集无回归，并把平均耗时从 `0.5709` 小幅改善到 `0.5675`
+
+### 剩余问题
+
+- 最近几轮 `frozen_20` 主要提供无回归证据，而非新的同集合成功率提升
+- 对象定义阶段 alias 可见性、数据转换中的空值语义、profile 驱动的排序分派仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力

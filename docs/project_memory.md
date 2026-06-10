@@ -7,10 +7,10 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v27`
+- 当前最新策略：`improved_v28`
 - 当前主分支最近重要能力：
-  - 已完成 `25` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v26 -> improved_v27` 无回归验证
+  - 已完成 `26` 条真实 issue 派生 `semi_real` 正式任务
+  - 已在 `frozen_20` 上补齐一轮 `improved_v27 -> improved_v28` 无回归验证
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
 ## 当前核心链路
@@ -26,11 +26,11 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v27.json --run-label realissuev27`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v28.json --run-label realissuev28`
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`25`
+- 正式 `semi_real` 真实 issue 任务数：`26`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
 - 当前冻结 manifest：
@@ -40,8 +40,8 @@
 
 ## 当前候选池状态
 
-- `accepted = 25`
-- `drafted = 1`
+- `accepted = 26`
+- `drafted = 0`
 - `to_review = 4`
 
 候选来源文件：
@@ -52,35 +52,35 @@
 
 ### 1. 最新扩容对比
 
-- 对比：`improved_v26 -> improved_v27`
-- 任务集：`24 -> 25` 条
+- 对比：`improved_v27 -> improved_v28`
+- 任务集：`25 -> 26` 条
 - 结果：
-  - `success_count: 24 -> 25`
+  - `success_count: 25 -> 26`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.375 -> 9.4`
-  - `average_duration_sec: 0.5699 -> 0.591`
+  - `average_steps: 9.4 -> 9.4231`
+  - `average_duration_sec: 0.591 -> 0.5898`
 
 说明：
 
-- 这组结果证明我们已经把正式真实任务集稳定扩容到 `25` 条
+- 这组结果证明我们已经把正式真实任务集稳定扩容到 `26` 条
 - 扩容后依旧保持 `100%` 成功率和 `100%` 测试通过率
 - 这一组仍属于扩容对比，效率指标轻微回升，需要继续观察
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v26 -> improved_v27`
+- 对比：`improved_v27 -> improved_v28`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_steps: 9.25 -> 9.25`
-  - `average_duration_sec: 0.5567 -> 0.5709`
+  - `average_duration_sec: 0.5709 -> 0.5675`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增删除自动提交规则没有破坏已有 `20` 条固定任务
+- 说明新增 model validator 继承规则没有破坏已有 `20` 条固定任务
 - 当前最近一组真正带来同集合成功率提升的证据仍然是 `improved_v21 -> improved_v22`
 
 ## 最新新增任务
@@ -141,14 +141,13 @@
   - repo：`sqlite_delete_repo`
   - 首个通过版本：`improved_v27`
   - 缺陷类型：`delete_where()` 删除后未提交事务
+- `task_057`
+  - 类型：`semi_real`
+  - repo：`pydantic_inheritance_repo`
+  - 首个通过版本：`improved_v28`
+  - 缺陷类型：子类 `model_validator` 覆盖父类校验链
 
 ## 最近三轮优化结论
-
-### `improved_v25`
-
-- 覆盖场景：访问缺失索引时的 ErrorTree 只读语义
-- 新增任务：`task_052`
-- 在 `frozen_20` 上补齐一轮无回归验证
 
 ### `improved_v26`
 
@@ -162,10 +161,16 @@
 - 新增任务：`task_056`
 - 在 `frozen_20` 上补齐一轮无回归验证
 
+### `improved_v28`
+
+- 覆盖场景：子类 `model_validator` 继续追加执行父类 validator
+- 新增任务：`task_057`
+- 在 `frozen_20` 上补齐一轮无回归验证
+
 ## 接下来最值得做的事
 
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
-- 从 `to_review` / `drafted` 中优先推进 `pydantic/pydantic#9582`、`python-attrs/attrs#1479`、`simonw/sqlite-utils#488`
+- 从 `to_review` 中优先推进 `python-attrs/attrs#1479`、`simonw/sqlite-utils#488`、`simonw/sqlite-utils#186`
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_057",
+  "repo_name": "pydantic_inheritance_repo",
+  "repo_path": "benchmarks/repos/pydantic_inheritance_repo",
+  "issue_title": "Model validator is ignored during inheritance",
+  "issue_text": "当前最小实现里，子类只要定义了自己的 `model_validator`，父类 validator 就会被覆盖掉。semi-real 任务要求：父类和子类的 `model_validator` 都要继续执行，不能因为子类重写而丢失父类校验语义。",
+  "test_command": "python -m pytest tests/test_models.py -q",
+  "success_criteria": "子类校验时应继续执行父类和子类 validator；父类单独校验路径不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "pydantic",
+    "inheritance",
+    "model-validator"
+  ],
+  "target_files_hint": [
+    "pydantic_inheritance_repo/models.py",
+    "tests/test_models.py"
+  ],
+  "expected_failure_test": "ModelValidatorInheritanceTests.test_child_model_runs_parent_and_child_validators",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pydantic/pydantic",
+    "repo_url": "https://github.com/pydantic/pydantic",
+    "issue_number": 9582,
+    "issue_url": "https://github.com/pydantic/pydantic/issues/9582",
+    "candidate_id": "pydantic_pydantic_issue_9582",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_014",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
