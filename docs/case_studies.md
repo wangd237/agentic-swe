@@ -263,6 +263,32 @@
 - 结果：
   - `task_042` 在扩容到 18 条任务后的正式任务集和冻结 18 条同集合评测里都完全通过
 
+## 成功案例 21：`task_044`
+
+- repo：`dateutil_month_year_repo`
+- 来源：`dateutil/dateutil#384`
+- 代表版本：`improved_v21`
+- 现象：
+  - 旧逻辑只支持 `MM/YYYY`
+  - `05.2016` 这类点号分隔输入会落到错误分支
+- 改进点：
+  - `improved_v21` 为点号分隔的月年格式增加专门解析分支
+- 结果：
+  - `task_044` 在扩容到 19 条任务后的正式任务集上完全通过
+
+## 成功案例 22：`task_046`
+
+- repo：`jsonschema_single_label_hostname_repo`
+- 来源：`python-jsonschema/jsonschema#1162`
+- 代表版本：`improved_v22`
+- 现象：
+  - 旧逻辑把 `localhost` 这类 single-label hostname 错误判为非法
+  - 普通多标签域名仍然能通过
+- 改进点：
+  - `improved_v22` 允许 single-label hostname 作为合法主机名通过
+- 结果：
+  - `task_046` 在扩容到 20 条任务后的正式任务集和冻结 20 条同集合评测里都完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -460,3 +486,23 @@
   - 虽然读到了目标函数，但没有形成异常回落修复补丁
 - 后续改进：
   - 升级为 `improved_v20`
+
+## 失败案例 21：`task_044` 在 `improved_v20`
+
+- 失败版本：`improved_v20`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 `MM.YYYY` 点号分隔的月年格式
+  - 虽然读到了 parser 逻辑，但没有形成对应补丁
+- 后续改进：
+  - 升级为 `improved_v21`
+
+## 失败案例 22：`task_046` 在 `improved_v21`
+
+- 失败版本：`improved_v21`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 single-label hostname 的合法性边界
+  - 读到了 hostname 校验函数，但没有形成修复
+- 后续改进：
+  - 升级为 `improved_v22`

@@ -3172,3 +3172,326 @@
 - 现在已经有 `frozen_15` 和 `frozen_18` 两组证据，下一阶段应继续朝 `frozen_20` 累积
 - 候选池虽然仍然充足，但 parser 类和容器状态污染类的高质量 issue 仍需优先推进
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 27：Month-Year Dot Parser Expansion（improved_v20 -> improved_v21）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `dateutil/dateutil#384` 推进成可运行任务
+- 验证 `improved_v20` 到 `improved_v21` 是否能覆盖 `MM.YYYY` 点号分隔的月年解析场景
+- 把正式真实任务集从 `18` 条扩容到 `19` 条
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `dateutil/dateutil#384`
+- 候选状态汇总更新为：
+  - `accepted = 19`
+  - `drafted = 1`
+  - `to_review = 9`
+- 新增草稿任务：
+  - `task_043`
+- 新增可运行 semi_real 任务：
+  - `task_044`
+- 新增 benchmark repo：
+  - `benchmarks/repos/dateutil_month_year_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v21.json`
+- patch 生成器新增能力：
+  - 识别仅支持 `MM/YYYY` 的旧逻辑
+  - 为 `MM.YYYY` 点号分隔输入补上月年解析分支
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_043.json`
+- `benchmarks/tasks/task_044.json`
+- `benchmarks/repos/dateutil_month_year_repo/dateutil_month_year_repo/parser.py`
+- `benchmarks/repos/dateutil_month_year_repo/tests/test_parser.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v21.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v20` 失败：
+  - `logs/trajectories/task_044/run_20260610T091839213626Z_1487/result.json`
+- `improved_v21` 成功：
+  - `logs/trajectories/task_044/run_20260610T092046267167Z_6076/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev20_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev21_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev21_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step19_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `18` 条任务集上的 `improved_v20`
+  - improved 是扩充到 `19` 条任务后的 `improved_v21`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v20: `18`
+    - improved_v21: `19`
+  - `success_count`
+    - improved_v20: `18`
+    - improved_v21: `19`
+  - `success_rate`
+    - improved_v20: `1.0`
+    - improved_v21: `1.0`
+  - `test_pass_rate`
+    - improved_v20: `1.0`
+    - improved_v21: `1.0`
+  - `average_steps`
+    - improved_v20: `9.3889`
+    - improved_v21: `9.3158`
+  - `average_duration_sec`
+    - improved_v20: `0.5823`
+    - improved_v21: `0.5743`
+
+### 关键案例
+
+#### improved_v20 失败案例：`task_044`
+
+- 运行结果：
+  - `logs/trajectories/task_044/run_20260610T091839213626Z_1487/result.json`
+- 现象：
+  - 已读取 `dateutil_month_year_repo/parser.py`
+  - 但没有匹配到点号分隔月年格式的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v21 成功案例：`task_044`
+
+- 运行结果：
+  - `logs/trajectories/task_044/run_20260610T092046267167Z_6076/result.json`
+- 现象：
+  - 自动识别 `MM.YYYY` 应沿用月年解析语义
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `19` 条
+- 候选池里正式 accepted 任务提升到 `19` 条，`to_review` 降到 `9` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v20`：覆盖 CLI 命令解析异常回落
+  - `improved_v21`：进一步覆盖月年点号分隔解析
+- 扩容对比中，`improved_v21` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 这一轮效率指标也有轻微改善
+
+### 剩余问题
+
+- 这一轮仍是扩容对比，还没有为 `improved_v21` 补到同集合证据
+- 当前仍缺少容器状态污染、版本比较 `dev/local` 边界等类型
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 28：Single-Label Hostname and Frozen-20 Eval（improved_v21 -> improved_v22）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-jsonschema/jsonschema#1162` 推进成可运行任务
+- 验证 `improved_v21` 到 `improved_v22` 是否能覆盖 single-label hostname 合法性场景
+- 在正式真实任务集扩容到 `20` 条后补齐第 `3` 组冻结同集合评测
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-jsonschema/jsonschema#1162`
+- 候选状态汇总更新为：
+  - `accepted = 20`
+  - `drafted = 1`
+  - `to_review = 9`
+- 新增草稿任务：
+  - `task_045`
+- 新增可运行 semi_real 任务：
+  - `task_046`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jsonschema_single_label_hostname_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v22.json`
+- 新增冻结 manifest：
+  - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
+- patch 生成器新增能力：
+  - 识别 single-label hostname 被错误拒绝的模式
+  - 允许 `localhost` 这类主机名通过合法性检查
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_045.json`
+- `benchmarks/tasks/task_046.json`
+- `benchmarks/repos/jsonschema_single_label_hostname_repo/jsonschema_single_label_hostname_repo/validators.py`
+- `benchmarks/repos/jsonschema_single_label_hostname_repo/tests/test_validators.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v22.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v21` 失败：
+  - `logs/trajectories/task_046/run_20260610T092235177619Z_0236/result.json`
+- `improved_v22` 成功：
+  - `logs/trajectories/task_046/run_20260610T092235218448Z_4302/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev21_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev22_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev22_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step20_001.json`
+
+### 冻结同集合运行
+
+- baseline batch run：
+  - `logs/summaries/batch_run_frozen20v21_001.json`
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v21_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v22_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v22_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step1_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `19` 条任务集上的 `improved_v21`
+  - improved 是扩充到 `20` 条任务后的 `improved_v22`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v21: `19`
+    - improved_v22: `20`
+  - `success_count`
+    - improved_v21: `19`
+    - improved_v22: `20`
+  - `success_rate`
+    - improved_v21: `1.0`
+    - improved_v22: `1.0`
+  - `test_pass_rate`
+    - improved_v21: `1.0`
+    - improved_v22: `1.0`
+  - `average_steps`
+    - improved_v21: `9.3158`
+    - improved_v22: `9.25`
+  - `average_duration_sec`
+    - improved_v21: `0.5743`
+    - improved_v22: `0.5552`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 因此这是当前第 `3` 组可直接解释为策略改进的同集合对比
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v21: `20`
+    - improved_v22: `20`
+  - `success_count`
+    - improved_v21: `19`
+    - improved_v22: `20`
+  - `success_rate`
+    - improved_v21: `0.95`
+    - improved_v22: `1.0`
+  - `test_pass_rate`
+    - improved_v21: `0.95`
+    - improved_v22: `1.0`
+  - `average_steps`
+    - improved_v21: `9.25`
+    - improved_v22: `9.25`
+  - `average_duration_sec`
+    - improved_v21: `0.5536`
+    - improved_v22: `0.5569`
+  - `taxonomy`
+    - improved_v21: `Premature Finish = 1`
+    - improved_v22: `无错误标签`
+
+### 关键案例
+
+#### improved_v21 失败案例：`task_046`
+
+- 运行结果：
+  - `logs/trajectories/task_046/run_20260610T092235177619Z_0236/result.json`
+- 现象：
+  - 已读取 `jsonschema_single_label_hostname_repo/validators.py`
+  - 但没有匹配到 single-label hostname 合法性的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v22 成功案例：`task_046`
+
+- 运行结果：
+  - `logs/trajectories/task_046/run_20260610T092235218448Z_4302/result.json`
+- 现象：
+  - 自动识别 `localhost` 这类 single-label hostname 不应被拒绝
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `20` 条
+- 候选池里正式 accepted 任务提升到 `20` 条，`to_review` 维持在 `9` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v21`：覆盖 `MM.YYYY` 月年格式解析
+  - `improved_v22`：进一步覆盖 single-label hostname 合法性
+- 扩容对比中，`improved_v22` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 冻结同集合对比中，`improved_v22` 把 `20` 条同集合成功率从 `0.95` 提升到 `1.0`
+
+### 剩余问题
+
+- 当前已经有 `frozen_15`、`frozen_18`、`frozen_20` 三组证据，后续应继续沿 `frozen_20` 累积
+- 版本比较 `dev/local` 边界、容器状态污染、validator 扩展语义仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

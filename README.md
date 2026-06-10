@@ -47,6 +47,8 @@
   - 已将 `python-jsonschema/jsonschema#1159` 推进为 `task_037` 草稿与 `task_038` 可运行 semi_real 任务
   - 已将 `pypa/packaging#845` 推进为 `task_039` 草稿与 `task_040` 可运行 semi_real 任务
   - 已将 `pallets/click#2402` 推进为 `task_041` 草稿与 `task_042` 可运行 semi_real 任务
+  - 已将 `dateutil/dateutil#384` 推进为 `task_043` 草稿与 `task_044` 可运行 semi_real 任务
+  - 已将 `python-jsonschema/jsonschema#1162` 推进为 `task_045` 草稿与 `task_046` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
   - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
@@ -63,6 +65,8 @@
   - 已完成 `improved_v18` 策略迭代，补充 integer-valued `multipleOf` 浮点数应按数学整数处理
   - 已完成 `improved_v19` 策略迭代，补充 packaging `Requirement.__str__` 在复合 marker 中统一规范化 extra 名称
   - 已完成 `improved_v20` 策略迭代，补充 click alias group 在 `cmd is None` 场景下保持普通返回语义
+  - 已完成 `improved_v21` 策略迭代，补充 `MM.YYYY` 月年格式在点号分隔场景下的解析修复
+  - 已完成 `improved_v22` 策略迭代，补充 single-label hostname 应视为合法主机名的修复
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -330,6 +334,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `task_040`：可运行的 semi_real 派生任务
     - `task_041`：真实 issue 草稿
     - `task_042`：可运行的 semi_real 派生任务
+    - `task_043`：真实 issue 草稿
+    - `task_044`：可运行的 semi_real 派生任务
+    - `task_045`：真实 issue 草稿
+    - `task_046`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -406,6 +414,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev19_001.json`
 - improved_v20：
   - `logs/summaries/batch_eval_realissuev20_001.json`
+- improved_v21：
+  - `logs/summaries/batch_eval_realissuev21_001.json`
+- improved_v22：
+  - `logs/summaries/batch_eval_realissuev22_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
@@ -417,6 +429,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step16_001.json`
   - `logs/summaries/batch_compare_realissue_step17_001.json`
   - `logs/summaries/batch_compare_realissue_step18_001.json`
+  - `logs/summaries/batch_compare_realissue_step19_001.json`
+  - `logs/summaries/batch_compare_realissue_step20_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -446,6 +460,14 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - 扩充到 18 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 18 条任务后：`average_steps: 9.3529 -> 9.3889`
   - 扩充到 18 条任务后：`average_duration_sec: 0.6026 -> 0.5823`
+  - 扩充到 19 条任务后：`success_count: 18 -> 19`
+  - 扩充到 19 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 19 条任务后：`average_steps: 9.3889 -> 9.3158`
+  - 扩充到 19 条任务后：`average_duration_sec: 0.5823 -> 0.5743`
+  - 扩充到 20 条任务后：`success_count: 19 -> 20`
+  - 扩充到 20 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 20 条任务后：`average_steps: 9.3158 -> 9.25`
+  - 扩充到 20 条任务后：`average_duration_sec: 0.5743 -> 0.5552`
   - `task_024` 从 `Premature Finish` 变为完全通过
   - `task_026` 在扩容后的任务集上保持完全通过
   - `task_028` 在扩容后的任务集上保持完全通过
@@ -456,6 +478,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `task_038` 在扩容后的任务集上完全通过
   - `task_040` 在扩容后的任务集上完全通过
   - `task_042` 在扩容后的任务集上完全通过
+  - `task_044` 在扩容后的任务集上完全通过
+  - `task_046` 在扩容后的任务集上完全通过
 
 冻结 15 条真实任务后的同集合对比产物：
 
@@ -486,6 +510,21 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `test_pass_rate: 0.9444 -> 1.0`
   - `Premature Finish: 1 -> 0`
   - `task_042` 从 `Premature Finish` 变为完全通过
+
+冻结 20 条真实任务后的同集合对比产物：
+
+- frozen manifest：
+  - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v21_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v22_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step1_001.json`
+  - `success_rate: 0.95 -> 1.0`
+  - `test_pass_rate: 0.95 -> 1.0`
+  - `Premature Finish: 1 -> 0`
+  - `task_046` 从 `Premature Finish` 变为完全通过
 
 ## Harness 设计方向
 

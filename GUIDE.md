@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v20` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v22` 多轮策略迭代，正式真实任务扩充到 `20` 条，并补齐 `frozen_20` 同集合评测 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -758,6 +758,20 @@ scripts/
   - 类型：`semi_real`
   - 来源：`pallets/click#2402`
   - 状态：已可运行
+- `task_043`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `dateutil/dateutil#384` 的真实入口记录
+- `task_044`
+  - 类型：`semi_real`
+  - 来源：`dateutil/dateutil#384`
+  - 状态：已可运行
+- `task_045`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `python-jsonschema/jsonschema#1162` 的真实入口记录
+- `task_046`
+  - 类型：`semi_real`
+  - 来源：`python-jsonschema/jsonschema#1162`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -794,6 +808,10 @@ scripts/
   - 作用：新增 packaging `Requirement.__str__` 在复合 marker 中统一规范化 extra 名称的修复能力
 - `optimization/policy_versions/improved_v20.json`
   - 作用：新增 click alias group 在 `cmd is None` 场景下保持普通返回语义的修复能力
+- `optimization/policy_versions/improved_v21.json`
+  - 作用：新增 `MM.YYYY` 在点号分隔场景下按月年格式解析的修复能力
+- `optimization/policy_versions/improved_v22.json`
+  - 作用：新增 single-label hostname 应通过 hostname 格式校验的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1232,6 +1250,49 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `improved_v19 -> improved_v20` 在同集合上从 `0.9444` 提升到 `1.0`
 - `task_042` 从 `Premature Finish` 变为完全通过
 
+### 方式 30：运行 `MM.YYYY` 月年解析真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_044.json --policy optimization/policy_versions/improved_v21.json
+```
+
+你会看到：
+
+- `task_044` 被成功修复
+- 修改文件是 `dateutil_month_year_repo/dateutil_month_year_repo/parser.py`
+- patch 原因是点号分隔的 `MM.YYYY` 应当走月年格式解析，而不是沿用仅支持斜杠分隔的旧逻辑
+
+### 方式 31：运行 single-label hostname 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_046.json --policy optimization/policy_versions/improved_v22.json
+```
+
+你会看到：
+
+- `task_046` 被成功修复
+- 修改文件是 `jsonschema_single_label_hostname_repo/jsonschema_single_label_hostname_repo/validators.py`
+- patch 原因是 `localhost` 这类 single-label hostname 应作为合法主机名通过，而不是被错误拒绝
+
+### 方式 32：运行冻结 20 条任务的同集合评测
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v21.json --run-label frozen20v21
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v22.json --run-label frozen20v22 --compare-against-eval logs/summaries/batch_eval_frozen20v21_001.json --compare-label frozen20_step1
+```
+
+你会看到：
+
+- 冻结 manifest 始终固定为同一组 `20` 条任务
+- `improved_v21 -> improved_v22` 在同集合上从 `0.95` 提升到 `1.0`
+- `task_046` 从 `Premature Finish` 变为完全通过
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1347,8 +1408,11 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 已补充 `task_037` / `task_038` 与 `improved_v18`
 - 已补充 `task_039` / `task_040` 与 `improved_v19`
 - 已补充 `task_041` / `task_042` 与 `improved_v20`
+- 已补充 `task_043` / `task_044` 与 `improved_v21`
+- 已补充 `task_045` / `task_046` 与 `improved_v22`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
+- 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

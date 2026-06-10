@@ -461,8 +461,8 @@
       "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1162",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T18:55:00: 已生成 real_issue task 草稿 task_045，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T18:58:00: 已生成 semi_real 可运行任务 task_046，仓库目录为 benchmarks/repos/jsonschema_single_label_hostname_repo。",
       "labels": [
         "Bug"
       ],
@@ -479,8 +479,8 @@
       "issue_url": "https://github.com/dateutil/dateutil/issues/384",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:29: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:29: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T18:40:00: 已生成 real_issue task 草稿 task_043，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T18:44:00: 已生成 semi_real 可运行任务 task_044，仓库目录为 benchmarks/repos/dateutil_month_year_repo。",
       "labels": [
         "bug",
         "parser"

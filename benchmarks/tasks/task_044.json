@@ -1,0 +1,37 @@
+{
+  "task_id": "task_044",
+  "repo_name": "dateutil_month_year_repo",
+  "repo_path": "benchmarks/repos/dateutil_month_year_repo",
+  "issue_title": "parser fails to parse MM.YYYY",
+  "issue_text": "当前月年解析逻辑能正确处理 `MM/YYYY`，但对 `MM.YYYY` 会走错分支，导致返回结果没有保持 `(year, month)` 语义。semi-real 任务要求：`05.2016` 应与 `05/2016` 一样被解析成 `2016-05`，同时不破坏已有 slash 分支和错误输入的异常行为。",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "`MM.YYYY` 应与 `MM/YYYY` 保持一致并解析为 `(year, month)`；slash 场景继续正确，非法格式仍抛出 ValueError，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "dateutil",
+    "parser",
+    "month-year"
+  ],
+  "target_files_hint": [
+    "dateutil_month_year_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "MonthYearParserTests.test_dot_separated_month_year_parses_correctly",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 384,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/384",
+    "candidate_id": "dateutil_dateutil_issue_384",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_043",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

@@ -13,24 +13,26 @@
 
 | task_id | 来源 issue | semi_real repo | 缺陷类型 | 首个通过版本 | 冻结集 |
 | --- | --- | --- | --- | --- | --- |
-| `task_006` | `psf/requests#6432` | `requests_compat_repo` | 依赖约束上界放宽 | `improved_v3` | `15/18` |
-| `task_008` | `psf/requests#7234` | `requests_encoding_repo` | quoted charset 去引号解析 | `improved_v4` | `15/18` |
-| `task_010` | `Textualize/rich#4090` | `rich_ansi_repo` | CRLF ANSI 行拆分 | `improved_v5` | `15/18` |
-| `task_013` | `Textualize/rich#3877` | `rich_handler_repo` | 时区偏移格式化 | `improved_v6` | `15/18` |
-| `task_016` | `pallets/click#3111` | `click_flag_repo` | 负向 boolean flag 默认值 | `improved_v7` | `15/18` |
-| `task_017` | `pytest-dev/pytest#14329` | `pytest_marker_repo` | 最近 marker 覆盖优先 | `improved_v8` | `15/18` |
-| `task_019` | `dateutil/dateutil#1432` | `dateutil_tz_repo` | UTC/GMT 零偏移回落 | `improved_v9` | `15/18` |
-| `task_022` | `dateutil/dateutil#1442` | `dateutil_parser_repo_v2` | 9 位时间串解析 | `improved_v10` | `15/18` |
-| `task_024` | `pallets/jinja#2069` | `jinja_meta_repo` | 分支全赋值变量分析 | `improved_v11` | `15/18` |
-| `task_026` | `pallets/jinja#2118` | `jinja_slice_repo` | `slice(fill_with)` 整除边界 | `improved_v12` | `15/18` |
-| `task_028` | `python-poetry/tomlkit#494` | `tomlkit_array_repo` | 数组下一行逗号风格 append | `improved_v13` | `15/18` |
-| `task_030` | `python-poetry/tomlkit#495` | `tomlkit_inline_table_repo` | dotted inline table 分隔修复 | `improved_v14` | `15/18` |
-| `task_032` | `pypa/packaging#873` | `packaging_wheel_repo` | wheel 版本 normalization 校验 | `improved_v15` | `15/18` |
-| `task_034` | `python-jsonschema/jsonschema#1157` | `jsonschema_extras_repo` | mixed-type extras 错误消息渲染 | `improved_v16` | `15/18` |
-| `task_036` | `python-jsonschema/jsonschema#1121` | `jsonschema_hostname_repo` | hostname 格式检查异常回落 | `improved_v17` | `15/18` |
-| `task_038` | `python-jsonschema/jsonschema#1159` | `jsonschema_multipleof_repo` | integer-valued `multipleOf` 浮点数数值语义 | `improved_v18` | `18` |
-| `task_040` | `pypa/packaging#845` | `packaging_requirement_repo` | Requirement extra 字符串规范化 | `improved_v19` | `18` |
-| `task_042` | `pallets/click#2402` | `click_alias_repo` | `cmd is None` 异常回落 | `improved_v20` | `18` |
+| `task_006` | `psf/requests#6432` | `requests_compat_repo` | 依赖约束上界放宽 | `improved_v3` | `15/18/20` |
+| `task_008` | `psf/requests#7234` | `requests_encoding_repo` | quoted charset 去引号解析 | `improved_v4` | `15/18/20` |
+| `task_010` | `Textualize/rich#4090` | `rich_ansi_repo` | CRLF ANSI 行拆分 | `improved_v5` | `15/18/20` |
+| `task_013` | `Textualize/rich#3877` | `rich_handler_repo` | 时区偏移格式化 | `improved_v6` | `15/18/20` |
+| `task_016` | `pallets/click#3111` | `click_flag_repo` | 负向 boolean flag 默认值 | `improved_v7` | `15/18/20` |
+| `task_017` | `pytest-dev/pytest#14329` | `pytest_marker_repo` | 最近 marker 覆盖优先 | `improved_v8` | `15/18/20` |
+| `task_019` | `dateutil/dateutil#1432` | `dateutil_tz_repo` | UTC/GMT 零偏移回落 | `improved_v9` | `15/18/20` |
+| `task_022` | `dateutil/dateutil#1442` | `dateutil_parser_repo_v2` | 9 位时间串解析 | `improved_v10` | `15/18/20` |
+| `task_024` | `pallets/jinja#2069` | `jinja_meta_repo` | 分支全赋值变量分析 | `improved_v11` | `15/18/20` |
+| `task_026` | `pallets/jinja#2118` | `jinja_slice_repo` | `slice(fill_with)` 整除边界 | `improved_v12` | `15/18/20` |
+| `task_028` | `python-poetry/tomlkit#494` | `tomlkit_array_repo` | 数组下一行逗号风格 append | `improved_v13` | `15/18/20` |
+| `task_030` | `python-poetry/tomlkit#495` | `tomlkit_inline_table_repo` | dotted inline table 分隔修复 | `improved_v14` | `15/18/20` |
+| `task_032` | `pypa/packaging#873` | `packaging_wheel_repo` | wheel 版本 normalization 校验 | `improved_v15` | `15/18/20` |
+| `task_034` | `python-jsonschema/jsonschema#1157` | `jsonschema_extras_repo` | mixed-type extras 错误消息渲染 | `improved_v16` | `15/18/20` |
+| `task_036` | `python-jsonschema/jsonschema#1121` | `jsonschema_hostname_repo` | hostname 格式检查异常回落 | `improved_v17` | `15/18/20` |
+| `task_038` | `python-jsonschema/jsonschema#1159` | `jsonschema_multipleof_repo` | integer-valued `multipleOf` 浮点数数值语义 | `improved_v18` | `18/20` |
+| `task_040` | `pypa/packaging#845` | `packaging_requirement_repo` | Requirement extra 字符串规范化 | `improved_v19` | `18/20` |
+| `task_042` | `pallets/click#2402` | `click_alias_repo` | `cmd is None` 异常回落 | `improved_v20` | `18/20` |
+| `task_044` | `dateutil/dateutil#384` | `dateutil_month_year_repo` | `MM.YYYY` 月年格式解析 | `improved_v21` | `20` |
+| `task_046` | `python-jsonschema/jsonschema#1162` | `jsonschema_single_label_hostname_repo` | single-label hostname 合法性判定 | `improved_v22` | `20` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -42,22 +44,24 @@
 - 继承 / 覆盖优先级
 - 时区解析边界
 - 时间串解析边界
+- 月年 parser 容错
 - 控制流分支分析
 - 切片 / 填充值边界
 - 序列化 / 分隔符保真
 - 版本规范校验
 - 错误消息渲染
 - 异常回落与普通失败语义
+- single-label hostname 规范边界
 - 数值语义 / 浮点与整数一致性
 - marker / requirement 字符串规范化
 - CLI 命令解析回落
 
 ## 当前仍相对欠缺的方向
 
-- 更典型的 parser 容错类 bug
 - 容器状态污染 / 惰性访问副作用
-- 版本比较中的 dev/local 边界
-- hostname 单标签这类规范边界问题
+- 版本比较中的 `dev/local` 边界
+- validator 扩展 / 继承时的语义丢失
+- 轻量数据库状态与提交语义问题
 
 ## 相关文件
 
@@ -66,5 +70,6 @@
 - 当前冻结 manifest：
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
+  - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
 - 候选池：
   - `benchmarks/real_world_candidates.json`

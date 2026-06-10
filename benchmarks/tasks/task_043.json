@@ -1,0 +1,29 @@
+{
+  "task_id": "task_043",
+  "repo_name": "dateutil",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "parser fails to parse MM.YYYY",
+  "issue_text": "当输入形如 `05.2016` 的月年字符串时，当前解析逻辑没有把它当成与 `05/2016` 等价的 `MM.YYYY` 格式，而是走了错误的分支，导致年月语义被错误解释。当前真实 issue 需要让 `MM.YYYY` 与 `MM/YYYY` 保持一致。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 384,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/384",
+    "candidate_id": "dateutil_dateutil_issue_384",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

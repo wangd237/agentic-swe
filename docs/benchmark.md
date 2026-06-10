@@ -55,6 +55,8 @@
 - `benchmarks/tasks/task_038.json`
 - `benchmarks/tasks/task_040.json`
 - `benchmarks/tasks/task_042.json`
+- `benchmarks/tasks/task_044.json`
+- `benchmarks/tasks/task_046.json`
 
 当前 repo：
 
@@ -79,6 +81,8 @@
 - `benchmarks/repos/jsonschema_hostname_repo`
 - `benchmarks/repos/jsonschema_multipleof_repo`
 - `benchmarks/repos/click_alias_repo`
+- `benchmarks/repos/dateutil_month_year_repo`
+- `benchmarks/repos/jsonschema_single_label_hostname_repo`
 
 用途：
 
@@ -94,6 +98,7 @@
   - `benchmarks/manifests/real_issue_tasks.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
+  - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
 - 已新增导入脚本：
@@ -138,6 +143,15 @@
 - `scaffolded`
 - `accepted`
 - `rejected`
+
+当前阶段补充说明：
+
+- 正式真实任务已经扩充到 `20` 条
+- `frozen_20` 已经成为后续策略迭代的固定同集合基线
+- 候选池状态已收敛到：
+  - `accepted = 20`
+  - `drafted = 1`
+  - `to_review = 9`
 
 这部分会在项目主链路更稳定后逐步接入。
 

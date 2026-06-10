@@ -1,0 +1,37 @@
+{
+  "task_id": "task_046",
+  "repo_name": "jsonschema_single_label_hostname_repo",
+  "repo_path": "benchmarks/repos/jsonschema_single_label_hostname_repo",
+  "issue_title": "Hostname format check does not allow single labels",
+  "issue_text": "当前 hostname 校验逻辑错误要求至少要有两个 label，因此 `localhost` 这类单标签 hostname 会被错误拒绝。semi-real 任务要求：单标签 hostname 应合法通过；多标签 hostname 继续通过；非法 hostname 继续返回 False。",
+  "test_command": "python -m pytest tests/test_hostname.py -q",
+  "success_criteria": "`localhost` 这类单标签 hostname 应返回 True；`example.com` 保持 True；非法 hostname 继续返回 False，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "hostname",
+    "single-label"
+  ],
+  "target_files_hint": [
+    "jsonschema_single_label_hostname_repo/hostname.py",
+    "tests/test_hostname.py"
+  ],
+  "expected_failure_test": "HostnameFormatTests.test_single_label_hostname_is_allowed",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1162,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1162",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1162",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_045",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
