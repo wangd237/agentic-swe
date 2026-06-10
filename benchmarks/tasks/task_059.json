@@ -1,0 +1,36 @@
+{
+  "task_id": "task_059",
+  "repo_name": "sqlite_transform_repo",
+  "repo_path": "benchmarks/repos/sqlite_transform_repo",
+  "issue_title": "`sqlite-utils transform` should set empty strings to null when converting text columns to integer/float",
+  "issue_text": "当前最小实现里，文本列在转换成 `integer` 或 `float` 时，如果原值是空字符串，会原样保留成 `\"\"`。semi-real 任务要求：数值列转换时空字符串应回落为 `None`，非空数字字符串继续正常转换，未纳入转换目标的普通文本列不回归。",
+  "test_command": "python -m pytest tests/test_transform.py -q",
+  "success_criteria": "数值列空字符串转换后应变为 `None`；非空数字字符串继续正确转换；非目标文本列保持原样；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "sqlite-utils",
+    "transform",
+    "coercion"
+  ],
+  "target_files_hint": [
+    "sqlite_transform_repo/transform.py",
+    "tests/test_transform.py"
+  ],
+  "expected_failure_test": "SqliteTransformTests.test_numeric_empty_strings_become_none",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "simonw/sqlite-utils",
+    "repo_url": "https://github.com/simonw/sqlite-utils",
+    "issue_number": 488,
+    "issue_url": "https://github.com/simonw/sqlite-utils/issues/488",
+    "candidate_id": "simonw_sqlite_utils_issue_488",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

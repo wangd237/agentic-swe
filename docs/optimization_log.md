@@ -1206,6 +1206,118 @@
 - 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
 - `frozen_20` 上无功能回归，仅有 `average_duration_sec` 从 `0.5675` 小幅波动到 `0.5688`
 
+## 2026-06-10 22:26 Phase 6 sqlite transform 空字符串清洗扩容
+
+### 本轮目标
+
+- 把 `simonw/sqlite-utils#488` 从 `to_review` 推进成正式可运行任务
+- 为数据清洗里的空字符串 / `null` 语义补一条新的规则型 patch 能力
+- 继续保留扩容对比与 `frozen_20` 同集合无回归对比
+
+### 本轮新增任务
+
+- `task_059`
+  - 类型：`semi_real`
+  - repo：`sqlite_transform_repo`
+  - 来源：`simonw/sqlite-utils#488`
+  - 缺陷：数值列转换时空字符串仍被保留为 `""`
+  - 目标：`integer` / `float` 转换时空字符串回落为 `None`
+
+### 本轮策略改动
+
+- 新增 `_handle_sqlite_transform_empty_string_numeric`
+  - 命中 `sqlite_transform_repo/transform.py` 中的数值转换模板
+  - 修复方式：把 `integer` / `float` 分支中的空字符串回落为 `None`
+- `improved_v30`
+  - 在 `improved_v29` 能力链之上增加数值列空字符串清洗修复
+
+### 单任务分辨运行
+
+- `improved_v29` 失败：
+  - `logs/trajectories/task_059/run_20260610T142539239429Z_4515/result.json`
+- `improved_v30` 成功：
+  - `logs/trajectories/task_059/run_20260610T142539283117Z_5654/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev29_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev30_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev30_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step29_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v29_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v30_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v30_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step9_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `27` 条任务集上的 `improved_v29`
+  - improved 是扩充到 `28` 条任务后的 `improved_v30`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v29: `27`
+    - improved_v30: `28`
+  - `success_count`
+    - improved_v29: `27`
+    - improved_v30: `28`
+  - `success_rate`
+    - improved_v29: `1.0`
+    - improved_v30: `1.0`
+  - `test_pass_rate`
+    - improved_v29: `1.0`
+    - improved_v30: `1.0`
+  - `average_steps`
+    - improved_v29: `9.4444`
+    - improved_v30: `9.3929`
+  - `average_duration_sec`
+    - improved_v29: `0.5675`
+    - improved_v30: `0.5633`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增数值列空字符串清洗规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v29: `20`
+    - improved_v30: `20`
+  - `success_count`
+    - improved_v29: `20`
+    - improved_v30: `20`
+  - `success_rate`
+    - improved_v29: `1.0`
+    - improved_v30: `1.0`
+  - `test_pass_rate`
+    - improved_v29: `1.0`
+    - improved_v30: `1.0`
+  - `average_steps`
+    - improved_v29: `9.25`
+    - improved_v30: `9.25`
+  - `average_duration_sec`
+    - improved_v29: `0.5688`
+    - improved_v30: `0.5631`
+  - `taxonomy`
+    - improved_v29: `无错误标签`
+    - improved_v30: `无错误标签`
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `28` 条
+- 候选池正式 accepted 提升到 `28` 条，`to_review` 收敛到 `2` 条
+- `improved_v30` 把数据清洗中的空字符串 / `null` 语义纳入正式覆盖面
+- 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 上无功能回归，且 `average_duration_sec` 从 `0.5688` 进一步改善到 `0.5631`
+
 ## Iteration 12：Closest Marker Override from Real Issue（improved_v7 -> improved_v8）
 
 ### 时间

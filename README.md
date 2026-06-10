@@ -80,6 +80,8 @@
   - 已完成 `improved_v28` 策略迭代，补充父子 `model_validator` 继承链的追加执行
   - 已将 `python-attrs/attrs#1479` 推进为 `task_058` 可运行 semi_real 任务
   - 已完成 `improved_v29` 策略迭代，补充 `field_transformer` 阶段默认 alias 的提前可见性
+  - 已将 `simonw/sqlite-utils#488` 推进为 `task_059` 可运行 semi_real 任务
+  - 已完成 `improved_v30` 策略迭代，补充数值列转换时空字符串回落为 `None`
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -451,6 +453,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev28_001.json`
 - improved_v29：
   - `logs/summaries/batch_eval_realissuev29_001.json`
+- improved_v30：
+  - `logs/summaries/batch_eval_realissuev30_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
@@ -471,6 +475,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step25_001.json`
   - `logs/summaries/batch_compare_realissue_step26_001.json`
   - `logs/summaries/batch_compare_realissue_step28_001.json`
+  - `logs/summaries/batch_compare_realissue_step29_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -536,6 +541,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - 扩充到 27 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 27 条任务后：`average_steps: 9.4231 -> 9.4444`
   - 扩充到 27 条任务后：`average_duration_sec: 0.5898 -> 0.5675`
+  - 扩充到 28 条任务后：`success_count: 27 -> 28`
+  - 扩充到 28 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 28 条任务后：`average_steps: 9.4444 -> 9.3929`
+  - 扩充到 28 条任务后：`average_duration_sec: 0.5675 -> 0.5633`
   - `task_024` 从 `Premature Finish` 变为完全通过
   - `task_026` 在扩容后的任务集上保持完全通过
   - `task_028` 在扩容后的任务集上保持完全通过
@@ -555,6 +564,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `task_056` 在扩容后的任务集上完全通过
   - `task_057` 在扩容后的任务集上完全通过
   - `task_058` 在扩容后的任务集上完全通过
+  - `task_059` 在扩容后的任务集上完全通过
 
 冻结 15 条真实任务后的同集合对比产物：
 

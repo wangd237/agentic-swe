@@ -40,6 +40,7 @@
 | `task_056` | `simonw/sqlite-utils#159` | `sqlite_delete_repo` | `delete_where()` 删除后未提交事务 | `improved_v27` | `-` |
 | `task_057` | `pydantic/pydantic#9582` | `pydantic_inheritance_repo` | 子类 `model_validator` 覆盖父类校验链 | `improved_v28` | `-` |
 | `task_058` | `python-attrs/attrs#1479` | `attrs_alias_repo` | `field_transformer` 阶段默认 alias 不可见 | `improved_v29` | `-` |
+| `task_059` | `simonw/sqlite-utils#488` | `sqlite_transform_repo` | 数值列转换时空字符串保留为 `""` | `improved_v30` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -71,7 +72,7 @@
 
 ## 当前仍相对欠缺的方向
 
-- 数据清洗中的空字符串 / `null` 语义
+- profile 驱动的排序 / 分派语义
 
 ## 相关文件
 

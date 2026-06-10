@@ -9,25 +9,9 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 3
+## 当前 Top 2
 
-### 1. `simonw/sqlite-utils#488`
-
-- 标题：
-  - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
-- 推荐级别：`medium`
-- 为什么适合：
-  - 能补数据清洗 / 类型转换边界这一类目前较少覆盖的问题
-  - 输入输出示例比较明确，适合缩成单函数转换逻辑
-- 预期目标文件：
-  - transform / coercion 逻辑
-- 预期测试形态：
-  - 空字符串在整数或浮点转换时回落为 `None`
-  - 非空数字字符串保持正常转换
-- 主要风险：
-  - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
-
-### 2. `simonw/sqlite-utils#186`
+### 1. `simonw/sqlite-utils#186`
 
 - 标题：
   - `.extract() shouldn't extract null values`
@@ -44,7 +28,7 @@
 - 主要风险：
   - 要避免把真实 sqlite schema 细节整体搬进 benchmark
 
-### 3. `PyCQA/isort#1815`
+### 2. `PyCQA/isort#1815`
 
 - 标题：
   - `Tuple sorting doesn't consider profile`
@@ -68,6 +52,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_058`
+
+### `simonw/sqlite-utils#488`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_059`
 
 ### `pydantic/pydantic#9582`
 
@@ -121,6 +111,6 @@
 
 每次准备扩容时，优先按下面顺序使用：
 
-1. 先从本文件 Top 3 里选
+1. 先从本文件 Top 2 里选
 2. 如果都不合适，再回到完整候选池
 3. 一旦某条进入正式任务，就把它从 shortlist 中移除或下移

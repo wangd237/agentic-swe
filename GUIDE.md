@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v29` 多轮策略迭代，正式真实任务扩充到 `27` 条，并在 `frozen_20` 上持续做同集合验证 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v30` 多轮策略迭代，正式真实任务扩充到 `28` 条，并在 `frozen_20` 上持续做同集合验证 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -865,6 +865,8 @@ scripts/
   - 作用：新增父子 `model_validator` 在继承链上追加执行、避免父类校验被覆盖的修复能力
 - `optimization/policy_versions/improved_v29.json`
   - 作用：新增 `field_transformer` 运行前提前暴露默认 alias 的修复能力
+- `optimization/policy_versions/improved_v30.json`
+  - 作用：新增数值列转换时把空字符串回落为 `None` 的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1486,6 +1488,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_058.json --policy
 - 修改文件是 `attrs_alias_repo/attrs_alias_repo/model.py`
 - patch 原因是 `field_transformer` 运行前就应能看到最终 alias
 
+### 方式 43：运行 sqlite transform 空字符串转 null 任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_059.json --policy optimization/policy_versions/improved_v30.json
+```
+
+你会看到：
+
+- `task_059` 被成功修复
+- 修改文件是 `sqlite_transform_repo/sqlite_transform_repo/transform.py`
+- patch 原因是数值列转换时空字符串应回落为 `None`
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1610,6 +1626,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_058.json --policy
 - 已补充 `task_055` / `task_056` 与 `improved_v27`
 - 已补充 `task_014` / `task_057` 与 `improved_v28`
 - 已补充 `task_058` 与 `improved_v29`
+- 已补充 `task_059` 与 `improved_v30`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果

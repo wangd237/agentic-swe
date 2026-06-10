@@ -440,8 +440,8 @@
       "issue_url": "https://github.com/simonw/sqlite-utils/issues/488",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:27: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:27: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T22:28:00: 已生成 semi_real 可运行任务 task_059，仓库目录为 benchmarks/repos/sqlite_transform_repo。",
       "labels": [
         "bug",
         "enhancement",

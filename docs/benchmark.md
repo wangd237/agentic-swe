@@ -64,6 +64,7 @@
 - `benchmarks/tasks/task_056.json`
 - `benchmarks/tasks/task_057.json`
 - `benchmarks/tasks/task_058.json`
+- `benchmarks/tasks/task_059.json`
 
 当前 repo：
 
@@ -97,6 +98,7 @@
 - `benchmarks/repos/sqlite_delete_repo`
 - `benchmarks/repos/pydantic_inheritance_repo`
 - `benchmarks/repos/attrs_alias_repo`
+- `benchmarks/repos/sqlite_transform_repo`
 
 用途：
 

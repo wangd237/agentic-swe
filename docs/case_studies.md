@@ -387,6 +387,20 @@
 - 结果：
   - `task_058` 在扩容到 27 条任务后的正式任务集上完全通过
 
+## 成功案例 30：`task_059`
+
+- repo：`sqlite_transform_repo`
+- 来源：`simonw/sqlite-utils#488`
+- 代表版本：`improved_v30`
+- 现象：
+  - 数值列转换时，非空数字字符串本来就会被正常转成 `int` / `float`
+  - 旧逻辑却把空字符串继续保留成 `""`
+  - 结果里“缺失值”与“文本空串”语义混杂
+- 改进点：
+  - `improved_v30` 在 `integer` / `float` 转换分支里把空字符串统一回落为 `None`
+- 结果：
+  - `task_059` 在扩容到 28 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -674,3 +688,13 @@
   - 读到了字段构建和 `field_transformer` 链路，但没有形成“在变换前回填默认 alias”的修复
 - 后续改进：
   - 升级为 `improved_v29`
+
+## 失败案例 30：`task_059` 在 `improved_v29`
+
+- 失败版本：`improved_v29`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解数值列空字符串应视为缺失值这一类清洗语义
+  - 读到了 `integer` / `float` 转换分支，但没有形成把 `\"\"` 回落为 `None` 的修复
+- 后续改进：
+  - 升级为 `improved_v30`

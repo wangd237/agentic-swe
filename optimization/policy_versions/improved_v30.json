@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v30",
+  "description": "增强规则型 patch 策略，额外支持数值列转换时把空字符串回落为 None，避免数据清洗阶段保留伪空值。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v30"
+}

@@ -702,6 +702,40 @@ def _handle_attrs_field_transformer_alias(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_sqlite_transform_empty_string_numeric(content: str) -> str | None:
+    # improved_v30 处理数值列转换时空字符串仍保留为 "" 的问题。
+    target_block = (
+        "    if target_type == \"integer\":\n"
+        "        # 这里故意保留真实 issue 中的缺陷：空字符串在数值列转换时仍被保留。\n"
+        "        if value == \"\":\n"
+        "            return value\n"
+        "        return int(value)\n\n"
+        "    if target_type == \"float\":\n"
+        "        # 这里故意保留真实 issue 中的缺陷：空字符串在数值列转换时仍被保留。\n"
+        "        if value == \"\":\n"
+        "            return value\n"
+        "        return float(value)"
+    )
+    if target_block not in content:
+        return None
+    if "return None" in target_block:
+        return None
+
+    replacement = (
+        "    if target_type == \"integer\":\n"
+        "        # 数值列里的空字符串应视为缺失值，而不是继续保留成文本空串。\n"
+        "        if value == \"\":\n"
+        "            return None\n"
+        "        return int(value)\n\n"
+        "    if target_type == \"float\":\n"
+        "        # 数值列里的空字符串应视为缺失值，而不是继续保留成文本空串。\n"
+        "        if value == \"\":\n"
+        "            return None\n"
+        "        return float(value)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1898,9 +1932,39 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30"}:
             should_run_v25_chain = True
-            if policy_config.patch_strategy == "improved_v29":
+            if policy_config.patch_strategy == "improved_v30":
+                improved_v30_content = _handle_sqlite_transform_empty_string_numeric(original_content)
+                if improved_v30_content is not None:
+                    updated_content = improved_v30_content
+                    patch_reason_parts = ["让数值列转换时把空字符串回落为 None，避免保留伪空值"]
+                    should_run_v25_chain = False
+                else:
+                    improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
+                    if improved_v29_content is not None:
+                        updated_content = improved_v29_content
+                        patch_reason_parts = ["让 field_transformer 在定义阶段就能读取最终 alias"]
+                        should_run_v25_chain = False
+                    else:
+                        improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                        if improved_v28_content is not None:
+                            updated_content = improved_v28_content
+                            patch_reason_parts = ["让子类 model validator 追加执行，保留父类 validator 继承链"]
+                            should_run_v25_chain = False
+                        else:
+                            improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                            if improved_v27_content is not None:
+                                updated_content = improved_v27_content
+                                patch_reason_parts = ["让 delete_where 在删除后提交事务，保证其他连接立即可见"]
+                                should_run_v25_chain = False
+                            else:
+                                improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                                if improved_v26_content is not None:
+                                    updated_content = improved_v26_content
+                                    patch_reason_parts = ["让 extend 保留原始 applicable_validators，避免 legacy $ref 语义回归"]
+                                    should_run_v25_chain = False
+            elif policy_config.patch_strategy == "improved_v29":
                 improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
                 if improved_v29_content is not None:
                     updated_content = improved_v29_content
