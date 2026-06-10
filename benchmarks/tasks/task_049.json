@@ -1,0 +1,29 @@
+{
+  "task_id": "task_049",
+  "repo_name": "dateutil",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Incorrect year is returned when parsing a date string such as \"may15,2021\"",
+  "issue_text": "当前日期解析逻辑在处理 `may15,2021` 这类字符串时，会因为逗号紧贴年份，导致年份 token 没被正确识别，最终错误回落到默认年份。当前真实 issue 需要让紧贴逗号的年份也能被正确识别，同时保持已经正确的加空格写法不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 1191,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/1191",
+    "candidate_id": "dateutil_dateutil_issue_1191",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

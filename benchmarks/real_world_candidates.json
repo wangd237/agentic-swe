@@ -421,8 +421,8 @@
       "issue_url": "https://github.com/dateutil/dateutil/issues/1191",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:26: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-10T22:10:00: 已生成 real_issue task 草稿 task_049，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-10T22:14:00: 已生成 semi_real 可运行任务 task_050，仓库目录为 benchmarks/repos/dateutil_attached_comma_repo。",
       "labels": [
         "bug",
         "parser"

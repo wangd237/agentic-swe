@@ -1,0 +1,37 @@
+{
+  "task_id": "task_050",
+  "repo_name": "dateutil_attached_comma_repo",
+  "repo_path": "benchmarks/repos/dateutil_attached_comma_repo",
+  "issue_title": "Incorrect year is returned when parsing a date string such as \"may15,2021\"",
+  "issue_text": "当前日期解析逻辑会先从首个 token 中拆出 `month + day`，再尝试从剩余片段里找年份。但当输入是 `may15,2021` 时，年份前面紧贴逗号，旧逻辑不会把 `,2021` 识别为年份，最终错误回落到默认年份。semi-real 任务要求：`may15,2021` 应与 `may15 , 2021` 一样解析成 `2021-05-15`。",
+  "test_command": "python -m pytest tests/test_parser.py -q",
+  "success_criteria": "紧贴逗号的年份也应被正确识别；`may15,2021` 与 `may15 , 2021` 都应解析成 `(2021, 5, 15)`，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "dateutil",
+    "parser",
+    "tokenization"
+  ],
+  "target_files_hint": [
+    "dateutil_attached_comma_repo/parser.py",
+    "tests/test_parser.py"
+  ],
+  "expected_failure_test": "AttachedCommaDateTests.test_attached_comma_year_is_detected",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "dateutil/dateutil",
+    "repo_url": "https://github.com/dateutil/dateutil",
+    "issue_number": 1191,
+    "issue_url": "https://github.com/dateutil/dateutil/issues/1191",
+    "candidate_id": "dateutil_dateutil_issue_1191",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_049",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

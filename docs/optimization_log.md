@@ -3673,3 +3673,182 @@
 - 当前最近一轮 `frozen_20` 结果是无回归，而不是新的成功率提升
 - 容器状态污染、validator 扩展语义、轻量数据库提交语义仍值得优先推进
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 30：Attached Comma Year Parser Expansion（improved_v23 -> improved_v24）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `dateutil/dateutil#1191` 推进成可运行任务
+- 验证 `improved_v23` 到 `improved_v24` 是否能覆盖年份前紧贴逗号时的 parser token 识别问题
+- 把正式真实任务集从 `21` 条扩容到 `22` 条
+- 在 `frozen_20` 上补一轮无回归验证
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `dateutil/dateutil#1191`
+- 候选状态汇总更新为：
+  - `accepted = 22`
+  - `drafted = 1`
+  - `to_review = 7`
+- 新增草稿任务：
+  - `task_049`
+- 新增可运行 semi_real 任务：
+  - `task_050`
+- 新增 benchmark repo：
+  - `benchmarks/repos/dateutil_attached_comma_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v24.json`
+- patch 生成器新增能力：
+  - 识别年份 token 前紧贴逗号但未被清理的模式
+  - 改为先移除前缀逗号，再识别四位年份
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_049.json`
+- `benchmarks/tasks/task_050.json`
+- `benchmarks/repos/dateutil_attached_comma_repo/dateutil_attached_comma_repo/parser.py`
+- `benchmarks/repos/dateutil_attached_comma_repo/tests/test_parser.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v24.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v23` 失败：
+  - `logs/trajectories/task_050/run_20260610T095611525999Z_6956/result.json`
+- `improved_v24` 成功：
+  - `logs/trajectories/task_050/run_20260610T095611540428Z_6190/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev23_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev24_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev24_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step22_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v23_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v24_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v24_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step3_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `21` 条任务集上的 `improved_v23`
+  - improved 是扩充到 `22` 条任务后的 `improved_v24`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v23: `21`
+    - improved_v24: `22`
+  - `success_count`
+    - improved_v23: `21`
+    - improved_v24: `22`
+  - `success_rate`
+    - improved_v23: `1.0`
+    - improved_v24: `1.0`
+  - `test_pass_rate`
+    - improved_v23: `1.0`
+    - improved_v24: `1.0`
+  - `average_steps`
+    - improved_v23: `9.2857`
+    - improved_v24: `9.2273`
+  - `average_duration_sec`
+    - improved_v23: `0.557`
+    - improved_v24: `0.5511`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 date parser 规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v23: `20`
+    - improved_v24: `20`
+  - `success_count`
+    - improved_v23: `20`
+    - improved_v24: `20`
+  - `success_rate`
+    - improved_v23: `1.0`
+    - improved_v24: `1.0`
+  - `test_pass_rate`
+    - improved_v23: `1.0`
+    - improved_v24: `1.0`
+  - `average_steps`
+    - improved_v23: `9.25`
+    - improved_v24: `9.25`
+  - `average_duration_sec`
+    - improved_v23: `0.554`
+    - improved_v24: `0.548`
+  - `taxonomy`
+    - improved_v23: `无错误标签`
+    - improved_v24: `无错误标签`
+
+### 关键案例
+
+#### improved_v23 失败案例：`task_050`
+
+- 运行结果：
+  - `logs/trajectories/task_050/run_20260610T095611525999Z_6956/result.json`
+- 现象：
+  - 已读取 `dateutil_attached_comma_repo/parser.py`
+  - 但没有匹配到 `,2021` 这一类 year token 清理策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v24 成功案例：`task_050`
+
+- 运行结果：
+  - `logs/trajectories/task_050/run_20260610T095611540428Z_6190/result.json`
+- 现象：
+  - 自动识别年份 token 前缀逗号需要先清理
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `22` 条
+- 候选池里正式 accepted 任务提升到 `22` 条，`to_review` 降到 `7` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v23`：覆盖 `Specifier >` 在 `dev+local` 场景下的比较语义
+  - `improved_v24`：进一步覆盖年份前紧贴逗号时的 parser token 识别
+- 扩容对比中，`improved_v24` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 扩容后的平均步数和平均耗时都优于上一轮
+- `frozen_20` 对比中，`improved_v24` 保持固定任务集无回归
+
+### 剩余问题
+
+- 当前最近两轮 `frozen_20` 结果都是无回归，而不是新的成功率提升
+- 容器状态污染、validator 扩展语义、轻量数据库提交语义仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

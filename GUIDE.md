@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v23` 多轮策略迭代，正式真实任务扩充到 `21` 条，并在 `frozen_20` 上持续做同集合验证 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v24` 多轮策略迭代，正式真实任务扩充到 `22` 条，并在 `frozen_20` 上持续做同集合验证 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -779,6 +779,13 @@ scripts/
   - 类型：`semi_real`
   - 来源：`pypa/packaging#810`
   - 状态：已可运行
+- `task_049`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `dateutil/dateutil#1191` 的真实入口记录
+- `task_050`
+  - 类型：`semi_real`
+  - 来源：`dateutil/dateutil#1191`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -821,6 +828,8 @@ scripts/
   - 作用：新增 single-label hostname 应通过 hostname 格式校验的修复能力
 - `optimization/policy_versions/improved_v23.json`
   - 作用：新增 `Specifier >` 在 `dev+local` 场景下按 public version 比较的修复能力
+- `optimization/policy_versions/improved_v24.json`
+  - 作用：新增年份前紧贴逗号时仍能识别 year token 的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1330,6 +1339,34 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `average_duration_sec` 从 `0.5569` 降到 `0.554`
 - 说明新增 `packaging` 规则没有破坏已有能力
 
+### 方式 35：运行 attached comma year 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_050.json --policy optimization/policy_versions/improved_v24.json
+```
+
+你会看到：
+
+- `task_050` 被成功修复
+- 修改文件是 `dateutil_attached_comma_repo/dateutil_attached_comma_repo/parser.py`
+- patch 原因是年份前紧贴逗号时，也应当先清理标点再识别 year token
+
+### 方式 36：运行 `frozen_20` 的下一轮无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v24.json --run-label frozen20v24 --compare-against-eval logs/summaries/batch_eval_frozen20v23_001.json --compare-label frozen20_step3
+```
+
+你会看到：
+
+- 固定 `20` 条任务集继续保持 `100%` 成功率与 `100%` 测试通过率
+- `average_duration_sec` 从 `0.554` 降到 `0.548`
+- 说明新增日期 parser 规则也没有破坏已有能力
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1448,6 +1485,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 已补充 `task_043` / `task_044` 与 `improved_v21`
 - 已补充 `task_045` / `task_046` 与 `improved_v22`
 - 已补充 `task_047` / `task_048` 与 `improved_v23`
+- 已补充 `task_049` / `task_050` 与 `improved_v24`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果

@@ -303,6 +303,20 @@
 - 结果：
   - `task_048` 在扩容到 21 条任务后的正式任务集上完全通过
 
+## 成功案例 24：`task_050`
+
+- repo：`dateutil_attached_comma_repo`
+- 来源：`dateutil/dateutil#1191`
+- 代表版本：`improved_v24`
+- 现象：
+  - `may15 , 2021` 这类带空格的写法是正确的
+  - 但 `may15,2021` 会把 `,2021` 留在 trailing token 中
+  - 旧逻辑不清理前缀逗号，最终回落到默认年份
+- 改进点：
+  - `improved_v24` 先对 year token 做 `lstrip(\",\")`
+- 结果：
+  - `task_050` 在扩容到 22 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -530,3 +544,13 @@
   - 读到了比较逻辑，但没有形成把 `base_version` 收紧为 `public version` 的修复
 - 后续改进：
   - 升级为 `improved_v23`
+
+## 失败案例 24：`task_050` 在 `improved_v23`
+
+- 失败版本：`improved_v23`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解年份前紧贴逗号时的 year token 识别问题
+  - 读到了 parser 逻辑，但没有形成“先清理前缀逗号再判定数字”的修复
+- 后续改进：
+  - 升级为 `improved_v24`

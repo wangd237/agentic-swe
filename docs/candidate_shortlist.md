@@ -11,24 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `dateutil/dateutil#1191`
-
-- 标题：
-  - `Incorrect year is returned when parsing a date string such as "may15,2021"`
-- 推荐级别：`high`
-- 为什么适合：
-  - 仍然是 parser 类 bug，但与 `task_044` 的 `MM.YYYY` 路径不同
-  - 输入输出样例清晰，容易还原成 `2` 个回归测试
-  - 能继续强化 `dateutil` parser 子类能力
-- 预期目标文件：
-  - 日期 token 切分或逗号处理逻辑
-- 预期测试形态：
-  - `may15,2021 -> 2021-05-15`
-  - 加空格版本继续保持正确
-- 主要风险：
-  - 需要小心不要把问题缩得过度依赖具体 tokenizer 细节
-
-### 2. `python-jsonschema/jsonschema#1328`
+### 1. `python-jsonschema/jsonschema#1328`
 
 - 标题：
   - `The return of __iter__() and __contains__() change after accessing of an index with no error`
@@ -44,7 +27,7 @@
 - 主要风险：
   - 需要缩题得足够小，避免把整个错误树结构都搬进 benchmark
 
-### 3. `python-jsonschema/jsonschema#1125`
+### 2. `python-jsonschema/jsonschema#1125`
 
 - 标题：
   - `extend() doesn't copy applicable_validators`
@@ -61,7 +44,7 @@
 - 主要风险：
   - 要避免把完整 legacy validator 体系整体搬进 benchmark
 
-### 4. `simonw/sqlite-utils#159`
+### 3. `simonw/sqlite-utils#159`
 
 - 标题：
   - `.delete_where() does not auto-commit (unlike .insert() or .upsert())`
@@ -77,7 +60,7 @@
 - 主要风险：
   - 会天然引入数据库状态，缩题时要把依赖面压到最小
 
-### 5. `pydantic/pydantic#9582`
+### 4. `pydantic/pydantic#9582`
 
 - 标题：
   - `Model validator is ignored during inheritance`
@@ -92,6 +75,22 @@
   - 子类 validator 不应覆盖掉父类 validator
 - 主要风险：
   - 需要把问题缩到足够小，避免引入完整框架生命周期
+
+### 5. `python-attrs/attrs#1479`
+
+- 标题：
+  - `Alias not available during field transformation`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 如果能缩成最小字段变换链路，可以补到对象定义阶段的元数据可见性问题
+  - 与当前 benchmark 的 parser / validator / specifier 语义差异较大
+- 预期目标文件：
+  - 字段变换或 alias 读取逻辑
+- 预期测试形态：
+  - 字段变换阶段应能读取 alias
+  - 不影响无 alias 的普通字段
+- 主要风险：
+  - 容易落到框架构建时序，缩题时要非常克制
 
 ## 已从短名单移除
 
@@ -113,13 +112,11 @@
   - 已进入正式任务
   - 对应 `task_047 / task_048`
 
-## 暂不优先
-
-### `python-attrs/attrs#1479`
+### `dateutil/dateutil#1191`
 
 - 原因：
-  - 更像框架生命周期 / 语义预期问题
-  - 容易落到“设计是否如此”而不是“实现明确错误”
+  - 已进入正式任务
+  - 对应 `task_049 / task_050`
 
 ## 使用方式
 

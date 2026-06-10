@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v24",
+  "description": "增强规则型 patch 策略，额外支持 date parser 在年份前紧贴逗号时仍能识别 year token。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v24"
+}
