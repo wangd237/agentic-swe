@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v18",
+  "description": "增强规则型 patch 策略，额外支持 jsonschema integer-valued multipleOf float 按数学整数处理。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v18"
+}

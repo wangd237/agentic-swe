@@ -221,6 +221,20 @@
 - 结果：
   - `task_036` 在扩容任务集和冻结同集合评测里都完全通过
 
+## 成功案例 18：`task_038`
+
+- repo：`jsonschema_multipleof_repo`
+- 来源：`python-jsonschema/jsonschema#1159`
+- 代表版本：`improved_v18`
+- 现象：
+  - `multipleOf=11` 时超大整数能通过
+  - 但 `multipleOf=11.0` 时旧逻辑会错误走浮点路径并失败
+- 改进点：
+  - `improved_v18` 先识别“整数值浮点数”
+  - 再按数学整数语义执行可整除判断
+- 结果：
+  - `task_038` 在扩容到 16 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -388,3 +402,13 @@
   - 虽然读到了目标函数，但没有形成能够吞掉 `ValueError` 的补丁
 - 后续改进：
   - 升级为 `improved_v17`
+
+## 失败案例 18：`task_038` 在 `improved_v17`
+
+- 失败版本：`improved_v17`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 `multipleOf=11.0` 这种整数值浮点数的语义
+  - 虽然读到了目标函数，但没有形成数值语义修复补丁
+- 后续改进：
+  - 升级为 `improved_v18`

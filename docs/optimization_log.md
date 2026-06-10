@@ -2708,3 +2708,144 @@
 - 冻结同集合对比目前只有 1 轮，后面还需要继续累计更多冻结集合版本
 - 候选池虽然还比较充足，但仍需要继续把 `to_review` issue 逐步筛成可运行任务
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
+## Iteration 24：Jsonschema Integer-Valued multipleOf Float（improved_v17 -> improved_v18）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-jsonschema/jsonschema#1159` 推进成可运行任务
+- 验证 `improved_v17` 到 `improved_v18` 是否能覆盖 integer-valued `multipleOf` 浮点数的数值语义问题
+- 在正式真实任务集扩容到 16 条后继续观察成功率和效率指标
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-jsonschema/jsonschema#1159`
+- 候选状态汇总更新为：
+  - `accepted = 16`
+  - `drafted = 1`
+  - `to_review = 13`
+- 新增草稿任务：
+  - `task_037`
+- 新增可运行 semi_real 任务：
+  - `task_038`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jsonschema_multipleof_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v18.json`
+- patch 生成器新增能力：
+  - 识别 integer-valued `multipleOf` 浮点数
+  - 将 `11.0` 这类值按数学整数 `11` 处理，而不是继续走纯浮点误差路径
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_037.json`
+- `benchmarks/tasks/task_038.json`
+- `benchmarks/repos/jsonschema_multipleof_repo/jsonschema_multipleof_repo/validator.py`
+- `benchmarks/repos/jsonschema_multipleof_repo/tests/test_validator.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v18.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v17` 失败：
+  - `logs/trajectories/task_038/run_20260610T080630043149Z_0253/result.json`
+- `improved_v18` 成功：
+  - `logs/trajectories/task_038/run_20260610T080630051215Z_7084/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev17_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev18_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev18_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step16_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 15 条任务集上的 `improved_v17`
+  - improved 是扩充到 16 条任务后的 `improved_v18`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v17: `15`
+    - improved_v18: `16`
+  - `success_count`
+    - improved_v17: `15`
+    - improved_v18: `16`
+  - `success_rate`
+    - improved_v17: `1.0`
+    - improved_v18: `1.0`
+  - `test_pass_rate`
+    - improved_v17: `1.0`
+    - improved_v18: `1.0`
+  - `average_steps`
+    - improved_v17: `9.2667`
+    - improved_v18: `9.1875`
+  - `average_duration_sec`
+    - improved_v17: `0.5887`
+    - improved_v18: `0.5649`
+
+### 关键案例
+
+#### improved_v17 失败案例：`task_038`
+
+- 运行结果：
+  - `logs/trajectories/task_038/run_20260610T080630043149Z_0253/result.json`
+- 现象：
+  - 已读取 `jsonschema_multipleof_repo/validator.py`
+  - 但没有匹配到 integer-valued `multipleOf` 浮点数的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v18 成功案例：`task_038`
+
+- 运行结果：
+  - `logs/trajectories/task_038/run_20260610T080630051215Z_7084/result.json`
+- 现象：
+  - 自动识别 `11.0` 应按数学整数处理
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 16 条
+- 候选池里正式 accepted 任务提升到 16 条，`to_review` 降到 13 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v17`：覆盖 hostname 格式检查异常回落
+  - `improved_v18`：进一步覆盖 integer-valued `multipleOf` 浮点数数值语义
+- 扩容对比中，`improved_v18` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- 同时平均步数和平均耗时都优于 `improved_v17`
+
+### 剩余问题
+
+- 这一轮仍是扩容对比，下一阶段需要继续补 `frozen_18` 或 `frozen_20` 的同集合证据
+- 候选池虽然仍然充足，但高质量 `to_review` issue 需要继续向可运行任务收敛
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

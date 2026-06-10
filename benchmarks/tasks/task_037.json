@@ -1,0 +1,29 @@
+{
+  "task_id": "task_037",
+  "repo_name": "jsonschema",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Instance validates if `multipleOf` is an integer, but fails if it's a float",
+  "issue_text": "```python\r\nfrom jsonschema import validate\r\n\r\ninstance = 9007199254740995\r\nvalidate(instance, schema={\"type\": \"integer\", \"multipleOf\": 11})    # passes\r\nvalidate(instance, schema={\"type\": \"integer\", \"multipleOf\": 11.0})  # fails\r\n```\r\n\r\n当前实现对 `multipleOf=11.0` 这样的整数值浮点数没有按数学整数处理，而是直接走浮点计算路径，导致大整数场景下出现错误判断。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1159,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1159",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1159",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

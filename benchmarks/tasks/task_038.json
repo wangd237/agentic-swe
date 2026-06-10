@@ -1,0 +1,37 @@
+{
+  "task_id": "task_038",
+  "repo_name": "jsonschema_multipleof_repo",
+  "repo_path": "benchmarks/repos/jsonschema_multipleof_repo",
+  "issue_title": "Instance validates if `multipleOf` is an integer, but fails if it's a float",
+  "issue_text": "当 `multipleOf` 传入整数值浮点数时，例如 `11.0`，当前校验逻辑错误地走浮点路径，导致超大整数在数学上明明可整除时仍被判定为失败。semi-real 任务要求：整数值浮点数应按数学整数处理，非整数值浮点数仍保持原有 multipleOf 语义。",
+  "test_command": "python -m pytest tests/test_validator.py -q",
+  "success_criteria": "当 `multipleOf=11.0` 时，超大整数 `9007199254740995` 应与 `multipleOf=11` 保持一致并通过校验；非整数倍场景仍应返回 False，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "multiple-of",
+    "numeric-semantics"
+  ],
+  "target_files_hint": [
+    "jsonschema_multipleof_repo/validator.py",
+    "tests/test_validator.py"
+  ],
+  "expected_failure_test": "MultipleOfValidatorTests.test_integer_valued_float_is_treated_like_integer",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1159,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1159",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1159",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_037",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

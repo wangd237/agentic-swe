@@ -52,6 +52,7 @@
 - `benchmarks/tasks/task_032.json`
 - `benchmarks/tasks/task_034.json`
 - `benchmarks/tasks/task_036.json`
+- `benchmarks/tasks/task_038.json`
 
 当前 repo：
 
@@ -73,6 +74,7 @@
 - `benchmarks/repos/packaging_wheel_repo`
 - `benchmarks/repos/jsonschema_extras_repo`
 - `benchmarks/repos/jsonschema_hostname_repo`
+- `benchmarks/repos/jsonschema_multipleof_repo`
 
 用途：
 
