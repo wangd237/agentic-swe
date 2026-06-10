@@ -9,25 +9,9 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 4
+## 当前 Top 3
 
-### 1. `python-attrs/attrs#1479`
-
-- 标题：
-  - `Alias not available during field transformation`
-- 推荐级别：`medium`
-- 为什么适合：
-  - 如果能缩成最小字段变换链路，可以补到对象定义阶段的元数据可见性问题
-  - 与当前 benchmark 的 parser / validator / specifier 语义差异较大
-- 预期目标文件：
-  - 字段变换或 alias 读取逻辑
-- 预期测试形态：
-  - 字段变换阶段应能读取 alias
-  - 不影响无 alias 的普通字段
-- 主要风险：
-  - 容易落到框架构建时序，缩题时要非常克制
-
-### 2. `simonw/sqlite-utils#488`
+### 1. `simonw/sqlite-utils#488`
 
 - 标题：
   - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
@@ -43,7 +27,7 @@
 - 主要风险：
   - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
 
-### 3. `simonw/sqlite-utils#186`
+### 2. `simonw/sqlite-utils#186`
 
 - 标题：
   - `.extract() shouldn't extract null values`
@@ -60,7 +44,7 @@
 - 主要风险：
   - 要避免把真实 sqlite schema 细节整体搬进 benchmark
 
-### 4. `PyCQA/isort#1815`
+### 3. `PyCQA/isort#1815`
 
 - 标题：
   - `Tuple sorting doesn't consider profile`
@@ -78,6 +62,12 @@
   - 要避免把完整格式化器行为整体搬进 benchmark
 
 ## 已从短名单移除
+
+### `python-attrs/attrs#1479`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_058`
 
 ### `pydantic/pydantic#9582`
 
@@ -131,6 +121,6 @@
 
 每次准备扩容时，优先按下面顺序使用：
 
-1. 先从本文件 Top 4 里选
+1. 先从本文件 Top 3 里选
 2. 如果都不合适，再回到完整候选池
 3. 一旦某条进入正式任务，就把它从 shortlist 中移除或下移

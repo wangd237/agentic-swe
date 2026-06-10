@@ -373,6 +373,20 @@
 - 结果：
   - `task_057` 在扩容到 26 条任务后的正式任务集上完全通过
 
+## 成功案例 29：`task_058`
+
+- repo：`attrs_alias_repo`
+- 来源：`python-attrs/attrs#1479`
+- 代表版本：`improved_v29`
+- 现象：
+  - `field_transformer` 运行时会读取字段对象上的 `alias`
+  - 旧逻辑只会提前暴露显式 alias
+  - 默认 alias 要等类构建结束后才回填，导致变换阶段拿到 `None`
+- 改进点：
+  - `improved_v29` 在构建字段对象时就把默认 alias 回填为字段名
+- 结果：
+  - `task_058` 在扩容到 27 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -650,3 +664,13 @@
   - 读到了继承与 validator 定义，但没有形成父类 validator 名单与子类名单合并的修复
 - 后续改进：
   - 升级为 `improved_v28`
+
+## 失败案例 29：`task_058` 在 `improved_v28`
+
+- 失败版本：`improved_v28`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解对象定义阶段的默认 alias 可见性问题
+  - 读到了字段构建和 `field_transformer` 链路，但没有形成“在变换前回填默认 alias”的修复
+- 后续改进：
+  - 升级为 `improved_v29`

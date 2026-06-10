@@ -678,6 +678,30 @@ def _handle_pydantic_inherited_model_validators(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_attrs_field_transformer_alias(content: str) -> str | None:
+    # improved_v29 处理 field_transformer 阶段读取不到默认 alias 的问题。
+    target_block = (
+        "                attribute = Attribute(name=name)\n"
+        "                # 这里故意保留真实 issue 中的缺陷：默认 alias 要等 field_transformer 运行完后\n"
+        "                # 才回填，导致变换阶段看到的是 None。\n"
+        "                if value.alias is not None:\n"
+        "                    attribute.alias = value.alias\n"
+        "                built_attributes.append(attribute)"
+    )
+    if target_block not in content:
+        return None
+    if "attribute.alias = value.alias or name" in content:
+        return None
+
+    replacement = (
+        "                attribute = Attribute(name=name)\n"
+        "                # field_transformer 运行前就应能看到最终 alias，默认 alias 也一样。\n"
+        "                attribute.alias = value.alias or name\n"
+        "                built_attributes.append(attribute)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1874,9 +1898,33 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29"}:
             should_run_v25_chain = True
-            if policy_config.patch_strategy == "improved_v28":
+            if policy_config.patch_strategy == "improved_v29":
+                improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
+                if improved_v29_content is not None:
+                    updated_content = improved_v29_content
+                    patch_reason_parts = ["让 field_transformer 在定义阶段就能读取最终 alias"]
+                    should_run_v25_chain = False
+                else:
+                    improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                    if improved_v28_content is not None:
+                        updated_content = improved_v28_content
+                        patch_reason_parts = ["让子类 model validator 追加执行，保留父类 validator 继承链"]
+                        should_run_v25_chain = False
+                    else:
+                        improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                        if improved_v27_content is not None:
+                            updated_content = improved_v27_content
+                            patch_reason_parts = ["让 delete_where 在删除后提交事务，保证其他连接立即可见"]
+                            should_run_v25_chain = False
+                        else:
+                            improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                            if improved_v26_content is not None:
+                                updated_content = improved_v26_content
+                                patch_reason_parts = ["让 extend 保留原始 applicable_validators，避免 legacy $ref 语义回归"]
+                                should_run_v25_chain = False
+            elif policy_config.patch_strategy == "improved_v28":
                 improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
                 if improved_v28_content is not None:
                     updated_content = improved_v28_content

@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v29",
+  "description": "增强规则型 patch 策略，额外支持 field_transformer 阶段提前暴露默认 alias，避免对象定义阶段的元数据可见性缺失。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v29"
+}

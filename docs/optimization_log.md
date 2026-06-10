@@ -1094,6 +1094,118 @@
 - 还没有直接接入 rich 原仓库快照
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
 
+## 2026-06-10 22:16 Phase 6 attrs alias 可见性扩容
+
+### 本轮目标
+
+- 把 `python-attrs/attrs#1479` 从 `to_review` 推进成正式可运行任务
+- 为对象定义阶段的 alias / 元数据可见性补一条新的规则型 patch 能力
+- 继续保留扩容对比与 `frozen_20` 同集合无回归对比
+
+### 本轮新增任务
+
+- `task_058`
+  - 类型：`semi_real`
+  - repo：`attrs_alias_repo`
+  - 来源：`python-attrs/attrs#1479`
+  - 缺陷：`field_transformer` 运行时默认 alias 仍是 `None`
+  - 目标：变换阶段即可读取最终 alias，默认 alias 等于字段名
+
+### 本轮策略改动
+
+- 新增 `_handle_attrs_field_transformer_alias`
+  - 命中 `attrs_alias_repo/model.py` 中的字段构建模板
+  - 修复方式：在 `field_transformer` 运行前就回填默认 alias
+- `improved_v29`
+  - 在 `improved_v28` 能力链之上增加 alias 可见性修复
+
+### 单任务分辨运行
+
+- `improved_v28` 失败：
+  - `logs/trajectories/task_058/run_20260610T141539455587Z_7032/result.json`
+- `improved_v29` 成功：
+  - `logs/trajectories/task_058/run_20260610T141539479416Z_5349/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev28_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev29_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev29_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step28_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v28_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v29_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v29_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step8_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `26` 条任务集上的 `improved_v28`
+  - improved 是扩充到 `27` 条任务后的 `improved_v29`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v28: `26`
+    - improved_v29: `27`
+  - `success_count`
+    - improved_v28: `26`
+    - improved_v29: `27`
+  - `success_rate`
+    - improved_v28: `1.0`
+    - improved_v29: `1.0`
+  - `test_pass_rate`
+    - improved_v28: `1.0`
+    - improved_v29: `1.0`
+  - `average_steps`
+    - improved_v28: `9.4231`
+    - improved_v29: `9.4444`
+  - `average_duration_sec`
+    - improved_v28: `0.5898`
+    - improved_v29: `0.5675`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 alias 可见性规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v28: `20`
+    - improved_v29: `20`
+  - `success_count`
+    - improved_v28: `20`
+    - improved_v29: `20`
+  - `success_rate`
+    - improved_v28: `1.0`
+    - improved_v29: `1.0`
+  - `test_pass_rate`
+    - improved_v28: `1.0`
+    - improved_v29: `1.0`
+  - `average_steps`
+    - improved_v28: `9.25`
+    - improved_v29: `9.25`
+  - `average_duration_sec`
+    - improved_v28: `0.5675`
+    - improved_v29: `0.5688`
+  - `taxonomy`
+    - improved_v28: `无错误标签`
+    - improved_v29: `无错误标签`
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `27` 条
+- 候选池正式 accepted 提升到 `27` 条，`to_review` 收敛到 `3` 条
+- `improved_v29` 把对象定义阶段 alias 可见性纳入正式覆盖面
+- 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 上无功能回归，仅有 `average_duration_sec` 从 `0.5675` 小幅波动到 `0.5688`
+
 ## Iteration 12：Closest Marker Override from Real Issue（improved_v7 -> improved_v8）
 
 ### 时间

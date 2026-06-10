@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v28` 多轮策略迭代，正式真实任务扩充到 `26` 条，并在 `frozen_20` 上持续做同集合验证 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v29` 多轮策略迭代，正式真实任务扩充到 `27` 条，并在 `frozen_20` 上持续做同集合验证 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -863,6 +863,8 @@ scripts/
   - 作用：新增 `delete_where()` 删除后自动提交事务、保证多连接可见性的修复能力
 - `optimization/policy_versions/improved_v28.json`
   - 作用：新增父子 `model_validator` 在继承链上追加执行、避免父类校验被覆盖的修复能力
+- `optimization/policy_versions/improved_v29.json`
+  - 作用：新增 `field_transformer` 运行前提前暴露默认 alias 的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1470,6 +1472,20 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_057.json --policy
 - 修改文件是 `pydantic_inheritance_repo/pydantic_inheritance_repo/models.py`
 - patch 原因是子类 `model_validator` 需要在父类 validator 之后继续追加执行
 
+### 方式 42：运行 attrs alias 定义阶段可见性任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_058.json --policy optimization/policy_versions/improved_v29.json
+```
+
+你会看到：
+
+- `task_058` 被成功修复
+- 修改文件是 `attrs_alias_repo/attrs_alias_repo/model.py`
+- patch 原因是 `field_transformer` 运行前就应能看到最终 alias
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1593,6 +1609,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_057.json --policy
 - 已补充 `task_053` / `task_054` 与 `improved_v26`
 - 已补充 `task_055` / `task_056` 与 `improved_v27`
 - 已补充 `task_014` / `task_057` 与 `improved_v28`
+- 已补充 `task_058` 与 `improved_v29`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果

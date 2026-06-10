@@ -1,0 +1,36 @@
+{
+  "task_id": "task_058",
+  "repo_name": "attrs_alias_repo",
+  "repo_path": "benchmarks/repos/attrs_alias_repo",
+  "issue_title": "Alias not available during field transformation",
+  "issue_text": "当前最小实现里，字段的默认 alias 要等 `field_transformer` 运行结束后才回填，导致变换阶段读取 alias 时拿到 `None`。semi-real 任务要求：`field_transformer` 运行时就应能看到最终 alias，默认 alias 应等于字段名，显式 alias 不回归。",
+  "test_command": "python -m pytest tests/test_model.py -q",
+  "success_criteria": "field_transformer 在定义阶段可读取默认 alias 和显式 alias；类构建后的 fields 结果保持正确；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "attrs",
+    "alias",
+    "field-transformer"
+  ],
+  "target_files_hint": [
+    "attrs_alias_repo/model.py",
+    "tests/test_model.py"
+  ],
+  "expected_failure_test": "FieldTransformerAliasTests.test_field_transformer_can_read_default_alias",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-attrs/attrs",
+    "repo_url": "https://github.com/python-attrs/attrs",
+    "issue_number": 1479,
+    "issue_url": "https://github.com/python-attrs/attrs/issues/1479",
+    "candidate_id": "python_attrs_attrs_issue_1479",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
