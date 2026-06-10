@@ -1,0 +1,37 @@
+{
+  "task_id": "task_052",
+  "repo_name": "jsonschema_error_tree_repo",
+  "repo_path": "benchmarks/repos/jsonschema_error_tree_repo",
+  "issue_title": "The return of `__iter__()` and `__contains__()` change after accessing of an index with no error",
+  "issue_text": "当前 `ErrorTree.__getitem__()` 在访问一个不存在的索引时，会通过 `setdefault()` 把空节点写回内部 children，导致树结构被污染。semi-real 任务要求：访问缺失索引时可以返回一个空 `ErrorTree`，但 `list(tree)` 和 `index in tree` 的结果不能因此改变。",
+  "test_command": "python -m pytest tests/test_error_tree.py -q",
+  "success_criteria": "访问缺失索引后，树的迭代结果和 `__contains__()` 结果都应保持不变；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "error-tree",
+    "state-pollution"
+  ],
+  "target_files_hint": [
+    "jsonschema_error_tree_repo/error_tree.py",
+    "tests/test_error_tree.py"
+  ],
+  "expected_failure_test": "ErrorTreeStateTests.test_accessing_missing_index_does_not_mutate_tree",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1328,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1328",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1328",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_051",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

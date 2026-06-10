@@ -35,11 +35,13 @@
 - 当前已补充 `task_046`，并在真实 issue 派生任务集上完成 `improved_v21 -> improved_v22` 扩容对比
 - 当前已补充 `task_048`，并在真实 issue 派生任务集上完成 `improved_v22 -> improved_v23` 扩容对比
 - 当前已补充 `task_050`，并在真实 issue 派生任务集上完成 `improved_v23 -> improved_v24` 扩容对比
+- 当前已补充 `task_052`，并在真实 issue 派生任务集上完成 `improved_v24 -> improved_v25` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v22 -> improved_v23`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v23 -> improved_v24`
+- 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v24 -> improved_v25`
 
 ## 当前可展示结果
 
@@ -904,6 +906,70 @@
 - changed task
   - `无`
 
+扩充到 23 条真实派生任务后的结果：
+
+- realissuev24：
+  - `logs/summaries/batch_eval_realissuev24_001.json`
+- realissuev25：
+  - `logs/summaries/batch_eval_realissuev25_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step23_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v24: `22`
+  - improved_v25: `23`
+- `success_count`
+  - improved_v24: `22`
+  - improved_v25: `23`
+- `success_rate`
+  - improved_v24: `1.0`
+  - improved_v25: `1.0`
+- `test_pass_rate`
+  - improved_v24: `1.0`
+  - improved_v25: `1.0`
+- `average_steps`
+  - improved_v24: `9.2273`
+  - improved_v25: `9.3478`
+- `average_duration_sec`
+  - improved_v24: `0.5511`
+  - improved_v25: `0.5548`
+- changed task
+  - `task_052`: 新增任务，在 `improved_v25` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 在正式任务集扩充到 23 条后，成功率继续保持 `100%`
+
+冻结 20 条真实任务上的最新一轮无回归结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v24_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v25_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step4_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v24: `1.0`
+  - improved_v25: `1.0`
+- `test_pass_rate`
+  - improved_v24: `1.0`
+  - improved_v25: `1.0`
+- `average_steps`
+  - improved_v24: `9.25`
+  - improved_v25: `9.25`
+- `average_duration_sec`
+  - improved_v24: `0.548`
+  - improved_v25: `0.5584`
+- taxonomy
+  - improved_v24: `无错误标签`
+  - improved_v25: `无错误标签`
+- changed task
+  - `无`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
@@ -931,6 +997,7 @@
 - `improved_v22` 进一步覆盖了真实 issue 派生出来的 single-label hostname 合法性场景
 - `improved_v23` 进一步覆盖了真实 issue 派生出来的 `Specifier >` 在 `dev+local` 场景下的比较语义
 - `improved_v24` 进一步覆盖了真实 issue 派生出来的年份前紧贴逗号时的 parser token 识别场景
+- `improved_v25` 进一步覆盖了真实 issue 派生出来的 ErrorTree 缺失索引访问状态污染场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 冻结 manifest 已经让我们拿到三组同集合上的真实提升证据
 - 在最近一轮 `frozen_20` 验证里，新增规则也保持了固定任务集无回归

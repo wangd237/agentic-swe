@@ -11,23 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `python-jsonschema/jsonschema#1328`
-
-- 标题：
-  - `The return of __iter__() and __contains__() change after accessing of an index with no error`
-- 推荐级别：`high`
-- 为什么适合：
-  - 可以补“容器状态污染 / 惰性访问副作用”这一类目前仍缺的缺陷
-  - 行为差异明确，适合做状态前后对照测试
-  - 与现有 `jsonschema` 任务语义差异足够大
-- 预期目标文件：
-  - 一个最小 `ErrorTree` 风格容器对象
-- 预期测试形态：
-  - 访问空索引前后，`__contains__` / `__iter__` 结果应保持一致
-- 主要风险：
-  - 需要缩题得足够小，避免把整个错误树结构都搬进 benchmark
-
-### 2. `python-jsonschema/jsonschema#1125`
+### 1. `python-jsonschema/jsonschema#1125`
 
 - 标题：
   - `extend() doesn't copy applicable_validators`
@@ -44,7 +28,7 @@
 - 主要风险：
   - 要避免把完整 legacy validator 体系整体搬进 benchmark
 
-### 3. `simonw/sqlite-utils#159`
+### 2. `simonw/sqlite-utils#159`
 
 - 标题：
   - `.delete_where() does not auto-commit (unlike .insert() or .upsert())`
@@ -60,7 +44,7 @@
 - 主要风险：
   - 会天然引入数据库状态，缩题时要把依赖面压到最小
 
-### 4. `pydantic/pydantic#9582`
+### 3. `pydantic/pydantic#9582`
 
 - 标题：
   - `Model validator is ignored during inheritance`
@@ -76,7 +60,7 @@
 - 主要风险：
   - 需要把问题缩到足够小，避免引入完整框架生命周期
 
-### 5. `python-attrs/attrs#1479`
+### 4. `python-attrs/attrs#1479`
 
 - 标题：
   - `Alias not available during field transformation`
@@ -91,6 +75,22 @@
   - 不影响无 alias 的普通字段
 - 主要风险：
   - 容易落到框架构建时序，缩题时要非常克制
+
+### 5. `simonw/sqlite-utils#488`
+
+- 标题：
+  - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 能补数据清洗 / 类型转换边界这一类目前较少覆盖的问题
+  - 输入输出示例比较明确，适合缩成单函数转换逻辑
+- 预期目标文件：
+  - transform / coercion 逻辑
+- 预期测试形态：
+  - 空字符串在整数或浮点转换时回落为 `None`
+  - 非空数字字符串保持正常转换
+- 主要风险：
+  - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
 
 ## 已从短名单移除
 
@@ -117,6 +117,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_049 / task_050`
+
+### `python-jsonschema/jsonschema#1328`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_051 / task_052`
 
 ## 使用方式
 

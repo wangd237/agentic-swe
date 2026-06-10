@@ -3852,3 +3852,181 @@
 - 当前最近两轮 `frozen_20` 结果都是无回归，而不是新的成功率提升
 - 容器状态污染、validator 扩展语义、轻量数据库提交语义仍值得优先推进
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 31：ErrorTree Read-Only Access Expansion（improved_v24 -> improved_v25）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-jsonschema/jsonschema#1328` 推进成可运行任务
+- 验证 `improved_v24` 到 `improved_v25` 是否能覆盖 ErrorTree 缺失索引访问的状态污染问题
+- 把正式真实任务集从 `22` 条扩容到 `23` 条
+- 在 `frozen_20` 上补一轮无回归验证
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-jsonschema/jsonschema#1328`
+- 候选状态汇总更新为：
+  - `accepted = 23`
+  - `drafted = 1`
+  - `to_review = 6`
+- 新增草稿任务：
+  - `task_051`
+- 新增可运行 semi_real 任务：
+  - `task_052`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jsonschema_error_tree_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v25.json`
+- patch 生成器新增能力：
+  - 识别 `__getitem__()` 用 `setdefault()` 写回空节点的模式
+  - 改为只读返回空节点，不污染内部 children
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_051.json`
+- `benchmarks/tasks/task_052.json`
+- `benchmarks/repos/jsonschema_error_tree_repo/jsonschema_error_tree_repo/error_tree.py`
+- `benchmarks/repos/jsonschema_error_tree_repo/tests/test_error_tree.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v25.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v24` 失败：
+  - `logs/trajectories/task_052/run_20260610T100155065230Z_4644/result.json`
+- `improved_v25` 成功：
+  - `logs/trajectories/task_052/run_20260610T100155084198Z_3773/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev24_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev25_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev25_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step23_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v24_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v25_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v25_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step4_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `22` 条任务集上的 `improved_v24`
+  - improved 是扩充到 `23` 条任务后的 `improved_v25`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v24: `22`
+    - improved_v25: `23`
+  - `success_count`
+    - improved_v24: `22`
+    - improved_v25: `23`
+  - `success_rate`
+    - improved_v24: `1.0`
+    - improved_v25: `1.0`
+  - `test_pass_rate`
+    - improved_v24: `1.0`
+    - improved_v25: `1.0`
+  - `average_steps`
+    - improved_v24: `9.2273`
+    - improved_v25: `9.3478`
+  - `average_duration_sec`
+    - improved_v24: `0.5511`
+    - improved_v25: `0.5548`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 ErrorTree 规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v24: `20`
+    - improved_v25: `20`
+  - `success_count`
+    - improved_v24: `20`
+    - improved_v25: `20`
+  - `success_rate`
+    - improved_v24: `1.0`
+    - improved_v25: `1.0`
+  - `test_pass_rate`
+    - improved_v24: `1.0`
+    - improved_v25: `1.0`
+  - `average_steps`
+    - improved_v24: `9.25`
+    - improved_v25: `9.25`
+  - `average_duration_sec`
+    - improved_v24: `0.548`
+    - improved_v25: `0.5584`
+  - `taxonomy`
+    - improved_v24: `无错误标签`
+    - improved_v25: `无错误标签`
+
+### 关键案例
+
+#### improved_v24 失败案例：`task_052`
+
+- 运行结果：
+  - `logs/trajectories/task_052/run_20260610T100155065230Z_4644/result.json`
+- 现象：
+  - 已读取 `jsonschema_error_tree_repo/error_tree.py`
+  - 但没有匹配到 `setdefault()` 引起的状态污染修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v25 成功案例：`task_052`
+
+- 运行结果：
+  - `logs/trajectories/task_052/run_20260610T100155084198Z_3773/result.json`
+- 现象：
+  - 自动识别缺失索引访问不应写回内部 children
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `23` 条
+- 候选池里正式 accepted 任务提升到 `23` 条，`to_review` 降到 `6` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v24`：覆盖年份前紧贴逗号时的 parser token 识别
+  - `improved_v25`：进一步覆盖 ErrorTree 缺失索引访问状态污染
+- 扩容对比中，`improved_v25` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 对比中，`improved_v25` 保持固定任务集无回归
+
+### 剩余问题
+
+- 当前最近三轮 `frozen_20` 结果都是无回归，而不是新的成功率提升
+- validator 扩展语义、轻量数据库提交语义、对象定义阶段元数据可见性仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

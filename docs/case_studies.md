@@ -317,6 +317,20 @@
 - 结果：
   - `task_050` 在扩容到 22 条任务后的正式任务集上完全通过
 
+## 成功案例 25：`task_052`
+
+- repo：`jsonschema_error_tree_repo`
+- 来源：`python-jsonschema/jsonschema#1328`
+- 代表版本：`improved_v25`
+- 现象：
+  - `ErrorTree` 初始只包含真实有错误的索引
+  - 但旧逻辑在访问缺失索引时会通过 `setdefault()` 把空节点写回树中
+  - 后续 `list(tree)` 和 `index in tree` 因此被污染
+- 改进点：
+  - `improved_v25` 把缺失索引访问改成 `get(..., ErrorTree())`
+- 结果：
+  - `task_052` 在扩容到 23 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -554,3 +568,13 @@
   - 读到了 parser 逻辑，但没有形成“先清理前缀逗号再判定数字”的修复
 - 后续改进：
   - 升级为 `improved_v24`
+
+## 失败案例 25：`task_052` 在 `improved_v24`
+
+- 失败版本：`improved_v24`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解缺失索引访问导致的 ErrorTree 状态污染
+  - 读到了 `__getitem__()`，但没有形成把 `setdefault()` 改成只读获取的修复
+- 后续改进：
+  - 升级为 `improved_v25`

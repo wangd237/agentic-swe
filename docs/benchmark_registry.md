@@ -35,6 +35,7 @@
 | `task_046` | `python-jsonschema/jsonschema#1162` | `jsonschema_single_label_hostname_repo` | single-label hostname 合法性判定 | `improved_v22` | `20` |
 | `task_048` | `pypa/packaging#810` | `packaging_specifier_repo` | `Specifier >` 在 `dev+local` 场景下的比较语义 | `improved_v23` | `-` |
 | `task_050` | `dateutil/dateutil#1191` | `dateutil_attached_comma_repo` | 年份前紧贴逗号时的 parser token 识别 | `improved_v24` | `-` |
+| `task_052` | `python-jsonschema/jsonschema#1328` | `jsonschema_error_tree_repo` | 访问缺失索引时的 ErrorTree 状态污染 | `improved_v25` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -58,11 +59,11 @@
 - marker / requirement 字符串规范化
 - `dev/local` 版本比较边界
 - 紧贴标点时的日期年份 token 识别
+- 容器状态污染 / 惰性访问副作用
 - CLI 命令解析回落
 
 ## 当前仍相对欠缺的方向
 
-- 容器状态污染 / 惰性访问副作用
 - validator 扩展 / 继承时的语义丢失
 - 轻量数据库状态与提交语义问题
 - 对象定义阶段的 alias / 元数据可见性

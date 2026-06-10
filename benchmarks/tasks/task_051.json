@@ -1,0 +1,29 @@
+{
+  "task_id": "task_051",
+  "repo_name": "jsonschema",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "The return of `__iter__()` and `__contains__()` change after accessing of an index with no error",
+  "issue_text": "当前 `ErrorTree` 在访问一个原本没有错误的索引时，会把这个空索引写回内部结构，导致后续 `__iter__()` 和 `__contains__()` 的结果被污染。当前真实 issue 需要让缺失索引访问保持只读语义：可以返回空节点，但不能改变树里哪些索引真正有错误。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1328,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1328",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1328",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
