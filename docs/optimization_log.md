@@ -2530,3 +2530,181 @@
 - 当前 compare 仍然主要是“逐轮扩容保持成功率”的证据链，后面建议补一次冻结同集合对比
 - 候选池虽然扩大了，但 `to_review` 还有 15 条，仍需要继续筛选高质量 issue
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
+## Iteration 23：Jsonschema Hostname ValueError Fallback and Frozen-Set Eval（improved_v16 -> improved_v17）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `python-jsonschema/jsonschema#1121` 推进成可运行任务
+- 验证 `improved_v16` 到 `improved_v17` 是否能覆盖 hostname 格式检查在空字符串场景下的异常回落
+- 首次补齐冻结同集合评测，避免结果一直只有扩容对比
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `python-jsonschema/jsonschema#1121`
+- 候选状态汇总更新为：
+  - `accepted = 15`
+  - `drafted = 1`
+  - `to_review = 14`
+- 新增草稿任务：
+  - `task_035`
+- 新增可运行 semi_real 任务：
+  - `task_036`
+- 新增 benchmark repo：
+  - `benchmarks/repos/jsonschema_hostname_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v17.json`
+- 新增冻结 manifest：
+  - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
+- patch 生成器新增能力：
+  - hostname 格式检查在空字符串场景下捕获 `ValueError`
+  - 回落为普通格式校验失败，而不是直接中断执行
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_035.json`
+- `benchmarks/tasks/task_036.json`
+- `benchmarks/repos/jsonschema_hostname_repo/jsonschema_hostname_repo/hostname.py`
+- `benchmarks/repos/jsonschema_hostname_repo/tests/test_hostname.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v17.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+
+### 单任务分辨运行
+
+- `improved_v16` 失败：
+  - `logs/trajectories/task_036/run_20260610T065725595352Z_2796/result.json`
+- `improved_v17` 成功：
+  - `logs/trajectories/task_036/run_20260610T065725595349Z_4937/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev16_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev17_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev17_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step15_001.json`
+
+### 冻结同集合运行
+
+- baseline batch run：
+  - `logs/summaries/batch_run_frozen15v16_001.json`
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen15v16_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen15v17_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen15v17_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen15_step1_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 14 条任务集上的 `improved_v16`
+  - improved 是扩充到 15 条任务后的 `improved_v17`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v16: `14`
+    - improved_v17: `15`
+  - `success_count`
+    - improved_v16: `14`
+    - improved_v17: `15`
+  - `success_rate`
+    - improved_v16: `1.0`
+    - improved_v17: `1.0`
+  - `test_pass_rate`
+    - improved_v16: `1.0`
+    - improved_v17: `1.0`
+  - `average_steps`
+    - improved_v16: `9.3571`
+    - improved_v17: `9.2667`
+  - `average_duration_sec`
+    - improved_v16: `0.5792`
+    - improved_v17: `0.5887`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 15 条任务
+  - 因此这是当前第一组可直接解释为策略改进的同集合对比
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v16: `15`
+    - improved_v17: `15`
+  - `success_count`
+    - improved_v16: `14`
+    - improved_v17: `15`
+  - `success_rate`
+    - improved_v16: `0.9333`
+    - improved_v17: `1.0`
+  - `test_pass_rate`
+    - improved_v16: `0.9333`
+    - improved_v17: `1.0`
+  - `average_steps`
+    - improved_v16: `9.2667`
+    - improved_v17: `9.2667`
+  - `average_duration_sec`
+    - improved_v16: `0.5926`
+    - improved_v17: `0.5906`
+  - `taxonomy`
+    - improved_v16: `Premature Finish = 1`
+    - improved_v17: `无错误标签`
+
+### 关键案例
+
+#### improved_v16 失败案例：`task_036`
+
+- 运行结果：
+  - `logs/trajectories/task_036/run_20260610T065725595352Z_2796/result.json`
+- 现象：
+  - 已读取 `jsonschema_hostname_repo/hostname.py`
+  - 但没有匹配到 hostname 空字符串异常回落的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v17 成功案例：`task_036`
+
+- 运行结果：
+  - `logs/trajectories/task_036/run_20260610T065725595349Z_4937/result.json`
+- 现象：
+  - 自动识别空字符串场景下不应继续抛出 `ValueError`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 15 条
+- 候选池里正式 accepted 任务提升到 15 条，`to_review` 还剩 14 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v16`：覆盖 mixed-type extras 错误消息渲染
+  - `improved_v17`：进一步覆盖 hostname 格式检查异常回落
+- 扩容对比中，`improved_v17` 保持了 `100%` 成功率与 `100%` 测试通过率
+- 冻结同集合对比中，`improved_v17` 首次把同集合成功率从 `0.9333` 提升到 `1.0`
+
+### 剩余问题
+
+- 冻结同集合对比目前只有 1 轮，后面还需要继续累计更多冻结集合版本
+- 候选池虽然还比较充足，但仍需要继续把 `to_review` issue 逐步筛成可运行任务
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力

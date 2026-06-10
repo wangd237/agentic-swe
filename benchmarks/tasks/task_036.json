@@ -1,0 +1,37 @@
+{
+  "task_id": "task_036",
+  "repo_name": "jsonschema_hostname_repo",
+  "repo_path": "benchmarks/repos/jsonschema_hostname_repo",
+  "issue_title": "hostname format checker might raise ValueError",
+  "issue_text": "At least on empty string `format: hostname` validator raises `ValueError` and not the expected `ValidationError`.\r\n\r\n当前 semi-real 任务要求：空字符串和不合法 hostname 不应再让格式检查函数直接抛出 `ValueError`，而应返回普通校验失败结果；合法 hostname 仍应保持通过。",
+  "test_command": "python -m pytest tests/test_hostname.py -q",
+  "success_criteria": "当 hostname 为空字符串时，格式检查不应再抛出 ValueError，而应返回 False；普通非法 hostname 仍应返回 False，合法 hostname 仍应返回 True，且回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "hostname",
+    "format-checker"
+  ],
+  "target_files_hint": [
+    "jsonschema_hostname_repo/hostname.py",
+    "tests/test_hostname.py"
+  ],
+  "expected_failure_test": "HostnameFormatTests.test_empty_string_returns_false_instead_of_value_error",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1121,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1121",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1121",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_035",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

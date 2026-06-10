@@ -51,6 +51,7 @@
 - `benchmarks/tasks/task_030.json`
 - `benchmarks/tasks/task_032.json`
 - `benchmarks/tasks/task_034.json`
+- `benchmarks/tasks/task_036.json`
 
 当前 repo：
 
@@ -71,6 +72,7 @@
 - `benchmarks/repos/tomlkit_inline_table_repo`
 - `benchmarks/repos/packaging_wheel_repo`
 - `benchmarks/repos/jsonschema_extras_repo`
+- `benchmarks/repos/jsonschema_hostname_repo`
 
 用途：
 
@@ -84,6 +86,7 @@
 
 - 已接入 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
+  - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
 - 已新增导入脚本：
@@ -468,6 +471,27 @@
 
 - `jsonschema_extras_repo/utils.py`
 - `tests/test_utils.py`
+
+### `jsonschema_hostname_repo`
+
+来源：
+
+- `python-jsonschema/jsonschema#1121`
+
+主要问题：
+
+- hostname 格式检查在空字符串场景下
+- 当前会把底层 `ValueError` 直接冒泡出去
+
+正确行为：
+
+- 空字符串应被视为普通格式校验失败
+- 不应再让格式检查函数直接抛出 `ValueError`
+
+相关文件：
+
+- `jsonschema_hostname_repo/hostname.py`
+- `tests/test_hostname.py`
 
 ## 当前为什么要分层
 

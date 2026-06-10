@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v16` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v17` 多轮策略迭代，补上自动 compare 报告链路，并接入真实 issue 派生任务入口 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -730,6 +730,13 @@ scripts/
   - 类型：`semi_real`
   - 来源：`python-jsonschema/jsonschema#1157`
   - 状态：已可运行
+- `task_035`
+  - 类型：`real_issue`
+  - 状态：草稿，已作为 `python-jsonschema/jsonschema#1121` 的真实入口记录
+- `task_036`
+  - 类型：`semi_real`
+  - 来源：`python-jsonschema/jsonschema#1121`
+  - 状态：已可运行
 - `optimization/policy_versions/improved_v3.json`
   - 作用：新增 urllib3 依赖上界放宽修复能力
 - `optimization/policy_versions/improved_v4.json`
@@ -758,6 +765,8 @@ scripts/
   - 作用：新增 wheel 文件名中未 normalized 版本号应被拒绝的修复能力
 - `optimization/policy_versions/improved_v16.json`
   - 作用：新增 mixed-type extras 排序失败时回落到原顺序渲染、避免 `TypeError` 的修复能力
+- `optimization/policy_versions/improved_v17.json`
+  - 作用：新增 hostname 格式检查在空字符串场景下回落为普通校验失败的修复能力
 
 当前这条链路已经从“真实 issue 候选”推进到“可运行任务 + 可比较策略结果”。
 
@@ -1110,6 +1119,35 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_034.json --policy
 - 修改文件是 `jsonschema_extras_repo/utils.py`
 - patch 原因是 mixed-type extras 在 `sorted(extras)` 时会抛出 `TypeError`，需要在排序失败时回落到稳定输出
 
+### 方式 24：运行 jsonschema hostname ValueError 真实 issue 派生任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_036.json --policy optimization/policy_versions/improved_v17.json
+```
+
+你会看到：
+
+- `task_036` 被成功修复
+- 修改文件是 `jsonschema_hostname_repo/hostname.py`
+- patch 原因是 hostname 格式检查在空字符串场景下不应再直接抛出 `ValueError`
+
+### 方式 25：运行冻结 15 条任务的同集合评测
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json --policy optimization/policy_versions/improved_v16.json --run-label frozen15v16
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json --policy optimization/policy_versions/improved_v17.json --run-label frozen15v17 --compare-against-eval logs/summaries/batch_eval_frozen15v16_001.json --compare-label frozen15_step1
+```
+
+你会看到：
+
+- 冻结 manifest 始终固定为同一组 15 条任务
+- `improved_v16 -> improved_v17` 在同集合上从 `0.9333` 提升到 `1.0`
+- `task_036` 从 `Premature Finish` 变为完全通过
+
 ## 当前实现中的环境偏差
 
 规格书默认测试框架是 `pytest`，现在当前环境已经完成安装。
@@ -1221,6 +1259,8 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_034.json --policy
 - 已补充 `task_029` / `task_030` 与 `improved_v14`
 - 已补充 `task_031` / `task_032` 与 `improved_v15`
 - 已补充 `task_033` / `task_034` 与 `improved_v16`
+- 已补充 `task_035` / `task_036` 与 `improved_v17`
+- 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 下一步会继续扩充任务与优化策略
 

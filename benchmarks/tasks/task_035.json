@@ -1,0 +1,29 @@
+{
+  "task_id": "task_035",
+  "repo_name": "jsonschema",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "hostname format checker might raise ValueError",
+  "issue_text": "At least on empty string `format: hostname` validator raises `ValueError` and not the expected `ValidationError`.\r\n\r\n```\r\n>>> from jsonschema.validators import validator_for\r\n>>> schema = {\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"string\", \"format\": \"hostname\"}\r\n>>> vcls = validator_for(schema)\r\n>>> validator = vcls(schema, format_checker=vcls.FORMAT_CHECKER)\r\n>>> validator.validate(\"\")\r\n....\r\n```\r\n当前实现会把底层格式检查阶段的 `ValueError` 直接冒泡出去，而不是把它当成普通格式校验失败处理。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1121,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1121",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1121",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -207,6 +207,20 @@
 - 结果：
   - `task_034` 在扩容后的真实任务集上完全通过
 
+## 成功案例 17：`task_036`
+
+- repo：`jsonschema_hostname_repo`
+- 来源：`python-jsonschema/jsonschema#1121`
+- 代表版本：`improved_v17`
+- 现象：
+  - hostname 格式检查在空字符串场景下
+  - 会把底层 `ValueError` 直接抛给调用方
+- 改进点：
+  - `improved_v17` 为空字符串场景增加异常回落
+  - 让格式检查返回普通失败而不是中断执行
+- 结果：
+  - `task_036` 在扩容任务集和冻结同集合评测里都完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -364,3 +378,13 @@
   - 虽然读到了目标函数，但没有形成能够规避 `TypeError` 的补丁
 - 后续改进：
   - 升级为 `improved_v16`
+
+## 失败案例 17：`task_036` 在 `improved_v16`
+
+- 失败版本：`improved_v16`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 hostname 格式检查在空字符串场景下的异常回落模式
+  - 虽然读到了目标函数，但没有形成能够吞掉 `ValueError` 的补丁
+- 后续改进：
+  - 升级为 `improved_v17`

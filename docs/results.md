@@ -27,6 +27,8 @@
 - 当前已补充 `task_030`，并在真实 issue 派生任务集上完成 `improved_v13 -> improved_v14` 扩容对比
 - 当前已补充 `task_032`，并在真实 issue 派生任务集上完成 `improved_v14 -> improved_v15` 扩容对比
 - 当前已补充 `task_034`，并在真实 issue 派生任务集上完成 `improved_v15 -> improved_v16` 扩容对比
+- 当前已补充 `task_036`，并在真实 issue 派生任务集上完成 `improved_v16 -> improved_v17` 扩容对比
+- 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 
 ## 当前可展示结果
 
@@ -472,6 +474,64 @@
   - 这一轮 compare 属于任务集扩容对比，不是冻结同集合对比
   - 成功率保持 `100%`，但平均步骤数和平均耗时小幅回升
 
+扩充到 15 条真实派生任务后的结果：
+
+- realissuev16：
+  - `logs/summaries/batch_eval_realissuev16_001.json`
+- realissuev17：
+  - `logs/summaries/batch_eval_realissuev17_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step15_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v16: `1.0`
+  - improved_v17: `1.0`
+- `test_pass_rate`
+  - improved_v16: `1.0`
+  - improved_v17: `1.0`
+- `average_steps`
+  - improved_v16: `9.3571`
+  - improved_v17: `9.2667`
+- `average_duration_sec`
+  - improved_v16: `0.5792`
+  - improved_v17: `0.5887`
+- changed task
+  - `task_036`: 新增任务，在 `improved_v17` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 平均步数略有改善，但平均耗时小幅回升
+
+冻结 15 条真实任务后的同集合结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen15v16_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen15v17_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen15_step1_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v16: `0.9333`
+  - improved_v17: `1.0`
+- `test_pass_rate`
+  - improved_v16: `0.9333`
+  - improved_v17: `1.0`
+- `average_steps`
+  - improved_v16: `9.2667`
+  - improved_v17: `9.2667`
+- `average_duration_sec`
+  - improved_v16: `0.5926`
+  - improved_v17: `0.5906`
+- taxonomy
+  - improved_v16: `Premature Finish = 1`
+  - improved_v17: `无错误标签`
+- changed task
+  - `task_036`: `Premature Finish -> 无错误标签`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
@@ -491,7 +551,9 @@
 - `improved_v14` 进一步覆盖了真实 issue 派生出来的 dotted inline table 分隔损坏场景
 - `improved_v15` 进一步覆盖了真实 issue 派生出来的 wheel 版本号 normalization 校验场景
 - `improved_v16` 进一步覆盖了真实 issue 派生出来的 mixed-type extras 错误消息渲染场景
+- `improved_v17` 进一步覆盖了真实 issue 派生出来的 hostname 格式检查异常回落场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
+- 冻结 manifest 让我们第一次拿到了同集合上的真实提升证据
 - 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：
   - `docs/optimization_log.md`
