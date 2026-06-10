@@ -289,6 +289,20 @@
 - 结果：
   - `task_046` 在扩容到 20 条任务后的正式任务集和冻结 20 条同集合评测里都完全通过
 
+## 成功案例 23：`task_048`
+
+- repo：`packaging_specifier_repo`
+- 来源：`pypa/packaging#810`
+- 代表版本：`improved_v23`
+- 现象：
+  - 普通 `dev` 版本比较是正确的
+  - 但一旦带 `local` 段，旧逻辑就错误地只比较 `base_version`
+  - 导致 `4.1.0a2.dev1235+local` 也被错误判为不满足 `>4.1.0a2.dev1234`
+- 改进点：
+  - `improved_v23` 把比较基准从 `base_version` 收紧为 `public version`
+- 结果：
+  - `task_048` 在扩容到 21 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -506,3 +520,13 @@
   - 读到了 hostname 校验函数，但没有形成修复
 - 后续改进：
   - 升级为 `improved_v22`
+
+## 失败案例 23：`task_048` 在 `improved_v22`
+
+- 失败版本：`improved_v22`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 `Specifier >` 在 `dev+local` 场景下的比较边界
+  - 读到了比较逻辑，但没有形成把 `base_version` 收紧为 `public version` 的修复
+- 后续改进：
+  - 升级为 `improved_v23`

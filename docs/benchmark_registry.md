@@ -33,6 +33,7 @@
 | `task_042` | `pallets/click#2402` | `click_alias_repo` | `cmd is None` 异常回落 | `improved_v20` | `18/20` |
 | `task_044` | `dateutil/dateutil#384` | `dateutil_month_year_repo` | `MM.YYYY` 月年格式解析 | `improved_v21` | `20` |
 | `task_046` | `python-jsonschema/jsonschema#1162` | `jsonschema_single_label_hostname_repo` | single-label hostname 合法性判定 | `improved_v22` | `20` |
+| `task_048` | `pypa/packaging#810` | `packaging_specifier_repo` | `Specifier >` 在 `dev+local` 场景下的比较语义 | `improved_v23` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -54,12 +55,12 @@
 - single-label hostname 规范边界
 - 数值语义 / 浮点与整数一致性
 - marker / requirement 字符串规范化
+- `dev/local` 版本比较边界
 - CLI 命令解析回落
 
 ## 当前仍相对欠缺的方向
 
 - 容器状态污染 / 惰性访问副作用
-- 版本比较中的 `dev/local` 边界
 - validator 扩展 / 继承时的语义丢失
 - 轻量数据库状态与提交语义问题
 

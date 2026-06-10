@@ -22,7 +22,7 @@
 目标：
 
 - 从剩余 `to_review` 候选里再挑 `1` 到 `2` 条高质量 issue
-- 形成新的 `task_047 / task_048` 或后续编号任务
+- 形成新的 `task_049 / task_050` 或后续编号任务
 - 继续扩充正式真实任务集
 
 完成标准：
@@ -35,7 +35,7 @@
 
 目标：
 
-- 把 `to_review = 9` 继续收敛
+- 把 `to_review = 8` 继续收敛
 - 尽量把高质量候选推进为 `accepted`
 - 把明显不适合的候选明确标为 `rejected`
 
@@ -59,11 +59,11 @@
 
 优先级建议：
 
-1. `pypa/packaging#810`
-2. `dateutil/dateutil#1191`
-3. `python-jsonschema/jsonschema#1328`
-4. `python-jsonschema/jsonschema#1125`
-5. `simonw/sqlite-utils#159`
+1. `dateutil/dateutil#1191`
+2. `python-jsonschema/jsonschema#1328`
+3. `python-jsonschema/jsonschema#1125`
+4. `simonw/sqlite-utils#159`
+5. `pydantic/pydantic#9582`
 
 详细理由见：
 

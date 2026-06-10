@@ -21,6 +21,7 @@
     "benchmarks/tasks/task_040.json",
     "benchmarks/tasks/task_042.json",
     "benchmarks/tasks/task_044.json",
-    "benchmarks/tasks/task_046.json"
+    "benchmarks/tasks/task_046.json",
+    "benchmarks/tasks/task_048.json"
   ]
 }

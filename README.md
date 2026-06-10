@@ -49,6 +49,7 @@
   - 已将 `pallets/click#2402` 推进为 `task_041` 草稿与 `task_042` 可运行 semi_real 任务
   - 已将 `dateutil/dateutil#384` 推进为 `task_043` 草稿与 `task_044` 可运行 semi_real 任务
   - 已将 `python-jsonschema/jsonschema#1162` 推进为 `task_045` 草稿与 `task_046` 可运行 semi_real 任务
+  - 已将 `pypa/packaging#810` 推进为 `task_047` 草稿与 `task_048` 可运行 semi_real 任务
   - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
   - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
   - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
@@ -67,6 +68,7 @@
   - 已完成 `improved_v20` 策略迭代，补充 click alias group 在 `cmd is None` 场景下保持普通返回语义
   - 已完成 `improved_v21` 策略迭代，补充 `MM.YYYY` 月年格式在点号分隔场景下的解析修复
   - 已完成 `improved_v22` 策略迭代，补充 single-label hostname 应视为合法主机名的修复
+  - 已完成 `improved_v23` 策略迭代，补充 `Specifier >` 在 `dev+local` 场景下应按 public version 比较
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -338,6 +340,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
     - `task_044`：可运行的 semi_real 派生任务
     - `task_045`：真实 issue 草稿
     - `task_046`：可运行的 semi_real 派生任务
+    - `task_047`：真实 issue 草稿
+    - `task_048`：可运行的 semi_real 派生任务
   - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
 
 ## 当前 baseline 结果
@@ -418,6 +422,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev21_001.json`
 - improved_v22：
   - `logs/summaries/batch_eval_realissuev22_001.json`
+- improved_v23：
+  - `logs/summaries/batch_eval_realissuev23_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
@@ -431,6 +437,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step18_001.json`
   - `logs/summaries/batch_compare_realissue_step19_001.json`
   - `logs/summaries/batch_compare_realissue_step20_001.json`
+  - `logs/summaries/batch_compare_realissue_step21_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -468,6 +475,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - 扩充到 20 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 20 条任务后：`average_steps: 9.3158 -> 9.25`
   - 扩充到 20 条任务后：`average_duration_sec: 0.5743 -> 0.5552`
+  - 扩充到 21 条任务后：`success_count: 20 -> 21`
+  - 扩充到 21 条任务后：`success_rate: 1.0 -> 1.0`
+  - 扩充到 21 条任务后：`average_steps: 9.25 -> 9.2857`
+  - 扩充到 21 条任务后：`average_duration_sec: 0.5552 -> 0.557`
   - `task_024` 从 `Premature Finish` 变为完全通过
   - `task_026` 在扩容后的任务集上保持完全通过
   - `task_028` 在扩容后的任务集上保持完全通过
@@ -480,6 +491,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `task_042` 在扩容后的任务集上完全通过
   - `task_044` 在扩容后的任务集上完全通过
   - `task_046` 在扩容后的任务集上完全通过
+  - `task_048` 在扩容后的任务集上完全通过
 
 冻结 15 条真实任务后的同集合对比产物：
 
@@ -525,6 +537,19 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `test_pass_rate: 0.95 -> 1.0`
   - `Premature Finish: 1 -> 0`
   - `task_046` 从 `Premature Finish` 变为完全通过
+
+冻结 20 条真实任务上的后续无回归对比产物：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v22_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v23_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step2_001.json`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5569 -> 0.554`
+  - 说明新增 `packaging` 规则没有破坏已有固定任务集
 
 ## Harness 设计方向
 

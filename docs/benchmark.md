@@ -57,6 +57,7 @@
 - `benchmarks/tasks/task_042.json`
 - `benchmarks/tasks/task_044.json`
 - `benchmarks/tasks/task_046.json`
+- `benchmarks/tasks/task_048.json`
 
 当前 repo：
 
@@ -83,6 +84,7 @@
 - `benchmarks/repos/click_alias_repo`
 - `benchmarks/repos/dateutil_month_year_repo`
 - `benchmarks/repos/jsonschema_single_label_hostname_repo`
+- `benchmarks/repos/packaging_specifier_repo`
 
 用途：
 
@@ -146,12 +148,12 @@
 
 当前阶段补充说明：
 
-- 正式真实任务已经扩充到 `20` 条
+- 正式真实任务已经扩充到 `21` 条
 - `frozen_20` 已经成为后续策略迭代的固定同集合基线
 - 候选池状态已收敛到：
-  - `accepted = 20`
+  - `accepted = 21`
   - `drafted = 1`
-  - `to_review = 9`
+  - `to_review = 8`
 
 这部分会在项目主链路更稳定后逐步接入。
 

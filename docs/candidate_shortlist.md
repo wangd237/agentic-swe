@@ -11,24 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `pypa/packaging#810`
-
-- 标题：
-  - ``Specifier` Greater than comparison returns incorrect result for a version with dev+local parts`
-- 推荐级别：`high`
-- 为什么适合：
-  - 版本比较边界问题，输入输出可明确收敛
-  - 能补齐 `packaging` 方向里目前仍欠缺的 `dev/local` 比较语义
-  - 适合缩成单函数或单判断分支任务
-- 预期目标文件：
-  - specifier 比较逻辑
-- 预期测试形态：
-  - `>` 比较在 `dev + local` 组合场景下的回归例子
-  - 一个普通版本比较回归例子
-- 主要风险：
-  - 需要先确认最小可复现版本，避免引入完整版本比较矩阵
-
-### 2. `dateutil/dateutil#1191`
+### 1. `dateutil/dateutil#1191`
 
 - 标题：
   - `Incorrect year is returned when parsing a date string such as "may15,2021"`
@@ -45,7 +28,7 @@
 - 主要风险：
   - 需要小心不要把问题缩得过度依赖具体 tokenizer 细节
 
-### 3. `python-jsonschema/jsonschema#1328`
+### 2. `python-jsonschema/jsonschema#1328`
 
 - 标题：
   - `The return of __iter__() and __contains__() change after accessing of an index with no error`
@@ -61,7 +44,7 @@
 - 主要风险：
   - 需要缩题得足够小，避免把整个错误树结构都搬进 benchmark
 
-### 4. `python-jsonschema/jsonschema#1125`
+### 3. `python-jsonschema/jsonschema#1125`
 
 - 标题：
   - `extend() doesn't copy applicable_validators`
@@ -78,7 +61,7 @@
 - 主要风险：
   - 要避免把完整 legacy validator 体系整体搬进 benchmark
 
-### 5. `simonw/sqlite-utils#159`
+### 4. `simonw/sqlite-utils#159`
 
 - 标题：
   - `.delete_where() does not auto-commit (unlike .insert() or .upsert())`
@@ -94,6 +77,22 @@
 - 主要风险：
   - 会天然引入数据库状态，缩题时要把依赖面压到最小
 
+### 5. `pydantic/pydantic#9582`
+
+- 标题：
+  - `Model validator is ignored during inheritance`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 属于继承链语义问题，但输入输出仍有明确现象
+  - 如果能缩成最小 validator 链路，会补到目前较少覆盖的模型继承行为
+- 预期目标文件：
+  - 最小 validator 分派逻辑
+- 预期测试形态：
+  - 父类 validator 继续运行
+  - 子类 validator 不应覆盖掉父类 validator
+- 主要风险：
+  - 需要把问题缩到足够小，避免引入完整框架生命周期
+
 ## 已从短名单移除
 
 ### `dateutil/dateutil#384`
@@ -108,6 +107,12 @@
   - 已进入正式任务
   - 对应 `task_045 / task_046`
 
+### `pypa/packaging#810`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_047 / task_048`
+
 ## 暂不优先
 
 ### `python-attrs/attrs#1479`
@@ -115,12 +120,6 @@
 - 原因：
   - 更像框架生命周期 / 语义预期问题
   - 容易落到“设计是否如此”而不是“实现明确错误”
-
-### `pydantic/pydantic#9582`
-
-- 原因：
-  - 当前虽然已导入草稿，但更像框架级继承语义
-  - 缩成足够干净的小任务之前，优先级暂时低于上面几条
 
 ## 使用方式
 

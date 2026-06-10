@@ -7,10 +7,10 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v22`
+- 当前最新策略：`improved_v23`
 - 当前主分支最近重要能力：
-  - 已完成 `20` 条真实 issue 派生 `semi_real` 正式任务
-  - 已补齐第 `3` 组冻结同集合评测证据：`frozen_20`
+  - 已完成 `21` 条真实 issue 派生 `semi_real` 正式任务
+  - 已在 `frozen_20` 上补齐一轮 `improved_v22 -> improved_v23` 无回归验证
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
 ## 当前核心链路
@@ -26,11 +26,11 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v22.json --run-label realissuev22`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v23.json --run-label realissuev23`
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`20`
+- 正式 `semi_real` 真实 issue 任务数：`21`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
 - 当前冻结 manifest：
@@ -40,9 +40,9 @@
 
 ## 当前候选池状态
 
-- `accepted = 20`
+- `accepted = 21`
 - `drafted = 1`
-- `to_review = 9`
+- `to_review = 8`
 
 候选来源文件：
 
@@ -52,37 +52,36 @@
 
 ### 1. 最新扩容对比
 
-- 对比：`improved_v21 -> improved_v22`
-- 任务集：`19 -> 20` 条
+- 对比：`improved_v22 -> improved_v23`
+- 任务集：`20 -> 21` 条
 - 结果：
-  - `success_count: 19 -> 20`
+  - `success_count: 20 -> 21`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.3158 -> 9.25`
-  - `average_duration_sec: 0.5743 -> 0.5552`
+  - `average_steps: 9.25 -> 9.2857`
+  - `average_duration_sec: 0.5552 -> 0.557`
 
 说明：
 
-- 这组结果证明我们已经把正式真实任务集稳定扩容到 `20` 条
+- 这组结果证明我们已经把正式真实任务集稳定扩容到 `21` 条
 - 扩容后依旧保持 `100%` 成功率和 `100%` 测试通过率
 - 这一组仍属于扩容对比，主要说明“规模扩大后依旧稳定”
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v21 -> improved_v22`
+- 对比：`improved_v22 -> improved_v23`
 - 任务集：固定 `20` 条
 - 结果：
-  - `success_rate: 0.95 -> 1.0`
-  - `test_pass_rate: 0.95 -> 1.0`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
   - `average_steps: 9.25 -> 9.25`
-  - `average_duration_sec: 0.5536 -> 0.5569`
-  - `Premature Finish: 1 -> 0`
+  - `average_duration_sec: 0.5569 -> 0.554`
 
 说明：
 
-- 这是当前第 `3` 组真正可解释为“策略改进”的冻结同集合证据
-- 关键变化任务是 `task_046`
-- 虽然平均耗时轻微回升，但成功率和错误标签显著改善
+- 这是当前最新的一轮 `frozen_20` 无回归验证
+- 说明新增 `packaging` 规则没有破坏已有 `20` 条固定任务
+- 当前最近一组真正带来同集合成功率提升的证据仍然是 `improved_v21 -> improved_v22`
 
 ## 最新新增任务
 
@@ -102,14 +101,16 @@
   - repo：`jsonschema_single_label_hostname_repo`
   - 首个通过版本：`improved_v22`
   - 缺陷类型：single-label hostname 合法性判定
+- `task_047`
+  - 类型：`real_issue`
+  - 来源：`pypa/packaging#810`
+- `task_048`
+  - 类型：`semi_real`
+  - repo：`packaging_specifier_repo`
+  - 首个通过版本：`improved_v23`
+  - 缺陷类型：`Specifier >` 在 `dev+local` 场景下的版本比较
 
 ## 最近三轮优化结论
-
-### `improved_v20`
-
-- 覆盖场景：CLI `resolve_command` 在 `cmd is None` 时的异常回落
-- 新增任务：`task_042`
-- 同时补齐冻结 `18` 条任务的同集合对比
 
 ### `improved_v21`
 
@@ -123,10 +124,16 @@
 - 新增任务：`task_046`
 - 同时补齐冻结 `20` 条任务的同集合对比
 
+### `improved_v23`
+
+- 覆盖场景：`Specifier >` 在 `dev+local` 场景下应按 public version 比较
+- 新增任务：`task_048`
+- 在 `frozen_20` 上补齐一轮无回归验证
+
 ## 接下来最值得做的事
 
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
-- 从 `to_review` 中优先推进 `pypa/packaging#810`、`dateutil/dateutil#1191`、`python-jsonschema/jsonschema#1328`
+- 从 `to_review` 中优先推进 `dateutil/dateutil#1191`、`python-jsonschema/jsonschema#1328`、`python-jsonschema/jsonschema#1125`
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

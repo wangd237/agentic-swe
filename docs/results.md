@@ -33,9 +33,11 @@
 - 当前已补充 `task_042`，并在真实 issue 派生任务集上完成 `improved_v19 -> improved_v20` 扩容对比
 - 当前已补充 `task_044`，并在真实 issue 派生任务集上完成 `improved_v20 -> improved_v21` 扩容对比
 - 当前已补充 `task_046`，并在真实 issue 派生任务集上完成 `improved_v21 -> improved_v22` 扩容对比
+- 当前已补充 `task_048`，并在真实 issue 派生任务集上完成 `improved_v22 -> improved_v23` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
+- 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v22 -> improved_v23`
 
 ## 当前可展示结果
 
@@ -772,6 +774,70 @@
 - changed task
   - `task_046`: `Premature Finish -> 无错误标签`
 
+扩充到 21 条真实派生任务后的结果：
+
+- realissuev22：
+  - `logs/summaries/batch_eval_realissuev22_001.json`
+- realissuev23：
+  - `logs/summaries/batch_eval_realissuev23_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step21_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v22: `20`
+  - improved_v23: `21`
+- `success_count`
+  - improved_v22: `20`
+  - improved_v23: `21`
+- `success_rate`
+  - improved_v22: `1.0`
+  - improved_v23: `1.0`
+- `test_pass_rate`
+  - improved_v22: `1.0`
+  - improved_v23: `1.0`
+- `average_steps`
+  - improved_v22: `9.25`
+  - improved_v23: `9.2857`
+- `average_duration_sec`
+  - improved_v22: `0.5552`
+  - improved_v23: `0.557`
+- changed task
+  - `task_048`: 新增任务，在 `improved_v23` 下完全通过
+- 备注
+  - 这一轮 compare 仍属于任务集扩容对比
+  - 在正式任务集扩充到 21 条后，成功率继续保持 `100%`
+
+冻结 20 条真实任务上的后续无回归结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v22_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v23_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step2_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v22: `1.0`
+  - improved_v23: `1.0`
+- `test_pass_rate`
+  - improved_v22: `1.0`
+  - improved_v23: `1.0`
+- `average_steps`
+  - improved_v22: `9.25`
+  - improved_v23: `9.25`
+- `average_duration_sec`
+  - improved_v22: `0.5569`
+  - improved_v23: `0.554`
+- taxonomy
+  - improved_v22: `无错误标签`
+  - improved_v23: `无错误标签`
+- changed task
+  - `无`
+
 ### 当前优化结论
 
 - improved policy 在不增加额外步骤成本的前提下，提升了成功率
@@ -797,8 +863,10 @@
 - `improved_v20` 进一步覆盖了真实 issue 派生出来的 CLI 命令解析异常回落场景
 - `improved_v21` 进一步覆盖了真实 issue 派生出来的 `MM.YYYY` 月年格式解析场景
 - `improved_v22` 进一步覆盖了真实 issue 派生出来的 single-label hostname 合法性场景
+- `improved_v23` 进一步覆盖了真实 issue 派生出来的 `Specifier >` 在 `dev+local` 场景下的比较语义
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 冻结 manifest 已经让我们拿到三组同集合上的真实提升证据
+- 在最近一轮 `frozen_20` 验证里，新增规则也保持了固定任务集无回归
 - 任务 schema 已经支持从 synthetic 过渡到 real_issue
 - 详细过程与文件级改动见：
   - `docs/optimization_log.md`

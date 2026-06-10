@@ -3495,3 +3495,181 @@
 - 当前已经有 `frozen_15`、`frozen_18`、`frozen_20` 三组证据，后续应继续沿 `frozen_20` 累积
 - 版本比较 `dev/local` 边界、容器状态污染、validator 扩展语义仍值得优先推进
 - 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力
+
+## Iteration 29：Packaging Dev-Local Specifier Expansion（improved_v22 -> improved_v23）
+
+### 时间
+
+- 2026-06-10
+
+### 阶段
+
+- `Phase 6`
+
+### 目标
+
+- 把 `pypa/packaging#810` 推进成可运行任务
+- 验证 `improved_v22` 到 `improved_v23` 是否能覆盖 `Specifier >` 在 `dev+local` 场景下的比较边界
+- 把正式真实任务集从 `20` 条扩容到 `21` 条
+- 在 `frozen_20` 上补一轮无回归验证
+
+### 改动类型
+
+- `policy`
+- `benchmark`
+- `docs`
+- `eval`
+
+### 改动摘要
+
+- 重新同步并推进真实候选：
+  - `pypa/packaging#810`
+- 候选状态汇总更新为：
+  - `accepted = 21`
+  - `drafted = 1`
+  - `to_review = 8`
+- 新增草稿任务：
+  - `task_047`
+- 新增可运行 semi_real 任务：
+  - `task_048`
+- 新增 benchmark repo：
+  - `benchmarks/repos/packaging_specifier_repo`
+- 新增策略配置：
+  - `optimization/policy_versions/improved_v23.json`
+- patch 生成器新增能力：
+  - 识别带 `local` 段时错误只比较 `base_version` 的模式
+  - 改为按 `public version` 判断是否与 specifier 相同
+
+### 主要涉及文件
+
+- `benchmarks/tasks/task_047.json`
+- `benchmarks/tasks/task_048.json`
+- `benchmarks/repos/packaging_specifier_repo/packaging_specifier_repo/specifiers.py`
+- `benchmarks/repos/packaging_specifier_repo/tests/test_specifiers.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `optimization/policy_versions/improved_v23.json`
+- `app/agent/patcher.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/results.md`
+- `docs/case_studies.md`
+- `docs/project_memory.md`
+- `docs/benchmark_registry.md`
+- `docs/next_actions.md`
+- `docs/candidate_shortlist.md`
+
+### 单任务分辨运行
+
+- `improved_v22` 失败：
+  - `logs/trajectories/task_048/run_20260610T094755253692Z_6416/result.json`
+- `improved_v23` 成功：
+  - `logs/trajectories/task_048/run_20260610T094755281044Z_1882/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev22_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev23_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev23_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step21_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v22_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v23_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v23_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step2_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `20` 条任务集上的 `improved_v22`
+  - improved 是扩充到 `21` 条任务后的 `improved_v23`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v22: `20`
+    - improved_v23: `21`
+  - `success_count`
+    - improved_v22: `20`
+    - improved_v23: `21`
+  - `success_rate`
+    - improved_v22: `1.0`
+    - improved_v23: `1.0`
+  - `test_pass_rate`
+    - improved_v22: `1.0`
+    - improved_v23: `1.0`
+  - `average_steps`
+    - improved_v22: `9.25`
+    - improved_v23: `9.2857`
+  - `average_duration_sec`
+    - improved_v22: `0.5552`
+    - improved_v23: `0.557`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 `packaging` 规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v22: `20`
+    - improved_v23: `20`
+  - `success_count`
+    - improved_v22: `20`
+    - improved_v23: `20`
+  - `success_rate`
+    - improved_v22: `1.0`
+    - improved_v23: `1.0`
+  - `test_pass_rate`
+    - improved_v22: `1.0`
+    - improved_v23: `1.0`
+  - `average_steps`
+    - improved_v22: `9.25`
+    - improved_v23: `9.25`
+  - `average_duration_sec`
+    - improved_v22: `0.5569`
+    - improved_v23: `0.554`
+  - `taxonomy`
+    - improved_v22: `无错误标签`
+    - improved_v23: `无错误标签`
+
+### 关键案例
+
+#### improved_v22 失败案例：`task_048`
+
+- 运行结果：
+  - `logs/trajectories/task_048/run_20260610T094755253692Z_6416/result.json`
+- 现象：
+  - 已读取 `packaging_specifier_repo/specifiers.py`
+  - 但没有匹配到 `dev+local` 版本比较的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v23 成功案例：`task_048`
+
+- 运行结果：
+  - `logs/trajectories/task_048/run_20260610T094755281044Z_1882/result.json`
+- 现象：
+  - 自动识别带 `local` 段时不应只比较 `base_version`
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `21` 条
+- 候选池里正式 accepted 任务提升到 `21` 条，`to_review` 降到 `8` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v22`：覆盖 single-label hostname 合法性
+  - `improved_v23`：进一步覆盖 `Specifier >` 在 `dev+local` 场景下的比较语义
+- 扩容对比中，`improved_v23` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 对比中，`improved_v23` 保持固定任务集无回归
+
+### 剩余问题
+
+- 当前最近一轮 `frozen_20` 结果是无回归，而不是新的成功率提升
+- 容器状态污染、validator 扩展语义、轻量数据库提交语义仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要持续扩任务和扩能力

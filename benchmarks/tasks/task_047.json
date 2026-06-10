@@ -1,0 +1,29 @@
+{
+  "task_id": "task_047",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`Specifier` Greater than comparison returns incorrect result for a version with dev+local parts",
+  "issue_text": "当前 `Specifier` 的 `>` 比较在以下场景会返回错误结果：specifier 与被比较版本的 base version 相同，被比较版本带有 `local` 段，但它的 `dev` 段实际上已经更大。当前真实 issue 需要让 `>` 比较在带 `local` 段时不再只看 base version，而应按 public version 语义判断，避免把更大的 dev 版本错误拒绝。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 810,
+    "issue_url": "https://github.com/pypa/packaging/issues/810",
+    "candidate_id": "pypa_packaging_issue_810",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
