@@ -1,0 +1,29 @@
+{
+  "task_id": "task_053",
+  "repo_name": "jsonschema",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "extend() doesn't copy applicable_validators",
+  "issue_text": "当前 `extend()` 在基于 legacy validator 生成扩展类时，没有把原始 `applicable_validators` 透传下去，导致含有 `$ref` 的 schema 又重新考虑了本应忽略的同级关键字。当前真实 issue 需要保留 legacy validator 的 `$ref` 邻接关键字过滤语义。 ",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1125,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1125",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1125",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

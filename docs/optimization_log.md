@@ -4025,6 +4025,187 @@
 - 扩容对比中，`improved_v25` 继续保持 `100%` 成功率与 `100%` 测试通过率
 - `frozen_20` 对比中，`improved_v25` 保持固定任务集无回归
 
+## Iteration 32：Applicable Validators Inheritance Expansion（improved_v25 -> improved_v26）
+
+### 本轮目标
+
+- 验证 `improved_v25` 到 `improved_v26` 是否能覆盖 `python-jsonschema/jsonschema#1125`
+- 把 validator `extend()` 时丢失 `applicable_validators` 的语义回归沉淀成正式 semi-real 任务
+- 继续在 `frozen_20` 上补一轮同集合验证，确认新增规则不破坏已有能力
+
+### 本轮新增输入
+
+- 新增候选推进：
+  - `python-jsonschema/jsonschema#1125`
+- 候选池状态更新：
+  - `accepted = 24`
+  - `drafted = 1`
+  - `to_review = 5`
+- 新增任务：
+  - `task_053`
+  - `task_054`
+- 新增策略：
+  - `optimization/policy_versions/improved_v26.json`
+
+### 本轮新增文件
+
+- `benchmarks/tasks/task_053.json`
+- `benchmarks/tasks/task_054.json`
+- `benchmarks/repos/jsonschema_extend_repo/README.md`
+- `benchmarks/repos/jsonschema_extend_repo/jsonschema_extend_repo/__init__.py`
+- `benchmarks/repos/jsonschema_extend_repo/jsonschema_extend_repo/validators.py`
+- `benchmarks/repos/jsonschema_extend_repo/tests/test_validators.py`
+- `optimization/policy_versions/improved_v26.json`
+
+### 本轮修改文件
+
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `README.md`
+- `GUIDE.md`
+- `docs/benchmark.md`
+- `docs/benchmark_registry.md`
+- `docs/candidate_shortlist.md`
+- `docs/case_studies.md`
+- `docs/next_actions.md`
+- `docs/project_memory.md`
+- `docs/results.md`
+
+### 本轮任务设计
+
+- `task_053`
+  - 类型：`real_issue`
+  - 来源：`python-jsonschema/jsonschema#1125`
+  - 作用：保留真实 issue 的入口和元数据
+- `task_054`
+  - 类型：`semi_real`
+  - repo：`jsonschema_extend_repo`
+  - 缺陷：`extend()` 在复制 `VALIDATORS` 时漏掉 `applicable_validators`
+  - 目标：扩展后的 legacy validator 仍保留 `$ref` 邻接关键字过滤语义
+
+### 本轮策略改动
+
+- 新增 `_handle_jsonschema_extend_copies_applicable_validators`
+  - 命中 `jsonschema_extend_repo/validators.py` 中的 `extend()` 缺陷模板
+  - 修复方式：在 `create()` 调用里继续透传 `validator.applicable_validators`
+- `improved_v26`
+  - 在 `improved_v25` 能力链之上增加 validator extend 语义继承修复
+
+### 单任务分辨运行
+
+- `improved_v25` 失败：
+  - `logs/trajectories/task_054/run_20260610T131321107700Z_4638/result.json`
+- `improved_v26` 成功：
+  - `logs/trajectories/task_054/run_20260610T131321174951Z_0079/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev25_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev26_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev26_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step24_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v25_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v26_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v26_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step5_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `23` 条任务集上的 `improved_v25`
+  - improved 是扩充到 `24` 条任务后的 `improved_v26`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v25: `23`
+    - improved_v26: `24`
+  - `success_count`
+    - improved_v25: `23`
+    - improved_v26: `24`
+  - `success_rate`
+    - improved_v25: `1.0`
+    - improved_v26: `1.0`
+  - `test_pass_rate`
+    - improved_v25: `1.0`
+    - improved_v26: `1.0`
+  - `average_steps`
+    - improved_v25: `9.3478`
+    - improved_v26: `9.375`
+  - `average_duration_sec`
+    - improved_v25: `0.5548`
+    - improved_v26: `0.5699`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 validator extend 规则不会带来回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v25: `20`
+    - improved_v26: `20`
+  - `success_count`
+    - improved_v25: `20`
+    - improved_v26: `20`
+  - `success_rate`
+    - improved_v25: `1.0`
+    - improved_v26: `1.0`
+  - `test_pass_rate`
+    - improved_v25: `1.0`
+    - improved_v26: `1.0`
+  - `average_steps`
+    - improved_v25: `9.25`
+    - improved_v26: `9.25`
+  - `average_duration_sec`
+    - improved_v25: `0.5584`
+    - improved_v26: `0.5567`
+  - `taxonomy`
+    - improved_v25: `无错误标签`
+    - improved_v26: `无错误标签`
+
+### 关键案例
+
+#### improved_v25 失败案例：`task_054`
+
+- 运行结果：
+  - `logs/trajectories/task_054/run_20260610T131321107700Z_4638/result.json`
+- 现象：
+  - 已读取 `jsonschema_extend_repo/validators.py`
+  - 但没有匹配到 `extend()` 需要继续透传 `applicable_validators` 的修复策略
+  - 最终以 `Premature Finish` 失败
+
+#### improved_v26 成功案例：`task_054`
+
+- 运行结果：
+  - `logs/trajectories/task_054/run_20260610T131321174951Z_0079/result.json`
+- 现象：
+  - 自动识别 legacy validator 的 `$ref` 邻接关键字过滤语义不能在 `extend()` 时丢失
+  - 修复后测试全部通过
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `24` 条
+- 候选池里正式 accepted 任务提升到 `24` 条，`to_review` 降到 `5` 条
+- 当前真实任务集上的结果链路已经形成：
+  - `improved_v25`：覆盖 ErrorTree 缺失索引访问状态污染
+  - `improved_v26`：进一步覆盖 validator `extend()` 语义继承
+- 扩容对比中，`improved_v26` 继续保持 `100%` 成功率与 `100%` 测试通过率
+- `frozen_20` 对比中，`improved_v26` 保持固定任务集无回归，并把平均耗时从 `0.5584` 小幅改善到 `0.5567`
+
+### 剩余问题
+
+- 最近几轮 `frozen_20` 主要提供无回归证据，而非新的同集合成功率提升
+- 轻量数据库提交语义、对象定义阶段 alias 可见性、模型 validator 继承仍值得优先推进
+- 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
 ### 剩余问题
 
 - 当前最近三轮 `frozen_20` 结果都是无回归，而不是新的成功率提升

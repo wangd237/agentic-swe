@@ -1,0 +1,37 @@
+{
+  "task_id": "task_054",
+  "repo_name": "jsonschema_extend_repo",
+  "repo_path": "benchmarks/repos/jsonschema_extend_repo",
+  "issue_title": "extend() doesn't copy applicable_validators",
+  "issue_text": "当前 `extend()` 在合成扩展 validator 时，只复制了 `VALIDATORS`，却丢失了 legacy validator 的 `applicable_validators`。semi-real 任务要求：扩展后的 validator 必须继续保留 `$ref` 邻接关键字过滤语义，不能重新把 `maximum` 这类同级关键字当成可应用规则。",
+  "test_command": "python -m pytest tests/test_validators.py -q",
+  "success_criteria": "扩展后的 legacy validator 在 `$ref` 场景下仍只应用 `$ref`；普通扩展路径不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jsonschema",
+    "validator-extension",
+    "applicable-validators"
+  ],
+  "target_files_hint": [
+    "jsonschema_extend_repo/validators.py",
+    "tests/test_validators.py"
+  ],
+  "expected_failure_test": "ExtendValidatorTests.test_extend_preserves_legacy_ref_filtering",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-jsonschema/jsonschema",
+    "repo_url": "https://github.com/python-jsonschema/jsonschema",
+    "issue_number": 1125,
+    "issue_url": "https://github.com/python-jsonschema/jsonschema/issues/1125",
+    "candidate_id": "python_jsonschema_jsonschema_issue_1125",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_053",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

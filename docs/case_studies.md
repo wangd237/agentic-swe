@@ -331,6 +331,20 @@
 - 结果：
   - `task_052` 在扩容到 23 条任务后的正式任务集上完全通过
 
+## 成功案例 26：`task_054`
+
+- repo：`jsonschema_extend_repo`
+- 来源：`python-jsonschema/jsonschema#1125`
+- 代表版本：`improved_v26`
+- 现象：
+  - legacy validator 在 `$ref` 场景下本应只应用 `$ref`
+  - 旧逻辑在 `extend()` 时只复制了 `VALIDATORS`
+  - 扩展后的 validator 因此重新把 `maximum`、`type` 等同级关键字视为可应用规则
+- 改进点：
+  - `improved_v26` 在 `extend()` 里把原始 `applicable_validators` 一并透传给 `create()`
+- 结果：
+  - `task_054` 在扩容到 24 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -578,3 +592,13 @@
   - 读到了 `__getitem__()`，但没有形成把 `setdefault()` 改成只读获取的修复
 - 后续改进：
   - 升级为 `improved_v25`
+
+## 失败案例 26：`task_054` 在 `improved_v25`
+
+- 失败版本：`improved_v25`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解 validator extend 时 `applicable_validators` 的语义继承
+  - 读到了 `extend()`，但没有形成把原始 `applicable_validators` 继续透传给 `create()` 的修复
+- 后续改进：
+  - 升级为 `improved_v26`

@@ -11,24 +11,7 @@
 
 ## 当前 Top 5
 
-### 1. `python-jsonschema/jsonschema#1125`
-
-- 标题：
-  - `extend() doesn't copy applicable_validators`
-- 推荐级别：`medium-high`
-- 为什么适合：
-  - 属于 validator 组合逻辑问题
-  - 输入输出可以通过极小 schema 行为复现
-  - 能补一类“继承 / 扩展时语义丢失”的任务形态
-- 预期目标文件：
-  - validator `extend` 逻辑
-- 预期测试形态：
-  - 扩展后仍保留 `applicable_validators`
-  - 普通 validator 扩展路径不回归
-- 主要风险：
-  - 要避免把完整 legacy validator 体系整体搬进 benchmark
-
-### 2. `simonw/sqlite-utils#159`
+### 1. `simonw/sqlite-utils#159`
 
 - 标题：
   - `.delete_where() does not auto-commit (unlike .insert() or .upsert())`
@@ -44,7 +27,7 @@
 - 主要风险：
   - 会天然引入数据库状态，缩题时要把依赖面压到最小
 
-### 3. `pydantic/pydantic#9582`
+### 2. `pydantic/pydantic#9582`
 
 - 标题：
   - `Model validator is ignored during inheritance`
@@ -60,7 +43,7 @@
 - 主要风险：
   - 需要把问题缩到足够小，避免引入完整框架生命周期
 
-### 4. `python-attrs/attrs#1479`
+### 3. `python-attrs/attrs#1479`
 
 - 标题：
   - `Alias not available during field transformation`
@@ -76,7 +59,7 @@
 - 主要风险：
   - 容易落到框架构建时序，缩题时要非常克制
 
-### 5. `simonw/sqlite-utils#488`
+### 4. `simonw/sqlite-utils#488`
 
 - 标题：
   - ``sqlite-utils transform` should set empty strings to null when converting text columns to integer/float`
@@ -91,6 +74,23 @@
   - 非空数字字符串保持正常转换
 - 主要风险：
   - 容易把 sqlite 表结构细节带进来，缩题时要尽量只保留数据转换本身
+
+### 5. `simonw/sqlite-utils#186`
+
+- 标题：
+  - `.extract() shouldn't extract null values`
+- 推荐级别：`medium`
+- 为什么适合：
+  - 仍然属于 sqlite-utils，但问题边界比事务语义更局部
+  - 可以缩成单函数数据提取与空值过滤行为
+  - 能补“数据抽取时的空值语义”这一类现有 benchmark 较少覆盖的问题
+- 预期目标文件：
+  - `extract` 或值清洗逻辑
+- 预期测试形态：
+  - `None` 不应被当成可继续抽取的值
+  - 非空字符串或对象保持原有抽取行为
+- 主要风险：
+  - 要避免把真实 sqlite schema 细节整体搬进 benchmark
 
 ## 已从短名单移除
 
@@ -123,6 +123,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_051 / task_052`
+
+### `python-jsonschema/jsonschema#1125`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_053 / task_054`
 
 ## 使用方式
 
