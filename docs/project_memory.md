@@ -19,6 +19,8 @@
   - 已新增热点任务集合历史分析入口 `scripts/analyze_task_history_cohort.py`
   - 已新增 `run_tests` 模式基准入口 `scripts/benchmark_run_tests_modes.py`
   - 已新增 `run_tests` 模式 cohort 汇总入口 `scripts/analyze_run_tests_mode_cohort.py`
+  - 已新增 `pytest` 分阶段基准入口 `scripts/benchmark_pytest_phases.py`
+  - 已新增 `pytest` 分阶段 cohort 汇总入口 `scripts/analyze_pytest_phase_cohort.py`
   - 已让新 trace 记录显式步骤耗时
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
@@ -140,6 +142,13 @@
   - `average_fresh_copy_duration_sec = 0.0023`
   - `fresh_slower_than_source_task_count = 2`
   - `persistent_slower_than_source_task_count = 2`
+- `pytest` 分阶段基准分析：
+  - `logs/summaries/pytest_phases_cohort_run_tests_hotspots_v32_001.json`
+  - `average_pytest_startup_over_python_sec = 0.1322`
+  - `average_collect_over_pytest_startup_sec = 0.0797`
+  - `average_full_over_collect_sec = 0.0159`
+  - `average_collect_first_minus_repeated_sec = 0.0132`
+  - `average_full_first_minus_repeated_sec = -0.0065`
 
 说明：
 
@@ -148,6 +157,7 @@
 - 时延回升最明显的任务集中在：`task_040`、`task_038`、`task_036`、`task_034`
 - workspace copy 的额外成本只有毫秒级，且三种运行模式没有呈现稳定的“workspace 更慢”趋势
 - 当前最可信的方向已经进一步收窄到 pytest 命令执行链本身，而不是工作副本复制
+- 在 pytest 命令执行链内部，主要耗时又进一步集中在启动与 collection，而不是 full run 本体
 
 ## 最新新增任务
 
@@ -283,7 +293,8 @@
 - 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，并继续定位近期耗时回升原因
 - 当前性能定位已经收窄到 `run_tests` 链路，下一步应优先检查测试执行环境和子进程开销
 - 对热点任务集合的历史聚合已经证明 `task_034 / task_036 / task_038 / task_040` 都在 `improved_v32` 上稳定回升
-- `run_tests` 模式基准已经证明 workspace copy 不是主因，下一步应优先设计 pytest 启动、import/collection、首次运行与重复运行差异实验
+- `run_tests` 模式基准已经证明 workspace copy 不是主因
+- `pytest` 分阶段基准已经证明主要开销位于启动与 collection，下一步应优先拆 import/collection 内部差异和解释器抖动
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

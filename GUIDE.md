@@ -632,6 +632,10 @@ scripts/
   - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
 - 汇总多个热点任务的 `run_tests` 模式基准：
   - `python scripts/analyze_run_tests_mode_cohort.py --benchmark-summary logs/summaries/run_tests_modes_task034v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task036v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task038v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- 对单个热点任务做 `pytest` 分阶段基准：
+  - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+- 汇总多个热点任务的 `pytest` 分阶段基准：
+  - `python scripts/analyze_pytest_phase_cohort.py --benchmark-summary logs/summaries/pytest_phases_task034v32_001.json --benchmark-summary logs/summaries/pytest_phases_task036v32_001.json --benchmark-summary logs/summaries/pytest_phases_task038v32_001.json --benchmark-summary logs/summaries/pytest_phases_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
@@ -656,7 +660,13 @@ scripts/
   - `average_fresh_combined_delta_sec = -0.0068`
   - `average_persistent_combined_delta_sec = -0.0059`
 - 这说明 workspace copy 的额外成本只有毫秒级，且整体并不稳定更慢，因此它不是最近 `improved_v32` 系统性回升的主因
-- 下一步应该继续下钻 pytest 启动、import/collection 和命令执行链，而不是优先怀疑 workspace copy
+- `pytest` 分阶段 cohort 基准进一步表明：
+  - `average_pytest_startup_over_python_sec = 0.1322`
+  - `average_collect_over_pytest_startup_sec = 0.0797`
+  - `average_full_over_collect_sec = 0.0159`
+  - `average_collect_first_minus_repeated_sec = 0.0132`
+- 这说明热点任务的主要开销堆在 `pytest` 启动和 collection，真正 full run 相对 collect-only 只多了十几毫秒量级
+- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，而不是优先怀疑 workspace copy 或测试主体执行
 
 ### 7. 真实 issue 导入入口已可用
 

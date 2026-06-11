@@ -1615,3 +1615,47 @@ trace 热点分析结果：
 - workspace copy 的额外成本只有毫秒级，且 fresh / persistent 模式整体并没有稳定慢于 source repo
 - 因此最近 `improved_v32` 的系统性回升并不是 workspace copy 导致的，主因更可能位于 pytest 命令执行链本身或环境层抖动
 - 下一步应继续围绕 pytest 启动、import/collection、首次运行和重复运行差异做更细实验
+
+`pytest` 分阶段基准结果：
+
+- 单任务基准产物：
+  - `logs/summaries/pytest_phases_task034v32_001.json`
+  - `logs/summaries/pytest_phases_task036v32_001.json`
+  - `logs/summaries/pytest_phases_task038v32_001.json`
+  - `logs/summaries/pytest_phases_task040v32_001.json`
+- cohort 汇总产物：
+  - `logs/summaries/pytest_phases_cohort_run_tests_hotspots_v32_001.json`
+  - `logs/summaries/pytest_phases_cohort_run_tests_hotspots_v32_001.md`
+- 分阶段命令：
+  - `python_noop`
+  - `pytest_version`
+  - `pytest_collect_only`
+  - `pytest_full_run`
+- 热点任务 cohort 聚合：
+  - `average_pytest_startup_over_python_sec = 0.1322`
+  - `average_collect_over_pytest_startup_sec = 0.0797`
+  - `average_full_over_collect_sec = 0.0159`
+  - `average_collect_first_minus_repeated_sec = 0.0132`
+  - `average_full_first_minus_repeated_sec = -0.0065`
+  - `full_slower_than_collect_task_count = 4`
+  - `collect_slower_than_startup_task_count = 4`
+- 单任务样例：
+  - `task_034`
+    - `python_noop avg = 0.0465`
+    - `pytest_version avg = 0.184`
+    - `pytest_collect_only avg = 0.261`
+    - `pytest_full_run avg = 0.27`
+  - `task_040`
+    - `python_noop avg = 0.0381`
+    - `pytest_version avg = 0.1667`
+    - `pytest_collect_only avg = 0.246`
+    - `pytest_full_run avg = 0.266`
+
+进一步结论：
+
+- 热点任务的主要额外开销集中在：
+  - Python 解释器空跑到 `pytest --version` 的启动差值
+  - `pytest --version` 到 `pytest --collect-only` 的 collection 差值
+- 真正 full run 相比 collect-only 平均只多 `0.0159s`
+- 这说明当前最该优先排查的是 pytest 启动、import 与 collection 链，而不是测试主体本身
+- `collect_first_minus_repeated_sec` 仍有轻微正值，说明首次 collection 可能存在少量额外抖动

@@ -5427,3 +5427,95 @@
 - 现在已经知道 workspace copy 不是主因，但还没有把 pytest 启动、import/collection、实际测试执行彻底拆开
 - 需要继续比较首次运行与重复运行差异，确认是否存在缓存、文件系统或解释器启动抖动
 - 下一步应优先设计 pytest 启动 / collection 的更细实验，而不是继续重复 workspace 模式对比
+
+## 2026-06-11 Phase 6 pytest 分阶段基准补强
+
+### 本轮目标
+
+- 把 `run_tests` 命令执行链进一步拆成解释器空跑、pytest 启动、collection、full run 四层
+- 验证热点任务的主要额外开销到底落在 pytest 启动、collection 还是测试主体执行
+- 为后续继续拆 import/collection 内部差异提供更直接的证据
+
+### 本轮新增文件
+
+- `scripts/benchmark_pytest_phases.py`
+- `scripts/analyze_pytest_phase_cohort.py`
+- `tests/test_benchmark_pytest_phases.py`
+- `tests/test_analyze_pytest_phase_cohort.py`
+- `logs/summaries/pytest_phases_task034v32_001.json`
+- `logs/summaries/pytest_phases_task034v32_001.md`
+- `logs/summaries/pytest_phases_task036v32_001.json`
+- `logs/summaries/pytest_phases_task036v32_001.md`
+- `logs/summaries/pytest_phases_task038v32_001.json`
+- `logs/summaries/pytest_phases_task038v32_001.md`
+- `logs/summaries/pytest_phases_task040v32_001.json`
+- `logs/summaries/pytest_phases_task040v32_001.md`
+- `logs/summaries/pytest_phases_cohort_run_tests_hotspots_v32_001.json`
+- `logs/summaries/pytest_phases_cohort_run_tests_hotspots_v32_001.md`
+
+### 本轮修改文件
+
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `scripts/benchmark_pytest_phases.py`：
+  - 在同一 repo 上按顺序比较 `python_noop / pytest_version / pytest_collect_only / pytest_full_run`
+  - 自动保留首次运行与重复运行均值
+  - 自动计算三段差值：
+    - `pytest_startup_over_python`
+    - `collect_over_pytest_startup`
+    - `full_over_collect`
+- 新增 `scripts/analyze_pytest_phase_cohort.py`：
+  - 把多个热点任务的 phase benchmark 聚合成 cohort 报告
+  - 自动汇总首次运行与重复运行差异
+  - 自动按 `full_over_collect` 排序，便于看哪些任务测试主体更重
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_benchmark_pytest_phases.py tests/test_analyze_pytest_phase_cohort.py tests/test_benchmark_run_tests_modes.py tests/test_analyze_run_tests_mode_cohort.py tests/test_runtime_diagnostics.py tests/test_analyze_task_history.py tests/test_analyze_task_history_cohort.py tests/test_analyze_trace_hotspots.py tests/test_analyze_duration_regressions.py tests/test_import_issue_batch.py tests/test_run_real_issue_eval.py tests/test_scaffold_semi_real_task.py -q`
+  - 结果：`31 passed`
+- 真实日志验证：
+  - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_pytest_phase_cohort.py --benchmark-summary logs/summaries/pytest_phases_task034v32_001.json --benchmark-summary logs/summaries/pytest_phases_task036v32_001.json --benchmark-summary logs/summaries/pytest_phases_task038v32_001.json --benchmark-summary logs/summaries/pytest_phases_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 热点任务 cohort：
+  - `task_034 / task_036 / task_038 / task_040`
+- 聚合结果：
+  - `average_pytest_startup_over_python_sec = 0.1322`
+  - `average_collect_over_pytest_startup_sec = 0.0797`
+  - `average_full_over_collect_sec = 0.0159`
+  - `average_collect_first_minus_repeated_sec = 0.0132`
+  - `average_full_first_minus_repeated_sec = -0.0065`
+- 单任务样例：
+  - `task_034`
+    - `python_noop avg = 0.0465`
+    - `pytest_version avg = 0.184`
+    - `pytest_collect_only avg = 0.261`
+    - `pytest_full_run avg = 0.27`
+  - `task_040`
+    - `python_noop avg = 0.0381`
+    - `pytest_version avg = 0.1667`
+    - `pytest_collect_only avg = 0.246`
+    - `pytest_full_run avg = 0.266`
+
+### 结论
+
+- 热点任务的主要额外开销集中在 pytest 启动和 collection，而不是测试主体执行
+- `full_over_collect` 只有十几毫秒量级，说明当前系统性回升并不像是测试用例本身变重
+- `collect_first_minus_repeated` 仍有轻微正值，说明首次 collection 可能存在少量额外抖动
+
+### 剩余问题
+
+- 现在已经知道主要耗时堆在启动与 collection，但还没有把 collection 内部的 import、发现、构建开销继续拆开
+- 还需要继续验证是否存在解释器级缓存、文件系统抖动或 Windows 环境特有开销
+- 下一步应优先补 import/collection 内部差异实验，而不是回到 workspace copy 假设

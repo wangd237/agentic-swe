@@ -1,0 +1,137 @@
+{
+  "created_at": "2026-06-11T11:06:24.574368+00:00",
+  "cohort_label": "run_tests_hotspots_v32",
+  "task_count": 4,
+  "task_ids": [
+    "task_034",
+    "task_036",
+    "task_038",
+    "task_040"
+  ],
+  "aggregate": {
+    "average_pytest_startup_over_python_sec": 0.1322,
+    "average_collect_over_pytest_startup_sec": 0.0797,
+    "average_full_over_collect_sec": 0.0159,
+    "average_collect_first_minus_repeated_sec": 0.0132,
+    "average_full_first_minus_repeated_sec": -0.0065,
+    "full_slower_than_collect_task_count": 4,
+    "collect_slower_than_startup_task_count": 4
+  },
+  "top_full_over_collect_deltas": [
+    {
+      "task_id": "task_038",
+      "test_command": "python -m pytest tests/test_validator.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.038,
+      "pytest_version_avg_sec": 0.1634,
+      "pytest_collect_only_avg_sec": 0.2404,
+      "pytest_full_run_avg_sec": 0.2658,
+      "pytest_startup_over_python_sec": 0.1254,
+      "collect_over_pytest_startup_sec": 0.077,
+      "full_over_collect_sec": 0.0254,
+      "collect_first_minus_repeated_sec": -0.0035,
+      "full_first_minus_repeated_sec": -0.0146
+    },
+    {
+      "task_id": "task_040",
+      "test_command": "python -m pytest tests/test_requirements.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0381,
+      "pytest_version_avg_sec": 0.1667,
+      "pytest_collect_only_avg_sec": 0.246,
+      "pytest_full_run_avg_sec": 0.266,
+      "pytest_startup_over_python_sec": 0.1286,
+      "collect_over_pytest_startup_sec": 0.0793,
+      "full_over_collect_sec": 0.02,
+      "collect_first_minus_repeated_sec": 0.014,
+      "full_first_minus_repeated_sec": -0.0142
+    },
+    {
+      "task_id": "task_036",
+      "test_command": "python -m pytest tests/test_hostname.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0452,
+      "pytest_version_avg_sec": 0.1826,
+      "pytest_collect_only_avg_sec": 0.268,
+      "pytest_full_run_avg_sec": 0.2771,
+      "pytest_startup_over_python_sec": 0.1374,
+      "collect_over_pytest_startup_sec": 0.0854,
+      "full_over_collect_sec": 0.0091,
+      "collect_first_minus_repeated_sec": 0.0099,
+      "full_first_minus_repeated_sec": 0.0044
+    },
+    {
+      "task_id": "task_034",
+      "test_command": "python -m pytest tests/test_utils.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0465,
+      "pytest_version_avg_sec": 0.184,
+      "pytest_collect_only_avg_sec": 0.261,
+      "pytest_full_run_avg_sec": 0.27,
+      "pytest_startup_over_python_sec": 0.1375,
+      "collect_over_pytest_startup_sec": 0.077,
+      "full_over_collect_sec": 0.009,
+      "collect_first_minus_repeated_sec": 0.0322,
+      "full_first_minus_repeated_sec": -0.0014
+    }
+  ],
+  "task_snapshots": [
+    {
+      "task_id": "task_034",
+      "test_command": "python -m pytest tests/test_utils.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0465,
+      "pytest_version_avg_sec": 0.184,
+      "pytest_collect_only_avg_sec": 0.261,
+      "pytest_full_run_avg_sec": 0.27,
+      "pytest_startup_over_python_sec": 0.1375,
+      "collect_over_pytest_startup_sec": 0.077,
+      "full_over_collect_sec": 0.009,
+      "collect_first_minus_repeated_sec": 0.0322,
+      "full_first_minus_repeated_sec": -0.0014
+    },
+    {
+      "task_id": "task_036",
+      "test_command": "python -m pytest tests/test_hostname.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0452,
+      "pytest_version_avg_sec": 0.1826,
+      "pytest_collect_only_avg_sec": 0.268,
+      "pytest_full_run_avg_sec": 0.2771,
+      "pytest_startup_over_python_sec": 0.1374,
+      "collect_over_pytest_startup_sec": 0.0854,
+      "full_over_collect_sec": 0.0091,
+      "collect_first_minus_repeated_sec": 0.0099,
+      "full_first_minus_repeated_sec": 0.0044
+    },
+    {
+      "task_id": "task_038",
+      "test_command": "python -m pytest tests/test_validator.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.038,
+      "pytest_version_avg_sec": 0.1634,
+      "pytest_collect_only_avg_sec": 0.2404,
+      "pytest_full_run_avg_sec": 0.2658,
+      "pytest_startup_over_python_sec": 0.1254,
+      "collect_over_pytest_startup_sec": 0.077,
+      "full_over_collect_sec": 0.0254,
+      "collect_first_minus_repeated_sec": -0.0035,
+      "full_first_minus_repeated_sec": -0.0146
+    },
+    {
+      "task_id": "task_040",
+      "test_command": "python -m pytest tests/test_requirements.py -q",
+      "repetitions": 3,
+      "python_noop_avg_sec": 0.0381,
+      "pytest_version_avg_sec": 0.1667,
+      "pytest_collect_only_avg_sec": 0.246,
+      "pytest_full_run_avg_sec": 0.266,
+      "pytest_startup_over_python_sec": 0.1286,
+      "collect_over_pytest_startup_sec": 0.0793,
+      "full_over_collect_sec": 0.02,
+      "collect_first_minus_repeated_sec": 0.014,
+      "full_first_minus_repeated_sec": -0.0142
+    }
+  ],
+  "analysis_id": "pytest_phases_cohort_run_tests_hotspots_v32_001"
+}

@@ -63,6 +63,12 @@
 - 尽量区分命令执行、import/collection、摘要提取三类开销
 - 在优化日志里明确记录“已排除项”和“当前最可信主因”
 
+当前状态：
+
+- 已完成一轮 `pytest` 分阶段细分实验
+- 已确认热点任务的主要额外开销位于 `pytest` 启动与 `collect-only`
+- 下一步应继续拆 import/collection 内部差异，而不是重复验证 workspace copy
+
 ### 4. 持续清理候选池
 
 目标：
@@ -92,7 +98,7 @@
 11. 用 `scripts/analyze_task_history.py` 下钻热点任务历史分布
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
-14. 继续做 pytest 启动 / collection 的更细实验
+14. 继续拆 pytest import / collection 的内部差异与解释器抖动
 15. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
@@ -101,7 +107,7 @@
 
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 继续对 pytest 启动、import/collection、首次运行与重复运行差异做更细实验
+3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验
 
 详细理由见：
 
@@ -128,6 +134,8 @@
 - `scripts/analyze_task_history_cohort.py`
 - `scripts/benchmark_run_tests_modes.py`
 - `scripts/analyze_run_tests_mode_cohort.py`
+- `scripts/benchmark_pytest_phases.py`
+- `scripts/analyze_pytest_phase_cohort.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`
