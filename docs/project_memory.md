@@ -70,12 +70,16 @@
 
 - `accepted = 30`
 - `drafted = 0`
-- `to_review = 0`
+- `to_review = 8`
 - 当前 accepted 候选已基本全部转成正式任务，下一阶段扩容主要依赖新增候选来源
 
 候选来源文件：
 
 - `benchmarks/real_world_candidates.json`
+- 当前新导入但尚未落地的重点候选主要来自：
+  - `pypa/packaging`
+  - `python-poetry/tomlkit`
+  - `pallets/jinja`
 
 ## 最新评测结论
 

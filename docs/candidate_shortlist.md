@@ -9,14 +9,63 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 0
+## 当前 Top 6
 
-当前高优先级 `to_review` 候选已经清零。
+### `pypa/packaging#909`
 
-下一阶段建议：
+- 原因：
+  - `parse_wheel_filename` 的压缩 tag 排序校验边界清晰
+  - 目标文件和测试入口都很明确
+  - 能补足当前 `packaging` 任务里还没有覆盖到的 wheel tag 校验能力
 
-- 从新的 GitHub 仓库来源继续扩候选池
-- 或开始引入更贴近真实仓库环境的外部 issue 检验
+### `pypa/packaging#788`
+
+- 原因：
+  - prerelease 比较逻辑有极小复现
+  - 与当前 `Specifier >` 方向形成互补，新增 `< prerelease` 语义
+  - 适合缩成单模块 specifier 回归任务
+
+### `pypa/packaging#638`
+
+- 原因：
+  - `Marker.evaluate(extra=None)` 是非常干净的类型边界 bug
+  - 单函数、单断言风格，适合快速转成高质量 semi_real
+  - 能补足 marker 归一化与空值处理能力
+
+### `python-poetry/tomlkit#431`
+
+- 原因：
+  - dotted key + super table 的渲染输出差异非常明确
+  - 与现有 `tomlkit` 两条任务相比，新增了 super table / dotted key 组合语义
+  - 仍然是单模块渲染逻辑，不会把修复边界拉太大
+
+### `python-poetry/tomlkit#383`
+
+- 原因：
+  - 当前 `tomlkit` 任务更偏序列化，这条能补容器删除语义
+  - `OutOfOrderTableProxy.pop()` 失败是很典型的容器状态 bug
+  - 语义有增量，不会和现有两个 `tomlkit` 任务过度重复
+
+### `pallets/jinja#2151`
+
+- 原因：
+  - async runtime 的 `__repr__` 警告问题，目标方法和修复方向都很清楚
+  - 能给 `jinja` 来源新增 async/runtime 表示层能力面
+  - 与现有 `meta` / `slice` 两条任务形成明显互补
+
+## 当前备选 2
+
+### `python-poetry/tomlkit#442`
+
+- 原因：
+  - 极易最小化，适合作为高置信度补量候选
+  - 但难度略低，优先级可稍后于更有语义增量的候选
+
+### `pallets/jinja#2176`
+
+- 原因：
+  - `indent` filter 的行为边界很清楚
+  - 但 issue 仍是 open，语义稳定性略弱于 closed/fixed 候选
 
 ## 已从短名单移除
 
@@ -96,6 +145,6 @@
 
 每次准备扩容时，优先按下面顺序使用：
 
-1. 先确认是否需要补充新的候选来源
-2. 再回到完整候选池或导入新的 issue 列表
+1. 先从当前 Top 6 中选择最容易转成 semi_real 的 issue
+2. 若 Top 6 消耗完，再回到完整候选池或导入新的 issue 列表
 3. 一旦某条进入正式任务，就把它从 shortlist 中移除或下移

@@ -56,6 +56,15 @@
 - 新任务进入 `benchmarks/manifests/real_issue_tasks.json`
 - 扩容后仍保持任务集整体稳定
 
+当前优先候选：
+
+- `pypa/packaging#909`
+- `pypa/packaging#788`
+- `pypa/packaging#638`
+- `python-poetry/tomlkit#431`
+- `python-poetry/tomlkit#383`
+- `pallets/jinja#2151`
+
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
 目标：
@@ -153,6 +162,11 @@
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 以 `improved_v33` 为候选基线，继续扩正式任务数并构建 `frozen_40`
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
+
+补充说明：
+
+- 当前新的候选库存已经重新打开，`to_review = 8`
+- 因此下一轮更应该优先“吃库存”，而不是继续先扩更多来源
 
 详细理由见：
 

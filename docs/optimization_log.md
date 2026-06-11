@@ -6436,3 +6436,86 @@
 
 - 还需要持续补新来源候选，否则正式任务数无法继续稳定扩容
 - 还需要设计 `frozen_40` 的构建节奏，避免一次性扩太多导致同集合质量波动
+
+## 2026-06-11 Phase 6 packaging / tomlkit / jinja 候选池扩容
+
+### 背景
+
+在 maturity 审计接入之后，当前瓶颈已经明确是：
+
+- 正式任务数只有 `30 / 60`
+- `frozen` 规模只有 `20 / 40`
+
+而旧候选池此前已经被吃到 `accepted = 30, to_review = 0`，继续扩正式任务前必须先补新库存。
+
+### 目标
+
+- 从 `pypa/packaging`、`python-poetry/tomlkit`、`pallets/jinja` 三个现有高质量来源里再补一批候选
+- 优先选择 closed/fixed、边界清晰、单模块修复的真实 issue
+- 为下一轮 `task_062+` 的 semi_real 落地准备库存
+
+### 改动类型
+
+- `benchmark`
+- `candidate_sourcing`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/example_issue_batch_packaging_tomlkit_jinja.txt`
+- `benchmarks/real_world_candidates.json`
+- `docs/candidate_shortlist.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增批量导入清单：
+  - `pypa/packaging#909`
+  - `pypa/packaging#788`
+  - `pypa/packaging#638`
+  - `python-poetry/tomlkit#431`
+  - `python-poetry/tomlkit#383`
+  - `python-poetry/tomlkit#442`
+  - `pallets/jinja#2151`
+  - `pallets/jinja#2176`
+- 已批量导入候选池
+- 已把 `docs/candidate_shortlist.md` 从 `Top 0` 更新为新的可执行 `Top 6`
+
+### 测试与验证
+
+- 运行命令：
+  - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch_packaging_tomlkit_jinja.txt`
+
+### 关键观察
+
+- 候选池状态从：
+  - `accepted = 30`
+  - `to_review = 0`
+- 变为：
+  - `accepted = 30`
+  - `to_review = 8`
+- 当前最值得优先推进的候选是：
+  - `pypa/packaging#909`
+  - `pypa/packaging#788`
+  - `pypa/packaging#638`
+  - `python-poetry/tomlkit#431`
+  - `python-poetry/tomlkit#383`
+  - `pallets/jinja#2151`
+
+### 结论
+
+- 这轮已经把“正式任务继续扩容”的前置库存重新补起来了
+- 下一步不必先继续找新来源，而应优先把这批候选转成 `task_062+`
+- 候选结构也与当前正式集互补，新增了：
+  - wheel tag 排序校验
+  - prerelease `<` 比较
+  - marker `None` 处理
+  - super table + dotted key 渲染
+  - 代理删除语义
+  - async runtime `__repr__` 警告
+
+### 剩余问题
+
+- 还没有把这 8 条候选中的任何一条推进成新的 semi_real 正式任务
+- 下一轮应优先从 `packaging#638`、`packaging#788` 或 `tomlkit#442` 这类边界最清晰的候选开始落地
