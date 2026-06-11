@@ -6054,3 +6054,124 @@
 - 还需要确认三者里哪一个是主导项，还是三者叠加才明显
 - 还需要确认关闭这些插件是否适合作为正式 runtime 默认行为，还是只应作为 benchmark 诊断能力
 - 下一步应优先做单插件切分实验
+
+## 2026-06-11 Phase 6 debug_exception 单插件切分与 v33 runtime 接线
+
+### 背景
+
+上一轮 `_003` 已经说明：
+
+- `debug_exception_plugins` 是主要收益来源之一
+
+但还没回答两个问题：
+
+- 三个插件里到底谁贡献最大
+- benchmark 结论能不能安全接进 runtime 主线
+
+### 目标
+
+- 把 `debug_exception_plugins` 再拆成单插件
+- 把最可信的一项接入 policy/runtime
+- 用小集合先验证不回归且有实际时延收益
+
+### 改动类型
+
+- `benchmark`
+- `runtime`
+- `policy`
+
+### 主要文件
+
+- `scripts/benchmark_pytest_plugin_variants.py`
+- `tests/test_benchmark_pytest_plugin_variants.py`
+- `app/agent/policy.py`
+- `app/tools/run_tests.py`
+- `app/runtime/task_runner.py`
+- `tests/test_runtime_diagnostics.py`
+- `optimization/policy_versions/improved_v33.json`
+- `benchmarks/manifests/run_tests_hotspots_v32.json`
+- `logs/summaries/pytest_plugin_variants_task034v32_004.json`
+- `logs/summaries/pytest_plugin_variants_task034v32_004.md`
+- `logs/summaries/pytest_plugin_variants_task036v32_004.json`
+- `logs/summaries/pytest_plugin_variants_task036v32_004.md`
+- `logs/summaries/pytest_plugin_variants_task038v32_004.json`
+- `logs/summaries/pytest_plugin_variants_task038v32_004.md`
+- `logs/summaries/pytest_plugin_variants_task040v32_004.json`
+- `logs/summaries/pytest_plugin_variants_task040v32_004.md`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_004.json`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_004.md`
+- `logs/summaries/batch_run_hotspotsv32baseline_001.json`
+- `logs/summaries/batch_run_hotspotsv32baseline_001.md`
+- `logs/summaries/batch_run_hotspotsv33_001.json`
+- `logs/summaries/batch_run_hotspotsv33_001.md`
+- `logs/summaries/duration_compare_hotspotsv33_001.json`
+- `logs/summaries/duration_compare_hotspotsv33_001.md`
+- `logs/summaries/trace_hotspots_hotspotsv33_001.json`
+- `logs/summaries/trace_hotspots_hotspotsv33_001.md`
+
+### 本轮实现内容
+
+- 在 plugin variant benchmark 中新增单插件变体：
+  - `debugging_only`
+  - `unraisableexception_only`
+  - `threadexception_only`
+- 为 runtime 增加 policy 级 pytest flags 注入口：
+  - `PolicyConfig.pytest_additional_flags`
+  - `run_tests(..., additional_pytest_flags=...)`
+  - `task_runner` 在 pre/post test 两次执行里透传 policy flags
+- 新增 `improved_v33`
+  - 当前只注入：
+    - `-p no:unraisableexception`
+- 新增小集合 manifest：
+  - `run_tests_hotspots_v32.json`
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_runtime_diagnostics.py tests/test_benchmark_pytest_plugin_variants.py tests/test_analyze_pytest_plugin_variant_cohort.py -q`
+  - 结果：`11 passed`
+- 单插件 benchmark：
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_pytest_plugin_variant_cohort.py --benchmark-summary logs/summaries/pytest_plugin_variants_task034v32_004.json --benchmark-summary logs/summaries/pytest_plugin_variants_task036v32_004.json --benchmark-summary logs/summaries/pytest_plugin_variants_task038v32_004.json --benchmark-summary logs/summaries/pytest_plugin_variants_task040v32_004.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- runtime 小集合验证：
+  - `python scripts/run_batch.py --manifest benchmarks/manifests/run_tests_hotspots_v32.json --policy optimization/policy_versions/improved_v32.json --run-label hotspotsv32baseline`
+  - `python scripts/run_batch.py --manifest benchmarks/manifests/run_tests_hotspots_v32.json --policy optimization/policy_versions/improved_v33.json --run-label hotspotsv33`
+  - `python -m scripts.analyze_duration_regressions --baseline-batch-summary logs/summaries/batch_run_hotspotsv32baseline_001.json --improved-batch-summary logs/summaries/batch_run_hotspotsv33_001.json --run-label hotspotsv33`
+  - `python -m scripts.analyze_trace_hotspots --baseline-batch-summary logs/summaries/batch_run_hotspotsv32baseline_001.json --improved-batch-summary logs/summaries/batch_run_hotspotsv33_001.json --run-label hotspotsv33`
+
+### 关键观察
+
+- `_004` plugin variant cohort：
+  - `unraisableexception_only`
+    - `avg_wall_delta = -0.0282`
+    - `avg_import_delta_us = -4683`
+    - `avg_module_delta = -1`
+  - `debugging_only`
+    - `avg_wall_delta = -0.0104`
+  - `threadexception_only`
+    - `avg_wall_delta = 0.0059`
+  - `debug_exception_plugins`
+    - `avg_wall_delta = -0.0346`
+  - `minimal_safe_plugins`
+    - `avg_wall_delta = -0.0496`
+- `improved_v33` 小集合验证：
+  - 成功率：`1.0 -> 1.0`
+  - 公共平均耗时：`0.5589 -> 0.5569`
+  - `common_average_delta_sec = -0.002`
+
+### 结论
+
+- 当前最可信、最适合先接入 runtime 的低风险项是：
+  - `-p no:unraisableexception`
+- `threadexception` 不值得优先推进
+- `debugging` 仍有一定收益，但不如 `unraisableexception` 明确
+- benchmark 结论已经成功接入 runtime 主线，且小集合验证未出现成功率回归
+
+### 剩余问题
+
+- 还需要把 `improved_v33` 扩到更大集合，确认收益在更广任务集上是否仍成立
+- 还需要确认 `-p no:unraisableexception` 是否适合作为未来默认策略的一部分
+- 下一步更适合做更大集合验证，而不是继续只在热点 4 任务上迭代

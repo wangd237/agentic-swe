@@ -14,6 +14,20 @@ FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)
 
 
+def _inject_pytest_flags(command: str, additional_flags: list[str] | None = None) -> str:
+    # 仅在 pytest 命令形态下追加额外 flags，避免污染非 pytest 测试命令。
+    if not additional_flags:
+        return command
+    normalized_command = command.strip()
+    if "pytest" not in normalized_command:
+        return command
+    for flag in additional_flags:
+        if flag in normalized_command:
+            continue
+        normalized_command = f"{normalized_command} {flag}"
+    return normalized_command
+
+
 def _summarize_test_output(stdout: str, stderr: str, exit_code: int) -> tuple[str, str]:
     # 尽量从 pytest 输出中提炼出一条“失败发生在哪里”的摘要。
     combined_output = "\n".join(part for part in [stdout, stderr] if part).strip()
@@ -40,13 +54,20 @@ def _summarize_test_output(stdout: str, stderr: str, exit_code: int) -> tuple[st
     return "测试命令执行失败，但未能从输出中提取明确失败位置。", ""
 
 
-def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
+def run_tests(
+    repo_path: str,
+    command: str,
+    timeout_sec: int = 120,
+    additional_pytest_flags: list[str] | None = None,
+) -> dict:
     # 通过受控子进程运行测试，并关闭 pytest 自动插件加载，减少环境噪声。
     try:
         tool_started_at = perf_counter()
         resolve_started_at = perf_counter()
         resolved_repo_path = resolve_repo_path(repo_path)
         resolve_repo_path_duration_sec = round(perf_counter() - resolve_started_at, 4)
+
+        effective_command = _inject_pytest_flags(command, additional_pytest_flags)
 
         env_setup_started_at = perf_counter()
         env = dict(os.environ)
@@ -55,7 +76,7 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
 
         command_started_at = perf_counter()
         completed_process = subprocess.run(
-            command,
+            effective_command,
             cwd=resolved_repo_path,
             shell=True,
             capture_output=True,
@@ -81,7 +102,9 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             "summary": test_summary,
             "data": {
                 "repo_path": str(resolved_repo_path),
-                "command": command,
+                "command": effective_command,
+                "original_command": command,
+                "additional_pytest_flags": additional_pytest_flags or [],
                 "timeout_sec": timeout_sec,
                 "exit_code": completed_process.returncode,
                 "stdout": completed_process.stdout,
@@ -107,7 +130,9 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             "summary": f"测试命令超时，超过 {timeout_sec} 秒。",
             "data": {
                 "repo_path": repo_path,
-                "command": command,
+                "command": _inject_pytest_flags(command, additional_pytest_flags),
+                "original_command": command,
+                "additional_pytest_flags": additional_pytest_flags or [],
                 "timeout_sec": timeout_sec,
                 "exit_code": None,
                 "stdout": error.stdout or "",
@@ -128,7 +153,13 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             "ok": False,
             "tool_name": "run_tests",
             "summary": "仓库路径不存在，无法运行测试。",
-            "data": {"repo_path": repo_path, "command": command, "timeout_sec": timeout_sec},
+            "data": {
+                "repo_path": repo_path,
+                "command": _inject_pytest_flags(command, additional_pytest_flags),
+                "original_command": command,
+                "additional_pytest_flags": additional_pytest_flags or [],
+                "timeout_sec": timeout_sec,
+            },
             "error": {"type": "not_found", "message": str(error)},
         }
     except NotADirectoryError as error:
@@ -136,7 +167,13 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             "ok": False,
             "tool_name": "run_tests",
             "summary": "给定路径不是仓库目录。",
-            "data": {"repo_path": repo_path, "command": command, "timeout_sec": timeout_sec},
+            "data": {
+                "repo_path": repo_path,
+                "command": _inject_pytest_flags(command, additional_pytest_flags),
+                "original_command": command,
+                "additional_pytest_flags": additional_pytest_flags or [],
+                "timeout_sec": timeout_sec,
+            },
             "error": {"type": "invalid_path", "message": str(error)},
         }
     except Exception as error:
@@ -144,6 +181,12 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             "ok": False,
             "tool_name": "run_tests",
             "summary": "运行测试时发生异常。",
-            "data": {"repo_path": repo_path, "command": command, "timeout_sec": timeout_sec},
+            "data": {
+                "repo_path": repo_path,
+                "command": _inject_pytest_flags(command, additional_pytest_flags),
+                "original_command": command,
+                "additional_pytest_flags": additional_pytest_flags or [],
+                "timeout_sec": timeout_sec,
+            },
             "error": {"type": "unknown_error", "message": str(error)},
         }

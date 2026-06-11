@@ -18,6 +18,7 @@ class PolicyConfig(BaseModel):
     max_retries: int = 2
     max_patch_files: int = 1
     patch_strategy: str = "baseline"
+    pytest_additional_flags: list[str] = []
 
     def to_dict(self) -> dict:
         return self.model_dump(mode="json")

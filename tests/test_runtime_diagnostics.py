@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -10,7 +11,18 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.runtime.task_runner import run_observation_task
-from app.tools.run_tests import run_tests
+from app.tools.run_tests import _inject_pytest_flags, run_tests
+
+
+def test_inject_pytest_flags_only_appends_for_pytest_commands() -> None:
+    assert _inject_pytest_flags("python -m pytest tests/test_demo.py -q", ["-p no:unraisableexception"]) == (
+        "python -m pytest tests/test_demo.py -q -p no:unraisableexception"
+    )
+    assert _inject_pytest_flags("python -m unittest -q", ["-p no:unraisableexception"]) == "python -m unittest -q"
+    assert _inject_pytest_flags(
+        "python -m pytest tests/test_demo.py -q -p no:unraisableexception",
+        ["-p no:unraisableexception"],
+    ) == "python -m pytest tests/test_demo.py -q -p no:unraisableexception"
 
 
 def test_run_tests_returns_split_duration_metrics(tmp_path: Path) -> None:
@@ -39,6 +51,29 @@ def test_run_tests_returns_split_duration_metrics(tmp_path: Path) -> None:
     assert result["data"]["subprocess_duration_sec"] == result["data"]["command_execution_duration_sec"]
     assert result["data"]["duration_sec"] >= result["data"]["pre_execution_duration_sec"]
     assert result["data"]["duration_sec"] >= result["data"]["subprocess_duration_sec"]
+
+
+def test_run_tests_records_injected_pytest_flags(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    test_file = repo_dir / "test_pass.py"
+    test_file.write_text(
+        "def test_pass():\n"
+        "    assert True\n",
+        encoding="utf-8",
+    )
+
+    result = run_tests(
+        str(repo_dir),
+        "python -m pytest test_pass.py -q",
+        timeout_sec=30,
+        additional_pytest_flags=["-p no:unraisableexception"],
+    )
+
+    assert result["ok"] is True
+    assert result["data"]["original_command"] == "python -m pytest test_pass.py -q"
+    assert result["data"]["additional_pytest_flags"] == ["-p no:unraisableexception"]
+    assert result["data"]["command"].endswith("-p no:unraisableexception")
 
 
 def test_run_observation_task_writes_trace_tool_metrics() -> None:
@@ -71,3 +106,44 @@ def test_run_observation_task_writes_trace_tool_metrics() -> None:
     patch_steps = [step for step in trace["steps"] if step["tool_name"] == "rule_based_patch"]
     assert len(patch_steps) == 1
     assert "patch_applied" in patch_steps[0]["tool_metrics"]
+
+
+def test_run_observation_task_passes_policy_pytest_flags(tmp_path: Path) -> None:
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(
+        json.dumps(
+            {
+                "policy_id": "test_policy",
+                "description": "test",
+                "patch_strategy": "baseline",
+                "pytest_additional_flags": ["-p no:unraisableexception"],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    observed_flags: list[list[str]] = []
+    original_run_tests = run_tests
+
+    def wrapped_run_tests(repo_path: str, command: str, timeout_sec: int = 120, additional_pytest_flags: list[str] | None = None) -> dict:
+        observed_flags.append(additional_pytest_flags or [])
+        return original_run_tests(
+            repo_path,
+            command,
+            timeout_sec=timeout_sec,
+            additional_pytest_flags=additional_pytest_flags,
+        )
+
+    with patch("app.runtime.task_runner.run_tests", side_effect=wrapped_run_tests):
+        output = run_observation_task(
+            task_path=REPO_ROOT / "benchmarks" / "tasks" / "task_001.json",
+            repo_root=REPO_ROOT,
+            policy_path=policy_path,
+        )
+
+    assert observed_flags == [["-p no:unraisableexception"], ["-p no:unraisableexception"]]
+    run_test_steps = [step for step in output["trace"]["steps"] if step["tool_name"] == "run_tests"]
+    assert run_test_steps[0]["tool_input"]["additional_pytest_flags"] == ["-p no:unraisableexception"]
+    assert output["result"]["tool_stats"]["policy_id"] == "test_policy"

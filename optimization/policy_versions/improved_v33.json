@@ -1,0 +1,11 @@
+{
+  "policy_id": "improved_v33",
+  "description": "在 improved_v32 基础上，为 pytest 测试命令追加 -p no:unraisableexception，减少 collection 阶段 builtin optional plugin 开销，同时保持 patch 策略不变。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v32",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception"
+  ]
+}

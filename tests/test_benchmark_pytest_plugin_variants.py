@@ -57,6 +57,9 @@ def test_build_pytest_plugin_variant_benchmark_returns_variants() -> None:
     assert set(summary["variant_summaries"]) == {
         "default_plugins",
         "light_terminal_plugins",
+        "debugging_only",
+        "unraisableexception_only",
+        "threadexception_only",
         "debug_exception_plugins",
         "minimal_safe_plugins",
     }

@@ -694,13 +694,15 @@ scripts/
 - 这说明 collection 的额外耗时里，有一块可以直接归因到稳定新增的 import 链，而不是纯粹随机抖动
 - `pytest` 插件变体 cohort 基准进一步表明：
   - `_001` 样本曾因为命令拼接 bug 失真
-  - 修正后的 `_003` 样本表明：
-    - `light_terminal_plugins`：`avg wall delta = -0.0123`
-    - `debug_exception_plugins`：`avg wall delta = -0.0235`
-    - `minimal_safe_plugins`：`avg wall delta = -0.0331`
-    - `minimal_safe_plugins`：`avg import delta(us) = -6415`
+  - 推进到 `_004` 样本后又进一步表明：
+    - `unraisableexception_only`：`avg wall delta = -0.0282`
+    - `debugging_only`：`avg wall delta = -0.0104`
+    - `threadexception_only`：`avg wall delta = 0.0059`
+    - `debug_exception_plugins`：`avg wall delta = -0.0346`
+    - `minimal_safe_plugins`：`avg wall delta = -0.0496`
+    - `minimal_safe_plugins`：`avg import delta(us) = -17930`
     - `minimal_safe_plugins`：`avg module delta = -22`
-- 这说明主要收益并不只是终端链，而是 `debug_exception_plugins` 这组三个插件开关已经贡献了大部分 wall time 改善
+- 这说明当前最强的单插件信号是 `-p no:unraisableexception`
 - `pytest importtime` 分组分析进一步表明：
   - `pytest_optional_plugins`：`avg self(us) = 6181`
   - `windows_ctypes`：`avg self(us) = 5103`
@@ -708,7 +710,10 @@ scripts/
   - `terminal_chain`：`avg self(us) = 3653`
   - `other` 已压到 `0`
 - 这说明新增 import 开销已经几乎都能归到可解释链路，后续不应再停留在“大概是 collection 变慢了”的层面
-- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先把 `debug_exception_plugins` 再拆成更细的单插件验证
+- runtime 侧也已补齐 policy 注入能力：
+  - 可以在策略 JSON 里配置 `pytest_additional_flags`
+  - 当前 `improved_v33` 已先验证 `-p no:unraisableexception`
+- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先扩大 `improved_v33` 的验证范围
 
 ### 7. 真实 issue 导入入口已可用
 

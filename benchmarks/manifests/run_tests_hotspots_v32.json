@@ -1,0 +1,10 @@
+{
+  "manifest_id": "run_tests_hotspots_v32",
+  "description": "用于快速验证 pytest collection 时延优化的热点任务集合。",
+  "tasks": [
+    "benchmarks/tasks/task_034.json",
+    "benchmarks/tasks/task_036.json",
+    "benchmarks/tasks/task_038.json",
+    "benchmarks/tasks/task_040.json"
+  ]
+}

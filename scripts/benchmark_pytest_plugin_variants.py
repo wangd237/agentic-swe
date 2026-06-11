@@ -48,6 +48,15 @@ PLUGIN_VARIANTS: dict[str, list[str]] = {
         "-p no:faulthandler",
         "-p no:terminalprogress",
     ],
+    "debugging_only": [
+        "-p no:debugging",
+    ],
+    "unraisableexception_only": [
+        "-p no:unraisableexception",
+    ],
+    "threadexception_only": [
+        "-p no:threadexception",
+    ],
     "debug_exception_plugins": [
         "-p no:debugging",
         "-p no:unraisableexception",

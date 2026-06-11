@@ -267,7 +267,12 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             trace.read_files.append(relative_path)
 
     tool_started_at = perf_counter()
-    pre_test_result = run_tests(str(run_paths.workspace_dir), task.test_command, timeout_sec=30)
+    pre_test_result = run_tests(
+        str(run_paths.workspace_dir),
+        task.test_command,
+        timeout_sec=30,
+        additional_pytest_flags=policy_config.pytest_additional_flags,
+    )
     _append_tool_step(
         trace=trace,
         tool_name="run_tests",
@@ -275,6 +280,7 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             "repo_path": str(run_paths.workspace_dir),
             "command": task.test_command,
             "timeout_sec": 30,
+            "additional_pytest_flags": policy_config.pytest_additional_flags,
         },
         tool_output_summary=pre_test_result["summary"],
         observation=f"测试退出码: {pre_test_result['data'].get('exit_code')}，失败位置: {pre_test_result['data'].get('observed_failure') or '未提取'}。",
@@ -323,7 +329,12 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         trace.total_tool_calls += 1
 
     tool_started_at = perf_counter()
-    post_test_result = run_tests(str(run_paths.workspace_dir), task.test_command, timeout_sec=30)
+    post_test_result = run_tests(
+        str(run_paths.workspace_dir),
+        task.test_command,
+        timeout_sec=30,
+        additional_pytest_flags=policy_config.pytest_additional_flags,
+    )
     _append_tool_step(
         trace=trace,
         tool_name="run_tests",
@@ -331,6 +342,7 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             "repo_path": str(run_paths.workspace_dir),
             "command": task.test_command,
             "timeout_sec": 30,
+            "additional_pytest_flags": policy_config.pytest_additional_flags,
         },
         tool_output_summary=post_test_result["summary"],
         observation=f"修复后测试退出码: {post_test_result['data'].get('exit_code')}。",

@@ -160,11 +160,13 @@
   - `average_collect_unique_module_delta = 37`
   - 高频新增模块：`_ctypes`、`pyexpat`、`xml.etree.ElementTree`、`_pytest.skipping`、`ctypes.wintypes`
 - `pytest` 插件变体基准分析：
-  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.json`
-  - `light_terminal_plugins`：`avg_wall_delta = -0.0123`
-  - `debug_exception_plugins`：`avg_wall_delta = -0.0235`
-  - `minimal_safe_plugins`：`avg_wall_delta = -0.0331`
-  - `minimal_safe_plugins`：`avg_import_delta_us = -6415`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_004.json`
+  - `unraisableexception_only`：`avg_wall_delta = -0.0282`
+  - `debugging_only`：`avg_wall_delta = -0.0104`
+  - `threadexception_only`：`avg_wall_delta = 0.0059`
+  - `debug_exception_plugins`：`avg_wall_delta = -0.0346`
+  - `minimal_safe_plugins`：`avg_wall_delta = -0.0496`
+  - `minimal_safe_plugins`：`avg_import_delta_us = -17930`
   - `minimal_safe_plugins`：`avg_module_delta = -22`
   - `_001` 样本已确认受命令拼接 bug 污染，后续应以 `_002 / _003` 为准
 - `pytest importtime` 分组分析：
@@ -186,10 +188,20 @@
 - 在 pytest 命令执行链内部，主要耗时又进一步集中在启动与 collection，而不是 full run 本体
 - 在 collection 内部，又已经能看到稳定新增的 import 链与模块集合，不再只是笼统的“collection 变慢”
 - 新增的插件变体实验给出了一个很有价值的负结论：
-  - `light_terminal_plugins` 这组轻量终端相关关闭项只有中等收益
-  - `debug_exception_plugins` 单独就能稳定减少约 `23.5ms`
-  - `minimal_safe_plugins` 整体能稳定减少约 `33.1ms` 和 `22` 个模块
-  - 当前最该继续下钻的是 `debug_exception_plugins` 与剩余轻量 optional plugins 的组合边界
+  - `unraisableexception_only` 单独就能稳定减少约 `28.2ms`
+  - `debugging_only` 只有小到中等收益
+  - `threadexception_only` 基本没有帮助，甚至轻微变慢
+  - `minimal_safe_plugins` 整体能稳定减少约 `49.6ms` 和 `22` 个模块
+  - 当前最该继续下钻的是 `unraisableexception` 与剩余轻量 optional plugins 的组合边界
+- runtime 已新增 policy 级 `pytest_additional_flags` 注入口：
+  - `app/agent/policy.py`
+  - `app/tools/run_tests.py`
+  - `app/runtime/task_runner.py`
+  - 已新增 `improved_v33`，先用 `-p no:unraisableexception` 做低风险 runtime 验证
+- `improved_v33` 小集合验证：
+  - `logs/summaries/duration_compare_hotspotsv33_001.json`
+  - 热点 `4` 任务公共平均耗时：`0.5589 -> 0.5569`
+  - `common_average_delta_sec = -0.002`
 - 新增的 import 分组分析又进一步说明：
   - 这些新增模块几乎都能归到明确链路，不再存在一大块难以解释的 `other`
   - 当前更值得优先切分的是 `pytest_optional_plugins`、`windows_ctypes`、`xml_stack` 和 `terminal_chain`
@@ -332,8 +344,9 @@
 - `run_tests` 模式基准已经证明 workspace copy 不是主因
 - `pytest` 分阶段基准已经证明主要开销位于启动与 collection，下一步应优先拆 import/collection 内部差异和解释器抖动
 - `pytest importtime` 基准已经证明 collection 的额外耗时伴随稳定新增 import 链，下一步应优先验证这些模块是否与平台或 pytest 默认插件链有关
-- `pytest` 插件变体基准已经修正为 `_002` 样本：`minimal_safe_plugins` 确实能稳定降本，下一步应优先拆解 `pytest_optional_plugins` 内部来源
+- `pytest` 插件变体基准已经推进到 `_004`：当前最值得直接产品化验证的项是 `-p no:unraisableexception`
 - `pytest importtime` 分组分析已经进一步证明：新增 import 开销主要由 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain` 构成，下一步应通过更细命令形态验证哪些组可以真正削减
+- `improved_v33` 已把 benchmark 结论接入 runtime，并在热点 4 任务上取得小幅总时延改善，下一步应继续扩大验证范围
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

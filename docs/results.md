@@ -1720,22 +1720,34 @@ trace 热点分析结果：
   - `logs/summaries/pytest_plugin_variants_task038v32_001.json`
   - `logs/summaries/pytest_plugin_variants_task040v32_001.json`
 - cohort 汇总产物：
-  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.json`
-  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.md`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_004.json`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_004.md`
 - 对比变体：
   - `default_plugins`
   - `light_terminal_plugins`
+  - `debugging_only`
+  - `unraisableexception_only`
+  - `threadexception_only`
   - `debug_exception_plugins`
   - `minimal_safe_plugins`
 - 热点任务 cohort 聚合：
-  - `light_terminal_plugins`: `avg wall delta = -0.0123`
-  - `light_terminal_plugins`: `avg import delta(us) = -4433`
+  - `light_terminal_plugins`: `avg wall delta = -0.0195`
+  - `light_terminal_plugins`: `avg import delta(us) = -9192`
   - `light_terminal_plugins`: `avg module delta = -15`
-  - `debug_exception_plugins`: `avg wall delta = -0.0235`
-  - `debug_exception_plugins`: `avg import delta(us) = 2073`
+  - `debugging_only`: `avg wall delta = -0.0104`
+  - `debugging_only`: `avg import delta(us) = -1889`
+  - `debugging_only`: `avg module delta = -4`
+  - `unraisableexception_only`: `avg wall delta = -0.0282`
+  - `unraisableexception_only`: `avg import delta(us) = -4683`
+  - `unraisableexception_only`: `avg module delta = -1`
+  - `threadexception_only`: `avg wall delta = 0.0059`
+  - `threadexception_only`: `avg import delta(us) = 1352`
+  - `threadexception_only`: `avg module delta = -1`
+  - `debug_exception_plugins`: `avg wall delta = -0.0346`
+  - `debug_exception_plugins`: `avg import delta(us) = -8225`
   - `debug_exception_plugins`: `avg module delta = -6`
-  - `minimal_safe_plugins`: `avg wall delta = -0.0331`
-  - `minimal_safe_plugins`: `avg import delta(us) = -6415`
+  - `minimal_safe_plugins`: `avg wall delta = -0.0496`
+  - `minimal_safe_plugins`: `avg import delta(us) = -17930`
   - `minimal_safe_plugins`: `avg module delta = -22`
 - 当前验证过可安全关闭的插件包括：
   - `junitxml`
@@ -1752,12 +1764,33 @@ trace 热点分析结果：
 
 进一步结论：
 
-- `_001` 样本后来确认受命令拼接 bug 污染，因此这里以后续修正的 `_003` 为准
-- `light_terminal_plugins` 能提供一部分收益，但不是主要来源
-- `debug_exception_plugins` 单独就能稳定减少约 `23.5ms`
-- `minimal_safe_plugins` 能稳定减少约 `33.1ms`、`6415us` import self time 和 `22` 个模块
+- `_001` 样本后来确认受命令拼接 bug 污染，因此这里以后续修正的 `_004` 为准
+- `unraisableexception_only` 已经是当前最强的单插件收益来源
+- `threadexception_only` 没有稳定收益，说明它不适合作为优先优化目标
+- `minimal_safe_plugins` 能稳定减少约 `49.6ms`、`17930us` import self time 和 `22` 个模块
 - 这说明前面 importtime 里看到的新增模块里，确实有一大块来自可安全关闭的 builtin optional plugins
-- 下一步最值得做的是把 `debug_exception_plugins` 再拆成更细的单插件验证，继续定位主要收益来源
+- 下一步最值得做的是把 `-p no:unraisableexception` 从 benchmark 结论继续扩大验证到更大任务集合
+
+`improved_v33` 小集合 runtime 验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v33.json`
+- 新增热点 manifest：
+  - `benchmarks/manifests/run_tests_hotspots_v32.json`
+- 运行结果：
+  - baseline：`logs/summaries/batch_run_hotspotsv32baseline_001.json`
+  - improved：`logs/summaries/batch_run_hotspotsv33_001.json`
+  - duration compare：`logs/summaries/duration_compare_hotspotsv33_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_hotspotsv33_001.json`
+- 指标：
+  - 成功率：`1.0 -> 1.0`
+  - 公共平均耗时：`0.5589 -> 0.5569`
+  - `common_average_delta_sec = -0.002`
+
+进一步结论：
+
+- 这说明 benchmark 里观测到的 `-p no:unraisableexception` 收益，已经能以低风险方式接入 runtime 主线
+- 当前收益量级还不大，因此下一步更应该扩大验证范围，而不是过早宣称它已经解决性能问题
 
 `pytest importtime` 分组分析结果：
 
