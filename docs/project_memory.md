@@ -10,7 +10,7 @@
 - 当前最新策略：`improved_v32`
 - 当前主分支最近重要能力：
   - 已完成 `30` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v31 -> improved_v32` 无回归验证
+  - 已在 `frozen_20` 上补齐一轮 `improved_v32 -> improved_v33` 无回归验证
   - 已把当前高优先级 `to_review` 候选池清零
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
@@ -94,19 +94,19 @@
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v31 -> improved_v32`
+- 对比：`improved_v32 -> improved_v33`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.25 -> 9.25`
-  - `average_duration_sec: 0.6122 -> 0.6774`
+  - `average_steps: 9.25 -> 10.25`
+  - `average_duration_sec: 0.6774 -> 0.5379`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增 profile 布局继承规则没有破坏已有 `20` 条固定任务
-- 当前最近一组真正带来同集合成功率提升的证据仍然是 `improved_v21 -> improved_v22`
+- 说明新增 `pytest_additional_flags` 注入口和 `-p no:unraisableexception` 没有破坏已有 `20` 条固定任务
+- 这一轮不仅无回归，而且平均耗时出现了显著回落
 
 ### 3. 最新时延分析结论
 
@@ -115,15 +115,15 @@
   - 公共 `29` 条任务平均耗时：`0.6115 -> 0.6767`
   - 平均差值：`+0.0652s`
 - `frozen_20` 分析：
-  - `logs/summaries/duration_compare_frozen20v32_001.json`
-  - 公共 `20` 条任务平均耗时：`0.6122 -> 0.6774`
-  - 平均差值：`+0.0652s`
+  - `logs/summaries/duration_compare_frozen20v33_001.json`
+  - 公共 `20` 条任务平均耗时：`0.6774 -> 0.5379`
+  - 平均差值：`-0.1395s`
 - trace 热点分析：
   - `logs/summaries/trace_hotspots_realissuev32_001.json`
-  - `logs/summaries/trace_hotspots_frozen20v32_001.json`
-  - 两组分析都指向 `run_tests` 是最主要的时延回升来源
+  - `logs/summaries/trace_hotspots_frozen20v33_001.json`
+  - 两组分析都指向 `run_tests` 是最主要的时延杠杆点
   - 扩容集上的 `run_tests` 总耗时增量约 `+1.5149s`
-  - `frozen_20` 上的 `run_tests` 总耗时增量约 `+1.0696s`
+  - `frozen_20` 上 `improved_v32 -> improved_v33` 的 `run_tests` 总耗时变化约 `-2.5941s`
 - 单任务历史分析：
   - `logs/summaries/task_history_task_040_003.json`
   - `task_040` 在 `improved_v31 -> improved_v32` 的历史平均耗时：`0.6213 -> 0.8171`
@@ -202,6 +202,13 @@
   - `logs/summaries/duration_compare_hotspotsv33_001.json`
   - 热点 `4` 任务公共平均耗时：`0.5589 -> 0.5569`
   - `common_average_delta_sec = -0.002`
+- `improved_v33` `frozen_20` 验证：
+  - `logs/summaries/batch_eval_frozen20v33_001.json`
+  - `logs/summaries/batch_compare_frozen20_step12_001.json`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6774 -> 0.5379`
+  - `run_tests` 总耗时下降：`-2.5941s`
 - 新增的 import 分组分析又进一步说明：
   - 这些新增模块几乎都能归到明确链路，不再存在一大块难以解释的 `other`
   - 当前更值得优先切分的是 `pytest_optional_plugins`、`windows_ctypes`、`xml_stack` 和 `terminal_chain`
@@ -346,7 +353,7 @@
 - `pytest importtime` 基准已经证明 collection 的额外耗时伴随稳定新增 import 链，下一步应优先验证这些模块是否与平台或 pytest 默认插件链有关
 - `pytest` 插件变体基准已经推进到 `_004`：当前最值得直接产品化验证的项是 `-p no:unraisableexception`
 - `pytest importtime` 分组分析已经进一步证明：新增 import 开销主要由 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain` 构成，下一步应通过更细命令形态验证哪些组可以真正削减
-- `improved_v33` 已把 benchmark 结论接入 runtime，并在热点 4 任务上取得小幅总时延改善，下一步应继续扩大验证范围
+- `improved_v33` 已把 benchmark 结论接入 runtime，并已在 `frozen_20` 上验证通过，下一步应继续判断是否可以作为后续更大集合和 `frozen_40` 的候选基线
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

@@ -81,7 +81,8 @@
 - 已确认新增 import 开销主要落在 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain`
 - 已新增 `improved_v33`，通过 policy 注入 `-p no:unraisableexception`
 - 已在热点 4 任务上验证 `improved_v33`：平均总耗时 `-0.002s`，成功率保持 `1.0`
-- 下一步应扩大 `improved_v33` 的验证范围，再判断是否值得作为正式策略基线推进
+- 已在 `frozen_20` 上验证 `improved_v33`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.6774 -> 0.5379`
+- 下一步应判断 `v33` 是否值得作为后续扩容与 `frozen_40` 的候选基线推进
 
 ### 4. 持续清理候选池
 
@@ -113,8 +114,8 @@
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
 14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
-15. 把 `improved_v33` 扩到更大集合验证，优先看 `frozen_20` 或更大的热点集合
-16. 若 `v33` 继续稳定，再拆 `unraisableexception + debugging` 的组合边界
+15. 把 `improved_v33` 扩到正式 `30` 条任务集，确认扩容集上也能保持无回归且不恶化时延
+16. 若 `v33` 在正式集也稳定，再拆 `unraisableexception + debugging` 的组合边界
 17. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
@@ -123,7 +124,7 @@
 
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，并优先扩大验证 `improved_v33`，随后再拆解 `unraisableexception` 组合边界
+3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，并优先把 `improved_v33` 扩到正式集，再拆解 `unraisableexception` 组合边界
 
 详细理由见：
 

@@ -1,0 +1,1177 @@
+{
+  "created_at": "2026-06-11T14:43:39.622510+00:00",
+  "baseline_batch_run_id": "batch_run_frozen20v32_001",
+  "improved_batch_run_id": "batch_run_frozen20v33_001",
+  "common_task_count": 20,
+  "baseline_average_duration_sec": 0.6774,
+  "improved_average_duration_sec": 0.5379,
+  "average_duration_delta_sec": -0.1395,
+  "top_task_regressions": [],
+  "top_tool_regressions": [
+    {
+      "tool_name": "unattributed_overhead",
+      "baseline_total_duration_sec": 0.0337,
+      "improved_total_duration_sec": 0.2345,
+      "delta_total_duration_sec": 0.2008,
+      "baseline_average_duration_sec": 0.0017,
+      "improved_average_duration_sec": 0.0117
+    },
+    {
+      "tool_name": "copy_workspace",
+      "baseline_total_duration_sec": 0.0,
+      "improved_total_duration_sec": 0.0418,
+      "delta_total_duration_sec": 0.0418,
+      "baseline_average_duration_sec": 0.0,
+      "improved_average_duration_sec": 0.0021
+    }
+  ],
+  "aggregate_tool_deltas": [
+    {
+      "tool_name": "copy_workspace",
+      "baseline_total_duration_sec": 0.0,
+      "improved_total_duration_sec": 0.0418,
+      "delta_total_duration_sec": 0.0418,
+      "baseline_average_duration_sec": 0.0,
+      "improved_average_duration_sec": 0.0021
+    },
+    {
+      "tool_name": "list_files",
+      "baseline_total_duration_sec": 0.108,
+      "improved_total_duration_sec": 0.0138,
+      "delta_total_duration_sec": -0.0942,
+      "baseline_average_duration_sec": 0.0054,
+      "improved_average_duration_sec": 0.0007
+    },
+    {
+      "tool_name": "read_file",
+      "baseline_total_duration_sec": 0.0306,
+      "improved_total_duration_sec": 0.0204,
+      "delta_total_duration_sec": -0.0102,
+      "baseline_average_duration_sec": 0.0015,
+      "improved_average_duration_sec": 0.001
+    },
+    {
+      "tool_name": "rule_based_patch",
+      "baseline_total_duration_sec": 0.0628,
+      "improved_total_duration_sec": 0.0234,
+      "delta_total_duration_sec": -0.0394,
+      "baseline_average_duration_sec": 0.0031,
+      "improved_average_duration_sec": 0.0012
+    },
+    {
+      "tool_name": "run_tests",
+      "baseline_total_duration_sec": 12.5496,
+      "improved_total_duration_sec": 9.9555,
+      "delta_total_duration_sec": -2.5941,
+      "baseline_average_duration_sec": 0.6275,
+      "improved_average_duration_sec": 0.4978
+    },
+    {
+      "tool_name": "search_code",
+      "baseline_total_duration_sec": 0.5215,
+      "improved_total_duration_sec": 0.4179,
+      "delta_total_duration_sec": -0.1036,
+      "baseline_average_duration_sec": 0.0261,
+      "improved_average_duration_sec": 0.0209
+    },
+    {
+      "tool_name": "show_diff",
+      "baseline_total_duration_sec": 0.2411,
+      "improved_total_duration_sec": 0.0498,
+      "delta_total_duration_sec": -0.1913,
+      "baseline_average_duration_sec": 0.0121,
+      "improved_average_duration_sec": 0.0025
+    },
+    {
+      "tool_name": "unattributed_overhead",
+      "baseline_total_duration_sec": 0.0337,
+      "improved_total_duration_sec": 0.2345,
+      "delta_total_duration_sec": 0.2008,
+      "baseline_average_duration_sec": 0.0017,
+      "improved_average_duration_sec": 0.0117
+    }
+  ],
+  "per_task_profiles": [
+    {
+      "task_id": "task_006",
+      "baseline_duration_sec": 0.6039,
+      "improved_duration_sec": 0.5439,
+      "delta_duration_sec": -0.06,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "search_code",
+      "dominant_regression_delta_sec": 0.0196,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": 0.0016
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0028,
+          "improved_duration_sec": 0.0003,
+          "delta_duration_sec": -0.0025
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0006,
+          "delta_duration_sec": 0.0
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0015,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.0007
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5824,
+          "improved_duration_sec": 0.5047,
+          "delta_duration_sec": -0.0777
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0026,
+          "improved_duration_sec": 0.0222,
+          "delta_duration_sec": 0.0196
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0131,
+          "improved_duration_sec": 0.0011,
+          "delta_duration_sec": -0.012
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0009,
+          "improved_duration_sec": 0.0126,
+          "delta_duration_sec": 0.0117
+        }
+      }
+    },
+    {
+      "task_id": "task_008",
+      "baseline_duration_sec": 0.7109,
+      "improved_duration_sec": 0.5546,
+      "delta_duration_sec": -0.1563,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0124,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0013,
+          "delta_duration_sec": 0.0013
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0026
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": 0.0001
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0019,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0012
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6651,
+          "improved_duration_sec": 0.5064,
+          "delta_duration_sec": -0.1587
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0256,
+          "improved_duration_sec": 0.0307,
+          "delta_duration_sec": 0.0051
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0139,
+          "improved_duration_sec": 0.0012,
+          "delta_duration_sec": -0.0127
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0008,
+          "improved_duration_sec": 0.0132,
+          "delta_duration_sec": 0.0124
+        }
+      }
+    },
+    {
+      "task_id": "task_010",
+      "baseline_duration_sec": 0.6332,
+      "improved_duration_sec": 0.5597,
+      "delta_duration_sec": -0.0735,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0118,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": 0.0016
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0027,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0023
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0006,
+          "delta_duration_sec": 0.0
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0009
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5878,
+          "improved_duration_sec": 0.5193,
+          "delta_duration_sec": -0.0685
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0258,
+          "improved_duration_sec": 0.0233,
+          "delta_duration_sec": -0.0025
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0141,
+          "improved_duration_sec": 0.0014,
+          "delta_duration_sec": -0.0127
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0124,
+          "delta_duration_sec": 0.0118
+        }
+      }
+    },
+    {
+      "task_id": "task_013",
+      "baseline_duration_sec": 0.5818,
+      "improved_duration_sec": 0.544,
+      "delta_duration_sec": -0.0378,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "search_code",
+      "dominant_regression_delta_sec": 0.0115,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0017,
+          "delta_duration_sec": 0.0017
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0028,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0024
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": 0.0002
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.0008
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5455,
+          "improved_duration_sec": 0.5,
+          "delta_duration_sec": -0.0455
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.015,
+          "improved_duration_sec": 0.0265,
+          "delta_duration_sec": 0.0115
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0154,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0139
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0009,
+          "improved_duration_sec": 0.0123,
+          "delta_duration_sec": 0.0114
+        }
+      }
+    },
+    {
+      "task_id": "task_016",
+      "baseline_duration_sec": 0.557,
+      "improved_duration_sec": 0.5335,
+      "delta_duration_sec": -0.0235,
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12,
+      "baseline_step_count": 12,
+      "improved_step_count": 13,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0115,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": 0.0016
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0028,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0024
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0006,
+          "improved_duration_sec": 0.0006,
+          "delta_duration_sec": 0.0
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0009
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5269,
+          "improved_duration_sec": 0.4984,
+          "delta_duration_sec": -0.0285
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0174,
+          "improved_duration_sec": 0.018,
+          "delta_duration_sec": 0.0006
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0067,
+          "improved_duration_sec": 0.0013,
+          "delta_duration_sec": -0.0054
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.001,
+          "improved_duration_sec": 0.0125,
+          "delta_duration_sec": 0.0115
+        }
+      }
+    },
+    {
+      "task_id": "task_017",
+      "baseline_duration_sec": 0.5973,
+      "improved_duration_sec": 0.5444,
+      "delta_duration_sec": -0.0529,
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10,
+      "baseline_step_count": 10,
+      "improved_step_count": 11,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0114,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0018,
+          "delta_duration_sec": 0.0018
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0052,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0048
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0014,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0007
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0015
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5584,
+          "improved_duration_sec": 0.4997,
+          "delta_duration_sec": -0.0587
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0189,
+          "improved_duration_sec": 0.0247,
+          "delta_duration_sec": 0.0058
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.009,
+          "improved_duration_sec": 0.0028,
+          "delta_duration_sec": -0.0062
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0014,
+          "improved_duration_sec": 0.0128,
+          "delta_duration_sec": 0.0114
+        }
+      }
+    },
+    {
+      "task_id": "task_019",
+      "baseline_duration_sec": 0.6106,
+      "improved_duration_sec": 0.5447,
+      "delta_duration_sec": -0.0659,
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10,
+      "baseline_step_count": 10,
+      "improved_step_count": 11,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0113,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0025,
+          "delta_duration_sec": 0.0025
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0053,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0044
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0014,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0007
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.0022
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5652,
+          "improved_duration_sec": 0.5056,
+          "delta_duration_sec": -0.0596
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0164,
+          "improved_duration_sec": 0.0195,
+          "delta_duration_sec": 0.0031
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0175,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": -0.0159
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0018,
+          "improved_duration_sec": 0.0131,
+          "delta_duration_sec": 0.0113
+        }
+      }
+    },
+    {
+      "task_id": "task_022",
+      "baseline_duration_sec": 0.6432,
+      "improved_duration_sec": 0.5482,
+      "delta_duration_sec": -0.095,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "search_code",
+      "dominant_regression_delta_sec": 0.0068,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0023,
+          "delta_duration_sec": 0.0023
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0056,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0047
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0015,
+          "improved_duration_sec": 0.0014,
+          "delta_duration_sec": -0.0001
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0028,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": -0.0012
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5987,
+          "improved_duration_sec": 0.511,
+          "delta_duration_sec": -0.0877
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0165,
+          "improved_duration_sec": 0.0233,
+          "delta_duration_sec": 0.0068
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0165,
+          "improved_duration_sec": 0.0021,
+          "delta_duration_sec": -0.0144
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0056,
+          "delta_duration_sec": 0.004
+        }
+      }
+    },
+    {
+      "task_id": "task_024",
+      "baseline_duration_sec": 0.7012,
+      "improved_duration_sec": 0.5432,
+      "delta_duration_sec": -0.158,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0034,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0028,
+          "delta_duration_sec": 0.0028
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0053,
+          "improved_duration_sec": 0.001,
+          "delta_duration_sec": -0.0043
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0006,
+          "delta_duration_sec": -0.001
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0012,
+          "delta_duration_sec": -0.0018
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6652,
+          "improved_duration_sec": 0.5135,
+          "delta_duration_sec": -0.1517
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0157,
+          "improved_duration_sec": 0.0172,
+          "delta_duration_sec": 0.0015
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0085,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": -0.0069
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0019,
+          "improved_duration_sec": 0.0053,
+          "delta_duration_sec": 0.0034
+        }
+      }
+    },
+    {
+      "task_id": "task_026",
+      "baseline_duration_sec": 0.7076,
+      "improved_duration_sec": 0.5515,
+      "delta_duration_sec": -0.1561,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0125,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0028,
+          "delta_duration_sec": 0.0028
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0062,
+          "improved_duration_sec": 0.001,
+          "delta_duration_sec": -0.0052
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0009
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0027,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0012
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6485,
+          "improved_duration_sec": 0.5047,
+          "delta_duration_sec": -0.1438
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0254,
+          "improved_duration_sec": 0.0227,
+          "delta_duration_sec": -0.0027
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0208,
+          "improved_duration_sec": 0.0032,
+          "delta_duration_sec": -0.0176
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0024,
+          "improved_duration_sec": 0.0149,
+          "delta_duration_sec": 0.0125
+        }
+      }
+    },
+    {
+      "task_id": "task_028",
+      "baseline_duration_sec": 0.6318,
+      "improved_duration_sec": 0.5521,
+      "delta_duration_sec": -0.0797,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0125,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0019,
+          "delta_duration_sec": 0.0019
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0055,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0046
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0017,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0002
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0031,
+          "improved_duration_sec": 0.0013,
+          "delta_duration_sec": -0.0018
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5822,
+          "improved_duration_sec": 0.5068,
+          "delta_duration_sec": -0.0754
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0295,
+          "improved_duration_sec": 0.0224,
+          "delta_duration_sec": -0.0071
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0082,
+          "improved_duration_sec": 0.0032,
+          "delta_duration_sec": -0.005
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0141,
+          "delta_duration_sec": 0.0125
+        }
+      }
+    },
+    {
+      "task_id": "task_030",
+      "baseline_duration_sec": 0.6324,
+      "improved_duration_sec": 0.519,
+      "delta_duration_sec": -0.1134,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0113,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0021,
+          "delta_duration_sec": 0.0021
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0061,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0052
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0018,
+          "improved_duration_sec": 0.0007,
+          "delta_duration_sec": -0.0011
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0027,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": -0.0011
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5838,
+          "improved_duration_sec": 0.477,
+          "delta_duration_sec": -0.1068
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0202,
+          "improved_duration_sec": 0.0197,
+          "delta_duration_sec": -0.0005
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0157,
+          "improved_duration_sec": 0.0036,
+          "delta_duration_sec": -0.0121
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0021,
+          "improved_duration_sec": 0.0134,
+          "delta_duration_sec": 0.0113
+        }
+      }
+    },
+    {
+      "task_id": "task_032",
+      "baseline_duration_sec": 0.7213,
+      "improved_duration_sec": 0.5209,
+      "delta_duration_sec": -0.2004,
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9,
+      "baseline_step_count": 9,
+      "improved_step_count": 10,
+      "dominant_regression_tool": "copy_workspace",
+      "dominant_regression_delta_sec": 0.0028,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0028,
+          "delta_duration_sec": 0.0028
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0059,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.005
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0014,
+          "delta_duration_sec": -0.0002
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0038,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.003
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6557,
+          "improved_duration_sec": 0.4838,
+          "delta_duration_sec": -0.1719
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0466,
+          "improved_duration_sec": 0.0241,
+          "delta_duration_sec": -0.0225
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0053,
+          "improved_duration_sec": 0.0027,
+          "delta_duration_sec": -0.0026
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0024,
+          "improved_duration_sec": 0.0044,
+          "delta_duration_sec": 0.002
+        }
+      }
+    },
+    {
+      "task_id": "task_034",
+      "baseline_duration_sec": 0.7888,
+      "improved_duration_sec": 0.5135,
+      "delta_duration_sec": -0.2753,
+      "baseline_tool_calls": 11,
+      "improved_tool_calls": 11,
+      "baseline_step_count": 11,
+      "improved_step_count": 12,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0119,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0023,
+          "delta_duration_sec": 0.0023
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0057,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0053
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0025,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0016
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0052,
+          "improved_duration_sec": 0.0017,
+          "delta_duration_sec": -0.0035
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.7387,
+          "improved_duration_sec": 0.4797,
+          "delta_duration_sec": -0.259
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.024,
+          "improved_duration_sec": 0.0114,
+          "delta_duration_sec": -0.0126
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0111,
+          "improved_duration_sec": 0.0036,
+          "delta_duration_sec": -0.0075
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0016,
+          "improved_duration_sec": 0.0135,
+          "delta_duration_sec": 0.0119
+        }
+      }
+    },
+    {
+      "task_id": "task_036",
+      "baseline_duration_sec": 0.77,
+      "improved_duration_sec": 0.5054,
+      "delta_duration_sec": -0.2646,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0114,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0018,
+          "delta_duration_sec": 0.0018
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0065,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0061
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0021,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0006
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0015
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.7018,
+          "improved_duration_sec": 0.4803,
+          "delta_duration_sec": -0.2215
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0448,
+          "improved_duration_sec": 0.0029,
+          "delta_duration_sec": -0.0419
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0098,
+          "improved_duration_sec": 0.0036,
+          "delta_duration_sec": -0.0062
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.002,
+          "improved_duration_sec": 0.0134,
+          "delta_duration_sec": 0.0114
+        }
+      }
+    },
+    {
+      "task_id": "task_038",
+      "baseline_duration_sec": 0.754,
+      "improved_duration_sec": 0.5131,
+      "delta_duration_sec": -0.2409,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0122,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0031,
+          "delta_duration_sec": 0.0031
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0062,
+          "improved_duration_sec": 0.001,
+          "delta_duration_sec": -0.0052
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.002,
+          "improved_duration_sec": 0.0014,
+          "delta_duration_sec": -0.0006
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0034,
+          "improved_duration_sec": 0.0016,
+          "delta_duration_sec": -0.0018
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6993,
+          "improved_duration_sec": 0.4868,
+          "delta_duration_sec": -0.2125
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0329,
+          "improved_duration_sec": 0.0036,
+          "delta_duration_sec": -0.0293
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0083,
+          "improved_duration_sec": 0.0015,
+          "delta_duration_sec": -0.0068
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0019,
+          "improved_duration_sec": 0.0141,
+          "delta_duration_sec": 0.0122
+        }
+      }
+    },
+    {
+      "task_id": "task_040",
+      "baseline_duration_sec": 0.9456,
+      "improved_duration_sec": 0.5149,
+      "delta_duration_sec": -0.4307,
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12,
+      "baseline_step_count": 12,
+      "improved_step_count": 13,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0118,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0021,
+          "delta_duration_sec": 0.0021
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0059,
+          "improved_duration_sec": 0.001,
+          "delta_duration_sec": -0.0049
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0022,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0013
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0017,
+          "delta_duration_sec": -0.0013
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.8829,
+          "improved_duration_sec": 0.4881,
+          "delta_duration_sec": -0.3948
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0408,
+          "improved_duration_sec": 0.0046,
+          "delta_duration_sec": -0.0362
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0089,
+          "improved_duration_sec": 0.0028,
+          "delta_duration_sec": -0.0061
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0019,
+          "improved_duration_sec": 0.0137,
+          "delta_duration_sec": 0.0118
+        }
+      }
+    },
+    {
+      "task_id": "task_042",
+      "baseline_duration_sec": 0.7014,
+      "improved_duration_sec": 0.5536,
+      "delta_duration_sec": -0.1478,
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10,
+      "baseline_step_count": 10,
+      "improved_step_count": 11,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0025,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0019,
+          "delta_duration_sec": 0.0019
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0067,
+          "improved_duration_sec": 0.0004,
+          "delta_duration_sec": -0.0063
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0025,
+          "improved_duration_sec": 0.0009,
+          "delta_duration_sec": -0.0016
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0039,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.0031
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.6377,
+          "improved_duration_sec": 0.51,
+          "delta_duration_sec": -0.1277
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0385,
+          "improved_duration_sec": 0.0317,
+          "delta_duration_sec": -0.0068
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0104,
+          "improved_duration_sec": 0.0037,
+          "delta_duration_sec": -0.0067
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0017,
+          "improved_duration_sec": 0.0042,
+          "delta_duration_sec": 0.0025
+        }
+      }
+    },
+    {
+      "task_id": "task_044",
+      "baseline_duration_sec": 0.6065,
+      "improved_duration_sec": 0.5447,
+      "delta_duration_sec": -0.0618,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0113,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.002,
+          "delta_duration_sec": 0.002
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0053,
+          "improved_duration_sec": 0.0006,
+          "delta_duration_sec": -0.0047
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0019,
+          "improved_duration_sec": 0.0018,
+          "delta_duration_sec": -0.0001
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0028,
+          "improved_duration_sec": 0.0008,
+          "delta_duration_sec": -0.002
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5555,
+          "improved_duration_sec": 0.4882,
+          "delta_duration_sec": -0.0673
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0248,
+          "improved_duration_sec": 0.0343,
+          "delta_duration_sec": 0.0095
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.014,
+          "improved_duration_sec": 0.0035,
+          "delta_duration_sec": -0.0105
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.0022,
+          "improved_duration_sec": 0.0135,
+          "delta_duration_sec": 0.0113
+        }
+      }
+    },
+    {
+      "task_id": "task_046",
+      "baseline_duration_sec": 0.6488,
+      "improved_duration_sec": 0.5522,
+      "delta_duration_sec": -0.0966,
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8,
+      "baseline_step_count": 8,
+      "improved_step_count": 9,
+      "dominant_regression_tool": "unattributed_overhead",
+      "dominant_regression_delta_sec": 0.0125,
+      "tool_deltas": {
+        "copy_workspace": {
+          "baseline_duration_sec": 0.0,
+          "improved_duration_sec": 0.0018,
+          "delta_duration_sec": 0.0018
+        },
+        "list_files": {
+          "baseline_duration_sec": 0.0125,
+          "improved_duration_sec": 0.0012,
+          "delta_duration_sec": -0.0113
+        },
+        "read_file": {
+          "baseline_duration_sec": 0.0018,
+          "improved_duration_sec": 0.002,
+          "delta_duration_sec": 0.0002
+        },
+        "rule_based_patch": {
+          "baseline_duration_sec": 0.0092,
+          "improved_duration_sec": 0.0013,
+          "delta_duration_sec": -0.0079
+        },
+        "run_tests": {
+          "baseline_duration_sec": 0.5683,
+          "improved_duration_sec": 0.4915,
+          "delta_duration_sec": -0.0768
+        },
+        "search_code": {
+          "baseline_duration_sec": 0.0401,
+          "improved_duration_sec": 0.0351,
+          "delta_duration_sec": -0.005
+        },
+        "show_diff": {
+          "baseline_duration_sec": 0.0139,
+          "improved_duration_sec": 0.0038,
+          "delta_duration_sec": -0.0101
+        },
+        "unattributed_overhead": {
+          "baseline_duration_sec": 0.003,
+          "improved_duration_sec": 0.0155,
+          "delta_duration_sec": 0.0125
+        }
+      }
+    }
+  ],
+  "analysis_id": "trace_hotspots_frozen20v33_001"
+}

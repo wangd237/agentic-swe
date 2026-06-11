@@ -713,7 +713,12 @@ scripts/
 - runtime 侧也已补齐 policy 注入能力：
   - 可以在策略 JSON 里配置 `pytest_additional_flags`
   - 当前 `improved_v33` 已先验证 `-p no:unraisableexception`
-- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先扩大 `improved_v33` 的验证范围
+- `improved_v33` 已进一步在 `frozen_20` 上验证：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6774 -> 0.5379`
+  - `run_tests` 总耗时下降：`-2.5941s`
+- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先把 `improved_v33` 扩到正式 30 条任务集
 
 ### 7. 真实 issue 导入入口已可用
 

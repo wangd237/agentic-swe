@@ -6175,3 +6175,89 @@
 - 还需要把 `improved_v33` 扩到更大集合，确认收益在更广任务集上是否仍成立
 - 还需要确认 `-p no:unraisableexception` 是否适合作为未来默认策略的一部分
 - 下一步更适合做更大集合验证，而不是继续只在热点 4 任务上迭代
+
+## 2026-06-11 Phase 6 improved_v33 frozen_20 同集合验证
+
+### 背景
+
+上一轮已经完成：
+
+- `improved_v33` 小集合热点验证
+- 结论是：
+  - 不回归
+  - 平均总耗时仅有小幅改善
+
+但要让它真正进入主线候选，必须先过 `frozen_20` 同集合验证。
+
+### 目标
+
+- 在固定 `20` 条真实任务上比较 `improved_v32 -> improved_v33`
+- 确认功能无回归
+- 确认时延是否继续改善，而不是只在热点小集合上有效
+
+### 改动类型
+
+- `benchmark`
+- `evaluation`
+
+### 主要文件
+
+- `logs/summaries/batch_run_frozen20v33_001.json`
+- `logs/summaries/batch_run_frozen20v33_001.md`
+- `logs/summaries/batch_eval_frozen20v33_001.json`
+- `logs/summaries/batch_eval_frozen20v33_001.md`
+- `logs/summaries/batch_compare_frozen20_step12_001.json`
+- `logs/summaries/batch_compare_frozen20_step12_001.md`
+- `logs/summaries/duration_compare_frozen20v33_001.json`
+- `logs/summaries/duration_compare_frozen20v33_001.md`
+- `logs/summaries/trace_hotspots_frozen20v33_001.json`
+- `logs/summaries/trace_hotspots_frozen20v33_001.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 运行 `frozen_20` 上的 `improved_v33`
+- 生成 batch/eval/compare 报告
+- 追加时延与 trace 热点分析
+
+### 测试与验证
+
+- 运行命令：
+  - `python scripts/run_batch.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v33.json --run-label frozen20v33`
+  - `python -m evals.batch_eval --batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_frozen20v33_001.json --output-dir E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries --run-label frozen20v33`
+  - `python -m scripts.analyze_duration_regressions --baseline-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_frozen20v32_001.json --improved-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_frozen20v33_001.json --run-label frozen20v33`
+  - `python -m scripts.analyze_trace_hotspots --baseline-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_frozen20v32_001.json --improved-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_frozen20v33_001.json --run-label frozen20v33`
+  - `compare_evals.compare_eval_summaries(...)` 直接生成 `batch_compare_frozen20_step12_001`
+
+### 关键观察
+
+- `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6774 -> 0.5379`
+  - `average_steps: 9.25 -> 10.25`
+- 时延分析：
+  - `common_average_delta_sec = -0.1395`
+- trace 热点：
+  - `run_tests` 总耗时：`12.5496 -> 9.9555`
+  - `delta_total_duration_sec = -2.5941`
+- 任务级最大改善：
+  - `task_040`: `-0.4307s`
+  - `task_034`: `-0.2753s`
+  - `task_036`: `-0.2646s`
+  - `task_038`: `-0.2409s`
+
+### 结论
+
+- `improved_v33` 已通过 `frozen_20` 同集合验证
+- 它不仅保持了 `100%` 成功率和 `100%` 测试通过率，还显著改善了平均耗时
+- 当前这已经足够支撑把 `v33` 视为后续更大集合验证的正式候选策略
+
+### 剩余问题
+
+- 还需要把 `v33` 扩到正式 `30` 条任务集，确认扩容集也受益
+- 还需要决定后续是继续堆 `unraisableexception` 方向，还是开始构建 `frozen_40`
+- 下一步更适合做正式集验证，而不是回到更细碎的插件切分

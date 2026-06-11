@@ -1792,6 +1792,36 @@ trace 热点分析结果：
 - 这说明 benchmark 里观测到的 `-p no:unraisableexception` 收益，已经能以低风险方式接入 runtime 主线
 - 当前收益量级还不大，因此下一步更应该扩大验证范围，而不是过早宣称它已经解决性能问题
 
+`improved_v33` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v33_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v33_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step12_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v33_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v33_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.6774 -> 0.5379`
+  - `average_steps`: `9.25 -> 10.25`
+  - `average_tool_calls`: `9.25 -> 9.25`
+- 时延分析：
+  - 公共 `20` 条任务平均耗时差值：`-0.1395s`
+  - `run_tests` 总耗时：`12.5496 -> 9.9555`
+  - `run_tests` 总增量：`-2.5941s`
+- 任务级最大改善：
+  - `task_040`: `-0.4307s`
+  - `task_034`: `-0.2753s`
+  - `task_036`: `-0.2646s`
+  - `task_038`: `-0.2409s`
+
+进一步结论：
+
+- `improved_v33` 不仅没有引入功能回归，还显著压低了 `frozen_20` 上的平均耗时
+- 这说明 `-p no:unraisableexception` 已经不只是 benchmark 线索，而是当前主线里可落地、可复现的 runtime 优化
+- 下一步最值得做的是把 `v33` 扩到正式 30 条任务集，再决定是否把它作为后续 `frozen_40` 的候选基线
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：
