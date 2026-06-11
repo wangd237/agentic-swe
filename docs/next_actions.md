@@ -46,6 +46,7 @@
 - 在优化日志里明确记录 top regressions 和后续假设
 - 至少保留 `1` 份 trace 热点分析报告，确认主要热点工具
 - 至少保留 `1` 份单任务历史时延分析报告，确认热点任务是稳定变慢还是高方差抖动
+- 至少保留 `1` 份热点任务集合历史分析报告，确认回升是否具有群体一致性
 
 ### 4. 持续清理候选池
 
@@ -74,7 +75,8 @@
 9. 用 `scripts/analyze_duration_regressions.py` 补一轮时延分析
 10. 用 `scripts/analyze_trace_hotspots.py` 补一轮 trace 热点分析
 11. 用 `scripts/analyze_task_history.py` 下钻热点任务历史分布
-12. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
+13. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
@@ -82,7 +84,7 @@
 
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 把 `task_040` 这类热点任务的历史分析扩展到 `task_038 / task_036 / task_034`
+3. 对 `run_tests` 设计更细的实验，拆分 pytest 启动、工作副本 I/O 和结果解析开销
 
 详细理由见：
 
@@ -106,6 +108,7 @@
 - `scripts/analyze_duration_regressions.py`
 - `scripts/analyze_trace_hotspots.py`
 - `scripts/analyze_task_history.py`
+- `scripts/analyze_task_history_cohort.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`

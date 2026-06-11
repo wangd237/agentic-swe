@@ -1544,4 +1544,26 @@ trace 热点分析结果：
 
 - `task_040` 在 `improved_v32` 上并不只是单次偶发变慢，历史聚合后仍然明显高于 `improved_v31`
 - 回升的主要部分继续集中在 `run_tests`，而且新 trace 已能看到显式 `subprocess` 耗时
-- 下一步应继续对 `task_038 / task_036 / task_034` 做同样的历史聚合，判断它们是否呈现同样模式
+
+热点任务集合历史分析结果：
+
+- `logs/summaries/task_history_cohort_run_tests_hotspots_v32_001.json`
+- 覆盖任务：
+  - `task_034`
+  - `task_036`
+  - `task_038`
+  - `task_040`
+- 平均历史耗时差值：`+0.1732s`
+- 平均 `run_tests` 历史耗时差值：`+0.1665s`
+- 正向回升任务数：`4 / 4`
+- 单任务明细：
+  - `task_040`: duration delta `+0.1958s`，run_tests delta `+0.2032s`
+  - `task_034`: duration delta `+0.1688s`，run_tests delta `+0.1602s`
+  - `task_038`: duration delta `+0.1660s`，run_tests delta `+0.1528s`
+  - `task_036`: duration delta `+0.1622s`，run_tests delta `+0.1497s`
+
+进一步结论：
+
+- `task_034 / task_036 / task_038 / task_040` 四个热点任务都在 `improved_v32` 上出现稳定历史回升，不是单任务偶发抖动
+- 这些任务的回升量级与 `run_tests` 增量高度接近，说明测试执行链仍然是当前最可信的主因
+- 下一步不再需要优先补更多历史聚合，而应开始设计 `run_tests` 细分实验，验证 pytest 启动、工作副本 I/O 或环境因素哪个贡献最大

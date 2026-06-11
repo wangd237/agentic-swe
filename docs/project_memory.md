@@ -16,6 +16,7 @@
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
   - 已新增单任务历史时延分析入口 `scripts/analyze_task_history.py`
+  - 已新增热点任务集合历史分析入口 `scripts/analyze_task_history_cohort.py`
   - 已让新 trace 记录显式步骤耗时
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
@@ -41,6 +42,8 @@
   - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
 - 单任务历史时延分析：
   - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
+- 热点任务集合历史分析：
+  - `python scripts/analyze_task_history_cohort.py --task-id task_034 --task-id task_036 --task-id task_038 --task-id task_040 --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 ## 当前正式任务规模
 
@@ -120,6 +123,12 @@
   - 其中 `run_tests` 平均增量：`+0.2032s`
   - `improved_v32` 的已观测 `run_tests_subprocess` 平均值是 `0.5296`
   - 由于旧 trace 没有该字段，当前不能直接计算跨版本 `run_tests_subprocess` delta
+- 热点任务集合历史分析：
+  - `logs/summaries/task_history_cohort_run_tests_hotspots_v32_001.json`
+  - 覆盖任务：`task_034 / task_036 / task_038 / task_040`
+  - 平均历史耗时增量：`+0.1732s`
+  - 平均 `run_tests` 历史耗时增量：`+0.1665s`
+  - `4 / 4` 个热点任务都呈现正向回升
 
 说明：
 
@@ -260,7 +269,7 @@
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
 - 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，并继续定位近期耗时回升原因
 - 当前性能定位已经收窄到 `run_tests` 链路，下一步应优先检查测试执行环境和子进程开销
-- 对热点任务的历史聚合已经证明 `task_040` 在 `improved_v32` 不只是单次偶发抖动，后续应优先补更多热点任务的历史分析
+- 对热点任务集合的历史聚合已经证明 `task_034 / task_036 / task_038 / task_040` 都在 `improved_v32` 上稳定回升，下一步应优先设计 `run_tests` 细分实验
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

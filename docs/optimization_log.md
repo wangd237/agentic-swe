@@ -5242,3 +5242,84 @@
 - 目前只对 `task_040` 做了历史分析，仍需扩展到 `task_038 / task_036 / task_034`
 - 旧 trace 缺少显式 `subprocess_duration_sec` 字段，因此更早样本只能看到 `run_tests` 总体耗时
 - 下一步应继续围绕 pytest 子进程启动、工作副本 I/O 和环境差异做更细的实验
+
+## 2026-06-11 14:34 Phase 6 热点任务集合历史分析补强
+
+### 本轮目标
+
+- 把单任务历史时延分析进一步扩展成热点任务集合的横向汇总
+- 验证 `task_034 / task_036 / task_038 / task_040` 是否都呈现稳定回升
+- 为下一步 `run_tests` 细分实验建立更强的群体证据
+
+### 本轮新增文件
+
+- `scripts/analyze_task_history_cohort.py`
+- `tests/test_analyze_task_history_cohort.py`
+- `logs/summaries/task_history_task_034_001.json`
+- `logs/summaries/task_history_task_034_001.md`
+- `logs/summaries/task_history_task_036_001.json`
+- `logs/summaries/task_history_task_036_001.md`
+- `logs/summaries/task_history_task_038_001.json`
+- `logs/summaries/task_history_task_038_001.md`
+- `logs/summaries/task_history_cohort_run_tests_hotspots_v32_001.json`
+- `logs/summaries/task_history_cohort_run_tests_hotspots_v32_001.md`
+
+### 本轮修改文件
+
+- `GUIDE.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/results.md`
+
+### 本轮实现内容
+
+- 新增 `scripts/analyze_task_history_cohort.py`：
+  - 支持按 `task_id` 或 `task_dir` 汇总多个任务的历史分析
+  - 自动汇总每个任务最近两版的耗时增量
+  - 自动汇总 `run_tests` 增量和最新可观测 `subprocess` 指标
+  - 产出 cohort 级 JSON 和 Markdown 报告
+- 新增 `tests/test_analyze_task_history_cohort.py`：
+  - 验证多任务聚合
+  - 验证均值和排序
+  - 验证输出文件落盘
+- 对真实热点任务补齐历史分析：
+  - `task_034`
+  - `task_036`
+  - `task_038`
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_analyze_task_history.py tests/test_analyze_task_history_cohort.py tests/test_runtime_diagnostics.py tests/test_analyze_trace_hotspots.py tests/test_analyze_duration_regressions.py tests/test_import_issue_batch.py tests/test_run_real_issue_eval.py tests/test_scaffold_semi_real_task.py -q`
+  - 结果：`22 passed`
+- 真实日志验证：
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_034 --output-dir logs/summaries`
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_036 --output-dir logs/summaries`
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_038 --output-dir logs/summaries`
+  - `python scripts/analyze_task_history_cohort.py --task-id task_034 --task-id task_036 --task-id task_038 --task-id task_040 --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 热点集合：
+  - `task_034 / task_036 / task_038 / task_040`
+- cohort 汇总：
+  - 平均历史耗时增量：`+0.1732s`
+  - 平均 `run_tests` 历史耗时增量：`+0.1665s`
+  - `4 / 4` 个热点任务都呈现正向回升
+- 单任务明细：
+  - `task_040`: duration delta `+0.1958s`，run_tests delta `+0.2032s`
+  - `task_034`: duration delta `+0.1688s`，run_tests delta `+0.1602s`
+  - `task_038`: duration delta `+0.1660s`，run_tests delta `+0.1528s`
+  - `task_036`: duration delta `+0.1622s`，run_tests delta `+0.1497s`
+
+### 结论
+
+- 最近一轮回升已经不只是某一条热点任务的问题，而是一个小型热点任务群的稳定现象
+- 这组任务的耗时回升量级与 `run_tests` 增量高度接近，进一步加强了测试执行链是主因的判断
+- 当前最应该做的不是继续补更多历史聚合，而是开始设计 `run_tests` 细分实验
+
+### 剩余问题
+
+- 目前只有 `task_040` 的最新样本显式记录了 `subprocess_duration_sec`
+- 旧热点任务历史样本还缺少统一的细粒度 `run_tests` 字段
+- 下一步应围绕 pytest 启动成本、工作副本 I/O、环境注入开销做专门实验

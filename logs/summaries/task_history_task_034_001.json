@@ -1,0 +1,1904 @@
+{
+  "created_at": "2026-06-11T06:34:40.575342+00:00",
+  "task_id": "task_034",
+  "task_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034",
+  "run_count": 35,
+  "policy_count": 18,
+  "policy_summaries": [
+    {
+      "policy_id": "improved_v15",
+      "run_count": 1,
+      "latest_run_id": "run_20260610T062856418427Z_9195",
+      "duration_sec": {
+        "count": 1,
+        "average": 0.5951,
+        "min": 0.5951,
+        "max": 0.5951,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "run_tests_total_duration_sec": {
+        "count": 1,
+        "average": 0.5795,
+        "min": 0.5795,
+        "max": 0.5795,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 1
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 1
+      },
+      "step_count": {
+        "count": 1,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 1,
+        "average": 10.0,
+        "min": 10.0,
+        "max": 10.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T062856418427Z_9195",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856418427Z_9195",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856418427Z_9195\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856418427Z_9195\\trace.json",
+          "policy_id": "improved_v15",
+          "final_status": "failed",
+          "duration_sec": 0.5951,
+          "step_count": 11,
+          "tool_call_count": 10,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5795,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v16",
+      "run_count": 3,
+      "latest_run_id": "run_20260610T065758100149Z_8397",
+      "duration_sec": {
+        "count": 3,
+        "average": 0.5818,
+        "min": 0.5453,
+        "max": 0.6286,
+        "stddev": 0.0348,
+        "range": 0.0833
+      },
+      "run_tests_total_duration_sec": {
+        "count": 3,
+        "average": 0.5438,
+        "min": 0.5052,
+        "max": 0.5781,
+        "stddev": 0.0299,
+        "range": 0.0729
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 3
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 3
+      },
+      "step_count": {
+        "count": 3,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 3,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T062856441863Z_2408",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856441863Z_2408",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856441863Z_2408\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062856441863Z_2408\\trace.json",
+          "policy_id": "improved_v16",
+          "final_status": "success",
+          "duration_sec": 0.5715,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5482,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T062924226285Z_5521",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062924226285Z_5521",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062924226285Z_5521\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T062924226285Z_5521\\trace.json",
+          "policy_id": "improved_v16",
+          "final_status": "success",
+          "duration_sec": 0.5453,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5052,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T065758100149Z_8397",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397\\trace.json",
+          "policy_id": "improved_v16",
+          "final_status": "success",
+          "duration_sec": 0.6286,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5781,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v17",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T065758100168Z_4309",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.6285,
+        "min": 0.6284,
+        "max": 0.6286,
+        "stddev": 0.0001,
+        "range": 0.0002
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5831,
+        "min": 0.5792,
+        "max": 0.587,
+        "stddev": 0.0039,
+        "range": 0.0078
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T065758100160Z_9230",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230\\trace.json",
+          "policy_id": "improved_v17",
+          "final_status": "success",
+          "duration_sec": 0.6284,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.587,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T065758100168Z_4309",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309\\trace.json",
+          "policy_id": "improved_v17",
+          "final_status": "success",
+          "duration_sec": 0.6286,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5792,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v18",
+      "run_count": 1,
+      "latest_run_id": "run_20260610T080654010809Z_9084",
+      "duration_sec": {
+        "count": 1,
+        "average": 0.5614,
+        "min": 0.5614,
+        "max": 0.5614,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "run_tests_total_duration_sec": {
+        "count": 1,
+        "average": 0.5361,
+        "min": 0.5361,
+        "max": 0.5361,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 1
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 1
+      },
+      "step_count": {
+        "count": 1,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 1,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T080654010809Z_9084",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T080654010809Z_9084",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T080654010809Z_9084\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T080654010809Z_9084\\trace.json",
+          "policy_id": "improved_v18",
+          "final_status": "success",
+          "duration_sec": 0.5614,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5361,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v19",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T082954320908Z_2668",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5767,
+        "min": 0.5593,
+        "max": 0.5941,
+        "stddev": 0.0174,
+        "range": 0.0348
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5501,
+        "min": 0.536,
+        "max": 0.5641,
+        "stddev": 0.0141,
+        "range": 0.0281
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T082713866477Z_0702",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082713866477Z_0702",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082713866477Z_0702\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082713866477Z_0702\\trace.json",
+          "policy_id": "improved_v19",
+          "final_status": "success",
+          "duration_sec": 0.5941,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5641,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T082954320908Z_2668",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082954320908Z_2668",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082954320908Z_2668\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082954320908Z_2668\\trace.json",
+          "policy_id": "improved_v19",
+          "final_status": "success",
+          "duration_sec": 0.5593,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.536,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v20",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T083014854580Z_4617",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5833,
+        "min": 0.5681,
+        "max": 0.5985,
+        "stddev": 0.0152,
+        "range": 0.0304
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5516,
+        "min": 0.5407,
+        "max": 0.5626,
+        "stddev": 0.011,
+        "range": 0.0219
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T082907426292Z_1300",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082907426292Z_1300",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082907426292Z_1300\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T082907426292Z_1300\\trace.json",
+          "policy_id": "improved_v20",
+          "final_status": "success",
+          "duration_sec": 0.5985,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5626,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T083014854580Z_4617",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T083014854580Z_4617",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T083014854580Z_4617\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T083014854580Z_4617\\trace.json",
+          "policy_id": "improved_v20",
+          "final_status": "success",
+          "duration_sec": 0.5681,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5407,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v21",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T092326859082Z_4128",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5639,
+        "min": 0.5476,
+        "max": 0.5802,
+        "stddev": 0.0163,
+        "range": 0.0326
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5335,
+        "min": 0.5183,
+        "max": 0.5488,
+        "stddev": 0.0152,
+        "range": 0.0305
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T092105305596Z_5672",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092105305596Z_5672",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092105305596Z_5672\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092105305596Z_5672\\trace.json",
+          "policy_id": "improved_v21",
+          "final_status": "success",
+          "duration_sec": 0.5802,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5488,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T092326859082Z_4128",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092326859082Z_4128",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092326859082Z_4128\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092326859082Z_4128\\trace.json",
+          "policy_id": "improved_v21",
+          "final_status": "success",
+          "duration_sec": 0.5476,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5183,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v22",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T092346222924Z_4376",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5611,
+        "min": 0.5599,
+        "max": 0.5623,
+        "stddev": 0.0012,
+        "range": 0.0024
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5343,
+        "min": 0.5332,
+        "max": 0.5354,
+        "stddev": 0.0011,
+        "range": 0.0022
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T092252783846Z_7786",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092252783846Z_7786",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092252783846Z_7786\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092252783846Z_7786\\trace.json",
+          "policy_id": "improved_v22",
+          "final_status": "success",
+          "duration_sec": 0.5623,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5332,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T092346222924Z_4376",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092346222924Z_4376",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092346222924Z_4376\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T092346222924Z_4376\\trace.json",
+          "policy_id": "improved_v22",
+          "final_status": "success",
+          "duration_sec": 0.5599,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5354,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v23",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T094812660646Z_6827",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5615,
+        "min": 0.5604,
+        "max": 0.5627,
+        "stddev": 0.0011,
+        "range": 0.0023
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5255,
+        "min": 0.524,
+        "max": 0.527,
+        "stddev": 0.0015,
+        "range": 0.003
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T094812660610Z_3733",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660610Z_3733",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660610Z_3733\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660610Z_3733\\trace.json",
+          "policy_id": "improved_v23",
+          "final_status": "success",
+          "duration_sec": 0.5604,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.524,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T094812660646Z_6827",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660646Z_6827",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660646Z_6827\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T094812660646Z_6827\\trace.json",
+          "policy_id": "improved_v23",
+          "final_status": "success",
+          "duration_sec": 0.5627,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.527,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v24",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T095628502238Z_8490",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5534,
+        "min": 0.5519,
+        "max": 0.5549,
+        "stddev": 0.0015,
+        "range": 0.003
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.535,
+        "min": 0.5341,
+        "max": 0.5358,
+        "stddev": 0.0009,
+        "range": 0.0017
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T095628502199Z_7166",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502199Z_7166",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502199Z_7166\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502199Z_7166\\trace.json",
+          "policy_id": "improved_v24",
+          "final_status": "success",
+          "duration_sec": 0.5519,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5341,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T095628502238Z_8490",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502238Z_8490",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502238Z_8490\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T095628502238Z_8490\\trace.json",
+          "policy_id": "improved_v24",
+          "final_status": "success",
+          "duration_sec": 0.5549,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5358,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v25",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T100213443911Z_8594",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5766,
+        "min": 0.5766,
+        "max": 0.5767,
+        "stddev": 0.0,
+        "range": 0.0001
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5417,
+        "min": 0.5415,
+        "max": 0.542,
+        "stddev": 0.0003,
+        "range": 0.0005
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T100213443733Z_1298",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443733Z_1298",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443733Z_1298\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443733Z_1298\\trace.json",
+          "policy_id": "improved_v25",
+          "final_status": "success",
+          "duration_sec": 0.5766,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5415,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T100213443911Z_8594",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443911Z_8594",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443911Z_8594\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T100213443911Z_8594\\trace.json",
+          "policy_id": "improved_v25",
+          "final_status": "success",
+          "duration_sec": 0.5767,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.542,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v26",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T131419081955Z_8432",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5485,
+        "min": 0.5412,
+        "max": 0.5558,
+        "stddev": 0.0073,
+        "range": 0.0146
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5214,
+        "min": 0.5202,
+        "max": 0.5226,
+        "stddev": 0.0012,
+        "range": 0.0024
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T131356766599Z_5606",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131356766599Z_5606",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131356766599Z_5606\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131356766599Z_5606\\trace.json",
+          "policy_id": "improved_v26",
+          "final_status": "success",
+          "duration_sec": 0.5558,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5226,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T131419081955Z_8432",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131419081955Z_8432",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131419081955Z_8432\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T131419081955Z_8432\\trace.json",
+          "policy_id": "improved_v26",
+          "final_status": "success",
+          "duration_sec": 0.5412,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5202,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v27",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T133324419389Z_4952",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5756,
+        "min": 0.5754,
+        "max": 0.5757,
+        "stddev": 0.0001,
+        "range": 0.0003
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5341,
+        "min": 0.5188,
+        "max": 0.5493,
+        "stddev": 0.0152,
+        "range": 0.0305
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T133255175789Z_2671",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133255175789Z_2671",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133255175789Z_2671\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133255175789Z_2671\\trace.json",
+          "policy_id": "improved_v27",
+          "final_status": "success",
+          "duration_sec": 0.5757,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5188,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T133324419389Z_4952",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133324419389Z_4952",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133324419389Z_4952\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T133324419389Z_4952\\trace.json",
+          "policy_id": "improved_v27",
+          "final_status": "success",
+          "duration_sec": 0.5754,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5493,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v28",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T140326726440Z_1465",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5862,
+        "min": 0.5667,
+        "max": 0.6058,
+        "stddev": 0.0196,
+        "range": 0.0391
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5468,
+        "min": 0.5253,
+        "max": 0.5683,
+        "stddev": 0.0215,
+        "range": 0.043
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T140301093931Z_0256",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140301093931Z_0256",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140301093931Z_0256\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140301093931Z_0256\\trace.json",
+          "policy_id": "improved_v28",
+          "final_status": "success",
+          "duration_sec": 0.5667,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5253,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T140326726440Z_1465",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140326726440Z_1465",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140326726440Z_1465\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T140326726440Z_1465\\trace.json",
+          "policy_id": "improved_v28",
+          "final_status": "success",
+          "duration_sec": 0.6058,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5683,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v29",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T141611188412Z_0249",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5707,
+        "min": 0.569,
+        "max": 0.5725,
+        "stddev": 0.0018,
+        "range": 0.0035
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5507,
+        "min": 0.5453,
+        "max": 0.556,
+        "stddev": 0.0054,
+        "range": 0.0107
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T141611186343Z_6820",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611186343Z_6820",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611186343Z_6820\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611186343Z_6820\\trace.json",
+          "policy_id": "improved_v29",
+          "final_status": "success",
+          "duration_sec": 0.569,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5453,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T141611188412Z_0249",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611188412Z_0249",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611188412Z_0249\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T141611188412Z_0249\\trace.json",
+          "policy_id": "improved_v29",
+          "final_status": "success",
+          "duration_sec": 0.5725,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.556,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v30",
+      "run_count": 2,
+      "latest_run_id": "run_20260610T142557395069Z_9532",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.5444,
+        "min": 0.5443,
+        "max": 0.5446,
+        "stddev": 0.0001,
+        "range": 0.0003
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5168,
+        "min": 0.5157,
+        "max": 0.5179,
+        "stddev": 0.0011,
+        "range": 0.0022
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T142557394873Z_0808",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557394873Z_0808",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557394873Z_0808\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557394873Z_0808\\trace.json",
+          "policy_id": "improved_v30",
+          "final_status": "success",
+          "duration_sec": 0.5443,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5179,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260610T142557395069Z_9532",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557395069Z_9532",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557395069Z_9532\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T142557395069Z_9532\\trace.json",
+          "policy_id": "improved_v30",
+          "final_status": "success",
+          "duration_sec": 0.5446,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5157,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v31",
+      "run_count": 2,
+      "latest_run_id": "run_20260611T045639935005Z_3742",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.6275,
+        "min": 0.6275,
+        "max": 0.6275,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.5838,
+        "min": 0.5824,
+        "max": 0.5852,
+        "stddev": 0.0014,
+        "range": 0.0028
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260611T045639934997Z_2050",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050\\trace.json",
+          "policy_id": "improved_v31",
+          "final_status": "success",
+          "duration_sec": 0.6275,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5824,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260611T045639935005Z_3742",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742\\trace.json",
+          "policy_id": "improved_v31",
+          "final_status": "success",
+          "duration_sec": 0.6275,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.5852,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    },
+    {
+      "policy_id": "improved_v32",
+      "run_count": 2,
+      "latest_run_id": "run_20260611T052404648813Z_9882",
+      "duration_sec": {
+        "count": 2,
+        "average": 0.7963,
+        "min": 0.7888,
+        "max": 0.8038,
+        "stddev": 0.0075,
+        "range": 0.015
+      },
+      "run_tests_total_duration_sec": {
+        "count": 2,
+        "average": 0.744,
+        "min": 0.7387,
+        "max": 0.7492,
+        "stddev": 0.0052,
+        "range": 0.0105
+      },
+      "run_tests_subprocess_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "run_tests_summary_duration_sec": {
+        "count": 0,
+        "average": null,
+        "min": null,
+        "max": null,
+        "stddev": null,
+        "range": null,
+        "observed_count": 0,
+        "missing_count": 2
+      },
+      "step_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "tool_call_count": {
+        "count": 2,
+        "average": 11.0,
+        "min": 11.0,
+        "max": 11.0,
+        "stddev": 0.0,
+        "range": 0.0
+      },
+      "runs": [
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260611T052404640856Z_2747",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\trace.json",
+          "policy_id": "improved_v32",
+          "final_status": "success",
+          "duration_sec": 0.8038,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.7492,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        },
+        {
+          "task_id": "task_034",
+          "run_id": "run_20260611T052404648813Z_9882",
+          "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882",
+          "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\result.json",
+          "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\trace.json",
+          "policy_id": "improved_v32",
+          "final_status": "success",
+          "duration_sec": 0.7888,
+          "step_count": 11,
+          "tool_call_count": 11,
+          "run_tests_call_count": 2,
+          "run_tests_total_duration_sec": 0.7387,
+          "run_tests_subprocess_duration_sec": null,
+          "run_tests_summary_duration_sec": null
+        }
+      ]
+    }
+  ],
+  "latest_policy_summary": {
+    "policy_id": "improved_v32",
+    "run_count": 2,
+    "latest_run_id": "run_20260611T052404648813Z_9882",
+    "duration_sec": {
+      "count": 2,
+      "average": 0.7963,
+      "min": 0.7888,
+      "max": 0.8038,
+      "stddev": 0.0075,
+      "range": 0.015
+    },
+    "run_tests_total_duration_sec": {
+      "count": 2,
+      "average": 0.744,
+      "min": 0.7387,
+      "max": 0.7492,
+      "stddev": 0.0052,
+      "range": 0.0105
+    },
+    "run_tests_subprocess_duration_sec": {
+      "count": 0,
+      "average": null,
+      "min": null,
+      "max": null,
+      "stddev": null,
+      "range": null,
+      "observed_count": 0,
+      "missing_count": 2
+    },
+    "run_tests_summary_duration_sec": {
+      "count": 0,
+      "average": null,
+      "min": null,
+      "max": null,
+      "stddev": null,
+      "range": null,
+      "observed_count": 0,
+      "missing_count": 2
+    },
+    "step_count": {
+      "count": 2,
+      "average": 11.0,
+      "min": 11.0,
+      "max": 11.0,
+      "stddev": 0.0,
+      "range": 0.0
+    },
+    "tool_call_count": {
+      "count": 2,
+      "average": 11.0,
+      "min": 11.0,
+      "max": 11.0,
+      "stddev": 0.0,
+      "range": 0.0
+    },
+    "runs": [
+      {
+        "task_id": "task_034",
+        "run_id": "run_20260611T052404640856Z_2747",
+        "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747",
+        "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\result.json",
+        "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\trace.json",
+        "policy_id": "improved_v32",
+        "final_status": "success",
+        "duration_sec": 0.8038,
+        "step_count": 11,
+        "tool_call_count": 11,
+        "run_tests_call_count": 2,
+        "run_tests_total_duration_sec": 0.7492,
+        "run_tests_subprocess_duration_sec": null,
+        "run_tests_summary_duration_sec": null
+      },
+      {
+        "task_id": "task_034",
+        "run_id": "run_20260611T052404648813Z_9882",
+        "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882",
+        "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\result.json",
+        "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\trace.json",
+        "policy_id": "improved_v32",
+        "final_status": "success",
+        "duration_sec": 0.7888,
+        "step_count": 11,
+        "tool_call_count": 11,
+        "run_tests_call_count": 2,
+        "run_tests_total_duration_sec": 0.7387,
+        "run_tests_subprocess_duration_sec": null,
+        "run_tests_summary_duration_sec": null
+      }
+    ]
+  },
+  "previous_policy_summary": {
+    "policy_id": "improved_v31",
+    "run_count": 2,
+    "latest_run_id": "run_20260611T045639935005Z_3742",
+    "duration_sec": {
+      "count": 2,
+      "average": 0.6275,
+      "min": 0.6275,
+      "max": 0.6275,
+      "stddev": 0.0,
+      "range": 0.0
+    },
+    "run_tests_total_duration_sec": {
+      "count": 2,
+      "average": 0.5838,
+      "min": 0.5824,
+      "max": 0.5852,
+      "stddev": 0.0014,
+      "range": 0.0028
+    },
+    "run_tests_subprocess_duration_sec": {
+      "count": 0,
+      "average": null,
+      "min": null,
+      "max": null,
+      "stddev": null,
+      "range": null,
+      "observed_count": 0,
+      "missing_count": 2
+    },
+    "run_tests_summary_duration_sec": {
+      "count": 0,
+      "average": null,
+      "min": null,
+      "max": null,
+      "stddev": null,
+      "range": null,
+      "observed_count": 0,
+      "missing_count": 2
+    },
+    "step_count": {
+      "count": 2,
+      "average": 11.0,
+      "min": 11.0,
+      "max": 11.0,
+      "stddev": 0.0,
+      "range": 0.0
+    },
+    "tool_call_count": {
+      "count": 2,
+      "average": 11.0,
+      "min": 11.0,
+      "max": 11.0,
+      "stddev": 0.0,
+      "range": 0.0
+    },
+    "runs": [
+      {
+        "task_id": "task_034",
+        "run_id": "run_20260611T045639934997Z_2050",
+        "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050",
+        "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050\\result.json",
+        "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639934997Z_2050\\trace.json",
+        "policy_id": "improved_v31",
+        "final_status": "success",
+        "duration_sec": 0.6275,
+        "step_count": 11,
+        "tool_call_count": 11,
+        "run_tests_call_count": 2,
+        "run_tests_total_duration_sec": 0.5824,
+        "run_tests_subprocess_duration_sec": null,
+        "run_tests_summary_duration_sec": null
+      },
+      {
+        "task_id": "task_034",
+        "run_id": "run_20260611T045639935005Z_3742",
+        "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742",
+        "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742\\result.json",
+        "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T045639935005Z_3742\\trace.json",
+        "policy_id": "improved_v31",
+        "final_status": "success",
+        "duration_sec": 0.6275,
+        "step_count": 11,
+        "tool_call_count": 11,
+        "run_tests_call_count": 2,
+        "run_tests_total_duration_sec": 0.5852,
+        "run_tests_subprocess_duration_sec": null,
+        "run_tests_summary_duration_sec": null
+      }
+    ]
+  },
+  "latest_policy_comparison": {
+    "baseline_policy_id": "improved_v31",
+    "improved_policy_id": "improved_v32",
+    "duration_average_delta_sec": 0.1688,
+    "run_tests_average_delta_sec": 0.1602,
+    "run_tests_subprocess_average_delta_sec": null,
+    "run_tests_summary_average_delta_sec": null
+  },
+  "slowest_runs": [
+    {
+      "task_id": "task_034",
+      "run_id": "run_20260611T052404640856Z_2747",
+      "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404640856Z_2747\\trace.json",
+      "policy_id": "improved_v32",
+      "final_status": "success",
+      "duration_sec": 0.8038,
+      "step_count": 11,
+      "tool_call_count": 11,
+      "run_tests_call_count": 2,
+      "run_tests_total_duration_sec": 0.7492,
+      "run_tests_subprocess_duration_sec": null,
+      "run_tests_summary_duration_sec": null
+    },
+    {
+      "task_id": "task_034",
+      "run_id": "run_20260611T052404648813Z_9882",
+      "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260611T052404648813Z_9882\\trace.json",
+      "policy_id": "improved_v32",
+      "final_status": "success",
+      "duration_sec": 0.7888,
+      "step_count": 11,
+      "tool_call_count": 11,
+      "run_tests_call_count": 2,
+      "run_tests_total_duration_sec": 0.7387,
+      "run_tests_subprocess_duration_sec": null,
+      "run_tests_summary_duration_sec": null
+    },
+    {
+      "task_id": "task_034",
+      "run_id": "run_20260610T065758100149Z_8397",
+      "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100149Z_8397\\trace.json",
+      "policy_id": "improved_v16",
+      "final_status": "success",
+      "duration_sec": 0.6286,
+      "step_count": 11,
+      "tool_call_count": 11,
+      "run_tests_call_count": 2,
+      "run_tests_total_duration_sec": 0.5781,
+      "run_tests_subprocess_duration_sec": null,
+      "run_tests_summary_duration_sec": null
+    },
+    {
+      "task_id": "task_034",
+      "run_id": "run_20260610T065758100168Z_4309",
+      "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100168Z_4309\\trace.json",
+      "policy_id": "improved_v17",
+      "final_status": "success",
+      "duration_sec": 0.6286,
+      "step_count": 11,
+      "tool_call_count": 11,
+      "run_tests_call_count": 2,
+      "run_tests_total_duration_sec": 0.5792,
+      "run_tests_subprocess_duration_sec": null,
+      "run_tests_summary_duration_sec": null
+    },
+    {
+      "task_id": "task_034",
+      "run_id": "run_20260610T065758100160Z_9230",
+      "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230",
+      "result_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230\\result.json",
+      "trace_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\trajectories\\task_034\\run_20260610T065758100160Z_9230\\trace.json",
+      "policy_id": "improved_v17",
+      "final_status": "success",
+      "duration_sec": 0.6284,
+      "step_count": 11,
+      "tool_call_count": 11,
+      "run_tests_call_count": 2,
+      "run_tests_total_duration_sec": 0.587,
+      "run_tests_subprocess_duration_sec": null,
+      "run_tests_summary_duration_sec": null
+    }
+  ],
+  "analysis_id": "task_history_task_034_001"
+}

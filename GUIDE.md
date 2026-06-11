@@ -610,6 +610,8 @@ scripts/
    - 看热点主要堆在哪个工具上
 3. `scripts/analyze_task_history.py`
    - 看单个热点任务在不同策略版本和多次运行里的历史分布
+4. `scripts/analyze_task_history_cohort.py`
+   - 把多个热点任务横向汇总，判断回升是否具有群体一致性
 
 你可以这样体验：
 
@@ -619,12 +621,15 @@ scripts/
   - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
 - 看热点任务 `task_040` 的历史分布：
   - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
+- 看热点任务集合 `task_034 / task_036 / task_038 / task_040` 的横向汇总：
+  - `python scripts/analyze_task_history_cohort.py --task-id task_034 --task-id task_036 --task-id task_038 --task-id task_040 --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
 - 不再只能看到“v32 变慢了”
 - 还能判断它是公共任务系统性回升，还是少数任务高方差抖动
 - 还能继续区分 `run_tests` 里的总耗时、子进程耗时和摘要提取耗时
+- 还能进一步确认“热点任务群”是否都在同一执行链上一起变慢
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -660,12 +665,15 @@ scripts/
 
 - `scripts/analyze_duration_regressions.py`
 - `scripts/analyze_trace_hotspots.py`
+- `scripts/analyze_task_history.py`
+- `scripts/analyze_task_history_cohort.py`
 
 当前能力如下：
 
 - 先在 `result.json` 层面对比两轮 batch run 的任务总耗时差异
 - 再在 `trace.json` 层面继续下钻到工具级热点
 - 再按单任务历史 run 聚合策略版本差异和波动范围
+- 再按热点任务集合做横向汇总，判断群体一致性
 - 新产生的 trace 已开始显式记录每一步 `duration_sec`
 - 旧 trace 没有显式耗时时，也可以回退到时间戳差值估算
 - 旧 trace 没有 `subprocess_duration_sec` 等细粒度字段时，会明确标记为“未观测”
@@ -1779,6 +1787,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充 batch run 时延回归分析入口
 - 已补充 trace 热点分析入口
 - 已补充单任务历史时延分析入口
+- 已补充热点任务集合历史分析入口
 - 已让新 trace 记录显式步骤耗时
 - 下一步会继续扩新来源、定位时延回归并扩充任务与优化策略
 
