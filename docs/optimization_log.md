@@ -5519,3 +5519,115 @@
 - 现在已经知道主要耗时堆在启动与 collection，但还没有把 collection 内部的 import、发现、构建开销继续拆开
 - 还需要继续验证是否存在解释器级缓存、文件系统抖动或 Windows 环境特有开销
 - 下一步应优先补 import/collection 内部差异实验，而不是回到 workspace copy 假设
+
+## 2026-06-11 Phase 6 pytest importtime 基准补强
+
+### 本轮目标
+
+- 把 `pytest collect-only` 的额外耗时进一步拆到 import 链层级
+- 验证 collection 变慢是否伴随稳定新增模块与 import self time 增量
+- 为下一步判断平台链路、终端能力或 pytest 默认插件链贡献提供更直接证据
+
+### 本轮新增文件
+
+- `scripts/benchmark_pytest_importtime.py`
+- `scripts/analyze_pytest_importtime_cohort.py`
+- `tests/test_benchmark_pytest_importtime.py`
+- `tests/test_analyze_pytest_importtime_cohort.py`
+- `logs/summaries/pytest_importtime_task034v32_001.json`
+- `logs/summaries/pytest_importtime_task034v32_001.md`
+- `logs/summaries/pytest_importtime_task034v32_002.json`
+- `logs/summaries/pytest_importtime_task034v32_002.md`
+- `logs/summaries/pytest_importtime_task036v32_001.json`
+- `logs/summaries/pytest_importtime_task036v32_001.md`
+- `logs/summaries/pytest_importtime_task036v32_002.json`
+- `logs/summaries/pytest_importtime_task036v32_002.md`
+- `logs/summaries/pytest_importtime_task038v32_001.json`
+- `logs/summaries/pytest_importtime_task038v32_001.md`
+- `logs/summaries/pytest_importtime_task038v32_002.json`
+- `logs/summaries/pytest_importtime_task038v32_002.md`
+- `logs/summaries/pytest_importtime_task040v32_001.json`
+- `logs/summaries/pytest_importtime_task040v32_001.md`
+- `logs/summaries/pytest_importtime_task040v32_002.json`
+- `logs/summaries/pytest_importtime_task040v32_002.md`
+- `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_001.json`
+- `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_001.md`
+- `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_002.json`
+- `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_002.md`
+
+### 本轮修改文件
+
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `scripts/benchmark_pytest_importtime.py`：
+  - 用 `python -X importtime -m pytest --version`
+  - 对比 `python -X importtime -m pytest ... --collect-only`
+  - 自动统计：
+    - wall time 增量
+    - import self time 增量
+    - unique module 增量
+    - 首次运行与重复运行差异
+  - 自动产出 collect-only 相比 version 稳定新增的高频模块
+- 新增 `scripts/analyze_pytest_importtime_cohort.py`：
+  - 把多个热点任务的 importtime benchmark 聚合成 cohort 报告
+  - 自动汇总新增模块出现频次
+  - 自动比较各任务的 import 增量强弱
+- 在同一轮里又追加了一版 `_002` 样本：
+  - 保留 `_001` 作为首轮产物
+  - `_002` 基于更可读的新增模块排序逻辑重新生成
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_benchmark_pytest_importtime.py tests/test_analyze_pytest_importtime_cohort.py tests/test_benchmark_pytest_phases.py tests/test_analyze_pytest_phase_cohort.py -q`
+  - 结果：`12 passed`
+- 真实日志验证：
+  - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_pytest_importtime_cohort.py --benchmark-summary logs/summaries/pytest_importtime_task034v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task036v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task038v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 最新热点任务 cohort：
+  - `task_034 / task_036 / task_038 / task_040`
+- `_002` 聚合结果：
+  - `average_collect_wall_delta_sec = 0.0697`
+  - `average_collect_import_self_delta_us = 20898`
+  - `average_collect_unique_module_delta = 37`
+  - `average_collect_wall_first_minus_repeated_sec = 0.0113`
+  - `average_collect_import_self_first_minus_repeated_us = 1449.75`
+- 高频新增模块：
+  - `_ctypes`
+  - `pyexpat`
+  - `xml.etree.ElementTree`
+  - `_pytest.skipping`
+  - `ctypes.wintypes`
+  - `ctypes`
+  - `pdb`
+  - `_pytest.terminalprogress`
+- 单任务样例：
+  - `task_040`
+    - `collect wall delta = 0.068`
+    - `collect import self delta = 30108us`
+  - `task_034`
+    - `collect wall delta = 0.0709`
+    - `collect import self delta = 18859us`
+
+### 结论
+
+- `collect-only` 的额外 wall time 与稳定的 import self time 增量一起出现，不再只是“collection 好像慢了”
+- 四个热点任务都稳定多出 `37` 个模块，说明这部分开销具备一致性
+- 当前最可信的方向已经从“pytest 启动 / collection 变慢”继续收窄到“collection 阶段稳定新增的 import 链”
+
+### 剩余问题
+
+- 现在已经知道哪些模块在 collection 阶段稳定新增，但还没有区分它们是平台链路、终端能力还是 pytest 默认插件链导致
+- 还需要继续验证是否能通过更轻的 pytest 配置或命令形态减少这部分开销
+- 下一步应优先比较 pytest 默认插件链、终端相关模块和 Windows 特定模块的贡献

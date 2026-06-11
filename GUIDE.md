@@ -636,6 +636,10 @@ scripts/
   - `python scripts/benchmark_pytest_phases.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
 - 汇总多个热点任务的 `pytest` 分阶段基准：
   - `python scripts/analyze_pytest_phase_cohort.py --benchmark-summary logs/summaries/pytest_phases_task034v32_001.json --benchmark-summary logs/summaries/pytest_phases_task036v32_001.json --benchmark-summary logs/summaries/pytest_phases_task038v32_001.json --benchmark-summary logs/summaries/pytest_phases_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- 对单个热点任务做 `pytest importtime` 基准：
+  - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+- 汇总多个热点任务的 `pytest importtime` 基准：
+  - `python scripts/analyze_pytest_importtime_cohort.py --benchmark-summary logs/summaries/pytest_importtime_task034v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task036v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task038v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
@@ -666,6 +670,12 @@ scripts/
   - `average_full_over_collect_sec = 0.0159`
   - `average_collect_first_minus_repeated_sec = 0.0132`
 - 这说明热点任务的主要开销堆在 `pytest` 启动和 collection，真正 full run 相对 collect-only 只多了十几毫秒量级
+- `pytest importtime` cohort 基准又进一步表明：
+  - `average_collect_wall_delta_sec = 0.0697`
+  - `average_collect_import_self_delta_us = 20898`
+  - `average_collect_unique_module_delta = 37`
+  - 高频新增模块包括：`_ctypes`、`pyexpat`、`xml.etree.ElementTree`、`_pytest.skipping`、`ctypes.wintypes`
+- 这说明 collection 的额外耗时里，有一块可以直接归因到稳定新增的 import 链，而不是纯粹随机抖动
 - 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，而不是优先怀疑 workspace copy 或测试主体执行
 
 ### 7. 真实 issue 导入入口已可用

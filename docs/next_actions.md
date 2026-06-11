@@ -67,7 +67,9 @@
 
 - 已完成一轮 `pytest` 分阶段细分实验
 - 已确认热点任务的主要额外开销位于 `pytest` 启动与 `collect-only`
-- 下一步应继续拆 import/collection 内部差异，而不是重复验证 workspace copy
+- 已完成一轮 `pytest importtime` 细分实验
+- 已确认 `collect-only` 阶段稳定多出 `37` 个模块和约 `20898us` import self time
+- 下一步应继续判断这些新增模块是否主要来自平台链路、终端能力或 pytest 默认插件链
 
 ### 4. 持续清理候选池
 
@@ -98,7 +100,7 @@
 11. 用 `scripts/analyze_task_history.py` 下钻热点任务历史分布
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
-14. 继续拆 pytest import / collection 的内部差异与解释器抖动
+14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
 15. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
@@ -136,6 +138,8 @@
 - `scripts/analyze_run_tests_mode_cohort.py`
 - `scripts/benchmark_pytest_phases.py`
 - `scripts/analyze_pytest_phase_cohort.py`
+- `scripts/benchmark_pytest_importtime.py`
+- `scripts/analyze_pytest_importtime_cohort.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`

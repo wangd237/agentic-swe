@@ -1659,3 +1659,55 @@ trace 热点分析结果：
 - 真正 full run 相比 collect-only 平均只多 `0.0159s`
 - 这说明当前最该优先排查的是 pytest 启动、import 与 collection 链，而不是测试主体本身
 - `collect_first_minus_repeated_sec` 仍有轻微正值，说明首次 collection 可能存在少量额外抖动
+
+`pytest importtime` 基准结果：
+
+- 单任务基准产物：
+  - `logs/summaries/pytest_importtime_task034v32_001.json`
+  - `logs/summaries/pytest_importtime_task034v32_002.json`
+  - `logs/summaries/pytest_importtime_task036v32_001.json`
+  - `logs/summaries/pytest_importtime_task036v32_002.json`
+  - `logs/summaries/pytest_importtime_task038v32_001.json`
+  - `logs/summaries/pytest_importtime_task038v32_002.json`
+  - `logs/summaries/pytest_importtime_task040v32_001.json`
+  - `logs/summaries/pytest_importtime_task040v32_002.json`
+- 最新 cohort 汇总产物：
+  - `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_002.json`
+  - `logs/summaries/pytest_importtime_cohort_run_tests_hotspots_v32_002.md`
+- 基准命令：
+  - `pytest_version_importtime`
+  - `pytest_collect_importtime`
+- 最新热点任务 cohort 聚合：
+  - `average_collect_wall_delta_sec = 0.0697`
+  - `average_collect_import_self_delta_us = 20898`
+  - `average_collect_unique_module_delta = 37`
+  - `average_collect_wall_first_minus_repeated_sec = 0.0113`
+  - `average_collect_import_self_first_minus_repeated_us = 1449.75`
+  - `collect_slower_than_version_task_count = 4`
+- 高频新增模块：
+  - `_ctypes`
+  - `pyexpat`
+  - `xml.etree.ElementTree`
+  - `_pytest.skipping`
+  - `ctypes.wintypes`
+  - `ctypes`
+  - `pdb`
+  - `_pytest.terminalprogress`
+- 单任务样例：
+  - `task_040`
+    - `pytest_version_importtime wall avg = 0.1869`
+    - `pytest_collect_importtime wall avg = 0.2549`
+    - `collect wall delta = 0.068`
+    - `collect import self delta = 30108us`
+  - `task_034`
+    - `pytest_version_importtime wall avg = 0.1886`
+    - `pytest_collect_importtime wall avg = 0.2595`
+    - `collect wall delta = 0.0709`
+    - `collect import self delta = 18859us`
+
+进一步结论：
+
+- `collect-only` 相比 `pytest --version` 的额外耗时，不只是 wall time 现象，也对应稳定的 import self time 增量
+- 四个热点任务都稳定多导入了 `37` 个模块，说明这不是单任务偶发波动
+- 这让“collection 阶段的 import 链”从推测变成了可复现证据
+- 下一步更适合继续看这些新增模块是否与 Windows 平台、终端能力或 pytest 默认插件链有关
