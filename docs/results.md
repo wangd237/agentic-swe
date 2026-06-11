@@ -1859,6 +1859,26 @@ trace 热点分析结果：
 - 目前 `v33` 已可以视为后续扩容到 `60+` 和构建 `frozen_40` 的强候选基线
 - 下一步重点应从“验证 `v33` 是否成立”切换为“继续扩真实任务规模，并累计 `frozen_40` 连续无回归证据”
 
+`Benchmark Maturity v1` 当前量化审计：
+
+- 审计脚本：
+  - `scripts/analyze_benchmark_maturity.py`
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_002.json`
+  - `logs/summaries/benchmark_maturity_maturity_002.md`
+- 当前结果：
+  - 正式任务数：`30 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续无回归版本：`0 / 5`
+
+进一步结论：
+
+- 当前已经提前超过“至少 6 个不同仓库生态”的广泛度要求
+- 但真正决定目标是否达成的缺口仍然集中在两件事：
+  - 继续把正式任务从 `30` 扩到 `60+`
+  - 继续把 frozen 从 `20` 扩到 `40`，并累计连续 `5` 个策略版本的稳定证据
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：

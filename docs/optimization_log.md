@@ -6362,3 +6362,77 @@
 - 还需要继续扩充真实任务规模，从 `30` 推到 `60+`
 - 还需要构建 `frozen_40`，并开始累计连续 `5` 个策略版本的同集合无回归证据
 - 如果后续继续做 runtime 细化，应该优先服务于 `frozen_40` 的长期稳定性目标，而不是只追求局部热点收益
+
+## 2026-06-11 Phase 6 Benchmark Maturity 审计接入
+
+### 背景
+
+在 `improved_v33` 已通过正式 `30` 条任务集验证后，主线目标不再只是某一轮策略是否有效。
+
+此时更需要一个稳定入口，能够直接回答：
+
+- 当前正式任务数距离 `60+` 还差多少
+- 当前仓库来源是否已经足够广
+- 当前 frozen 集合距离 `40` 还差多少
+- 当前连续无回归证据已经累计到第几轮
+
+### 目标
+
+- 新增一个可复用的 maturity 审计脚本
+- 把 `Benchmark Maturity v1` 的硬目标变成仓库内的可执行检查
+- 让后续每轮推进都能直接对照量化缺口，而不是手工盘点
+
+### 改动类型
+
+- `benchmark`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `scripts/analyze_benchmark_maturity.py`
+- `tests/test_analyze_benchmark_maturity.py`
+- `logs/summaries/benchmark_maturity_maturity_002.json`
+- `logs/summaries/benchmark_maturity_maturity_002.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 maturity 审计脚本：
+  - 自动汇总正式任务数
+  - 自动统计正式任务来源生态数
+  - 自动扫描现有 frozen manifests
+  - 自动检查 `frozen_40` 上是否已经存在连续版本无回归证据
+- 新增配套测试，确保目标缺口计算口径稳定
+- 跑出当前仓库真实快照，并把结果同步到主文档入口
+
+### 测试与验证
+
+- 运行命令：
+  - `python -m pytest tests/test_analyze_benchmark_maturity.py -q`
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 当前正式任务数：`30 / 60`
+- 当前正式任务来源生态数：`13 / 6`
+- 当前最大 frozen 集合：`20 / 40`
+- 当前 `frozen_40` 连续版本：`0 / 5`
+- `accepted = 30` 且当前基本都已转成正式任务，说明旧候选库存已经基本吃完
+
+### 结论
+
+- 当前主线缺口已经非常清楚：
+  - 广泛度不是瓶颈，来源生态已经提前达标
+  - 任务规模和 frozen 稳定性证据才是下一阶段决定性工作
+- 后续每轮推进都应该优先服务于两条主线：
+  - 正式任务从 `30` 扩到 `60+`
+  - `frozen_20` 升级到 `frozen_40`，并累计 `5` 个连续版本的无回归证据
+
+### 剩余问题
+
+- 还需要持续补新来源候选，否则正式任务数无法继续稳定扩容
+- 还需要设计 `frozen_40` 的构建节奏，避免一次性扩太多导致同集合质量波动

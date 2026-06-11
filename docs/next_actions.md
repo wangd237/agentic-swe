@@ -4,6 +4,30 @@
 
 ## 当前最高优先级
 
+### 0. 用 maturity 审计结果驱动后续推进
+
+目标：
+
+- 让每轮推进都直接对应 `Benchmark Maturity v1` 的量化缺口
+- 避免每次续做都重新手工盘点规模、生态覆盖和 frozen 进度
+
+完成标准：
+
+- 每次重要更新后至少补一轮：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+- 至少同步最新审计结果到：
+  - `docs/project_memory.md`
+  - `docs/optimization_log.md`
+
+当前状态：
+
+- 已新增 `scripts/analyze_benchmark_maturity.py`
+- 最新审计结果：
+  - 正式任务数：`30 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
 ### 1. 以 `frozen_20` 作为后续策略升级的固定基线
 
 目标：
@@ -17,17 +41,18 @@
 - 至少保留 `1` 份 compare 报告
 - 报告里明确记录成功率、测试通过率和 taxonomy 变化
 
-### 2. 继续扩容 1 到 2 条正式任务
+### 2. 继续扩容正式任务，朝 `40+` 再到 `60+`
 
 目标：
 
-- 从新的候选来源中再补充 `1` 到 `2` 条高质量 issue
+- 从新的候选来源中持续补充高质量 issue
 - 形成新的 `task_062` 或后续编号任务
 - 继续扩充正式真实任务集
 
 完成标准：
 
-- 单任务能区分旧策略失败 / 新策略成功
+- 单轮至少新增 `1` 到 `3` 条正式任务
+- 优先补足还没覆盖或覆盖较薄的仓库来源
 - 新任务进入 `benchmarks/manifests/real_issue_tasks.json`
 - 扩容后仍保持任务集整体稳定
 
@@ -118,7 +143,8 @@
 15. 继续扩真实 issue 正式任务，优先朝 `40+` 再到 `60+` 推进
 16. 构建 `frozen_40`，并开始累计连续 `5` 个策略版本的固定集合无回归证据
 17. 视情况继续拆 `unraisableexception + debugging` 的组合边界，但优先级低于 benchmark maturity 主线
-18. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+18. 跑一轮 `python -m scripts.analyze_benchmark_maturity --run-label maturity` 更新量化缺口
+19. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 

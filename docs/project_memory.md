@@ -57,18 +57,21 @@
 ## 当前正式任务规模
 
 - 正式 `semi_real` 真实 issue 任务数：`30`
+- 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
 - 当前冻结 manifest：
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
+- 当前最大 frozen 集合：`20`
 
 ## 当前候选池状态
 
 - `accepted = 30`
 - `drafted = 0`
 - `to_review = 0`
+- 当前 accepted 候选已基本全部转成正式任务，下一阶段扩容主要依赖新增候选来源
 
 候选来源文件：
 
@@ -239,6 +242,12 @@
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_duration_sec: 0.6778 -> 0.5423`
   - `run_tests` 总耗时下降：`-3.6001s`
+- maturity 审计结果：
+  - `logs/summaries/benchmark_maturity_maturity_002.json`
+  - 正式任务数：`30 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
 - 新增的 import 分组分析又进一步说明：
   - 这些新增模块几乎都能归到明确链路，不再存在一大块难以解释的 `other`
   - 当前更值得优先切分的是 `pytest_optional_plugins`、`windows_ctypes`、`xml_stack` 和 `terminal_chain`
@@ -385,6 +394,7 @@
 - `pytest importtime` 分组分析已经进一步证明：新增 import 开销主要由 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain` 构成，下一步应通过更细命令形态验证哪些组可以真正削减
 - `improved_v33` 已把 benchmark 结论接入 runtime，并已同时通过热点集、`frozen_20` 与正式 `30` 条任务集验证
 - 当前主线应从 `v33` 验证切换到更高层目标：继续扩充真实任务到 `60+`、构建 `frozen_40`，并开始累计连续 `5` 轮无回归证据
+- 当前已经确认：来源广泛度不是瓶颈，真正缺口集中在正式任务规模和 `frozen_40` 稳定性证据
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序
