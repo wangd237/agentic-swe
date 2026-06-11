@@ -82,6 +82,8 @@
   - 已完成 `improved_v29` 策略迭代，补充 `field_transformer` 阶段默认 alias 的提前可见性
   - 已将 `simonw/sqlite-utils#488` 推进为 `task_059` 可运行 semi_real 任务
   - 已完成 `improved_v30` 策略迭代，补充数值列转换时空字符串回落为 `None`
+  - 已将 `simonw/sqlite-utils#186` 推进为 `task_060` 可运行 semi_real 任务
+  - 已完成 `improved_v31` 策略迭代，补充 extract 时跳过 `None` 维表提取
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 

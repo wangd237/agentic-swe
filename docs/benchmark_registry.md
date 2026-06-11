@@ -41,6 +41,7 @@
 | `task_057` | `pydantic/pydantic#9582` | `pydantic_inheritance_repo` | 子类 `model_validator` 覆盖父类校验链 | `improved_v28` | `-` |
 | `task_058` | `python-attrs/attrs#1479` | `attrs_alias_repo` | `field_transformer` 阶段默认 alias 不可见 | `improved_v29` | `-` |
 | `task_059` | `simonw/sqlite-utils#488` | `sqlite_transform_repo` | 数值列转换时空字符串保留为 `""` | `improved_v30` | `-` |
+| `task_060` | `simonw/sqlite-utils#186` | `sqlite_extract_repo` | extract 时为 `None` 生成冗余维表记录 | `improved_v31` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 

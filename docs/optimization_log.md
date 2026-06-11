@@ -1318,6 +1318,118 @@
 - 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
 - `frozen_20` 上无功能回归，且 `average_duration_sec` 从 `0.5688` 进一步改善到 `0.5631`
 
+## 2026-06-11 12:56 Phase 6 sqlite extract null 过滤扩容
+
+### 本轮目标
+
+- 把 `simonw/sqlite-utils#186` 从 `to_review` 推进成正式可运行任务
+- 为维表提取时的 `None` 过滤语义补一条新的规则型 patch 能力
+- 继续保留扩容对比与 `frozen_20` 同集合无回归对比
+
+### 本轮新增任务
+
+- `task_060`
+  - 类型：`semi_real`
+  - repo：`sqlite_extract_repo`
+  - 来源：`simonw/sqlite-utils#186`
+  - 缺陷：extract 时错误为 `None` 生成维表记录
+  - 目标：`None` 不参与维表提取，主表空值继续保留为 `None`
+
+### 本轮策略改动
+
+- 新增 `_handle_sqlite_extract_skip_nulls`
+  - 命中 `sqlite_extract_repo/extract.py` 中的提取模板
+  - 修复方式：先识别 `None`，直接保留在主表，不进入维表
+- `improved_v31`
+  - 在 `improved_v30` 能力链之上增加 null 提取过滤修复
+
+### 单任务分辨运行
+
+- `improved_v30` 失败：
+  - `logs/trajectories/task_060/run_20260611T045609613781Z_7280/result.json`
+- `improved_v31` 成功：
+  - `logs/trajectories/task_060/run_20260611T045609607536Z_0345/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev30_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev31_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev31_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step30_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v30_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v31_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v31_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step10_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `28` 条任务集上的 `improved_v30`
+  - improved 是扩充到 `29` 条任务后的 `improved_v31`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v30: `28`
+    - improved_v31: `29`
+  - `success_count`
+    - improved_v30: `28`
+    - improved_v31: `29`
+  - `success_rate`
+    - improved_v30: `1.0`
+    - improved_v31: `1.0`
+  - `test_pass_rate`
+    - improved_v30: `1.0`
+    - improved_v31: `1.0`
+  - `average_steps`
+    - improved_v30: `9.3929`
+    - improved_v31: `9.3448`
+  - `average_duration_sec`
+    - improved_v30: `0.5633`
+    - improved_v31: `0.6115`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 null 提取过滤规则不会带来功能回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v30: `20`
+    - improved_v31: `20`
+  - `success_count`
+    - improved_v30: `20`
+    - improved_v31: `20`
+  - `success_rate`
+    - improved_v30: `1.0`
+    - improved_v31: `1.0`
+  - `test_pass_rate`
+    - improved_v30: `1.0`
+    - improved_v31: `1.0`
+  - `average_steps`
+    - improved_v30: `9.25`
+    - improved_v31: `9.25`
+  - `average_duration_sec`
+    - improved_v30: `0.5631`
+    - improved_v31: `0.6122`
+  - `taxonomy`
+    - improved_v30: `无错误标签`
+    - improved_v31: `无错误标签`
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `29` 条
+- 候选池正式 accepted 提升到 `29` 条，`to_review` 收敛到 `1` 条
+- `improved_v31` 把 null 提取过滤纳入正式覆盖面
+- 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
+- 本轮存在效率波动：步数略降，但 `average_duration_sec` 在扩容集与 `frozen_20` 上都明显回升，后续需要观察这是否是运行时抖动还是新任务分布导致
+
 ## Iteration 12：Closest Marker Override from Real Issue（improved_v7 -> improved_v8）
 
 ### 时间

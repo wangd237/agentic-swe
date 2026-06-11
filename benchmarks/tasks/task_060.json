@@ -1,0 +1,36 @@
+{
+  "task_id": "task_060",
+  "repo_name": "sqlite_extract_repo",
+  "repo_path": "benchmarks/repos/sqlite_extract_repo",
+  "issue_title": ".extract() shouldn't extract null values",
+  "issue_text": "当前最小实现里，对列执行 `extract` 时会把 `None` 也当成一个维表值，生成额外的 `None` 记录，并把主表里的空值映射到这条伪记录。semi-real 任务要求：`None` 不应参与维表提取，主表里的空值应继续保留为 `None`，非空值仍应正常去重并建立映射。",
+  "test_command": "python -m pytest tests/test_extract.py -q",
+  "success_criteria": "None 值不应进入维表；主表空值应映射为 `*_id = None`；非空值继续正确去重映射；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "sqlite-utils",
+    "extract",
+    "null-handling"
+  ],
+  "target_files_hint": [
+    "sqlite_extract_repo/extract.py",
+    "tests/test_extract.py"
+  ],
+  "expected_failure_test": "SqliteExtractTests.test_extract_skips_none_values",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "simonw/sqlite-utils",
+    "repo_url": "https://github.com/simonw/sqlite-utils",
+    "issue_number": 186,
+    "issue_url": "https://github.com/simonw/sqlite-utils/issues/186",
+    "candidate_id": "simonw_sqlite_utils_issue_186",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

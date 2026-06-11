@@ -736,6 +736,43 @@ def _handle_sqlite_transform_empty_string_numeric(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_sqlite_extract_skip_nulls(content: str) -> str | None:
+    # improved_v31 处理 extract 时错误为 None 生成维表记录的问题。
+    target_block = (
+        "        value = row.get(column_name)\n"
+        "        # 这里故意保留真实 issue 中的缺陷：None 也会被当成一个需要抽取的维表值。\n"
+        "        if value not in value_to_id:\n"
+        "            value_to_id[value] = len(dimension_rows) + 1\n"
+        "            dimension_rows.append({\"id\": value_to_id[value], \"value\": value})\n\n"
+        "        extracted_row = dict(row)\n"
+        "        extracted_row[f\"{column_name}_id\"] = value_to_id[value]\n"
+        "        extracted_row.pop(column_name, None)\n"
+        "        extracted_rows.append(extracted_row)"
+    )
+    if target_block not in content:
+        return None
+    if "if value is None:" in content:
+        return None
+
+    replacement = (
+        "        value = row.get(column_name)\n"
+        "        extracted_row = dict(row)\n"
+        "        if value is None:\n"
+        "            # 空值应继续保留在主表里，不应为它创建维表记录。\n"
+        "            extracted_row[f\"{column_name}_id\"] = None\n"
+        "            extracted_row.pop(column_name, None)\n"
+        "            extracted_rows.append(extracted_row)\n"
+        "            continue\n\n"
+        "        if value not in value_to_id:\n"
+        "            value_to_id[value] = len(dimension_rows) + 1\n"
+        "            dimension_rows.append({\"id\": value_to_id[value], \"value\": value})\n\n"
+        "        extracted_row[f\"{column_name}_id\"] = value_to_id[value]\n"
+        "        extracted_row.pop(column_name, None)\n"
+        "        extracted_rows.append(extracted_row)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1932,9 +1969,45 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31"}:
             should_run_v25_chain = True
-            if policy_config.patch_strategy == "improved_v30":
+            if policy_config.patch_strategy == "improved_v31":
+                improved_v31_content = _handle_sqlite_extract_skip_nulls(original_content)
+                if improved_v31_content is not None:
+                    updated_content = improved_v31_content
+                    patch_reason_parts = ["让 extract 跳过 None，不再为空值生成维表记录"]
+                    should_run_v25_chain = False
+                else:
+                    improved_v30_content = _handle_sqlite_transform_empty_string_numeric(original_content)
+                    if improved_v30_content is not None:
+                        updated_content = improved_v30_content
+                        patch_reason_parts = ["让数值列转换时把空字符串回落为 None，避免保留伪空值"]
+                        should_run_v25_chain = False
+                    else:
+                        improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
+                        if improved_v29_content is not None:
+                            updated_content = improved_v29_content
+                            patch_reason_parts = ["让 field_transformer 在定义阶段就能读取最终 alias"]
+                            should_run_v25_chain = False
+                        else:
+                            improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                            if improved_v28_content is not None:
+                                updated_content = improved_v28_content
+                                patch_reason_parts = ["让子类 model validator 追加执行，保留父类 validator 继承链"]
+                                should_run_v25_chain = False
+                            else:
+                                improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                                if improved_v27_content is not None:
+                                    updated_content = improved_v27_content
+                                    patch_reason_parts = ["让 delete_where 在删除后提交事务，保证其他连接立即可见"]
+                                    should_run_v25_chain = False
+                                else:
+                                    improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                                    if improved_v26_content is not None:
+                                        updated_content = improved_v26_content
+                                        patch_reason_parts = ["让 extend 保留原始 applicable_validators，避免 legacy $ref 语义回归"]
+                                        should_run_v25_chain = False
+            elif policy_config.patch_strategy == "improved_v30":
                 improved_v30_content = _handle_sqlite_transform_empty_string_numeric(original_content)
                 if improved_v30_content is not None:
                     updated_content = improved_v30_content

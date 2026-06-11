@@ -9,26 +9,9 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 2
+## 当前 Top 1
 
-### 1. `simonw/sqlite-utils#186`
-
-- 标题：
-  - `.extract() shouldn't extract null values`
-- 推荐级别：`medium`
-- 为什么适合：
-  - 仍然属于 sqlite-utils，但问题边界比事务语义更局部
-  - 可以缩成单函数数据提取与空值过滤行为
-  - 能补“数据抽取时的空值语义”这一类现有 benchmark 较少覆盖的问题
-- 预期目标文件：
-  - `extract` 或值清洗逻辑
-- 预期测试形态：
-  - `None` 不应被当成可继续抽取的值
-  - 非空字符串或对象保持原有抽取行为
-- 主要风险：
-  - 要避免把真实 sqlite schema 细节整体搬进 benchmark
-
-### 2. `PyCQA/isort#1815`
+### 1. `PyCQA/isort#1815`
 
 - 标题：
   - `Tuple sorting doesn't consider profile`
@@ -58,6 +41,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_059`
+
+### `simonw/sqlite-utils#186`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_060`
 
 ### `pydantic/pydantic#9582`
 
@@ -111,6 +100,6 @@
 
 每次准备扩容时，优先按下面顺序使用：
 
-1. 先从本文件 Top 2 里选
+1. 先从本文件 Top 1 里选
 2. 如果都不合适，再回到完整候选池
 3. 一旦某条进入正式任务，就把它从 shortlist 中移除或下移
