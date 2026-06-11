@@ -415,6 +415,20 @@
 - 结果：
   - `task_060` 在扩容到 29 条任务后的正式任务集上完全通过
 
+## 成功案例 32：`task_061`
+
+- repo：`isort_profile_repo`
+- 来源：`PyCQA/isort#1815`
+- 代表版本：`improved_v32`
+- 现象：
+  - tuple 格式化分支会根据布局策略决定是紧凑输出还是多行输出
+  - 旧逻辑没有把传入的 `profile` 带入容器分支
+  - 结果是 `profile="black"` 仍然走默认 compact 布局
+- 改进点：
+  - `improved_v32` 让 tuple 格式化直接继承 `profile` 对应的布局策略
+- 结果：
+  - `task_061` 在扩容到 30 条任务后的正式任务集上完全通过
+
 ## 失败案例 1：`task_003` 在 `baseline_v1`
 
 - 失败版本：`baseline_v1`
@@ -722,3 +736,13 @@
   - 读到了提取与映射逻辑，但没有形成“跳过 null 提取”的修复
 - 后续改进：
   - 升级为 `improved_v31`
+
+## 失败案例 32：`task_061` 在 `improved_v31`
+
+- 失败版本：`improved_v31`
+- 失败标签：`Premature Finish`
+- 原因：
+  - 当前 patch 生成器还不理解容器格式化分支也要继承 `profile` 布局策略
+  - 读到了 tuple 格式化逻辑，但没有形成“把 profile 传入布局分派”的修复
+- 后续改进：
+  - 升级为 `improved_v32`

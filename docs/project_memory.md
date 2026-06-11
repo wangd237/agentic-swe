@@ -7,10 +7,11 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v31`
+- 当前最新策略：`improved_v32`
 - 当前主分支最近重要能力：
-  - 已完成 `29` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v30 -> improved_v31` 无回归验证
+  - 已完成 `30` 条真实 issue 派生 `semi_real` 正式任务
+  - 已在 `frozen_20` 上补齐一轮 `improved_v31 -> improved_v32` 无回归验证
+  - 已把当前高优先级 `to_review` 候选池清零
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
 ## 当前核心链路
@@ -26,11 +27,11 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v31.json --run-label realissuev31`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v32.json --run-label realissuev32`
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`29`
+- 正式 `semi_real` 真实 issue 任务数：`30`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
 - 当前冻结 manifest：
@@ -40,9 +41,9 @@
 
 ## 当前候选池状态
 
-- `accepted = 29`
+- `accepted = 30`
 - `drafted = 0`
-- `to_review = 1`
+- `to_review = 0`
 
 候选来源文件：
 
@@ -52,35 +53,35 @@
 
 ### 1. 最新扩容对比
 
-- 对比：`improved_v30 -> improved_v31`
-- 任务集：`28 -> 29` 条
+- 对比：`improved_v31 -> improved_v32`
+- 任务集：`29 -> 30` 条
 - 结果：
-  - `success_count: 28 -> 29`
+  - `success_count: 29 -> 30`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.3929 -> 9.3448`
-  - `average_duration_sec: 0.5633 -> 0.6115`
+  - `average_steps: 9.3448 -> 9.3`
+  - `average_duration_sec: 0.6115 -> 0.6778`
 
 说明：
 
-- 这组结果证明我们已经把正式真实任务集稳定扩容到 `29` 条
+- 这组结果证明我们已经把正式真实任务集稳定扩容到 `30` 条
 - 扩容后依旧保持 `100%` 成功率和 `100%` 测试通过率
-- 这一组仍属于扩容对比，步数继续改善，但耗时出现明显回升，需要后续观察
+- 这一组仍属于扩容对比，步数继续改善，但耗时继续回升，已经值得单独跟踪
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v30 -> improved_v31`
+- 对比：`improved_v31 -> improved_v32`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_steps: 9.25 -> 9.25`
-  - `average_duration_sec: 0.5631 -> 0.6122`
+  - `average_duration_sec: 0.6122 -> 0.6774`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增 null 提取过滤规则没有破坏已有 `20` 条固定任务
+- 说明新增 profile 布局继承规则没有破坏已有 `20` 条固定任务
 - 当前最近一组真正带来同集合成功率提升的证据仍然是 `improved_v21 -> improved_v22`
 
 ## 最新新增任务
@@ -161,6 +162,11 @@
   - repo：`sqlite_extract_repo`
   - 首个通过版本：`improved_v31`
   - 缺陷类型：extract 时错误为 `None` 生成维表记录
+- `task_061`
+  - 类型：`semi_real`
+  - repo：`isort_profile_repo`
+  - 首个通过版本：`improved_v32`
+  - 缺陷类型：tuple 格式化分支未继承 profile 布局策略
 
 ## 最近三轮优化结论
 
@@ -200,10 +206,16 @@
 - 新增任务：`task_060`
 - 在 `frozen_20` 上补齐一轮无回归验证
 
+### `improved_v32`
+
+- 覆盖场景：tuple 格式化分支继承 profile 布局策略
+- 新增任务：`task_061`
+- 在 `frozen_20` 上补齐一轮无回归验证
+
 ## 接下来最值得做的事
 
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
-- 从 `to_review` 中优先推进 `PyCQA/isort#1815`
+- 当前高优先级 `to_review` 已清零，下一步应扩新来源并定位近期耗时回升原因
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

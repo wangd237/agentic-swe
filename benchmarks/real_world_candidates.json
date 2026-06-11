@@ -535,8 +535,8 @@
       "issue_url": "https://github.com/PyCQA/isort/issues/1815",
       "language": "python",
       "difficulty": "medium",
-      "status": "to_review",
-      "notes": "2026-06-10T14:23:31: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-10T14:23:31: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-11T13:10:00: 已生成 semi_real 可运行任务 task_061，仓库目录为 benchmarks/repos/isort_profile_repo。",
       "labels": [
         "bug"
       ],

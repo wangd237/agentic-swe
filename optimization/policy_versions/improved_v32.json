@@ -1,0 +1,8 @@
+{
+  "policy_id": "improved_v32",
+  "description": "增强规则型 patch 策略，额外支持 tuple 格式化分支继承 profile 布局策略，避免 profile 配置在容器格式化中丢失。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v32"
+}

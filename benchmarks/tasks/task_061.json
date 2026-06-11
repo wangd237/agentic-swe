@@ -1,0 +1,36 @@
+{
+  "task_id": "task_061",
+  "repo_name": "isort_profile_repo",
+  "repo_path": "benchmarks/repos/isort_profile_repo",
+  "issue_title": "Tuple sorting doesn't consider profile",
+  "issue_text": "当前最小实现里，tuple 格式化分支没有使用传入的 `profile`，导致 `profile=\"black\"` 时仍然走默认紧凑布局。semi-real 任务要求：tuple 格式化应继承 profile 对应的布局策略，`black` profile 应使用多行缩进布局，而默认 profile 行为不回归。",
+  "test_command": "python -m pytest tests/test_formatter.py -q",
+  "success_criteria": "tuple 格式化应考虑传入 profile；`profile=\"black\"` 时输出 vertical 布局；默认 profile 保持 compact 布局；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "isort",
+    "profile",
+    "formatting"
+  ],
+  "target_files_hint": [
+    "isort_profile_repo/formatter.py",
+    "tests/test_formatter.py"
+  ],
+  "expected_failure_test": "IsortProfileTests.test_black_profile_uses_vertical_tuple_layout",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "PyCQA/isort",
+    "repo_url": "https://github.com/PyCQA/isort",
+    "issue_number": 1815,
+    "issue_url": "https://github.com/PyCQA/isort/issues/1815",
+    "candidate_id": "PyCQA_isort_issue_1815",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

@@ -42,6 +42,7 @@
 - 当前已补充 `task_058`，并在真实 issue 派生任务集上完成 `improved_v28 -> improved_v29` 扩容对比
 - 当前已补充 `task_059`，并在真实 issue 派生任务集上完成 `improved_v29 -> improved_v30` 扩容对比
 - 当前已补充 `task_060`，并在真实 issue 派生任务集上完成 `improved_v30 -> improved_v31` 扩容对比
+- 当前已补充 `task_061`，并在真实 issue 派生任务集上完成 `improved_v31 -> improved_v32` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
@@ -54,6 +55,7 @@
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v28 -> improved_v29`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v29 -> improved_v30`
 - 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v30 -> improved_v31`
+- 当前已补充冻结 20 条真实任务上的后续无回归验证，对比 `improved_v31 -> improved_v32`
 
 ## 当前可展示结果
 
@@ -1208,6 +1210,7 @@
 - `improved_v29` 进一步覆盖了真实 issue 派生出来的对象定义阶段 alias 可见性场景
 - `improved_v30` 进一步覆盖了真实 issue 派生出来的数值列空字符串清洗场景
 - `improved_v31` 进一步覆盖了真实 issue 派生出来的 null 提取过滤场景
+- `improved_v32` 进一步覆盖了真实 issue 派生出来的 profile 驱动布局继承场景
 - compare 报告已经可以作为后续每轮优化的标准化对比产物
 - 冻结 manifest 已经让我们拿到三组同集合上的真实提升证据
 - 在最近一轮 `frozen_20` 验证里，新增规则也保持了固定任务集无回归
@@ -1411,5 +1414,68 @@
 - taxonomy
   - improved_v30: `无错误标签`
   - improved_v31: `无错误标签`
+- changed task
+  - `无`
+
+## 最新一轮：`improved_v31 -> improved_v32`
+
+扩容到 30 条真实 issue 任务后的结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_realissuev31_001.json`
+- improved：
+  - `logs/summaries/batch_eval_realissuev32_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step31_001.json`
+
+当前结果：
+
+- `task_count`
+  - improved_v31: `29`
+  - improved_v32: `30`
+- `success_count`
+  - improved_v31: `29`
+  - improved_v32: `30`
+- `success_rate`
+  - improved_v31: `1.0`
+  - improved_v32: `1.0`
+- `test_pass_rate`
+  - improved_v31: `1.0`
+  - improved_v32: `1.0`
+- `average_steps`
+  - improved_v31: `9.3448`
+  - improved_v32: `9.3`
+- `average_duration_sec`
+  - improved_v31: `0.6115`
+  - improved_v32: `0.6778`
+- changed task
+  - `task_061`: 新增任务，在 `improved_v32` 下完全通过
+
+冻结 20 条真实任务上的最新一轮无回归结果：
+
+- baseline：
+  - `logs/summaries/batch_eval_frozen20v31_001.json`
+- improved：
+  - `logs/summaries/batch_eval_frozen20v32_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step11_001.json`
+
+当前结果：
+
+- `success_rate`
+  - improved_v31: `1.0`
+  - improved_v32: `1.0`
+- `test_pass_rate`
+  - improved_v31: `1.0`
+  - improved_v32: `1.0`
+- `average_steps`
+  - improved_v31: `9.25`
+  - improved_v32: `9.25`
+- `average_duration_sec`
+  - improved_v31: `0.6122`
+  - improved_v32: `0.6774`
+- taxonomy
+  - improved_v31: `无错误标签`
+  - improved_v32: `无错误标签`
 - changed task
   - `无`

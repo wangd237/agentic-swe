@@ -84,6 +84,8 @@
   - 已完成 `improved_v30` 策略迭代，补充数值列转换时空字符串回落为 `None`
   - 已将 `simonw/sqlite-utils#186` 推进为 `task_060` 可运行 semi_real 任务
   - 已完成 `improved_v31` 策略迭代，补充 extract 时跳过 `None` 维表提取
+  - 已将 `PyCQA/isort#1815` 推进为 `task_061` 可运行 semi_real 任务
+  - 已完成 `improved_v32` 策略迭代，补充 tuple 格式化分支继承 profile 布局策略
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
   - 已补充项目说明文档与阶段指南
 
@@ -457,6 +459,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_eval_realissuev29_001.json`
 - improved_v30：
   - `logs/summaries/batch_eval_realissuev30_001.json`
+- improved_v31：
+  - `logs/summaries/batch_eval_realissuev31_001.json`
+- improved_v32：
+  - `logs/summaries/batch_eval_realissuev32_001.json`
 - compare：
   - `logs/summaries/batch_compare_realissue_step9_001.json`
   - `logs/summaries/batch_compare_realissue_step10_001.json`
@@ -478,6 +484,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step26_001.json`
   - `logs/summaries/batch_compare_realissue_step28_001.json`
   - `logs/summaries/batch_compare_realissue_step29_001.json`
+  - `logs/summaries/batch_compare_realissue_step30_001.json`
+  - `logs/summaries/batch_compare_realissue_step31_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`

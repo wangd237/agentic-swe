@@ -1430,6 +1430,118 @@
 - 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
 - 本轮存在效率波动：步数略降，但 `average_duration_sec` 在扩容集与 `frozen_20` 上都明显回升，后续需要观察这是否是运行时抖动还是新任务分布导致
 
+## 2026-06-11 13:24 Phase 6 isort profile 布局继承扩容
+
+### 本轮目标
+
+- 把 `PyCQA/isort#1815` 从 `to_review` 推进成正式可运行任务
+- 为 profile 驱动的布局分派补一条新的规则型 patch 能力
+- 清空当前高优先级真实 issue 候选池
+
+### 本轮新增任务
+
+- `task_061`
+  - 类型：`semi_real`
+  - repo：`isort_profile_repo`
+  - 来源：`PyCQA/isort#1815`
+  - 缺陷：tuple 格式化分支没有继承传入的 `profile`
+  - 目标：`profile="black"` 时使用 vertical 布局，默认 profile 不回归
+
+### 本轮策略改动
+
+- 新增 `_handle_isort_tuple_profile_layout`
+  - 命中 `isort_profile_repo/formatter.py` 中的容器格式化模板
+  - 修复方式：让 tuple 格式化分支把 `profile` 传入布局分派
+- `improved_v32`
+  - 在 `improved_v31` 能力链之上增加 profile 布局继承修复
+
+### 单任务分辨运行
+
+- `improved_v31` 失败：
+  - `logs/trajectories/task_061/run_20260611T052329621518Z_9635/result.json`
+- `improved_v32` 成功：
+  - `logs/trajectories/task_061/run_20260611T052329601465Z_4764/result.json`
+
+### 扩容任务集运行
+
+- baseline eval：
+  - `logs/summaries/batch_eval_realissuev31_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_realissuev32_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_realissuev32_001.json`
+- compare：
+  - `logs/summaries/batch_compare_realissue_step31_001.json`
+
+### 冻结同集合运行
+
+- baseline batch eval：
+  - `logs/summaries/batch_eval_frozen20v31_001.json`
+- improved batch run：
+  - `logs/summaries/batch_run_frozen20v32_001.json`
+- improved batch eval：
+  - `logs/summaries/batch_eval_frozen20v32_001.json`
+- compare：
+  - `logs/summaries/batch_compare_frozen20_step11_001.json`
+
+### 指标对比
+
+- 扩容对比说明：
+  - baseline 是 `29` 条任务集上的 `improved_v31`
+  - improved 是扩充到 `30` 条任务后的 `improved_v32`
+- 扩容对比结果：
+  - `task_count`
+    - improved_v31: `29`
+    - improved_v32: `30`
+  - `success_count`
+    - improved_v31: `29`
+    - improved_v32: `30`
+  - `success_rate`
+    - improved_v31: `1.0`
+    - improved_v32: `1.0`
+  - `test_pass_rate`
+    - improved_v31: `1.0`
+    - improved_v32: `1.0`
+  - `average_steps`
+    - improved_v31: `9.3448`
+    - improved_v32: `9.3`
+  - `average_duration_sec`
+    - improved_v31: `0.6115`
+    - improved_v32: `0.6778`
+- 冻结同集合说明：
+  - baseline 和 improved 使用完全相同的 `20` 条任务
+  - 这一轮主要用于确认新增 profile 布局继承规则不会带来功能回归
+- 冻结同集合结果：
+  - `task_count`
+    - improved_v31: `20`
+    - improved_v32: `20`
+  - `success_count`
+    - improved_v31: `20`
+    - improved_v32: `20`
+  - `success_rate`
+    - improved_v31: `1.0`
+    - improved_v32: `1.0`
+  - `test_pass_rate`
+    - improved_v31: `1.0`
+    - improved_v32: `1.0`
+  - `average_steps`
+    - improved_v31: `9.25`
+    - improved_v32: `9.25`
+  - `average_duration_sec`
+    - improved_v31: `0.6122`
+    - improved_v32: `0.6774`
+  - `taxonomy`
+    - improved_v31: `无错误标签`
+    - improved_v32: `无错误标签`
+
+### 结论
+
+- 真实 issue 派生任务集已经扩充到 `30` 条
+- 当前高优先级真实候选池已经清零，候选状态收敛为 `accepted = 30`
+- `improved_v32` 把 profile 驱动布局继承纳入正式覆盖面
+- 扩容后继续保持 `100%` 成功率与 `100%` 测试通过率
+- 但最近三轮 `average_duration_sec` 连续回升，后续应把 runtime 效率波动作为一个独立跟踪方向
+
 ## Iteration 12：Closest Marker Override from Real Issue（improved_v7 -> improved_v8）
 
 ### 时间
