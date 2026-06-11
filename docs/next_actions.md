@@ -23,7 +23,7 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`30 / 60`
+  - 正式任务数：`31 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`
@@ -60,9 +60,9 @@
 
 - `pypa/packaging#909`
 - `pypa/packaging#788`
-- `pypa/packaging#638`
 - `python-poetry/tomlkit#431`
 - `python-poetry/tomlkit#383`
+- `python-poetry/tomlkit#442`
 - `pallets/jinja#2151`
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
@@ -113,11 +113,10 @@
 - 已确认 `threadexception_only` 没有稳定收益
 - 已完成一轮 `pytest importtime` 分组分析
 - 已确认新增 import 开销主要落在 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain`
-- 已新增 `improved_v33`，通过 policy 注入 `-p no:unraisableexception`
-- 已在热点 4 任务上验证 `improved_v33`：平均总耗时 `-0.002s`，成功率保持 `1.0`
-- 已在 `frozen_20` 上验证 `improved_v33`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.6774 -> 0.5379`
-- 已在正式 `30` 条任务集上验证 `improved_v33`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.6778 -> 0.5423`
-- 当前可以把 `v33` 视为后续扩容与 `frozen_40` 的候选基线推进
+- 已新增 `improved_v34`，在 `improved_v33` 基础上补充 `packaging Marker.evaluate(extra=None)` 修复规则
+- 已在 `frozen_20` 上验证 `improved_v34`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5379 -> 0.5368`
+- 已在正式 `31` 条任务集上验证 `improved_v34`：`success_count = 30 -> 31`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5423 -> 0.5391`
+- 当前可以把 `v34` 视为后续扩容与 `frozen_40` 的候选基线推进
 
 ### 4. 持续清理候选池
 
@@ -160,12 +159,14 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v33` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+2. 以 `improved_v34` 为候选基线，继续扩正式任务数并构建 `frozen_40`
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
 - 当前新的候选库存已经重新打开，`to_review = 8`
+- 当前 `packaging#638` 已经落地为 `task_063`
+- 当前新的候选库存仍需继续消化，剩余 `to_review = 7`
 - 因此下一轮更应该优先“吃库存”，而不是继续先扩更多来源
 
 详细理由见：

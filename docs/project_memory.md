@@ -7,11 +7,11 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v33`
+- 当前最新策略：`improved_v34`
 - 当前主分支最近重要能力：
-  - 已完成 `30` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v32 -> improved_v33` 无回归验证
-  - 已在正式 `30` 条真实任务集上补齐 `improved_v32 -> improved_v33` 全量验证
+  - 已完成 `31` 条真实 issue 派生 `semi_real` 正式任务
+  - 已在 `frozen_20` 上补齐一轮 `improved_v33 -> improved_v34` 无回归验证
+  - 已在正式 `31` 条真实任务集上补齐 `improved_v33 -> improved_v34` 全量验证
   - 已把当前高优先级 `to_review` 候选池清零
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
@@ -42,7 +42,7 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v33.json --run-label realissuev33`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v34.json --run-label realissuev34`
 - 候选批量导入：
   - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
 - 时延回归分析：
@@ -56,7 +56,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`30`
+- 正式 `semi_real` 真实 issue 任务数：`31`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -68,9 +68,9 @@
 
 ## 当前候选池状态
 
-- `accepted = 30`
+- `accepted = 31`
 - `drafted = 0`
-- `to_review = 8`
+- `to_review = 7`
 - 当前 accepted 候选已基本全部转成正式任务，下一阶段扩容主要依赖新增候选来源
 
 候选来源文件：
@@ -118,19 +118,19 @@
 
 ### 3. 当前最新正式集证据
 
-- 对比：`improved_v32 -> improved_v33`
-- 任务集：固定正式 `30` 条
+- 对比：`improved_v33 -> improved_v34`
+- 任务集：扩容到正式 `31` 条
 - 结果：
+  - `success_count: 30 -> 31`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.3 -> 10.3`
-  - `average_duration_sec: 0.6778 -> 0.5423`
+  - `average_duration_sec: 0.5423 -> 0.5391`
 
 说明：
 
-- 这说明 `improved_v33` 的收益并没有停留在热点样本或 `frozen_20`
-- 在正式 `30` 条真实任务集上，它同样保持了 `100%` 成功率和 `100%` 测试通过率
-- 因此它已经可以作为后续扩容到 `60+` 与构建 `frozen_40` 的候选基线
+- 这说明 `improved_v34` 不只是保住了 `v33` 的已有能力
+- 它还把正式真实任务集从 `30` 条稳定扩到 `31` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
+- 因此当前主线基线已经从 `v33 / 30 条` 前进到 `v34 / 31 条`
 
 ### 4. 最新时延分析结论
 
@@ -139,13 +139,13 @@
   - 公共 `29` 条任务平均耗时：`0.6115 -> 0.6767`
   - 平均差值：`+0.0652s`
 - `frozen_20` 分析：
-  - `logs/summaries/duration_compare_frozen20v33_001.json`
-  - 公共 `20` 条任务平均耗时：`0.6774 -> 0.5379`
-  - 平均差值：`-0.1395s`
-- 正式 `30` 条任务集分析：
-  - `logs/summaries/duration_compare_realissuev33_001.json`
-  - 公共 `30` 条任务平均耗时：`0.6778 -> 0.5423`
-  - 平均差值：`-0.1355s`
+  - `logs/summaries/duration_compare_frozen20v34_001.json`
+  - 公共 `20` 条任务平均耗时：`0.5379 -> 0.5368`
+  - 平均差值：`-0.0011s`
+- 正式 `31` 条任务集分析：
+  - `logs/summaries/duration_compare_realissuev34_001.json`
+  - 公共 `30` 条任务平均耗时：`0.5423 -> 0.5391`
+  - 平均差值：`-0.0014s`
 - trace 热点分析：
   - `logs/summaries/trace_hotspots_realissuev32_001.json`
   - `logs/summaries/trace_hotspots_frozen20v33_001.json`
@@ -232,23 +232,22 @@
   - `logs/summaries/duration_compare_hotspotsv33_001.json`
   - 热点 `4` 任务公共平均耗时：`0.5589 -> 0.5569`
   - `common_average_delta_sec = -0.002`
-- `improved_v33` `frozen_20` 验证：
-  - `logs/summaries/batch_eval_frozen20v33_001.json`
-  - `logs/summaries/batch_compare_frozen20_step12_001.json`
+- `improved_v34` `frozen_20` 验证：
+  - `logs/summaries/batch_eval_frozen20v34_001.json`
+  - `logs/summaries/batch_compare_frozen20_step13_001.json`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.6774 -> 0.5379`
-  - `run_tests` 总耗时下降：`-2.5941s`
-- `improved_v33` 正式 `30` 条任务集验证：
-  - `logs/summaries/batch_eval_realissuev33_001.json`
-  - `logs/summaries/batch_compare_realissue_step13_002.json`
+  - `average_duration_sec: 0.5379 -> 0.5368`
+- `improved_v34` 正式 `31` 条任务集验证：
+  - `logs/summaries/batch_eval_realissuev34_001.json`
+  - `logs/summaries/batch_compare_realissue_step14_002.json`
+  - `success_count: 30 -> 31`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.6778 -> 0.5423`
-  - `run_tests` 总耗时下降：`-3.6001s`
+  - `average_duration_sec: 0.5423 -> 0.5391`
 - maturity 审计结果：
-  - `logs/summaries/benchmark_maturity_maturity_002.json`
-  - 正式任务数：`30 / 60`
+  - `logs/summaries/benchmark_maturity_maturity_005.json`
+  - 正式任务数：`31 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`
@@ -340,6 +339,14 @@
   - repo：`isort_profile_repo`
   - 首个通过版本：`improved_v32`
   - 缺陷类型：tuple 格式化分支未继承 profile 布局策略
+- `task_062`
+  - 类型：`real_issue`
+  - 来源：`pypa/packaging#638`
+- `task_063`
+  - 类型：`semi_real`
+  - repo：`packaging_marker_repo`
+  - 首个通过版本：`improved_v34`
+  - 缺陷类型：`Marker.evaluate(extra=None)` 错误对 `None` 调用 `.lower()`
 
 ## 最近三轮优化结论
 

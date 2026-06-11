@@ -1,0 +1,461 @@
+{
+  "created_at": "2026-06-11T15:48:06.196462+00:00",
+  "objective": {
+    "formal_task_target": 60,
+    "ecosystem_target": 6,
+    "frozen_target": 40,
+    "frozen_streak_target": 5,
+    "minimum_success_rate": 0.95,
+    "minimum_test_pass_rate": 0.95,
+    "max_duration_growth_ratio": 0.03,
+    "baseline_policy_id": "improved_v32"
+  },
+  "formal_manifest": {
+    "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\manifests\\real_issue_tasks.json",
+    "task_count": 31,
+    "source_type_counts": {
+      "semi_real": 31
+    },
+    "ecosystem_count": 13,
+    "ecosystem_counts": {
+      "PyCQA/isort": 1,
+      "Textualize/rich": 2,
+      "dateutil/dateutil": 4,
+      "pallets/click": 2,
+      "pallets/jinja": 2,
+      "psf/requests": 2,
+      "pydantic/pydantic": 1,
+      "pypa/packaging": 4,
+      "pytest-dev/pytest": 1,
+      "python-attrs/attrs": 1,
+      "python-jsonschema/jsonschema": 6,
+      "python-poetry/tomlkit": 2,
+      "simonw/sqlite-utils": 3
+    },
+    "tasks": [
+      {
+        "task_id": "task_006",
+        "repo_full_name": "psf/requests",
+        "source_type": "semi_real",
+        "issue_title": "Allow urllib3 2.x for Python 3.7+ in requests dependency constraints"
+      },
+      {
+        "task_id": "task_008",
+        "repo_full_name": "psf/requests",
+        "source_type": "semi_real",
+        "issue_title": "Detect quoted charset values in get_encoding_from_headers"
+      },
+      {
+        "task_id": "task_010",
+        "repo_full_name": "Textualize/rich",
+        "source_type": "semi_real",
+        "issue_title": "[BUG] Text.from_ansi leaves empty lines when input string has CRLF line endings"
+      },
+      {
+        "task_id": "task_013",
+        "repo_full_name": "Textualize/rich",
+        "source_type": "semi_real",
+        "issue_title": "[BUG] RichHandler ignores `%z` time zone format specifier"
+      },
+      {
+        "task_id": "task_016",
+        "repo_full_name": "pallets/click",
+        "source_type": "semi_real",
+        "issue_title": "New \"default\" behaviour in Click 8.3.x is broken for negative boolean flags"
+      },
+      {
+        "task_id": "task_017",
+        "repo_full_name": "pytest-dev/pytest",
+        "source_type": "semi_real",
+        "issue_title": "get_closest_marker is working unexpectedly"
+      },
+      {
+        "task_id": "task_019",
+        "repo_full_name": "dateutil/dateutil",
+        "source_type": "semi_real",
+        "issue_title": "TypeError in tzstr when parsing \"UTC\" or \"GMT\" without offset"
+      },
+      {
+        "task_id": "task_022",
+        "repo_full_name": "dateutil/dateutil",
+        "source_type": "semi_real",
+        "issue_title": "default parser fails to parse 9-digit time string as HHMMSSmmm format"
+      },
+      {
+        "task_id": "task_024",
+        "repo_full_name": "pallets/jinja",
+        "source_type": "semi_real",
+        "issue_title": "meta.find_undeclared_variables returning variables set in if blocks as of 3.1.5"
+      },
+      {
+        "task_id": "task_026",
+        "repo_full_name": "pallets/jinja",
+        "source_type": "semi_real",
+        "issue_title": "Slice returns one extra item when slice count is a divisor of iterable length and fill_with not none"
+      },
+      {
+        "task_id": "task_028",
+        "repo_full_name": "python-poetry/tomlkit",
+        "source_type": "semi_real",
+        "issue_title": "tomlkit inserts an invalid comma when appending to unusually formatted array"
+      },
+      {
+        "task_id": "task_030",
+        "repo_full_name": "python-poetry/tomlkit",
+        "source_type": "semi_real",
+        "issue_title": "adding to a dotted inline table produces corrupt output"
+      },
+      {
+        "task_id": "task_032",
+        "repo_full_name": "pypa/packaging",
+        "source_type": "semi_real",
+        "issue_title": "Bug: `parse_wheel_filename` permits non-normalized versions."
+      },
+      {
+        "task_id": "task_034",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "additionalItems can blow up when rendering a message for a non-homogeneous array"
+      },
+      {
+        "task_id": "task_036",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "hostname format checker might raise ValueError"
+      },
+      {
+        "task_id": "task_038",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "Instance validates if `multipleOf` is an integer, but fails if it's a float"
+      },
+      {
+        "task_id": "task_040",
+        "repo_full_name": "pypa/packaging",
+        "source_type": "semi_real",
+        "issue_title": "Inconsistent `extra` normalisation in `Requirement.__str__`"
+      },
+      {
+        "task_id": "task_042",
+        "repo_full_name": "pallets/click",
+        "source_type": "semi_real",
+        "issue_title": "resolve_command fails if cmd is None"
+      },
+      {
+        "task_id": "task_044",
+        "repo_full_name": "dateutil/dateutil",
+        "source_type": "semi_real",
+        "issue_title": "parser fails to parse MM.YYYY"
+      },
+      {
+        "task_id": "task_046",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "Hostname format check does not allow single labels"
+      },
+      {
+        "task_id": "task_048",
+        "repo_full_name": "pypa/packaging",
+        "source_type": "semi_real",
+        "issue_title": "`Specifier` Greater than comparison returns incorrect result for a version with dev+local parts"
+      },
+      {
+        "task_id": "task_050",
+        "repo_full_name": "dateutil/dateutil",
+        "source_type": "semi_real",
+        "issue_title": "Incorrect year is returned when parsing a date string such as \"may15,2021\""
+      },
+      {
+        "task_id": "task_052",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "The return of `__iter__()` and `__contains__()` change after accessing of an index with no error"
+      },
+      {
+        "task_id": "task_054",
+        "repo_full_name": "python-jsonschema/jsonschema",
+        "source_type": "semi_real",
+        "issue_title": "extend() doesn't copy applicable_validators"
+      },
+      {
+        "task_id": "task_056",
+        "repo_full_name": "simonw/sqlite-utils",
+        "source_type": "semi_real",
+        "issue_title": ".delete_where() does not auto-commit (unlike .insert() or .upsert())"
+      },
+      {
+        "task_id": "task_057",
+        "repo_full_name": "pydantic/pydantic",
+        "source_type": "semi_real",
+        "issue_title": "Model validator is ignored during inheritance"
+      },
+      {
+        "task_id": "task_058",
+        "repo_full_name": "python-attrs/attrs",
+        "source_type": "semi_real",
+        "issue_title": "Alias not available during field transformation"
+      },
+      {
+        "task_id": "task_059",
+        "repo_full_name": "simonw/sqlite-utils",
+        "source_type": "semi_real",
+        "issue_title": "`sqlite-utils transform` should set empty strings to null when converting text columns to integer/float"
+      },
+      {
+        "task_id": "task_060",
+        "repo_full_name": "simonw/sqlite-utils",
+        "source_type": "semi_real",
+        "issue_title": ".extract() shouldn't extract null values"
+      },
+      {
+        "task_id": "task_061",
+        "repo_full_name": "PyCQA/isort",
+        "source_type": "semi_real",
+        "issue_title": "Tuple sorting doesn't consider profile"
+      },
+      {
+        "task_id": "task_063",
+        "repo_full_name": "pypa/packaging",
+        "source_type": "semi_real",
+        "issue_title": "Marker.evaluate with extra=None  fails in 22.0"
+      }
+    ]
+  },
+  "candidate_dataset": {
+    "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\real_world_candidates.json",
+    "candidate_count": 38,
+    "status_counts": {
+      "accepted": 31,
+      "to_review": 7
+    },
+    "repo_counts": {
+      "PyCQA/isort": 1,
+      "Textualize/rich": 2,
+      "dateutil/dateutil": 4,
+      "pallets/click": 2,
+      "pallets/jinja": 4,
+      "psf/requests": 2,
+      "pydantic/pydantic": 1,
+      "pypa/packaging": 6,
+      "pytest-dev/pytest": 1,
+      "python-attrs/attrs": 1,
+      "python-jsonschema/jsonschema": 6,
+      "python-poetry/tomlkit": 5,
+      "simonw/sqlite-utils": 3
+    }
+  },
+  "frozen_manifests": {
+    "frozen_sets": [
+      {
+        "manifest_id": "real_issue_tasks_frozen_15_v1",
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\manifests\\real_issue_tasks_frozen_15_v1.json",
+        "task_count": 15
+      },
+      {
+        "manifest_id": "real_issue_tasks_frozen_18_v1",
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\manifests\\real_issue_tasks_frozen_18_v1.json",
+        "task_count": 18
+      },
+      {
+        "manifest_id": "real_issue_tasks_frozen_20_v1",
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\manifests\\real_issue_tasks_frozen_20_v1.json",
+        "task_count": 20
+      }
+    ],
+    "latest_frozen_task_count": 20,
+    "latest_frozen_manifest": {
+      "manifest_id": "real_issue_tasks_frozen_20_v1",
+      "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\manifests\\real_issue_tasks_frozen_20_v1.json",
+      "task_count": 20
+    }
+  },
+  "frozen_eval_records": {
+    "15": {
+      "16": {
+        "policy_id": "improved_v16",
+        "policy_version": 16,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen15v16_001.json",
+        "success_rate": 0.9333,
+        "test_pass_rate": 0.9333,
+        "average_duration_sec": 0.5926
+      },
+      "17": {
+        "policy_id": "improved_v17",
+        "policy_version": 17,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen15v17_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5906
+      }
+    },
+    "18": {
+      "19": {
+        "policy_id": "improved_v19",
+        "policy_version": 19,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen18v19_001.json",
+        "success_rate": 0.9444,
+        "test_pass_rate": 0.9444,
+        "average_duration_sec": 0.5736
+      },
+      "20": {
+        "policy_id": "improved_v20",
+        "policy_version": 20,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen18v20_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5713
+      }
+    },
+    "20": {
+      "21": {
+        "policy_id": "improved_v21",
+        "policy_version": 21,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v21_001.json",
+        "success_rate": 0.95,
+        "test_pass_rate": 0.95,
+        "average_duration_sec": 0.5536
+      },
+      "22": {
+        "policy_id": "improved_v22",
+        "policy_version": 22,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v22_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5569
+      },
+      "23": {
+        "policy_id": "improved_v23",
+        "policy_version": 23,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v23_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.554
+      },
+      "24": {
+        "policy_id": "improved_v24",
+        "policy_version": 24,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v24_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.548
+      },
+      "25": {
+        "policy_id": "improved_v25",
+        "policy_version": 25,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v25_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5584
+      },
+      "26": {
+        "policy_id": "improved_v26",
+        "policy_version": 26,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v26_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5567
+      },
+      "27": {
+        "policy_id": "improved_v27",
+        "policy_version": 27,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v27_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5709
+      },
+      "28": {
+        "policy_id": "improved_v28",
+        "policy_version": 28,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v28_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5675
+      },
+      "29": {
+        "policy_id": "improved_v29",
+        "policy_version": 29,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v29_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5688
+      },
+      "30": {
+        "policy_id": "improved_v30",
+        "policy_version": 30,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v30_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5631
+      },
+      "31": {
+        "policy_id": "improved_v31",
+        "policy_version": 31,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v31_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.6122
+      },
+      "32": {
+        "policy_id": "improved_v32",
+        "policy_version": 32,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v32_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.6774
+      },
+      "33": {
+        "policy_id": "improved_v33",
+        "policy_version": 33,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v33_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5379
+      },
+      "34": {
+        "policy_id": "improved_v34",
+        "policy_version": 34,
+        "path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_eval_frozen20v34_001.json",
+        "success_rate": 1.0,
+        "test_pass_rate": 1.0,
+        "average_duration_sec": 0.5368
+      }
+    }
+  },
+  "frozen_40_streak": {
+    "frozen_count": 40,
+    "baseline_policy_id": "improved_v32",
+    "baseline_eval_present": false,
+    "meets_target": false,
+    "reason": "当前没有 frozen_40 的评测结果。",
+    "qualifying_versions": [],
+    "longest_streak_versions": [],
+    "longest_streak_length": 0
+  },
+  "goal_gaps": {
+    "formal_task_goal": {
+      "target": 60,
+      "actual": 31,
+      "gap": 29,
+      "met": false
+    },
+    "ecosystem_goal": {
+      "target": 6,
+      "actual": 13,
+      "gap": 0,
+      "met": true
+    },
+    "frozen_goal": {
+      "target": 40,
+      "actual": 20,
+      "gap": 20,
+      "met": false
+    },
+    "frozen_40_streak_goal": {
+      "target": 5,
+      "actual": 0,
+      "gap": 5,
+      "met": false
+    }
+  },
+  "audit_id": "benchmark_maturity_maturity_004"
+}

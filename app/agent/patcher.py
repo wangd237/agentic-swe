@@ -803,6 +803,31 @@ def _handle_isort_tuple_profile_layout(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_packaging_marker_extra_none(content: str) -> str | None:
+    # improved_v34 处理 Marker.evaluate 在 extra 为 None 时错误调用 lower 的问题。
+    target_block = (
+        "        # 这里故意保留真实 issue 中的缺陷：当 extra 为 None 时直接调用 lower，\n"
+        "        # 会抛出 AttributeError，而不是像旧版本那样回落为 False。\n"
+        '        normalized_value = raw_value.lower().replace("_", "-")\n'
+        '        normalized_expected = self.expected_extra.lower().replace("_", "-")\n'
+        "        return normalized_value == normalized_expected"
+    )
+    if target_block not in content:
+        return None
+    if "if raw_value is None:" in content:
+        return None
+
+    replacement = (
+        "        # extra 为 None 时，应像旧版本那样回落成“不匹配”，而不是继续调用字符串方法。\n"
+        "        if raw_value is None:\n"
+        "            return False\n"
+        '        normalized_value = raw_value.lower().replace("_", "-")\n'
+        '        normalized_expected = self.expected_extra.lower().replace("_", "-")\n'
+        "        return normalized_value == normalized_expected"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -1999,7 +2024,332 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34"}:
+            if policy_config.patch_strategy == "improved_v34":
+                improved_v34_content = _handle_packaging_marker_extra_none(original_content)
+                if improved_v34_content is not None:
+                    updated_content = improved_v34_content
+                    patch_reason_parts = ["让 Marker.evaluate 在 extra 为 None 时回落为 False，而不是继续调用 lower"]
+                else:
+                    improved_v32_content = _handle_isort_tuple_profile_layout(original_content)
+                    if improved_v32_content is not None:
+                        updated_content = improved_v32_content
+                        patch_reason_parts = ["让 tuple 格式化分支继承 profile 对应的布局策略"]
+                    else:
+                        improved_v31_content = _handle_sqlite_extract_skip_nulls(original_content)
+                        if improved_v31_content is not None:
+                            updated_content = improved_v31_content
+                            patch_reason_parts = ["让 extract 跳过 None，不再为空值生成维表记录"]
+                        else:
+                            improved_v30_content = _handle_sqlite_transform_empty_string_numeric(original_content)
+                            if improved_v30_content is not None:
+                                updated_content = improved_v30_content
+                                patch_reason_parts = ["让数值列转换时把空字符串回落为 None，避免保留伪空值"]
+                            else:
+                                improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
+                                if improved_v29_content is not None:
+                                    updated_content = improved_v29_content
+                                    patch_reason_parts = ["让字段变换阶段也能读取 alias，避免信息只在后置阶段回填"]
+                                else:
+                                    improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                                    if improved_v28_content is not None:
+                                        updated_content = improved_v28_content
+                                        patch_reason_parts = ["让继承链中的 model validator 同时生效"]
+                                    else:
+                                        improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                                        if improved_v27_content is not None:
+                                            updated_content = improved_v27_content
+                                            patch_reason_parts = ["让 delete_where 在非事务场景下自动提交"]
+                                        else:
+                                            improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                                            if improved_v26_content is not None:
+                                                updated_content = improved_v26_content
+                                                patch_reason_parts = ["让 extend 复制 applicable_validators，避免子 validator 污染父 validator"]
+                                            else:
+                                                improved_v25_content = _handle_jsonschema_error_tree_missing_index(original_content)
+                                                if improved_v25_content is not None:
+                                                    updated_content = improved_v25_content
+                                                    patch_reason_parts = ["让 ErrorTree 访问缺失索引时不再隐式创建空错误节点"]
+                                                else:
+                                                    improved_v24_content = _handle_dateutil_attached_comma_year(original_content)
+                                                    if improved_v24_content is not None:
+                                                        updated_content = improved_v24_content
+                                                        patch_reason_parts = ["让紧贴逗号的年份在切词时与月份正确分离"]
+                                                    else:
+                                                        improved_v23_content = _handle_packaging_dev_local_greater_than(original_content)
+                                                        if improved_v23_content is not None:
+                                                            updated_content = improved_v23_content
+                                                            patch_reason_parts = ["让带 local 段的 dev 版本继续按完整 public version 比较大小"]
+                                                        else:
+                                                            improved_v22_content = _handle_jsonschema_single_label_hostname(original_content)
+                                                            if improved_v22_content is not None:
+                                                                updated_content = improved_v22_content
+                                                                patch_reason_parts = ["让单标签 hostname 在 format checker 中被视为合法"]
+                                                            else:
+                                                                improved_v21_content = _handle_dateutil_month_year_dot_format(original_content)
+                                                                if improved_v21_content is not None:
+                                                                    updated_content = improved_v21_content
+                                                                    patch_reason_parts = ["让 MM.YYYY 格式回落成 month/year 解析路径"]
+                                                                else:
+                                                                    improved_v20_content = _handle_click_resolve_command_none(original_content)
+                                                                    if improved_v20_content is not None:
+                                                                        updated_content = improved_v20_content
+                                                                        patch_reason_parts = ["让 cmd 为 None 时保持普通返回语义，不再直接访问 name"]
+                                                                    else:
+                                                                        improved_v19_content = _handle_packaging_requirement_extra_normalization(original_content)
+                                                                        if improved_v19_content is not None:
+                                                                            updated_content = improved_v19_content
+                                                                            patch_reason_parts = ["让复合 marker 表达式里的 extra 名称也统一规范化"]
+                                                                        else:
+                                                                            improved_v18_content = _handle_jsonschema_integer_valued_multiple_of_float(original_content)
+                                                                            if improved_v18_content is not None:
+                                                                                updated_content = improved_v18_content
+                                                                                patch_reason_parts = ["让整数值的 multipleOf float 走整数等价比较路径"]
+                                                                            else:
+                                                                                improved_v17_content = _handle_jsonschema_hostname_value_error(original_content)
+                                                                                if improved_v17_content is not None:
+                                                                                    updated_content = improved_v17_content
+                                                                                    patch_reason_parts = ["让 hostname format checker 在 ValueError 场景下回落为 False"]
+                                                                                else:
+                                                                                    improved_v16_content = _handle_jsonschema_mixed_type_extras_sort(original_content)
+                                                                                    if improved_v16_content is not None:
+                                                                                        updated_content = improved_v16_content
+                                                                                        patch_reason_parts = ["为 mixed-type extras 排序增加 TypeError 兜底"]
+                                                                                    else:
+                                                                                        improved_v15_content = _handle_packaging_non_normalized_wheel_version(original_content)
+                                                                                        if improved_v15_content is not None:
+                                                                                            updated_content = improved_v15_content
+                                                                                            patch_reason_parts = ["拒绝 wheel 文件名中的非规范化版本号"]
+                                                                                        else:
+                                                                                            improved_v14_content = _handle_tomlkit_dotted_inline_table_append(original_content)
+                                                                                            if improved_v14_content is not None:
+                                                                                                updated_content = improved_v14_content
+                                                                                                patch_reason_parts = ["为 dotted inline table 追加键值对时补上逗号分隔"]
+                                                                                            else:
+                                                                                                improved_v13_content = _handle_tomlkit_next_line_comma_append(original_content)
+                                                                                                if improved_v13_content is not None:
+                                                                                                    updated_content = improved_v13_content
+                                                                                                    patch_reason_parts = ["保留数组原始下一行逗号风格，避免 append 后生成双逗号"]
+                                                                                                else:
+                                                                                                    improved_v12_content = _handle_slice_fill_with_divisible_case(original_content)
+                                                                                                    if improved_v12_content is not None:
+                                                                                                        updated_content = improved_v12_content
+                                                                                                        patch_reason_parts = ["让 slice 仅在存在余数时才补入 fill_with"]
+                                                                                                    else:
+                                                                                                        improved_v11_content = _handle_branch_assigned_undeclared(original_content)
+                                                                                                        if improved_v11_content is not None:
+                                                                                                            updated_content = improved_v11_content
+                                                                                                            patch_reason_parts = ["让所有分支都已赋值的变量不再被判定为 undeclared"]
+                                                                                                        else:
+                                                                                                            improved_v10_content = _handle_nine_digit_time_string(original_content)
+                                                                                                            if improved_v10_content is not None:
+                                                                                                                updated_content = improved_v10_content
+                                                                                                                patch_reason_parts = ["让 9 位时间串按 HHMMSSmmm 解析"]
+                                                                                                            else:
+                                                                                                                improved_v9_content = _handle_tzstr_zero_offset(original_content)
+                                                                                                                if improved_v9_content is not None:
+                                                                                                                    updated_content = improved_v9_content
+                                                                                                                    patch_reason_parts = ["让 UTC 和 GMT 在未显式提供 offset 时回落为零偏移"]
+                                                                                                                else:
+                                                                                                                    improved_v8_content = _handle_closest_marker_inheritance(original_content)
+                                                                                                                    if improved_v8_content is not None:
+                                                                                                                        updated_content = improved_v8_content
+                                                                                                                        patch_reason_parts = ["让 get_closest_marker 优先返回继承链中最近的 marker"]
+                                                                                                                    else:
+                                                                                                                        improved_v7_content = _handle_negative_boolean_default(original_content)
+                                                                                                                        if improved_v7_content is not None:
+                                                                                                                            updated_content = improved_v7_content
+                                                                                                                            patch_reason_parts = ["修正负向布尔 flag 的 default=True 默认行为"]
+                                                                                                                        else:
+                                                                                                                            improved_v6_content = _handle_richhandler_timezone(original_content)
+                                                                                                                            if improved_v6_content is not None:
+                                                                                                                                updated_content = improved_v6_content
+                                                                                                                                patch_reason_parts = ["让 RichHandler 的时间格式化显式保留时区信息"]
+                                                                                                                            else:
+                                                                                                                                improved_v5_content = _handle_crlf_ansi_lines(original_content)
+                                                                                                                                if improved_v5_content is not None:
+                                                                                                                                    updated_content = improved_v5_content
+                                                                                                                                    patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+                                                                                                                                else:
+                                                                                                                                    improved_v4_content = _handle_quoted_charset(original_content)
+                                                                                                                                    if improved_v4_content is not None:
+                                                                                                                                        updated_content = improved_v4_content
+                                                                                                                                        patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                                                                                                                                    else:
+                                                                                                                                        improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                                                                                                                                        if improved_v3_content is not None:
+                                                                                                                                            updated_content = improved_v3_content
+                                                                                                                                            patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                                                                                                                                        else:
+                                                                                                                                            improved_v2_content = _handle_leading_none_item(original_content)
+                                                                                                                                            if improved_v2_content is not None:
+                                                                                                                                                updated_content = improved_v2_content
+                                                                                                                                                patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                                                                                                                                            else:
+                                                                                                                                                improved_content = _handle_none_items(updated_content)
+                                                                                                                                                if improved_content is not None:
+                                                                                                                                                    updated_content = improved_content
+                                                                                                                                                    patch_reason_parts.append("加入 None 元素过滤逻辑")
+            elif policy_config.patch_strategy == "improved_v32":
+                improved_v32_content = _handle_isort_tuple_profile_layout(original_content)
+                if improved_v32_content is not None:
+                    updated_content = improved_v32_content
+                    patch_reason_parts = ["让 tuple 格式化分支继承 profile 对应的布局策略"]
+                else:
+                    improved_v31_content = _handle_sqlite_extract_skip_nulls(original_content)
+                    if improved_v31_content is not None:
+                        updated_content = improved_v31_content
+                        patch_reason_parts = ["让 extract 跳过 None，不再为空值生成维表记录"]
+                    else:
+                        improved_v30_content = _handle_sqlite_transform_empty_string_numeric(original_content)
+                        if improved_v30_content is not None:
+                            updated_content = improved_v30_content
+                            patch_reason_parts = ["让数值列转换时把空字符串回落为 None，避免保留伪空值"]
+                        else:
+                            improved_v29_content = _handle_attrs_field_transformer_alias(original_content)
+                            if improved_v29_content is not None:
+                                updated_content = improved_v29_content
+                                patch_reason_parts = ["让字段变换阶段也能读取 alias，避免信息只在后置阶段回填"]
+                            else:
+                                improved_v28_content = _handle_pydantic_inherited_model_validators(original_content)
+                                if improved_v28_content is not None:
+                                    updated_content = improved_v28_content
+                                    patch_reason_parts = ["让继承链中的 model validator 同时生效"]
+                                else:
+                                    improved_v27_content = _handle_sqlite_delete_where_autocommit(original_content)
+                                    if improved_v27_content is not None:
+                                        updated_content = improved_v27_content
+                                        patch_reason_parts = ["让 delete_where 在非事务场景下自动提交"]
+                                    else:
+                                        improved_v26_content = _handle_jsonschema_extend_copies_applicable_validators(original_content)
+                                        if improved_v26_content is not None:
+                                            updated_content = improved_v26_content
+                                            patch_reason_parts = ["让 extend 复制 applicable_validators，避免子 validator 污染父 validator"]
+                                        else:
+                                            improved_v25_content = _handle_jsonschema_error_tree_missing_index(original_content)
+                                            if improved_v25_content is not None:
+                                                updated_content = improved_v25_content
+                                                patch_reason_parts = ["让 ErrorTree 访问缺失索引时不再隐式创建空错误节点"]
+                                            else:
+                                                improved_v24_content = _handle_dateutil_attached_comma_year(original_content)
+                                                if improved_v24_content is not None:
+                                                    updated_content = improved_v24_content
+                                                    patch_reason_parts = ["让紧贴逗号的年份在切词时与月份正确分离"]
+                                                else:
+                                                    improved_v23_content = _handle_packaging_dev_local_greater_than(original_content)
+                                                    if improved_v23_content is not None:
+                                                        updated_content = improved_v23_content
+                                                        patch_reason_parts = ["让带 local 段的 dev 版本继续按完整 public version 比较大小"]
+                                                    else:
+                                                        improved_v22_content = _handle_jsonschema_single_label_hostname(original_content)
+                                                        if improved_v22_content is not None:
+                                                            updated_content = improved_v22_content
+                                                            patch_reason_parts = ["让单标签 hostname 在 format checker 中被视为合法"]
+                                                        else:
+                                                            improved_v21_content = _handle_dateutil_month_year_dot_format(original_content)
+                                                            if improved_v21_content is not None:
+                                                                updated_content = improved_v21_content
+                                                                patch_reason_parts = ["让 MM.YYYY 格式回落成 month/year 解析路径"]
+                                                            else:
+                                                                improved_v20_content = _handle_click_resolve_command_none(original_content)
+                                                                if improved_v20_content is not None:
+                                                                    updated_content = improved_v20_content
+                                                                    patch_reason_parts = ["让 cmd 为 None 时保持普通返回语义，不再直接访问 name"]
+                                                                else:
+                                                                    improved_v19_content = _handle_packaging_requirement_extra_normalization(original_content)
+                                                                    if improved_v19_content is not None:
+                                                                        updated_content = improved_v19_content
+                                                                        patch_reason_parts = ["让复合 marker 表达式里的 extra 名称也统一规范化"]
+                                                                    else:
+                                                                        improved_v18_content = _handle_jsonschema_integer_valued_multiple_of_float(original_content)
+                                                                        if improved_v18_content is not None:
+                                                                            updated_content = improved_v18_content
+                                                                            patch_reason_parts = ["让整数值的 multipleOf float 走整数等价比较路径"]
+                                                                        else:
+                                                                            improved_v17_content = _handle_jsonschema_hostname_value_error(original_content)
+                                                                            if improved_v17_content is not None:
+                                                                                updated_content = improved_v17_content
+                                                                                patch_reason_parts = ["让 hostname format checker 在 ValueError 场景下回落为 False"]
+                                                                            else:
+                                                                                improved_v16_content = _handle_jsonschema_mixed_type_extras_sort(original_content)
+                                                                                if improved_v16_content is not None:
+                                                                                    updated_content = improved_v16_content
+                                                                                    patch_reason_parts = ["为 mixed-type extras 排序增加 TypeError 兜底"]
+                                                                                else:
+                                                                                    improved_v15_content = _handle_packaging_non_normalized_wheel_version(original_content)
+                                                                                    if improved_v15_content is not None:
+                                                                                        updated_content = improved_v15_content
+                                                                                        patch_reason_parts = ["拒绝 wheel 文件名中的非规范化版本号"]
+                                                                                    else:
+                                                                                        improved_v14_content = _handle_tomlkit_dotted_inline_table_append(original_content)
+                                                                                        if improved_v14_content is not None:
+                                                                                            updated_content = improved_v14_content
+                                                                                            patch_reason_parts = ["为 dotted inline table 追加键值对时补上逗号分隔"]
+                                                                                        else:
+                                                                                            improved_v13_content = _handle_tomlkit_next_line_comma_append(original_content)
+                                                                                            if improved_v13_content is not None:
+                                                                                                updated_content = improved_v13_content
+                                                                                                patch_reason_parts = ["保留数组原始下一行逗号风格，避免 append 后生成双逗号"]
+                                                                                            else:
+                                                                                                improved_v12_content = _handle_slice_fill_with_divisible_case(original_content)
+                                                                                                if improved_v12_content is not None:
+                                                                                                    updated_content = improved_v12_content
+                                                                                                    patch_reason_parts = ["让 slice 仅在存在余数时才补入 fill_with"]
+                                                                                                else:
+                                                                                                    improved_v11_content = _handle_branch_assigned_undeclared(original_content)
+                                                                                                    if improved_v11_content is not None:
+                                                                                                        updated_content = improved_v11_content
+                                                                                                        patch_reason_parts = ["让所有分支都已赋值的变量不再被判定为 undeclared"]
+                                                                                                    else:
+                                                                                                        improved_v10_content = _handle_nine_digit_time_string(original_content)
+                                                                                                        if improved_v10_content is not None:
+                                                                                                            updated_content = improved_v10_content
+                                                                                                            patch_reason_parts = ["让 9 位时间串按 HHMMSSmmm 解析"]
+                                                                                                        else:
+                                                                                                            improved_v9_content = _handle_tzstr_zero_offset(original_content)
+                                                                                                            if improved_v9_content is not None:
+                                                                                                                updated_content = improved_v9_content
+                                                                                                                patch_reason_parts = ["让 UTC 和 GMT 在未显式提供 offset 时回落为零偏移"]
+                                                                                                            else:
+                                                                                                                improved_v8_content = _handle_closest_marker_inheritance(original_content)
+                                                                                                                if improved_v8_content is not None:
+                                                                                                                    updated_content = improved_v8_content
+                                                                                                                    patch_reason_parts = ["让 get_closest_marker 优先返回继承链中最近的 marker"]
+                                                                                                                else:
+                                                                                                                    improved_v7_content = _handle_negative_boolean_default(original_content)
+                                                                                                                    if improved_v7_content is not None:
+                                                                                                                        updated_content = improved_v7_content
+                                                                                                                        patch_reason_parts = ["修正负向布尔 flag 的 default=True 默认行为"]
+                                                                                                                    else:
+                                                                                                                        improved_v6_content = _handle_richhandler_timezone(original_content)
+                                                                                                                        if improved_v6_content is not None:
+                                                                                                                            updated_content = improved_v6_content
+                                                                                                                            patch_reason_parts = ["让 RichHandler 的时间格式化显式保留时区信息"]
+                                                                                                                        else:
+                                                                                                                            improved_v5_content = _handle_crlf_ansi_lines(original_content)
+                                                                                                                            if improved_v5_content is not None:
+                                                                                                                                updated_content = improved_v5_content
+                                                                                                                                patch_reason_parts = ["将 ANSI 文本拆分逻辑改为兼容 CRLF 的 splitlines keepends 流程"]
+                                                                                                                            else:
+                                                                                                                                improved_v4_content = _handle_quoted_charset(original_content)
+                                                                                                                                if improved_v4_content is not None:
+                                                                                                                                    updated_content = improved_v4_content
+                                                                                                                                    patch_reason_parts = ["加入 quoted charset 去引号逻辑"]
+                                                                                                                                else:
+                                                                                                                                    improved_v3_content = _relax_urllib3_upper_bound(original_content)
+                                                                                                                                    if improved_v3_content is not None:
+                                                                                                                                        updated_content = improved_v3_content
+                                                                                                                                        patch_reason_parts = ["放宽 urllib3 依赖上界到 3.x"]
+                                                                                                                                    else:
+                                                                                                                                        improved_v2_content = _handle_leading_none_item(original_content)
+                                                                                                                                        if improved_v2_content is not None:
+                                                                                                                                            updated_content = improved_v2_content
+                                                                                                                                            patch_reason_parts = ["加入空输入与全量 None 元素过滤逻辑"]
+                                                                                                                                        else:
+                                                                                                                                            improved_content = _handle_none_items(updated_content)
+                                                                                                                                            if improved_content is not None:
+                                                                                                                                                updated_content = improved_content
+                                                                                                                                                patch_reason_parts.append("加入 None 元素过滤逻辑")
             should_run_v25_chain = True
             if policy_config.patch_strategy == "improved_v32":
                 improved_v32_content = _handle_isort_tuple_profile_layout(original_content)

@@ -6519,3 +6519,116 @@
 
 - 还没有把这 8 条候选中的任何一条推进成新的 semi_real 正式任务
 - 下一轮应优先从 `packaging#638`、`packaging#788` 或 `tomlkit#442` 这类边界最清晰的候选开始落地
+
+## 2026-06-11 Phase 6 packaging marker `extra=None` 扩容与 `improved_v34`
+
+### 背景
+
+上一轮我们已经完成：
+
+- maturity 审计接入
+- packaging / tomlkit / jinja 候选池扩容
+- `docs/candidate_shortlist.md` 的可执行排序
+
+因此这一轮最自然的下一步，就是把 shortlist 里的第一批低风险候选真正转成新的正式任务，而不是继续只停留在候选层。
+
+### 目标
+
+- 把 `pypa/packaging#638` 转成新的 semi_real 正式任务
+- 为 `Marker.evaluate(extra=None)` 场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v34`
+- 把 maturity 审计结果同步到 `31 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_062.json`
+- `benchmarks/tasks/task_063.json`
+- `benchmarks/repos/packaging_marker_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v34.json`
+- `app/agent/patcher.py`
+- `logs/summaries/batch_run_realissuev34_001.json`
+- `logs/summaries/batch_eval_realissuev34_001.json`
+- `logs/summaries/batch_compare_realissue_step14_002.json`
+- `logs/summaries/batch_run_frozen20v34_001.json`
+- `logs/summaries/batch_eval_frozen20v34_001.json`
+- `logs/summaries/batch_compare_frozen20_step13_001.json`
+- `logs/summaries/benchmark_maturity_maturity_005.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `packaging#638` 的 `real_issue` 草稿：
+  - `task_062`
+- 新增可运行的 semi_real 正式任务：
+  - `task_063`
+- 新增 repo：
+  - `benchmarks/repos/packaging_marker_repo`
+- 在 repo 中故意保留 bug：
+  - `extra` 为 `None` 时仍继续执行 `.lower()`，从而触发回归测试失败
+- 新增 `improved_v34`
+- 在 patcher 中新增 `Marker.evaluate(extra=None)` 的专用规则
+- 把 `task_063` 加入正式 manifest
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_063.json --policy optimization/policy_versions/improved_v34.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v34.json --run-label realissuev34 --compare-against-eval logs/summaries/batch_eval_realissuev33_001.json --compare-label realissue_step14`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v34.json --run-label frozen20v34 --compare-against-eval logs/summaries/batch_eval_frozen20v33_001.json --compare-label frozen20_step13`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `30 -> 31`
+- 候选池状态：
+  - `accepted = 30 -> 31`
+  - `to_review = 8 -> 7`
+- `improved_v34` 正式 `31` 条任务集结果：
+  - `success_count: 30 -> 31`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5423 -> 0.5391`
+- `improved_v34` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5379 -> 0.5368`
+- maturity 审计：
+  - 正式任务数：`31 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `packaging#638` 已成功从候选进入正式 semi_real 任务集
+- `improved_v34` 在扩容后继续保持正式集和固定集双线无回归
+- 当前主线基线已经更新为：
+  - 正式任务数：`31`
+  - 最新策略：`improved_v34`
+  - 固定集合证据：`frozen_20`
+- 这说明我们正在稳步推进“规模扩容 + 稳定性证据同步累积”的成熟度路线，而不是只做孤立的新任务堆叠
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 还没有开始构建
+- 下一轮应继续优先吃 shortlist 中边界清晰的剩余候选，例如：
+  - `pypa/packaging#788`
+  - `python-poetry/tomlkit#442`
+  - `python-poetry/tomlkit#431`

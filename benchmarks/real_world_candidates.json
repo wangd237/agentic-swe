@@ -592,8 +592,8 @@
       "issue_url": "https://github.com/pypa/packaging/issues/638",
       "language": "python",
       "difficulty": "easy",
-      "status": "to_review",
-      "notes": "2026-06-11T23:28:50: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。",
+      "status": "accepted",
+      "notes": "2026-06-11T23:28:50: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-11T23:41:35: 重新同步 GitHub issue 元数据。\n2026-06-11T23:41:35: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-11T23:41:50: 已生成 semi_real 可运行任务 task_063，仓库目录为 benchmarks/repos/packaging_marker_repo。",
       "labels": [
         "bug",
         "packaging.markers"

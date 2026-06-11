@@ -1,0 +1,29 @@
+{
+  "task_id": "task_062",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Marker.evaluate with extra=None  fails in 22.0",
+  "issue_text": "Previously in v21.3\r\n```py\r\n>>> from packaging.markers import Marker\r\n>>> marker=Marker('extra == \"opt-feature\"')\r\n>>> marker.evaluate({\"extra\": None})\r\nFalse\r\n```\r\n\r\nWith v22.0, we get,\r\n```py\r\n>>> from packaging.markers import Marker\r\n>>> marker=Marker('extra == \"opt-feature\"')\r\n>>> marker.evaluate({\"extra\": None})\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\n  File \"/home/rth/.miniforge/envs/pyodide-env/lib/python3.10/site-packages/packaging/markers.py\", line 24",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 638,
+    "issue_url": "https://github.com/pypa/packaging/issues/638",
+    "candidate_id": "pypa_packaging_issue_638",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

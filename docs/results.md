@@ -43,6 +43,7 @@
 - 当前已补充 `task_059`，并在真实 issue 派生任务集上完成 `improved_v29 -> improved_v30` 扩容对比
 - 当前已补充 `task_060`，并在真实 issue 派生任务集上完成 `improved_v30 -> improved_v31` 扩容对比
 - 当前已补充 `task_061`，并在真实 issue 派生任务集上完成 `improved_v31 -> improved_v32` 扩容对比
+- 当前已补充 `task_063`，并在真实 issue 派生任务集上完成 `improved_v33 -> improved_v34` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
@@ -1878,6 +1879,60 @@ trace 热点分析结果：
 - 但真正决定目标是否达成的缺口仍然集中在两件事：
   - 继续把正式任务从 `30` 扩到 `60+`
   - 继续把 frozen 从 `20` 扩到 `40`，并累计连续 `5` 个策略版本的稳定证据
+
+`improved_v34` 正式 31 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v34.json`
+- 新增任务：
+  - `benchmarks/tasks/task_063.json`
+- 新增 repo：
+  - `benchmarks/repos/packaging_marker_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev34_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev34_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step14_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev34_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev34_001.json`
+- 指标：
+  - `task_count`: `30 -> 31`
+  - `success_count`: `30 -> 31`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5423 -> 0.5391`
+- 结论：
+  - 这说明 `packaging#638` 已成功转化为正式第 `31` 条 semi_real 任务
+  - `improved_v34` 在扩容后继续保持全量成功，并没有引入功能或时延回归
+
+`improved_v34` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v34_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v34_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step13_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v34_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v34_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5379 -> 0.5368`
+- 结论：
+  - 这说明 `improved_v34` 在固定 `20` 条真实任务上继续无回归
+  - 当前我们已经同时拥有正式扩容证据和固定集合稳定性证据
+
+`Benchmark Maturity v1` 最新量化审计：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_005.json`
+  - `logs/summaries/benchmark_maturity_maturity_005.md`
+- 当前结果：
+  - 正式任务数：`31 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续无回归版本：`0 / 5`
+- 结论：
+  - 广泛度仍然提前达标
+  - 下一阶段仍然要继续扩正式任务数，并尽快把 `frozen_20` 升级为 `frozen_40`
 
 `pytest importtime` 分组分析结果：
 
