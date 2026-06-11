@@ -1,0 +1,220 @@
+{
+  "created_at": "2026-06-11T13:56:33.308798+00:00",
+  "cohort_label": "run_tests_hotspots_v32",
+  "task_count": 4,
+  "task_ids": [
+    "task_034",
+    "task_036",
+    "task_038",
+    "task_040"
+  ],
+  "variant_aggregate": {
+    "light_terminal_plugins": {
+      "average_wall_delta_sec": 0.002,
+      "average_import_delta_us": -102,
+      "average_module_delta": 0,
+      "top_removed_modules": []
+    },
+    "minimal_safe_plugins": {
+      "average_wall_delta_sec": 0.0025,
+      "average_import_delta_us": 594,
+      "average_module_delta": 0,
+      "top_removed_modules": []
+    }
+  },
+  "ranked_variants": [
+    {
+      "variant_name": "light_terminal_plugins",
+      "average_wall_delta_sec": 0.002,
+      "average_import_delta_us": -102,
+      "average_module_delta": 0,
+      "top_removed_modules": []
+    },
+    {
+      "variant_name": "minimal_safe_plugins",
+      "average_wall_delta_sec": 0.0025,
+      "average_import_delta_us": 594,
+      "average_module_delta": 0,
+      "top_removed_modules": []
+    }
+  ],
+  "task_snapshots": [
+    {
+      "task_id": "task_034",
+      "test_command": "python -m pytest tests/test_utils.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": 0.0033,
+          "import_self_delta_us": 407,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": 0.0053,
+          "import_self_delta_us": 967,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        }
+      }
+    },
+    {
+      "task_id": "task_036",
+      "test_command": "python -m pytest tests/test_hostname.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": -0.0002,
+          "import_self_delta_us": -589,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": 0.0008,
+          "import_self_delta_us": 397,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        }
+      }
+    },
+    {
+      "task_id": "task_038",
+      "test_command": "python -m pytest tests/test_validator.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": 0.0008,
+          "import_self_delta_us": -613,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": 0.0005,
+          "import_self_delta_us": 186,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        }
+      }
+    },
+    {
+      "task_id": "task_040",
+      "test_command": "python -m pytest tests/test_requirements.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": 0.0041,
+          "import_self_delta_us": 387,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": 0.0033,
+          "import_self_delta_us": 824,
+          "unique_module_delta": 0,
+          "removed_modules": []
+        }
+      }
+    }
+  ],
+  "analysis_id": "pytest_plugin_variants_cohort_run_tests_hotspots_v32_001"
+}

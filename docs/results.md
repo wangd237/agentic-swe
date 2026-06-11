@@ -1711,3 +1711,45 @@ trace 热点分析结果：
 - 四个热点任务都稳定多导入了 `37` 个模块，说明这不是单任务偶发波动
 - 这让“collection 阶段的 import 链”从推测变成了可复现证据
 - 下一步更适合继续看这些新增模块是否与 Windows 平台、终端能力或 pytest 默认插件链有关
+
+`pytest` 插件变体基准结果：
+
+- 单任务基准产物：
+  - `logs/summaries/pytest_plugin_variants_task034v32_001.json`
+  - `logs/summaries/pytest_plugin_variants_task036v32_001.json`
+  - `logs/summaries/pytest_plugin_variants_task038v32_001.json`
+  - `logs/summaries/pytest_plugin_variants_task040v32_001.json`
+- cohort 汇总产物：
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_001.json`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_001.md`
+- 对比变体：
+  - `default_plugins`
+  - `light_terminal_plugins`
+  - `minimal_safe_plugins`
+- 热点任务 cohort 聚合：
+  - `light_terminal_plugins`: `avg wall delta = 0.002`
+  - `light_terminal_plugins`: `avg import delta(us) = -102`
+  - `light_terminal_plugins`: `avg module delta = 0`
+  - `minimal_safe_plugins`: `avg wall delta = 0.0025`
+  - `minimal_safe_plugins`: `avg import delta(us) = 594`
+  - `minimal_safe_plugins`: `avg module delta = 0`
+- 当前验证过可安全关闭的插件包括：
+  - `junitxml`
+  - `pastebin`
+  - `setuponly`
+  - `setupplan`
+  - `stepwise`
+  - `warnings`
+  - `faulthandler`
+  - `terminalprogress`
+  - `debugging`
+  - `unraisableexception`
+  - `threadexception`
+
+进一步结论：
+
+- 关闭这组默认插件后，wall time 只变化到几毫秒量级，没有形成稳定降本
+- 两组插件变体都没有减少新增模块数，说明前面 importtime 里看到的 `37` 个新增模块不是主要由这组插件带来的
+- 这是一个非常有价值的负结论：
+  - 当前慢点大概率不在这组可安全关闭的默认插件上
+  - 后续应优先继续切分 `pytest` 主干 collection 逻辑、Windows 平台链路和终端能力链路

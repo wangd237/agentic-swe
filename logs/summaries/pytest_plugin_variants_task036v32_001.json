@@ -1,0 +1,1919 @@
+{
+  "created_at": "2026-06-11T13:56:18.815608+00:00",
+  "task_id": "task_036",
+  "task_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\tasks\\task_036.json",
+  "source_repo_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\benchmarks\\repos\\jsonschema_hostname_repo",
+  "test_command": "python -m pytest tests/test_hostname.py -q",
+  "repetitions": 3,
+  "variant_summaries": {
+    "default_plugins": {
+      "variant_name": "default_plugins",
+      "plugin_flags": [],
+      "run_count": 3,
+      "all_ok": false,
+      "average_command_execution_duration_sec": 0.0429,
+      "average_total_import_self_us": 9085,
+      "average_unique_module_count": 33,
+      "first_command_execution_duration_sec": 0.0472,
+      "repeated_command_execution_average_sec": 0.0408,
+      "latest_top_self_imports": [
+        {
+          "module": "encodings",
+          "self_us": 1402,
+          "cumulative_us": 2984
+        },
+        {
+          "module": "site",
+          "self_us": 1197,
+          "cumulative_us": 4144
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 894,
+          "cumulative_us": 894
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 778,
+          "cumulative_us": 778
+        },
+        {
+          "module": "codecs",
+          "self_us": 731,
+          "cumulative_us": 805
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 617,
+          "cumulative_us": 617
+        },
+        {
+          "module": "os",
+          "self_us": 438,
+          "cumulative_us": 1446
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 435,
+          "cumulative_us": 725
+        },
+        {
+          "module": "encodings.gbk",
+          "self_us": 379,
+          "cumulative_us": 454
+        },
+        {
+          "module": "time",
+          "self_us": 368,
+          "cumulative_us": 368
+        }
+      ],
+      "latest_top_cumulative_imports": [
+        {
+          "module": "site",
+          "self_us": 1197,
+          "cumulative_us": 4144
+        },
+        {
+          "module": "encodings",
+          "self_us": 1402,
+          "cumulative_us": 2984
+        },
+        {
+          "module": "os",
+          "self_us": 438,
+          "cumulative_us": 1446
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 894,
+          "cumulative_us": 894
+        },
+        {
+          "module": "codecs",
+          "self_us": 731,
+          "cumulative_us": 805
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 778,
+          "cumulative_us": 778
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 435,
+          "cumulative_us": 725
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 617,
+          "cumulative_us": 617
+        },
+        {
+          "module": "zipimport",
+          "self_us": 163,
+          "cumulative_us": 530
+        },
+        {
+          "module": "encodings.gbk",
+          "self_us": 379,
+          "cumulative_us": 454
+        }
+      ],
+      "latest_module_names": [
+        "_abc",
+        "_codecs",
+        "_codecs_cn",
+        "_collections_abc",
+        "_distutils_hack",
+        "_frozen_importlib_external",
+        "_io",
+        "_multibytecodec",
+        "_signal",
+        "_sitebuiltins",
+        "_stat",
+        "_winapi",
+        "abc",
+        "codecs",
+        "encodings",
+        "encodings.aliases",
+        "encodings.gbk",
+        "encodings.utf_8",
+        "encodings.utf_8_sig",
+        "errno",
+        "genericpath",
+        "io",
+        "marshal",
+        "nt",
+        "ntpath",
+        "os",
+        "site",
+        "sitecustomize",
+        "stat",
+        "time",
+        "usercustomize",
+        "winreg",
+        "zipimport"
+      ],
+      "records": [
+        {
+          "variant_name": "default_plugins",
+          "run_index": 1,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0472,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 9195,
+          "top_self_imports": [
+            {
+              "module": "encodings",
+              "self_us": 1345,
+              "cumulative_us": 2504
+            },
+            {
+              "module": "site",
+              "self_us": 1223,
+              "cumulative_us": 4210
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 943,
+              "cumulative_us": 943
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 592,
+              "cumulative_us": 592
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 571,
+              "cumulative_us": 571
+            },
+            {
+              "module": "codecs",
+              "self_us": 543,
+              "cumulative_us": 589
+            },
+            {
+              "module": "time",
+              "self_us": 456,
+              "cumulative_us": 456
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 434,
+              "cumulative_us": 756
+            },
+            {
+              "module": "os",
+              "self_us": 429,
+              "cumulative_us": 1396
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 384,
+              "cumulative_us": 384
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1223,
+              "cumulative_us": 4210
+            },
+            {
+              "module": "encodings",
+              "self_us": 1345,
+              "cumulative_us": 2504
+            },
+            {
+              "module": "os",
+              "self_us": 429,
+              "cumulative_us": 1396
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 943,
+              "cumulative_us": 943
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 434,
+              "cumulative_us": 756
+            },
+            {
+              "module": "zipimport",
+              "self_us": 214,
+              "cumulative_us": 670
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 592,
+              "cumulative_us": 592
+            },
+            {
+              "module": "codecs",
+              "self_us": 543,
+              "cumulative_us": 589
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 571,
+              "cumulative_us": 571
+            },
+            {
+              "module": "time",
+              "self_us": 456,
+              "cumulative_us": 456
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "default_plugins",
+          "run_index": 2,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0412,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 8526,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1169,
+              "cumulative_us": 4241
+            },
+            {
+              "module": "encodings",
+              "self_us": 1012,
+              "cumulative_us": 1952
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1012,
+              "cumulative_us": 1012
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 612,
+              "cumulative_us": 612
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 501,
+              "cumulative_us": 501
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 441,
+              "cumulative_us": 740
+            },
+            {
+              "module": "os",
+              "self_us": 430,
+              "cumulative_us": 1431
+            },
+            {
+              "module": "codecs",
+              "self_us": 392,
+              "cumulative_us": 440
+            },
+            {
+              "module": "time",
+              "self_us": 380,
+              "cumulative_us": 380
+            },
+            {
+              "module": "encodings.utf_8",
+              "self_us": 372,
+              "cumulative_us": 372
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1169,
+              "cumulative_us": 4241
+            },
+            {
+              "module": "encodings",
+              "self_us": 1012,
+              "cumulative_us": 1952
+            },
+            {
+              "module": "os",
+              "self_us": 430,
+              "cumulative_us": 1431
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1012,
+              "cumulative_us": 1012
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 441,
+              "cumulative_us": 740
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 612,
+              "cumulative_us": 612
+            },
+            {
+              "module": "zipimport",
+              "self_us": 167,
+              "cumulative_us": 547
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 501,
+              "cumulative_us": 501
+            },
+            {
+              "module": "codecs",
+              "self_us": 392,
+              "cumulative_us": 440
+            },
+            {
+              "module": "time",
+              "self_us": 380,
+              "cumulative_us": 380
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "default_plugins",
+          "run_index": 3,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0404,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 9534,
+          "top_self_imports": [
+            {
+              "module": "encodings",
+              "self_us": 1402,
+              "cumulative_us": 2984
+            },
+            {
+              "module": "site",
+              "self_us": 1197,
+              "cumulative_us": 4144
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 894,
+              "cumulative_us": 894
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 778,
+              "cumulative_us": 778
+            },
+            {
+              "module": "codecs",
+              "self_us": 731,
+              "cumulative_us": 805
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 617,
+              "cumulative_us": 617
+            },
+            {
+              "module": "os",
+              "self_us": 438,
+              "cumulative_us": 1446
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 435,
+              "cumulative_us": 725
+            },
+            {
+              "module": "encodings.gbk",
+              "self_us": 379,
+              "cumulative_us": 454
+            },
+            {
+              "module": "time",
+              "self_us": 368,
+              "cumulative_us": 368
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1197,
+              "cumulative_us": 4144
+            },
+            {
+              "module": "encodings",
+              "self_us": 1402,
+              "cumulative_us": 2984
+            },
+            {
+              "module": "os",
+              "self_us": 438,
+              "cumulative_us": 1446
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 894,
+              "cumulative_us": 894
+            },
+            {
+              "module": "codecs",
+              "self_us": 731,
+              "cumulative_us": 805
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 778,
+              "cumulative_us": 778
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 435,
+              "cumulative_us": 725
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 617,
+              "cumulative_us": 617
+            },
+            {
+              "module": "zipimport",
+              "self_us": 163,
+              "cumulative_us": 530
+            },
+            {
+              "module": "encodings.gbk",
+              "self_us": 379,
+              "cumulative_us": 454
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        }
+      ]
+    },
+    "light_terminal_plugins": {
+      "variant_name": "light_terminal_plugins",
+      "plugin_flags": [
+        "-p no:junitxml",
+        "-p no:pastebin",
+        "-p no:setuponly",
+        "-p no:setupplan",
+        "-p no:stepwise",
+        "-p no:warnings",
+        "-p no:faulthandler",
+        "-p no:terminalprogress"
+      ],
+      "run_count": 3,
+      "all_ok": false,
+      "average_command_execution_duration_sec": 0.0427,
+      "average_total_import_self_us": 8496,
+      "average_unique_module_count": 33,
+      "first_command_execution_duration_sec": 0.0462,
+      "repeated_command_execution_average_sec": 0.0409,
+      "latest_top_self_imports": [
+        {
+          "module": "site",
+          "self_us": 1268,
+          "cumulative_us": 4292
+        },
+        {
+          "module": "encodings",
+          "self_us": 939,
+          "cumulative_us": 1803
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 893,
+          "cumulative_us": 893
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 604,
+          "cumulative_us": 604
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 451,
+          "cumulative_us": 451
+        },
+        {
+          "module": "os",
+          "self_us": 444,
+          "cumulative_us": 1441
+        },
+        {
+          "module": "encodings.utf_8_sig",
+          "self_us": 416,
+          "cumulative_us": 416
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 413,
+          "cumulative_us": 703
+        },
+        {
+          "module": "codecs",
+          "self_us": 375,
+          "cumulative_us": 415
+        },
+        {
+          "module": "time",
+          "self_us": 327,
+          "cumulative_us": 327
+        }
+      ],
+      "latest_top_cumulative_imports": [
+        {
+          "module": "site",
+          "self_us": 1268,
+          "cumulative_us": 4292
+        },
+        {
+          "module": "encodings",
+          "self_us": 939,
+          "cumulative_us": 1803
+        },
+        {
+          "module": "os",
+          "self_us": 444,
+          "cumulative_us": 1441
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 893,
+          "cumulative_us": 893
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 413,
+          "cumulative_us": 703
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 604,
+          "cumulative_us": 604
+        },
+        {
+          "module": "zipimport",
+          "self_us": 175,
+          "cumulative_us": 501
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 451,
+          "cumulative_us": 451
+        },
+        {
+          "module": "encodings.utf_8_sig",
+          "self_us": 416,
+          "cumulative_us": 416
+        },
+        {
+          "module": "codecs",
+          "self_us": 375,
+          "cumulative_us": 415
+        }
+      ],
+      "latest_module_names": [
+        "_abc",
+        "_codecs",
+        "_codecs_cn",
+        "_collections_abc",
+        "_distutils_hack",
+        "_frozen_importlib_external",
+        "_io",
+        "_multibytecodec",
+        "_signal",
+        "_sitebuiltins",
+        "_stat",
+        "_winapi",
+        "abc",
+        "codecs",
+        "encodings",
+        "encodings.aliases",
+        "encodings.gbk",
+        "encodings.utf_8",
+        "encodings.utf_8_sig",
+        "errno",
+        "genericpath",
+        "io",
+        "marshal",
+        "nt",
+        "ntpath",
+        "os",
+        "site",
+        "sitecustomize",
+        "stat",
+        "time",
+        "usercustomize",
+        "winreg",
+        "zipimport"
+      ],
+      "records": [
+        {
+          "variant_name": "light_terminal_plugins",
+          "run_index": 1,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0462,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 9153,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1707,
+              "cumulative_us": 5081
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1059,
+              "cumulative_us": 1059
+            },
+            {
+              "module": "encodings",
+              "self_us": 933,
+              "cumulative_us": 1860
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 617,
+              "cumulative_us": 617
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 510,
+              "cumulative_us": 510
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 494,
+              "cumulative_us": 494
+            },
+            {
+              "module": "os",
+              "self_us": 480,
+              "cumulative_us": 1510
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 434,
+              "cumulative_us": 727
+            },
+            {
+              "module": "codecs",
+              "self_us": 391,
+              "cumulative_us": 434
+            },
+            {
+              "module": "encodings.utf_8",
+              "self_us": 330,
+              "cumulative_us": 330
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1707,
+              "cumulative_us": 5081
+            },
+            {
+              "module": "encodings",
+              "self_us": 933,
+              "cumulative_us": 1860
+            },
+            {
+              "module": "os",
+              "self_us": 480,
+              "cumulative_us": 1510
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1059,
+              "cumulative_us": 1059
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 434,
+              "cumulative_us": 727
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 617,
+              "cumulative_us": 617
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 510,
+              "cumulative_us": 510
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 494,
+              "cumulative_us": 494
+            },
+            {
+              "module": "zipimport",
+              "self_us": 156,
+              "cumulative_us": 459
+            },
+            {
+              "module": "codecs",
+              "self_us": 391,
+              "cumulative_us": 434
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "light_terminal_plugins",
+          "run_index": 2,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0395,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 8102,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1086,
+              "cumulative_us": 3916
+            },
+            {
+              "module": "encodings",
+              "self_us": 972,
+              "cumulative_us": 1892
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 795,
+              "cumulative_us": 795
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 612,
+              "cumulative_us": 612
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 483,
+              "cumulative_us": 483
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 468,
+              "cumulative_us": 798
+            },
+            {
+              "module": "os",
+              "self_us": 434,
+              "cumulative_us": 1423
+            },
+            {
+              "module": "time",
+              "self_us": 408,
+              "cumulative_us": 408
+            },
+            {
+              "module": "codecs",
+              "self_us": 396,
+              "cumulative_us": 438
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 298,
+              "cumulative_us": 298
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1086,
+              "cumulative_us": 3916
+            },
+            {
+              "module": "encodings",
+              "self_us": 972,
+              "cumulative_us": 1892
+            },
+            {
+              "module": "os",
+              "self_us": 434,
+              "cumulative_us": 1423
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 468,
+              "cumulative_us": 798
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 795,
+              "cumulative_us": 795
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 612,
+              "cumulative_us": 612
+            },
+            {
+              "module": "zipimport",
+              "self_us": 161,
+              "cumulative_us": 569
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 483,
+              "cumulative_us": 483
+            },
+            {
+              "module": "codecs",
+              "self_us": 396,
+              "cumulative_us": 438
+            },
+            {
+              "module": "time",
+              "self_us": 408,
+              "cumulative_us": 408
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "light_terminal_plugins",
+          "run_index": 3,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0423,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 8234,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1268,
+              "cumulative_us": 4292
+            },
+            {
+              "module": "encodings",
+              "self_us": 939,
+              "cumulative_us": 1803
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 893,
+              "cumulative_us": 893
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 604,
+              "cumulative_us": 604
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 451,
+              "cumulative_us": 451
+            },
+            {
+              "module": "os",
+              "self_us": 444,
+              "cumulative_us": 1441
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 416,
+              "cumulative_us": 416
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 413,
+              "cumulative_us": 703
+            },
+            {
+              "module": "codecs",
+              "self_us": 375,
+              "cumulative_us": 415
+            },
+            {
+              "module": "time",
+              "self_us": 327,
+              "cumulative_us": 327
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1268,
+              "cumulative_us": 4292
+            },
+            {
+              "module": "encodings",
+              "self_us": 939,
+              "cumulative_us": 1803
+            },
+            {
+              "module": "os",
+              "self_us": 444,
+              "cumulative_us": 1441
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 893,
+              "cumulative_us": 893
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 413,
+              "cumulative_us": 703
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 604,
+              "cumulative_us": 604
+            },
+            {
+              "module": "zipimport",
+              "self_us": 175,
+              "cumulative_us": 501
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 451,
+              "cumulative_us": 451
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 416,
+              "cumulative_us": 416
+            },
+            {
+              "module": "codecs",
+              "self_us": 375,
+              "cumulative_us": 415
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        }
+      ]
+    },
+    "minimal_safe_plugins": {
+      "variant_name": "minimal_safe_plugins",
+      "plugin_flags": [
+        "-p no:junitxml",
+        "-p no:pastebin",
+        "-p no:setuponly",
+        "-p no:setupplan",
+        "-p no:stepwise",
+        "-p no:warnings",
+        "-p no:faulthandler",
+        "-p no:terminalprogress",
+        "-p no:debugging",
+        "-p no:unraisableexception",
+        "-p no:threadexception"
+      ],
+      "run_count": 3,
+      "all_ok": false,
+      "average_command_execution_duration_sec": 0.0437,
+      "average_total_import_self_us": 9482,
+      "average_unique_module_count": 33,
+      "first_command_execution_duration_sec": 0.0422,
+      "repeated_command_execution_average_sec": 0.0444,
+      "latest_top_self_imports": [
+        {
+          "module": "site",
+          "self_us": 1254,
+          "cumulative_us": 4716
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 1222,
+          "cumulative_us": 1222
+        },
+        {
+          "module": "encodings",
+          "self_us": 1045,
+          "cumulative_us": 2361
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 738,
+          "cumulative_us": 738
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 675,
+          "cumulative_us": 1075
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 630,
+          "cumulative_us": 630
+        },
+        {
+          "module": "codecs",
+          "self_us": 513,
+          "cumulative_us": 579
+        },
+        {
+          "module": "os",
+          "self_us": 458,
+          "cumulative_us": 1493
+        },
+        {
+          "module": "encodings.utf_8_sig",
+          "self_us": 444,
+          "cumulative_us": 444
+        },
+        {
+          "module": "encodings.gbk",
+          "self_us": 405,
+          "cumulative_us": 475
+        }
+      ],
+      "latest_top_cumulative_imports": [
+        {
+          "module": "site",
+          "self_us": 1254,
+          "cumulative_us": 4716
+        },
+        {
+          "module": "encodings",
+          "self_us": 1045,
+          "cumulative_us": 2361
+        },
+        {
+          "module": "os",
+          "self_us": 458,
+          "cumulative_us": 1493
+        },
+        {
+          "module": "_distutils_hack",
+          "self_us": 1222,
+          "cumulative_us": 1222
+        },
+        {
+          "module": "_frozen_importlib_external",
+          "self_us": 675,
+          "cumulative_us": 1075
+        },
+        {
+          "module": "encodings.aliases",
+          "self_us": 738,
+          "cumulative_us": 738
+        },
+        {
+          "module": "_collections_abc",
+          "self_us": 630,
+          "cumulative_us": 630
+        },
+        {
+          "module": "codecs",
+          "self_us": 513,
+          "cumulative_us": 579
+        },
+        {
+          "module": "zipimport",
+          "self_us": 163,
+          "cumulative_us": 486
+        },
+        {
+          "module": "encodings.gbk",
+          "self_us": 405,
+          "cumulative_us": 475
+        }
+      ],
+      "latest_module_names": [
+        "_abc",
+        "_codecs",
+        "_codecs_cn",
+        "_collections_abc",
+        "_distutils_hack",
+        "_frozen_importlib_external",
+        "_io",
+        "_multibytecodec",
+        "_signal",
+        "_sitebuiltins",
+        "_stat",
+        "_winapi",
+        "abc",
+        "codecs",
+        "encodings",
+        "encodings.aliases",
+        "encodings.gbk",
+        "encodings.utf_8",
+        "encodings.utf_8_sig",
+        "errno",
+        "genericpath",
+        "io",
+        "marshal",
+        "nt",
+        "ntpath",
+        "os",
+        "site",
+        "sitecustomize",
+        "stat",
+        "time",
+        "usercustomize",
+        "winreg",
+        "zipimport"
+      ],
+      "records": [
+        {
+          "variant_name": "minimal_safe_plugins",
+          "run_index": 1,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress -p no:debugging -p no:unraisableexception -p no:threadexception",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0422,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 8582,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1086,
+              "cumulative_us": 4160
+            },
+            {
+              "module": "encodings",
+              "self_us": 979,
+              "cumulative_us": 2028
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 906,
+              "cumulative_us": 906
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 618,
+              "cumulative_us": 618
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 581,
+              "cumulative_us": 581
+            },
+            {
+              "module": "os",
+              "self_us": 468,
+              "cumulative_us": 1488
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 446,
+              "cumulative_us": 763
+            },
+            {
+              "module": "codecs",
+              "self_us": 422,
+              "cumulative_us": 468
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 408,
+              "cumulative_us": 408
+            },
+            {
+              "module": "encodings.utf_8",
+              "self_us": 353,
+              "cumulative_us": 353
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1086,
+              "cumulative_us": 4160
+            },
+            {
+              "module": "encodings",
+              "self_us": 979,
+              "cumulative_us": 2028
+            },
+            {
+              "module": "os",
+              "self_us": 468,
+              "cumulative_us": 1488
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 906,
+              "cumulative_us": 906
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 446,
+              "cumulative_us": 763
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 618,
+              "cumulative_us": 618
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 581,
+              "cumulative_us": 581
+            },
+            {
+              "module": "zipimport",
+              "self_us": 173,
+              "cumulative_us": 520
+            },
+            {
+              "module": "codecs",
+              "self_us": 422,
+              "cumulative_us": 468
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 408,
+              "cumulative_us": 408
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "minimal_safe_plugins",
+          "run_index": 2,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress -p no:debugging -p no:unraisableexception -p no:threadexception",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0423,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 9960,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1509,
+              "cumulative_us": 5209
+            },
+            {
+              "module": "encodings",
+              "self_us": 1175,
+              "cumulative_us": 2170
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 953,
+              "cumulative_us": 953
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 761,
+              "cumulative_us": 761
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 661,
+              "cumulative_us": 661
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 543,
+              "cumulative_us": 543
+            },
+            {
+              "module": "os",
+              "self_us": 525,
+              "cumulative_us": 1620
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 461,
+              "cumulative_us": 784
+            },
+            {
+              "module": "time",
+              "self_us": 441,
+              "cumulative_us": 441
+            },
+            {
+              "module": "codecs",
+              "self_us": 410,
+              "cumulative_us": 453
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1509,
+              "cumulative_us": 5209
+            },
+            {
+              "module": "encodings",
+              "self_us": 1175,
+              "cumulative_us": 2170
+            },
+            {
+              "module": "os",
+              "self_us": 525,
+              "cumulative_us": 1620
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 953,
+              "cumulative_us": 953
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 461,
+              "cumulative_us": 784
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 761,
+              "cumulative_us": 761
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 661,
+              "cumulative_us": 661
+            },
+            {
+              "module": "zipimport",
+              "self_us": 165,
+              "cumulative_us": 605
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 543,
+              "cumulative_us": 543
+            },
+            {
+              "module": "encodings.gbk",
+              "self_us": 394,
+              "cumulative_us": 474
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        },
+        {
+          "variant_name": "minimal_safe_plugins",
+          "run_index": 3,
+          "command": "python -X importtime python -m pytest tests/test_hostname.py -q --collect-only -p no:junitxml -p no:pastebin -p no:setuponly -p no:setupplan -p no:stepwise -p no:warnings -p no:faulthandler -p no:terminalprogress -p no:debugging -p no:unraisableexception -p no:threadexception",
+          "ok": false,
+          "exit_code": 2,
+          "command_execution_duration_sec": 0.0465,
+          "entry_count": 33,
+          "unique_module_count": 33,
+          "total_import_self_us": 9903,
+          "top_self_imports": [
+            {
+              "module": "site",
+              "self_us": 1254,
+              "cumulative_us": 4716
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1222,
+              "cumulative_us": 1222
+            },
+            {
+              "module": "encodings",
+              "self_us": 1045,
+              "cumulative_us": 2361
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 738,
+              "cumulative_us": 738
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 675,
+              "cumulative_us": 1075
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 630,
+              "cumulative_us": 630
+            },
+            {
+              "module": "codecs",
+              "self_us": 513,
+              "cumulative_us": 579
+            },
+            {
+              "module": "os",
+              "self_us": 458,
+              "cumulative_us": 1493
+            },
+            {
+              "module": "encodings.utf_8_sig",
+              "self_us": 444,
+              "cumulative_us": 444
+            },
+            {
+              "module": "encodings.gbk",
+              "self_us": 405,
+              "cumulative_us": 475
+            }
+          ],
+          "top_cumulative_imports": [
+            {
+              "module": "site",
+              "self_us": 1254,
+              "cumulative_us": 4716
+            },
+            {
+              "module": "encodings",
+              "self_us": 1045,
+              "cumulative_us": 2361
+            },
+            {
+              "module": "os",
+              "self_us": 458,
+              "cumulative_us": 1493
+            },
+            {
+              "module": "_distutils_hack",
+              "self_us": 1222,
+              "cumulative_us": 1222
+            },
+            {
+              "module": "_frozen_importlib_external",
+              "self_us": 675,
+              "cumulative_us": 1075
+            },
+            {
+              "module": "encodings.aliases",
+              "self_us": 738,
+              "cumulative_us": 738
+            },
+            {
+              "module": "_collections_abc",
+              "self_us": 630,
+              "cumulative_us": 630
+            },
+            {
+              "module": "codecs",
+              "self_us": 513,
+              "cumulative_us": 579
+            },
+            {
+              "module": "zipimport",
+              "self_us": 163,
+              "cumulative_us": 486
+            },
+            {
+              "module": "encodings.gbk",
+              "self_us": 405,
+              "cumulative_us": 475
+            }
+          ],
+          "module_names": [
+            "_abc",
+            "_codecs",
+            "_codecs_cn",
+            "_collections_abc",
+            "_distutils_hack",
+            "_frozen_importlib_external",
+            "_io",
+            "_multibytecodec",
+            "_signal",
+            "_sitebuiltins",
+            "_stat",
+            "_winapi",
+            "abc",
+            "codecs",
+            "encodings",
+            "encodings.aliases",
+            "encodings.gbk",
+            "encodings.utf_8",
+            "encodings.utf_8_sig",
+            "errno",
+            "genericpath",
+            "io",
+            "marshal",
+            "nt",
+            "ntpath",
+            "os",
+            "site",
+            "sitecustomize",
+            "stat",
+            "time",
+            "usercustomize",
+            "winreg",
+            "zipimport"
+          ]
+        }
+      ]
+    }
+  },
+  "derived_metrics": {
+    "baseline_variant": "default_plugins",
+    "variant_deltas": [
+      {
+        "variant_name": "light_terminal_plugins",
+        "disabled_plugin_flags": [
+          "-p no:junitxml",
+          "-p no:pastebin",
+          "-p no:setuponly",
+          "-p no:setupplan",
+          "-p no:stepwise",
+          "-p no:warnings",
+          "-p no:faulthandler",
+          "-p no:terminalprogress"
+        ],
+        "wall_delta_sec": -0.0002,
+        "import_self_delta_us": -589,
+        "unique_module_delta": 0,
+        "removed_modules": []
+      },
+      {
+        "variant_name": "minimal_safe_plugins",
+        "disabled_plugin_flags": [
+          "-p no:junitxml",
+          "-p no:pastebin",
+          "-p no:setuponly",
+          "-p no:setupplan",
+          "-p no:stepwise",
+          "-p no:warnings",
+          "-p no:faulthandler",
+          "-p no:terminalprogress",
+          "-p no:debugging",
+          "-p no:unraisableexception",
+          "-p no:threadexception"
+        ],
+        "wall_delta_sec": 0.0008,
+        "import_self_delta_us": 397,
+        "unique_module_delta": 0,
+        "removed_modules": []
+      }
+    ],
+    "ranked_by_wall_reduction": [
+      {
+        "variant_name": "light_terminal_plugins",
+        "disabled_plugin_flags": [
+          "-p no:junitxml",
+          "-p no:pastebin",
+          "-p no:setuponly",
+          "-p no:setupplan",
+          "-p no:stepwise",
+          "-p no:warnings",
+          "-p no:faulthandler",
+          "-p no:terminalprogress"
+        ],
+        "wall_delta_sec": -0.0002,
+        "import_self_delta_us": -589,
+        "unique_module_delta": 0,
+        "removed_modules": []
+      },
+      {
+        "variant_name": "minimal_safe_plugins",
+        "disabled_plugin_flags": [
+          "-p no:junitxml",
+          "-p no:pastebin",
+          "-p no:setuponly",
+          "-p no:setupplan",
+          "-p no:stepwise",
+          "-p no:warnings",
+          "-p no:faulthandler",
+          "-p no:terminalprogress",
+          "-p no:debugging",
+          "-p no:unraisableexception",
+          "-p no:threadexception"
+        ],
+        "wall_delta_sec": 0.0008,
+        "import_self_delta_us": 397,
+        "unique_module_delta": 0,
+        "removed_modules": []
+      }
+    ]
+  },
+  "benchmark_id": "pytest_plugin_variants_task036v32_001"
+}

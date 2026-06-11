@@ -23,6 +23,8 @@
   - 已新增 `pytest` 分阶段 cohort 汇总入口 `scripts/analyze_pytest_phase_cohort.py`
   - 已新增 `pytest importtime` 基准入口 `scripts/benchmark_pytest_importtime.py`
   - 已新增 `pytest importtime` cohort 汇总入口 `scripts/analyze_pytest_importtime_cohort.py`
+  - 已新增 `pytest` 插件变体基准入口 `scripts/benchmark_pytest_plugin_variants.py`
+  - 已新增 `pytest` 插件变体 cohort 汇总入口 `scripts/analyze_pytest_plugin_variant_cohort.py`
   - 已让新 trace 记录显式步骤耗时
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
@@ -157,6 +159,12 @@
   - `average_collect_import_self_delta_us = 20898`
   - `average_collect_unique_module_delta = 37`
   - 高频新增模块：`_ctypes`、`pyexpat`、`xml.etree.ElementTree`、`_pytest.skipping`、`ctypes.wintypes`
+- `pytest` 插件变体基准分析：
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_001.json`
+  - `light_terminal_plugins`：`avg_wall_delta = 0.002`
+  - `minimal_safe_plugins`：`avg_wall_delta = 0.0025`
+  - 两组变体的 `avg_module_delta` 都是 `0`
+  - 可安全关闭的这组默认插件没有带来稳定降本，也没有减少新增模块数
 
 说明：
 
@@ -167,6 +175,9 @@
 - 当前最可信的方向已经进一步收窄到 pytest 命令执行链本身，而不是工作副本复制
 - 在 pytest 命令执行链内部，主要耗时又进一步集中在启动与 collection，而不是 full run 本体
 - 在 collection 内部，又已经能看到稳定新增的 import 链与模块集合，不再只是笼统的“collection 变慢”
+- 新增的插件变体实验给出了一个很有价值的负结论：
+  - 默认 pytest 插件链里这组可安全关闭插件不是主因
+  - 后续应优先下钻 `pytest` 主干 collection 逻辑、Windows 平台链路和终端能力链路，而不是继续在这组默认插件上投入过多时间
 
 ## 最新新增任务
 
@@ -305,6 +316,7 @@
 - `run_tests` 模式基准已经证明 workspace copy 不是主因
 - `pytest` 分阶段基准已经证明主要开销位于启动与 collection，下一步应优先拆 import/collection 内部差异和解释器抖动
 - `pytest importtime` 基准已经证明 collection 的额外耗时伴随稳定新增 import 链，下一步应优先验证这些模块是否与平台或 pytest 默认插件链有关
+- `pytest` 插件变体基准已经进一步证明：当前这组可安全关闭的默认插件几乎不贡献降本空间，后续应优先验证 Windows 模块链路、终端能力链路和 pytest 主干 collection 逻辑
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

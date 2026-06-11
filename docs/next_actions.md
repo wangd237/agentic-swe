@@ -69,7 +69,9 @@
 - 已确认热点任务的主要额外开销位于 `pytest` 启动与 `collect-only`
 - 已完成一轮 `pytest importtime` 细分实验
 - 已确认 `collect-only` 阶段稳定多出 `37` 个模块和约 `20898us` import self time
-- 下一步应继续判断这些新增模块是否主要来自平台链路、终端能力或 pytest 默认插件链
+- 已完成一轮 `pytest` 插件变体细分实验
+- 已确认这组可安全关闭的默认插件几乎不降低 wall time，模块增量也保持 `0`
+- 下一步应继续判断这些新增模块是否主要来自 Windows 平台链路、终端能力链路或 pytest 主干 collection 逻辑
 
 ### 4. 持续清理候选池
 
@@ -101,7 +103,8 @@
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
 14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
-15. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+15. 用更细的命令形态验证 `colorama / pdb / terminalprogress / ctypes.wintypes` 等链路的贡献
+16. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
@@ -109,7 +112,7 @@
 
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验
+3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，并优先切分 Windows 模块链路与终端能力链路
 
 详细理由见：
 
@@ -140,6 +143,8 @@
 - `scripts/analyze_pytest_phase_cohort.py`
 - `scripts/benchmark_pytest_importtime.py`
 - `scripts/analyze_pytest_importtime_cohort.py`
+- `scripts/benchmark_pytest_plugin_variants.py`
+- `scripts/analyze_pytest_plugin_variant_cohort.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`

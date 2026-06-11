@@ -594,6 +594,8 @@ scripts/
 - `scripts/analyze_task_history_cohort.py`
 - `scripts/benchmark_run_tests_modes.py`
 - `scripts/analyze_run_tests_mode_cohort.py`
+- `scripts/benchmark_pytest_plugin_variants.py`
+- `scripts/analyze_pytest_plugin_variant_cohort.py`
 
 它们的作用是：
 
@@ -605,7 +607,7 @@ scripts/
 
 ### 7. 当前新增的性能诊断链
 
-目前 Phase 6 的性能定位已经形成五层递进：
+目前 Phase 6 的性能定位已经形成六层递进：
 
 1. `scripts/analyze_duration_regressions.py`
    - 看相邻两轮 batch run 的公共任务总体时延变化
@@ -617,6 +619,9 @@ scripts/
    - 把多个热点任务横向汇总，判断回升是否具有群体一致性
 5. `scripts/benchmark_run_tests_modes.py` + `scripts/analyze_run_tests_mode_cohort.py`
    - 直接比较 source repo、persistent workspace、fresh workspace 三种运行模式下的 `run_tests` 开销
+6. `scripts/benchmark_pytest_plugin_variants.py` + `scripts/analyze_pytest_plugin_variant_cohort.py`
+   - 直接比较默认插件链、轻量终端插件链和最小安全插件链
+   - 判断 pytest 默认插件链里哪些部分值得继续怀疑，哪些部分已经可以先排除
 
 你可以这样体验：
 
@@ -640,6 +645,10 @@ scripts/
   - `python scripts/benchmark_pytest_importtime.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
 - 汇总多个热点任务的 `pytest importtime` 基准：
   - `python scripts/analyze_pytest_importtime_cohort.py --benchmark-summary logs/summaries/pytest_importtime_task034v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task036v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task038v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- 对单个热点任务做 `pytest` 插件变体基准：
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+- 汇总多个热点任务的 `pytest` 插件变体基准：
+  - `python scripts/analyze_pytest_plugin_variant_cohort.py --benchmark-summary logs/summaries/pytest_plugin_variants_task034v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task036v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task038v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
@@ -676,7 +685,12 @@ scripts/
   - `average_collect_unique_module_delta = 37`
   - 高频新增模块包括：`_ctypes`、`pyexpat`、`xml.etree.ElementTree`、`_pytest.skipping`、`ctypes.wintypes`
 - 这说明 collection 的额外耗时里，有一块可以直接归因到稳定新增的 import 链，而不是纯粹随机抖动
-- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，而不是优先怀疑 workspace copy 或测试主体执行
+- `pytest` 插件变体 cohort 基准进一步表明：
+  - `light_terminal_plugins`：`avg wall delta = 0.002`
+  - `minimal_safe_plugins`：`avg wall delta = 0.0025`
+  - 两组变体的 `avg module delta` 都是 `0`
+- 这说明默认插件链里这组可安全关闭插件不是当前慢点主因
+- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先验证 Windows 平台链路、终端能力链路和 pytest 主干 collection 逻辑
 
 ### 7. 真实 issue 导入入口已可用
 
