@@ -26,10 +26,18 @@ def test_run_tests_returns_split_duration_metrics(tmp_path: Path) -> None:
     result = run_tests(str(repo_dir), "python -m pytest test_pass.py -q", timeout_sec=30)
 
     assert result["ok"] is True
+    assert isinstance(result["data"]["resolve_repo_path_duration_sec"], float)
+    assert isinstance(result["data"]["env_setup_duration_sec"], float)
+    assert isinstance(result["data"]["pre_execution_duration_sec"], float)
+    assert isinstance(result["data"]["command_execution_duration_sec"], float)
     assert isinstance(result["data"]["subprocess_duration_sec"], float)
     assert isinstance(result["data"]["summary_extraction_duration_sec"], float)
+    assert result["data"]["pre_execution_duration_sec"] >= 0.0
+    assert result["data"]["command_execution_duration_sec"] >= 0.0
     assert result["data"]["subprocess_duration_sec"] >= 0.0
     assert result["data"]["summary_extraction_duration_sec"] >= 0.0
+    assert result["data"]["subprocess_duration_sec"] == result["data"]["command_execution_duration_sec"]
+    assert result["data"]["duration_sec"] >= result["data"]["pre_execution_duration_sec"]
     assert result["data"]["duration_sec"] >= result["data"]["subprocess_duration_sec"]
 
 
@@ -47,9 +55,18 @@ def test_run_observation_task_writes_trace_tool_metrics() -> None:
     run_test_steps = [step for step in trace["steps"] if step["tool_name"] == "run_tests"]
     assert len(run_test_steps) == 2
     for step in run_test_steps:
+        assert "resolve_repo_path_duration_sec" in step["tool_metrics"]
+        assert "env_setup_duration_sec" in step["tool_metrics"]
+        assert "pre_execution_duration_sec" in step["tool_metrics"]
+        assert "command_execution_duration_sec" in step["tool_metrics"]
         assert "subprocess_duration_sec" in step["tool_metrics"]
         assert "summary_extraction_duration_sec" in step["tool_metrics"]
         assert step["duration_sec"] is not None
+
+    workspace_steps = [step for step in trace["steps"] if step["tool_name"] == "copy_workspace"]
+    assert len(workspace_steps) == 1
+    assert workspace_steps[0]["action_type"] == "workspace_prep"
+    assert workspace_steps[0]["duration_sec"] is not None
 
     patch_steps = [step for step in trace["steps"] if step["tool_name"] == "rule_based_patch"]
     assert len(patch_steps) == 1

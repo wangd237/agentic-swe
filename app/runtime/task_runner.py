@@ -190,9 +190,28 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
     run_paths = build_run_paths(repository_root / "logs" / "trajectories", task.task_id, run_id)
     run_paths.run_dir.mkdir(parents=True, exist_ok=True)
 
+    workspace_copy_started_at = perf_counter()
     _copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
+    workspace_copy_duration_sec = round(perf_counter() - workspace_copy_started_at, 4)
 
     trace = Trace(task_id=task.task_id, run_id=run_id, started_at=_utc_timestamp())
+    trace.steps.append(
+        TraceStep(
+            step_index=1,
+            action_type="workspace_prep",
+            tool_name="copy_workspace",
+            tool_input={
+                "source_repo_path": str(source_repo_path),
+                "workspace_path": str(run_paths.workspace_dir),
+            },
+            tool_output_summary="已完成 benchmark repo 到工作副本的复制。",
+            observation="当前任务将在隔离 workspace 中执行，避免污染基准输入。",
+            decision="继续进入仓库观察与测试阶段。",
+            timestamp=_utc_timestamp(),
+            duration_sec=workspace_copy_duration_sec,
+            tool_metrics={"ignored_dir_count": len(COPY_IGNORE_DIR_NAMES)},
+        )
+    )
     write_json(run_paths.task_json_path, task)
     tool_started_at = perf_counter()
     list_result = list_files(str(run_paths.workspace_dir))
@@ -263,6 +282,10 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         duration_sec=round(perf_counter() - tool_started_at, 4),
         tool_metrics={
             "exit_code": pre_test_result["data"].get("exit_code"),
+            "resolve_repo_path_duration_sec": pre_test_result["data"].get("resolve_repo_path_duration_sec"),
+            "env_setup_duration_sec": pre_test_result["data"].get("env_setup_duration_sec"),
+            "pre_execution_duration_sec": pre_test_result["data"].get("pre_execution_duration_sec"),
+            "command_execution_duration_sec": pre_test_result["data"].get("command_execution_duration_sec"),
             "subprocess_duration_sec": pre_test_result["data"].get("subprocess_duration_sec"),
             "summary_extraction_duration_sec": pre_test_result["data"].get("summary_extraction_duration_sec"),
         },
@@ -315,6 +338,10 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         duration_sec=round(perf_counter() - tool_started_at, 4),
         tool_metrics={
             "exit_code": post_test_result["data"].get("exit_code"),
+            "resolve_repo_path_duration_sec": post_test_result["data"].get("resolve_repo_path_duration_sec"),
+            "env_setup_duration_sec": post_test_result["data"].get("env_setup_duration_sec"),
+            "pre_execution_duration_sec": post_test_result["data"].get("pre_execution_duration_sec"),
+            "command_execution_duration_sec": post_test_result["data"].get("command_execution_duration_sec"),
             "subprocess_duration_sec": post_test_result["data"].get("subprocess_duration_sec"),
             "summary_extraction_duration_sec": post_test_result["data"].get("summary_extraction_duration_sec"),
         },
@@ -381,6 +408,7 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             "search_queries": search_queries,
             "read_file_count": len(trace.read_files),
             "policy_id": policy_config.policy_id,
+            "workspace_copy_duration_sec": workspace_copy_duration_sec,
         },
         recommended_files=files_to_read,
     )

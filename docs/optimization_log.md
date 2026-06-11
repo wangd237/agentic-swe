@@ -5323,3 +5323,107 @@
 - 目前只有 `task_040` 的最新样本显式记录了 `subprocess_duration_sec`
 - 旧热点任务历史样本还缺少统一的细粒度 `run_tests` 字段
 - 下一步应围绕 pytest 启动成本、工作副本 I/O、环境注入开销做专门实验
+
+## 2026-06-11 Phase 6 run_tests 模式基准补强
+
+### 本轮目标
+
+- 在热点任务集合上直接验证 workspace copy 是否导致 `improved_v32` 的系统性时延回升
+- 把 `run_tests` 的内部耗时继续拆细，方便后续继续下钻 pytest 执行链
+- 为下一步 pytest 启动、import/collection 实验建立更可靠的排除证据
+
+### 本轮新增文件
+
+- `scripts/benchmark_run_tests_modes.py`
+- `scripts/analyze_run_tests_mode_cohort.py`
+- `tests/test_benchmark_run_tests_modes.py`
+- `tests/test_analyze_run_tests_mode_cohort.py`
+- `logs/summaries/run_tests_modes_task034v32_001.json`
+- `logs/summaries/run_tests_modes_task034v32_001.md`
+- `logs/summaries/run_tests_modes_task036v32_001.json`
+- `logs/summaries/run_tests_modes_task036v32_001.md`
+- `logs/summaries/run_tests_modes_task038v32_001.json`
+- `logs/summaries/run_tests_modes_task038v32_001.md`
+- `logs/summaries/run_tests_modes_task040v32_001.json`
+- `logs/summaries/run_tests_modes_task040v32_001.md`
+- `logs/summaries/run_tests_modes_cohort_run_tests_hotspots_v32_001.json`
+- `logs/summaries/run_tests_modes_cohort_run_tests_hotspots_v32_001.md`
+
+### 本轮修改文件
+
+- `app/tools/run_tests.py`
+- `app/runtime/task_runner.py`
+- `tests/test_runtime_diagnostics.py`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 继续细化 `run_tests` 的诊断字段：
+  - `resolve_repo_path_duration_sec`
+  - `env_setup_duration_sec`
+  - `pre_execution_duration_sec`
+  - `command_execution_duration_sec`
+  - `summary_extraction_duration_sec`
+  - `subprocess_duration_sec`
+- 让 `task_runner` 把 `copy_workspace` 作为独立 trace step 落盘：
+  - 额外记录 `workspace_copy_duration_sec`
+  - 便于把 repo 复制成本从总时延中单独观察出来
+- 新增 `scripts/benchmark_run_tests_modes.py`：
+  - 支持对单个任务比较 `source_repo / persistent_workspace / fresh_workspace`
+  - 自动统计 copy、command、run_tests、combined 四类均值
+- 新增 `scripts/analyze_run_tests_mode_cohort.py`：
+  - 支持把多个热点任务的模式 benchmark 聚合成 cohort 报告
+  - 自动统计 fresh / persistent 相对 source 的 delta
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_runtime_diagnostics.py tests/test_benchmark_run_tests_modes.py tests/test_analyze_run_tests_mode_cohort.py tests/test_analyze_task_history.py tests/test_analyze_task_history_cohort.py tests/test_analyze_trace_hotspots.py tests/test_analyze_duration_regressions.py tests/test_import_issue_batch.py tests/test_run_real_issue_eval.py tests/test_scaffold_semi_real_task.py -q`
+  - 结果：`26 passed`
+- 真实日志验证：
+  - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_run_tests_mode_cohort.py --benchmark-summary logs/summaries/run_tests_modes_task034v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task036v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task038v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 热点任务 cohort：
+  - `task_034 / task_036 / task_038 / task_040`
+- 聚合结果：
+  - `average_persistent_run_tests_delta_sec = -0.0068`
+  - `average_fresh_run_tests_delta_sec = -0.0091`
+  - `average_persistent_combined_delta_sec = -0.0059`
+  - `average_fresh_combined_delta_sec = -0.0068`
+  - `average_fresh_copy_duration_sec = 0.0023`
+  - `fresh_slower_than_source_task_count = 2`
+  - `persistent_slower_than_source_task_count = 2`
+- 单任务样例：
+  - `task_040`
+    - source repo `run_tests avg = 0.2653`
+    - persistent workspace `run_tests avg = 0.2654`
+    - fresh workspace `run_tests avg = 0.2710`
+    - fresh copy `avg = 0.0024`
+  - `task_034`
+    - source repo `run_tests avg = 0.2647`
+    - persistent workspace `run_tests avg = 0.2652`
+    - fresh workspace `run_tests avg = 0.2711`
+    - fresh copy `avg = 0.0023`
+  - `task_036` / `task_038`
+    - workspace 模式反而略快于 source repo
+
+### 结论
+
+- workspace copy 的额外成本只有毫秒级，不足以解释 `improved_v32` 的系统性回升
+- fresh / persistent workspace 相比 source repo 并没有表现出稳定更慢，因此“工作副本复制是主因”的假设基本可以排除
+- 当前最可信的主因已经进一步收窄到 pytest 命令执行链本身或环境层抖动
+
+### 剩余问题
+
+- 现在已经知道 workspace copy 不是主因，但还没有把 pytest 启动、import/collection、实际测试执行彻底拆开
+- 需要继续比较首次运行与重复运行差异，确认是否存在缓存、文件系统或解释器启动抖动
+- 下一步应优先设计 pytest 启动 / collection 的更细实验，而不是继续重复 workspace 模式对比

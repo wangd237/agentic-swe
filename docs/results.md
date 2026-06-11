@@ -1567,3 +1567,51 @@ trace 热点分析结果：
 - `task_034 / task_036 / task_038 / task_040` 四个热点任务都在 `improved_v32` 上出现稳定历史回升，不是单任务偶发抖动
 - 这些任务的回升量级与 `run_tests` 增量高度接近，说明测试执行链仍然是当前最可信的主因
 - 下一步不再需要优先补更多历史聚合，而应开始设计 `run_tests` 细分实验，验证 pytest 启动、工作副本 I/O 或环境因素哪个贡献最大
+
+`run_tests` 模式基准结果：
+
+- 单任务基准产物：
+  - `logs/summaries/run_tests_modes_task034v32_001.json`
+  - `logs/summaries/run_tests_modes_task036v32_001.json`
+  - `logs/summaries/run_tests_modes_task038v32_001.json`
+  - `logs/summaries/run_tests_modes_task040v32_001.json`
+- cohort 汇总产物：
+  - `logs/summaries/run_tests_modes_cohort_run_tests_hotspots_v32_001.json`
+  - `logs/summaries/run_tests_modes_cohort_run_tests_hotspots_v32_001.md`
+- 对比模式：
+  - `source_repo`
+  - `persistent_workspace`
+  - `fresh_workspace`
+- 热点任务 cohort 聚合：
+  - `average_persistent_run_tests_delta_sec = -0.0068`
+  - `average_fresh_run_tests_delta_sec = -0.0091`
+  - `average_persistent_combined_delta_sec = -0.0059`
+  - `average_fresh_combined_delta_sec = -0.0068`
+  - `average_fresh_copy_duration_sec = 0.0023`
+  - `fresh_slower_than_source_task_count = 2`
+  - `persistent_slower_than_source_task_count = 2`
+- 单任务样例：
+  - `task_040`
+    - source repo `run_tests avg = 0.2653`
+    - persistent workspace `run_tests avg = 0.2654`
+    - fresh workspace `run_tests avg = 0.2710`
+    - fresh copy `avg = 0.0024`
+  - `task_034`
+    - source repo `run_tests avg = 0.2647`
+    - persistent workspace `run_tests avg = 0.2652`
+    - fresh workspace `run_tests avg = 0.2711`
+    - fresh copy `avg = 0.0023`
+
+进一步结论：
+
+- `run_tests` 现在已经显式拆分：
+  - `resolve_repo_path_duration_sec`
+  - `env_setup_duration_sec`
+  - `pre_execution_duration_sec`
+  - `command_execution_duration_sec`
+  - `summary_extraction_duration_sec`
+  - `subprocess_duration_sec`
+- `task_runner` 已把 `copy_workspace` 作为独立 trace step 落盘，并补充 `workspace_copy_duration_sec`
+- workspace copy 的额外成本只有毫秒级，且 fresh / persistent 模式整体并没有稳定慢于 source repo
+- 因此最近 `improved_v32` 的系统性回升并不是 workspace copy 导致的，主因更可能位于 pytest 命令执行链本身或环境层抖动
+- 下一步应继续围绕 pytest 启动、import/collection、首次运行和重复运行差异做更细实验

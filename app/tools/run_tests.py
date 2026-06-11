@@ -43,11 +43,17 @@ def _summarize_test_output(stdout: str, stderr: str, exit_code: int) -> tuple[st
 def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
     # 通过受控子进程运行测试，并关闭 pytest 自动插件加载，减少环境噪声。
     try:
+        tool_started_at = perf_counter()
+        resolve_started_at = perf_counter()
         resolved_repo_path = resolve_repo_path(repo_path)
+        resolve_repo_path_duration_sec = round(perf_counter() - resolve_started_at, 4)
+
+        env_setup_started_at = perf_counter()
         env = dict(os.environ)
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
-        started_at = perf_counter()
+        env_setup_duration_sec = round(perf_counter() - env_setup_started_at, 4)
 
+        command_started_at = perf_counter()
         completed_process = subprocess.run(
             command,
             cwd=resolved_repo_path,
@@ -57,7 +63,7 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             timeout=timeout_sec,
             env=env,
         )
-        subprocess_duration_sec = round(perf_counter() - started_at, 4)
+        command_execution_duration_sec = round(perf_counter() - command_started_at, 4)
 
         summary_started_at = perf_counter()
         test_summary, observed_failure = _summarize_test_output(
@@ -66,7 +72,8 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             exit_code=completed_process.returncode,
         )
         summary_extraction_duration_sec = round(perf_counter() - summary_started_at, 4)
-        duration_sec = round(subprocess_duration_sec + summary_extraction_duration_sec, 4)
+        pre_execution_duration_sec = round(resolve_repo_path_duration_sec + env_setup_duration_sec, 4)
+        duration_sec = round(perf_counter() - tool_started_at, 4)
 
         return {
             "ok": completed_process.returncode == 0,
@@ -80,7 +87,11 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
                 "stdout": completed_process.stdout,
                 "stderr": completed_process.stderr,
                 "duration_sec": duration_sec,
-                "subprocess_duration_sec": subprocess_duration_sec,
+                "resolve_repo_path_duration_sec": resolve_repo_path_duration_sec,
+                "env_setup_duration_sec": env_setup_duration_sec,
+                "pre_execution_duration_sec": pre_execution_duration_sec,
+                "command_execution_duration_sec": command_execution_duration_sec,
+                "subprocess_duration_sec": command_execution_duration_sec,
                 "summary_extraction_duration_sec": summary_extraction_duration_sec,
                 "observed_failure": observed_failure,
             },
@@ -102,6 +113,10 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
                 "stdout": error.stdout or "",
                 "stderr": error.stderr or "",
                 "duration_sec": timeout_sec,
+                "resolve_repo_path_duration_sec": 0.0,
+                "env_setup_duration_sec": 0.0,
+                "pre_execution_duration_sec": 0.0,
+                "command_execution_duration_sec": timeout_sec,
                 "subprocess_duration_sec": timeout_sec,
                 "summary_extraction_duration_sec": 0.0,
                 "observed_failure": "",

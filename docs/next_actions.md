@@ -48,6 +48,21 @@
 - 至少保留 `1` 份单任务历史时延分析报告，确认热点任务是稳定变慢还是高方差抖动
 - 至少保留 `1` 份热点任务集合历史分析报告，确认回升是否具有群体一致性
 
+### 5. 继续下钻 pytest 启动与 collection 开销
+
+目标：
+
+- 在已经确认 workspace copy 不是主因之后
+- 继续定位 `run_tests` 命令执行链里到底是哪一段在回升
+- 尽量把“猜测 pytest 变慢”变成可复现、可比较的实验结论
+
+完成标准：
+
+- 至少保留 `1` 份针对 pytest 启动或 collection 的细分实验报告
+- 明确比较首次运行与重复运行差异
+- 尽量区分命令执行、import/collection、摘要提取三类开销
+- 在优化日志里明确记录“已排除项”和“当前最可信主因”
+
 ### 4. 持续清理候选池
 
 目标：
@@ -76,7 +91,9 @@
 10. 用 `scripts/analyze_trace_hotspots.py` 补一轮 trace 热点分析
 11. 用 `scripts/analyze_task_history.py` 下钻热点任务历史分布
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
-13. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
+14. 继续做 pytest 启动 / collection 的更细实验
+15. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
@@ -84,7 +101,7 @@
 
 1. 扩新来源，补下一批 GitHub issue 候选
 2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 对 `run_tests` 设计更细的实验，拆分 pytest 启动、工作副本 I/O 和结果解析开销
+3. 继续对 pytest 启动、import/collection、首次运行与重复运行差异做更细实验
 
 详细理由见：
 
@@ -109,6 +126,8 @@
 - `scripts/analyze_trace_hotspots.py`
 - `scripts/analyze_task_history.py`
 - `scripts/analyze_task_history_cohort.py`
+- `scripts/benchmark_run_tests_modes.py`
+- `scripts/analyze_run_tests_mode_cohort.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`

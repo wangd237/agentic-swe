@@ -591,6 +591,9 @@ scripts/
 - `scripts/analyze_duration_regressions.py`
 - `scripts/analyze_trace_hotspots.py`
 - `scripts/analyze_task_history.py`
+- `scripts/analyze_task_history_cohort.py`
+- `scripts/benchmark_run_tests_modes.py`
+- `scripts/analyze_run_tests_mode_cohort.py`
 
 它们的作用是：
 
@@ -602,7 +605,7 @@ scripts/
 
 ### 7. 当前新增的性能诊断链
 
-目前 Phase 6 的性能定位已经形成三层递进：
+目前 Phase 6 的性能定位已经形成五层递进：
 
 1. `scripts/analyze_duration_regressions.py`
    - 看相邻两轮 batch run 的公共任务总体时延变化
@@ -612,6 +615,8 @@ scripts/
    - 看单个热点任务在不同策略版本和多次运行里的历史分布
 4. `scripts/analyze_task_history_cohort.py`
    - 把多个热点任务横向汇总，判断回升是否具有群体一致性
+5. `scripts/benchmark_run_tests_modes.py` + `scripts/analyze_run_tests_mode_cohort.py`
+   - 直接比较 source repo、persistent workspace、fresh workspace 三种运行模式下的 `run_tests` 开销
 
 你可以这样体验：
 
@@ -623,6 +628,10 @@ scripts/
   - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
 - 看热点任务集合 `task_034 / task_036 / task_038 / task_040` 的横向汇总：
   - `python scripts/analyze_task_history_cohort.py --task-id task_034 --task-id task_036 --task-id task_038 --task-id task_040 --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- 对单个热点任务做 `run_tests` 模式基准：
+  - `python scripts/benchmark_run_tests_modes.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+- 汇总多个热点任务的 `run_tests` 模式基准：
+  - `python scripts/analyze_run_tests_mode_cohort.py --benchmark-summary logs/summaries/run_tests_modes_task034v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task036v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task038v32_001.json --benchmark-summary logs/summaries/run_tests_modes_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
@@ -630,6 +639,24 @@ scripts/
 - 还能判断它是公共任务系统性回升，还是少数任务高方差抖动
 - 还能继续区分 `run_tests` 里的总耗时、子进程耗时和摘要提取耗时
 - 还能进一步确认“热点任务群”是否都在同一执行链上一起变慢
+- 还能直接验证“工作副本复制”是不是主因，而不是只做推测
+
+当前最新结论：
+
+- `run_tests` 已新增更细的诊断字段：
+  - `resolve_repo_path_duration_sec`
+  - `env_setup_duration_sec`
+  - `pre_execution_duration_sec`
+  - `command_execution_duration_sec`
+  - `summary_extraction_duration_sec`
+  - `subprocess_duration_sec`
+- `task_runner` 现在会把 `copy_workspace` 作为独立 trace step 写入，并记录 `workspace_copy_duration_sec`
+- 热点任务集合 `task_034 / task_036 / task_038 / task_040` 的模式基准汇总表明：
+  - `average_fresh_copy_duration_sec = 0.0023`
+  - `average_fresh_combined_delta_sec = -0.0068`
+  - `average_persistent_combined_delta_sec = -0.0059`
+- 这说明 workspace copy 的额外成本只有毫秒级，且整体并不稳定更慢，因此它不是最近 `improved_v32` 系统性回升的主因
+- 下一步应该继续下钻 pytest 启动、import/collection 和命令执行链，而不是优先怀疑 workspace copy
 
 ### 7. 真实 issue 导入入口已可用
 
