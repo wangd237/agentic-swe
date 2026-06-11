@@ -17,7 +17,7 @@ def test_build_collect_importtime_command_includes_plugin_flags() -> None:
         ["-p no:junitxml", "-p no:pastebin"],
     )
 
-    assert command == "python -X importtime python -m pytest tests/test_demo.py -q --collect-only -p no:junitxml -p no:pastebin"
+    assert command == "python -X importtime -m pytest tests/test_demo.py -q --collect-only -p no:junitxml -p no:pastebin"
 
 
 def test_build_variant_delta_computes_removed_modules() -> None:
@@ -57,6 +57,7 @@ def test_build_pytest_plugin_variant_benchmark_returns_variants() -> None:
     assert set(summary["variant_summaries"]) == {
         "default_plugins",
         "light_terminal_plugins",
+        "debug_exception_plugins",
         "minimal_safe_plugins",
     }
     assert isinstance(summary["derived_metrics"]["ranked_by_wall_reduction"], list)

@@ -1,0 +1,711 @@
+{
+  "created_at": "2026-06-11T14:19:47.325549+00:00",
+  "cohort_label": "run_tests_hotspots_v32",
+  "task_count": 4,
+  "task_ids": [
+    "task_034",
+    "task_036",
+    "task_038",
+    "task_040"
+  ],
+  "variant_aggregate": {
+    "debug_exception_plugins": {
+      "average_wall_delta_sec": -0.0235,
+      "average_import_delta_us": 2073,
+      "average_module_delta": -6,
+      "top_removed_modules": [
+        {
+          "module": "_pytest.threadexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.unraisableexception",
+          "task_count": 4
+        },
+        {
+          "module": "cmd",
+          "task_count": 4
+        },
+        {
+          "module": "code",
+          "task_count": 4
+        },
+        {
+          "module": "codeop",
+          "task_count": 4
+        },
+        {
+          "module": "pdb",
+          "task_count": 4
+        }
+      ]
+    },
+    "light_terminal_plugins": {
+      "average_wall_delta_sec": -0.0123,
+      "average_import_delta_us": -4433,
+      "average_module_delta": -15,
+      "top_removed_modules": [
+        {
+          "module": "_elementtree",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.junitxml",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.pastebin",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setuponly",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setupplan",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.stepwise",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.terminalprogress",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.warnings",
+          "task_count": 4
+        },
+        {
+          "module": "faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "pyexpat",
+          "task_count": 4
+        },
+        {
+          "module": "xml",
+          "task_count": 4
+        }
+      ]
+    },
+    "minimal_safe_plugins": {
+      "average_wall_delta_sec": -0.0331,
+      "average_import_delta_us": -6415,
+      "average_module_delta": -22,
+      "top_removed_modules": [
+        {
+          "module": "_elementtree",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.junitxml",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.pastebin",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setuponly",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setupplan",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.stepwise",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.terminalprogress",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.threadexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.tracemalloc",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.unraisableexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.warnings",
+          "task_count": 4
+        }
+      ]
+    }
+  },
+  "ranked_variants": [
+    {
+      "variant_name": "minimal_safe_plugins",
+      "average_wall_delta_sec": -0.0331,
+      "average_import_delta_us": -6415,
+      "average_module_delta": -22,
+      "top_removed_modules": [
+        {
+          "module": "_elementtree",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.junitxml",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.pastebin",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setuponly",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setupplan",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.stepwise",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.terminalprogress",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.threadexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.tracemalloc",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.unraisableexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.warnings",
+          "task_count": 4
+        }
+      ]
+    },
+    {
+      "variant_name": "debug_exception_plugins",
+      "average_wall_delta_sec": -0.0235,
+      "average_import_delta_us": 2073,
+      "average_module_delta": -6,
+      "top_removed_modules": [
+        {
+          "module": "_pytest.threadexception",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.unraisableexception",
+          "task_count": 4
+        },
+        {
+          "module": "cmd",
+          "task_count": 4
+        },
+        {
+          "module": "code",
+          "task_count": 4
+        },
+        {
+          "module": "codeop",
+          "task_count": 4
+        },
+        {
+          "module": "pdb",
+          "task_count": 4
+        }
+      ]
+    },
+    {
+      "variant_name": "light_terminal_plugins",
+      "average_wall_delta_sec": -0.0123,
+      "average_import_delta_us": -4433,
+      "average_module_delta": -15,
+      "top_removed_modules": [
+        {
+          "module": "_elementtree",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.junitxml",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.pastebin",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setuponly",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.setupplan",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.stepwise",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.terminalprogress",
+          "task_count": 4
+        },
+        {
+          "module": "_pytest.warnings",
+          "task_count": 4
+        },
+        {
+          "module": "faulthandler",
+          "task_count": 4
+        },
+        {
+          "module": "pyexpat",
+          "task_count": 4
+        },
+        {
+          "module": "xml",
+          "task_count": 4
+        }
+      ]
+    }
+  ],
+  "task_snapshots": [
+    {
+      "task_id": "task_034",
+      "test_command": "python -m pytest tests/test_utils.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": -0.0132,
+          "import_self_delta_us": -2404,
+          "unique_module_delta": -15,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.warnings",
+            "faulthandler",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        },
+        "debug_exception_plugins": {
+          "variant_name": "debug_exception_plugins",
+          "disabled_plugin_flags": [
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0278,
+          "import_self_delta_us": 3951,
+          "unique_module_delta": -6,
+          "removed_modules": [
+            "_pytest.threadexception",
+            "_pytest.unraisableexception",
+            "cmd",
+            "code",
+            "codeop",
+            "pdb"
+          ]
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.035,
+          "import_self_delta_us": -3550,
+          "unique_module_delta": -22,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.threadexception",
+            "_pytest.tracemalloc",
+            "_pytest.unraisableexception",
+            "_pytest.warnings",
+            "cmd",
+            "code",
+            "codeop",
+            "faulthandler",
+            "pdb",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "task_036",
+      "test_command": "python -m pytest tests/test_hostname.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": -0.0116,
+          "import_self_delta_us": -2972,
+          "unique_module_delta": -15,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.warnings",
+            "faulthandler",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        },
+        "debug_exception_plugins": {
+          "variant_name": "debug_exception_plugins",
+          "disabled_plugin_flags": [
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0253,
+          "import_self_delta_us": 3991,
+          "unique_module_delta": -6,
+          "removed_modules": [
+            "_pytest.threadexception",
+            "_pytest.unraisableexception",
+            "cmd",
+            "code",
+            "codeop",
+            "pdb"
+          ]
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0329,
+          "import_self_delta_us": -2341,
+          "unique_module_delta": -22,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.threadexception",
+            "_pytest.tracemalloc",
+            "_pytest.unraisableexception",
+            "_pytest.warnings",
+            "cmd",
+            "code",
+            "codeop",
+            "faulthandler",
+            "pdb",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "task_038",
+      "test_command": "python -m pytest tests/test_validator.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": -0.0142,
+          "import_self_delta_us": -6721,
+          "unique_module_delta": -15,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.warnings",
+            "faulthandler",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        },
+        "debug_exception_plugins": {
+          "variant_name": "debug_exception_plugins",
+          "disabled_plugin_flags": [
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0217,
+          "import_self_delta_us": -149,
+          "unique_module_delta": -6,
+          "removed_modules": [
+            "_pytest.threadexception",
+            "_pytest.unraisableexception",
+            "cmd",
+            "code",
+            "codeop",
+            "pdb"
+          ]
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0338,
+          "import_self_delta_us": -10703,
+          "unique_module_delta": -22,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.threadexception",
+            "_pytest.tracemalloc",
+            "_pytest.unraisableexception",
+            "_pytest.warnings",
+            "cmd",
+            "code",
+            "codeop",
+            "faulthandler",
+            "pdb",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        }
+      }
+    },
+    {
+      "task_id": "task_040",
+      "test_command": "python -m pytest tests/test_requirements.py -q",
+      "repetitions": 3,
+      "variant_deltas": {
+        "light_terminal_plugins": {
+          "variant_name": "light_terminal_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress"
+          ],
+          "wall_delta_sec": -0.0103,
+          "import_self_delta_us": -5636,
+          "unique_module_delta": -15,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.warnings",
+            "faulthandler",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        },
+        "debug_exception_plugins": {
+          "variant_name": "debug_exception_plugins",
+          "disabled_plugin_flags": [
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0193,
+          "import_self_delta_us": 499,
+          "unique_module_delta": -6,
+          "removed_modules": [
+            "_pytest.threadexception",
+            "_pytest.unraisableexception",
+            "cmd",
+            "code",
+            "codeop",
+            "pdb"
+          ]
+        },
+        "minimal_safe_plugins": {
+          "variant_name": "minimal_safe_plugins",
+          "disabled_plugin_flags": [
+            "-p no:junitxml",
+            "-p no:pastebin",
+            "-p no:setuponly",
+            "-p no:setupplan",
+            "-p no:stepwise",
+            "-p no:warnings",
+            "-p no:faulthandler",
+            "-p no:terminalprogress",
+            "-p no:debugging",
+            "-p no:unraisableexception",
+            "-p no:threadexception"
+          ],
+          "wall_delta_sec": -0.0307,
+          "import_self_delta_us": -9066,
+          "unique_module_delta": -22,
+          "removed_modules": [
+            "_elementtree",
+            "_pytest.faulthandler",
+            "_pytest.junitxml",
+            "_pytest.pastebin",
+            "_pytest.setuponly",
+            "_pytest.setupplan",
+            "_pytest.stepwise",
+            "_pytest.terminalprogress",
+            "_pytest.threadexception",
+            "_pytest.tracemalloc",
+            "_pytest.unraisableexception",
+            "_pytest.warnings",
+            "cmd",
+            "code",
+            "codeop",
+            "faulthandler",
+            "pdb",
+            "pyexpat",
+            "xml",
+            "xml.etree",
+            "xml.etree.ElementPath",
+            "xml.etree.ElementTree"
+          ]
+        }
+      }
+    }
+  ],
+  "analysis_id": "pytest_plugin_variants_cohort_run_tests_hotspots_v32_003"
+}

@@ -1720,19 +1720,23 @@ trace 热点分析结果：
   - `logs/summaries/pytest_plugin_variants_task038v32_001.json`
   - `logs/summaries/pytest_plugin_variants_task040v32_001.json`
 - cohort 汇总产物：
-  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_001.json`
-  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_001.md`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.json`
+  - `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.md`
 - 对比变体：
   - `default_plugins`
   - `light_terminal_plugins`
+  - `debug_exception_plugins`
   - `minimal_safe_plugins`
 - 热点任务 cohort 聚合：
-  - `light_terminal_plugins`: `avg wall delta = 0.002`
-  - `light_terminal_plugins`: `avg import delta(us) = -102`
-  - `light_terminal_plugins`: `avg module delta = 0`
-  - `minimal_safe_plugins`: `avg wall delta = 0.0025`
-  - `minimal_safe_plugins`: `avg import delta(us) = 594`
-  - `minimal_safe_plugins`: `avg module delta = 0`
+  - `light_terminal_plugins`: `avg wall delta = -0.0123`
+  - `light_terminal_plugins`: `avg import delta(us) = -4433`
+  - `light_terminal_plugins`: `avg module delta = -15`
+  - `debug_exception_plugins`: `avg wall delta = -0.0235`
+  - `debug_exception_plugins`: `avg import delta(us) = 2073`
+  - `debug_exception_plugins`: `avg module delta = -6`
+  - `minimal_safe_plugins`: `avg wall delta = -0.0331`
+  - `minimal_safe_plugins`: `avg import delta(us) = -6415`
+  - `minimal_safe_plugins`: `avg module delta = -22`
 - 当前验证过可安全关闭的插件包括：
   - `junitxml`
   - `pastebin`
@@ -1748,8 +1752,36 @@ trace 热点分析结果：
 
 进一步结论：
 
-- 关闭这组默认插件后，wall time 只变化到几毫秒量级，没有形成稳定降本
-- 两组插件变体都没有减少新增模块数，说明前面 importtime 里看到的 `37` 个新增模块不是主要由这组插件带来的
-- 这是一个非常有价值的负结论：
-  - 当前慢点大概率不在这组可安全关闭的默认插件上
-  - 后续应优先继续切分 `pytest` 主干 collection 逻辑、Windows 平台链路和终端能力链路
+- `_001` 样本后来确认受命令拼接 bug 污染，因此这里以后续修正的 `_003` 为准
+- `light_terminal_plugins` 能提供一部分收益，但不是主要来源
+- `debug_exception_plugins` 单独就能稳定减少约 `23.5ms`
+- `minimal_safe_plugins` 能稳定减少约 `33.1ms`、`6415us` import self time 和 `22` 个模块
+- 这说明前面 importtime 里看到的新增模块里，确实有一大块来自可安全关闭的 builtin optional plugins
+- 下一步最值得做的是把 `debug_exception_plugins` 再拆成更细的单插件验证，继续定位主要收益来源
+
+`pytest importtime` 分组分析结果：
+
+- cohort 汇总产物：
+  - `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_002.json`
+  - `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_002.md`
+- 分组后的热点任务 cohort 聚合：
+  - `pytest_optional_plugins`: `avg self(us) = 6181`
+  - `windows_ctypes`: `avg self(us) = 5103`
+  - `xml_stack`: `avg self(us) = 4026`
+  - `terminal_chain`: `avg self(us) = 3653`
+  - `debugging_chain`: `avg self(us) = 2094`
+  - `pytest_collection_core`: `avg self(us) = 1126`
+  - `python_shell_chain`: `avg self(us) = 722`
+  - `other`: `avg self(us) = 0`
+- 热点任务主导分组：
+  - `task_040`: dominant group = `pytest_optional_plugins`
+  - `task_034`: dominant group = `pytest_optional_plugins`
+  - `task_036`: dominant group = `pytest_optional_plugins`
+  - `task_038`: dominant group = `pytest_optional_plugins`
+
+进一步结论：
+
+- 新增 import 链已经几乎都能归到明确来源，不再存在一大块难以解释的 `other`
+- 这让下一步优化目标更清晰了：
+  - 优先验证 `pytest_optional_plugins` 是否能通过更激进但安全的命令形态继续削减
+  - 同时继续验证 `windows_ctypes / xml_stack / terminal_chain` 哪些属于不可避免的 collection 成本，哪些还有可降空间

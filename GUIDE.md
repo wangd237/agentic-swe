@@ -596,6 +596,7 @@ scripts/
 - `scripts/analyze_run_tests_mode_cohort.py`
 - `scripts/benchmark_pytest_plugin_variants.py`
 - `scripts/analyze_pytest_plugin_variant_cohort.py`
+- `scripts/analyze_pytest_importtime_groups.py`
 
 它们的作用是：
 
@@ -607,7 +608,7 @@ scripts/
 
 ### 7. 当前新增的性能诊断链
 
-目前 Phase 6 的性能定位已经形成六层递进：
+目前 Phase 6 的性能定位已经形成七层递进：
 
 1. `scripts/analyze_duration_regressions.py`
    - 看相邻两轮 batch run 的公共任务总体时延变化
@@ -622,6 +623,10 @@ scripts/
 6. `scripts/benchmark_pytest_plugin_variants.py` + `scripts/analyze_pytest_plugin_variant_cohort.py`
    - 直接比较默认插件链、轻量终端插件链和最小安全插件链
    - 判断 pytest 默认插件链里哪些部分值得继续怀疑，哪些部分已经可以先排除
+7. `scripts/analyze_pytest_importtime_groups.py`
+   - 复用已有 importtime 基准结果
+   - 把新增模块再按 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain / debugging_chain` 等来源分组
+   - 把“哪些模块变多了”推进到“哪一类链路更值得继续切分”
 
 你可以这样体验：
 
@@ -649,6 +654,8 @@ scripts/
   - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
 - 汇总多个热点任务的 `pytest` 插件变体基准：
   - `python scripts/analyze_pytest_plugin_variant_cohort.py --benchmark-summary logs/summaries/pytest_plugin_variants_task034v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task036v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task038v32_001.json --benchmark-summary logs/summaries/pytest_plugin_variants_task040v32_001.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+- 对多个热点任务做 `pytest importtime` 分组分析：
+  - `python scripts/analyze_pytest_importtime_groups.py --benchmark-summary logs/summaries/pytest_importtime_task034v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task036v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task038v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
 
 当前这层新增能力的意义是：
 
@@ -686,11 +693,22 @@ scripts/
   - 高频新增模块包括：`_ctypes`、`pyexpat`、`xml.etree.ElementTree`、`_pytest.skipping`、`ctypes.wintypes`
 - 这说明 collection 的额外耗时里，有一块可以直接归因到稳定新增的 import 链，而不是纯粹随机抖动
 - `pytest` 插件变体 cohort 基准进一步表明：
-  - `light_terminal_plugins`：`avg wall delta = 0.002`
-  - `minimal_safe_plugins`：`avg wall delta = 0.0025`
-  - 两组变体的 `avg module delta` 都是 `0`
-- 这说明默认插件链里这组可安全关闭插件不是当前慢点主因
-- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先验证 Windows 平台链路、终端能力链路和 pytest 主干 collection 逻辑
+  - `_001` 样本曾因为命令拼接 bug 失真
+  - 修正后的 `_003` 样本表明：
+    - `light_terminal_plugins`：`avg wall delta = -0.0123`
+    - `debug_exception_plugins`：`avg wall delta = -0.0235`
+    - `minimal_safe_plugins`：`avg wall delta = -0.0331`
+    - `minimal_safe_plugins`：`avg import delta(us) = -6415`
+    - `minimal_safe_plugins`：`avg module delta = -22`
+- 这说明主要收益并不只是终端链，而是 `debug_exception_plugins` 这组三个插件开关已经贡献了大部分 wall time 改善
+- `pytest importtime` 分组分析进一步表明：
+  - `pytest_optional_plugins`：`avg self(us) = 6181`
+  - `windows_ctypes`：`avg self(us) = 5103`
+  - `xml_stack`：`avg self(us) = 4026`
+  - `terminal_chain`：`avg self(us) = 3653`
+  - `other` 已压到 `0`
+- 这说明新增 import 开销已经几乎都能归到可解释链路，后续不应再停留在“大概是 collection 变慢了”的层面
+- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先把 `debug_exception_plugins` 再拆成更细的单插件验证
 
 ### 7. 真实 issue 导入入口已可用
 

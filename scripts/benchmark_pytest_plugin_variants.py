@@ -14,7 +14,11 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
-from scripts.benchmark_pytest_importtime import build_importtime_profile
+from scripts.benchmark_pytest_importtime import (
+    _build_collect_only_command,
+    _build_importtime_command,
+    build_importtime_profile,
+)
 from app.tools.run_tests import run_tests
 
 
@@ -43,6 +47,11 @@ PLUGIN_VARIANTS: dict[str, list[str]] = {
         "-p no:warnings",
         "-p no:faulthandler",
         "-p no:terminalprogress",
+    ],
+    "debug_exception_plugins": [
+        "-p no:debugging",
+        "-p no:unraisableexception",
+        "-p no:threadexception",
     ],
     "minimal_safe_plugins": SAFE_DISABLE_PLUGIN_FLAGS,
 }
@@ -86,8 +95,9 @@ def _next_benchmark_id(summary_dir: Path, benchmark_label: str) -> str:
 
 
 def _build_collect_importtime_command(test_command: str, plugin_flags: list[str]) -> str:
-    collect_command = test_command if "--collect-only" in test_command else f"{test_command} --collect-only"
-    return " ".join(["python -X importtime", collect_command, *plugin_flags]).strip()
+    collect_command = _build_collect_only_command(test_command)
+    importtime_command = _build_importtime_command(collect_command)
+    return " ".join([importtime_command, *plugin_flags]).strip()
 
 
 def _build_run_record(variant_name: str, run_index: int, command: str, result: dict) -> dict:

@@ -5752,3 +5752,305 @@
 - 还需要继续验证 `colorama / pdb / ctypes.wintypes / _pytest.skipping` 等链路各自贡献了多少
 - 还没有把“Windows 平台链路”和“pytest 主干 collection 逻辑”完全拆开
 - 下一步更适合设计更细的命令形态实验，而不是继续在这组默认插件上追加更多轮次
+
+## 2026-06-11 Phase 6 pytest importtime 分组分析补强
+
+### 背景
+
+上一轮已经确认两件事：
+
+- `pytest importtime` 里稳定多出 `37` 个模块
+- 关闭一组可安全关闭的默认插件后，几乎没有降本
+
+但我们还缺少更强的一步：
+
+- 这些新增模块到底主要属于哪些链路
+- 哪些链路更值得用下一轮实验去切
+
+### 目标
+
+- 复用已有 `pytest importtime` benchmark 结果
+- 把“模块列表”提升为“来源分组”
+- 为下一轮命令形态实验提供更聚焦的优先级
+
+### 改动类型
+
+- `benchmark`
+
+### 主要文件
+
+- `scripts/analyze_pytest_importtime_groups.py`
+- `tests/test_analyze_pytest_importtime_groups.py`
+- `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_001.json`
+- `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_001.md`
+- `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_002.json`
+- `logs/summaries/pytest_import_groups_run_tests_hotspots_v32_002.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `scripts/analyze_pytest_importtime_groups.py`：
+  - 直接读取已有 `pytest_importtime_task*_002.json`
+  - 比较 `pytest_version_importtime` 与 `pytest_collect_importtime` 的最后一轮模块集合
+  - 将新增模块按链路分组：
+    - `pytest_optional_plugins`
+    - `windows_ctypes`
+    - `xml_stack`
+    - `terminal_chain`
+    - `debugging_chain`
+    - `pytest_collection_core`
+    - `python_shell_chain`
+    - `other`
+- 新增 `tests/test_analyze_pytest_importtime_groups.py`
+  - 覆盖分组规则识别
+  - 覆盖 cohort 聚合
+  - 覆盖输出文件生成
+- 在同一轮里保留 `_001` 首版样本后，又根据真实模块清单补强规则并生成 `_002`
+  - `_002` 已把原来过大的 `other` 压缩到 `0`
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_analyze_pytest_importtime_groups.py tests/test_analyze_pytest_importtime_cohort.py tests/test_benchmark_pytest_importtime.py -q`
+  - 结果：`10 passed`
+- 真实日志验证：
+  - `python scripts/analyze_pytest_importtime_groups.py --benchmark-summary logs/summaries/pytest_importtime_task034v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task036v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task038v32_002.json --benchmark-summary logs/summaries/pytest_importtime_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 热点任务 cohort：
+  - `task_034 / task_036 / task_038 / task_040`
+- `_002` 聚合结果：
+  - `pytest_optional_plugins`: `avg self(us) = 6181`
+  - `windows_ctypes`: `avg self(us) = 5103`
+  - `xml_stack`: `avg self(us) = 4026`
+  - `terminal_chain`: `avg self(us) = 3653`
+  - `debugging_chain`: `avg self(us) = 2094`
+  - `pytest_collection_core`: `avg self(us) = 1126`
+  - `python_shell_chain`: `avg self(us) = 722`
+  - `other`: `avg self(us) = 0`
+- 四个热点任务的 dominant group 都是：
+  - `pytest_optional_plugins`
+
+### 结论
+
+- 新增 import 开销已经几乎都能归入明确链路，说明这条证据链足够可解释，不再只是“多了很多模块”
+- 当前最值得继续下钻的第一优先级是：
+  - `pytest_optional_plugins`
+- 第二优先级是：
+  - `windows_ctypes`
+  - `xml_stack`
+  - `terminal_chain`
+- 这也解释了为什么上一轮“关闭一组可安全关闭插件”没有明显降本：
+  - 那组插件并没有覆盖掉当前 import 开销最大的整块来源
+
+### 剩余问题
+
+- 还需要验证 `pytest_optional_plugins` 中哪些是 builtin 但可安全关闭、哪些不适合动
+- 还需要验证 `windows_ctypes / xml_stack / terminal_chain` 是否只是平台不可避免成本
+- 下一步更适合设计更细的 `collect-only` 命令形态，而不是继续重复同类聚合分析
+
+## 2026-06-11 Phase 6 pytest 插件变体基准修正与重跑
+
+### 背景
+
+在继续下钻时，我们回看了上一轮 `pytest plugin variants` 的原始产物，发现：
+
+- `_001` 样本里的命令被错误拼成了
+  - `python -X importtime python -m pytest ...`
+- 这会导致：
+  - `ok = False`
+  - `exit_code = 2`
+
+也就是说，上一轮“几乎没有收益”的结论不能继续直接信任。
+
+### 目标
+
+- 修正 `plugin variants` benchmark 的命令拼接
+- 重新生成热点任务样本与 cohort 报告
+- 用修正后的 `_002` 结果替换原先失真的判断
+
+### 改动类型
+
+- `benchmark`
+- `bugfix`
+
+### 主要文件
+
+- `scripts/benchmark_pytest_plugin_variants.py`
+- `tests/test_benchmark_pytest_plugin_variants.py`
+- `logs/summaries/pytest_plugin_variants_task034v32_002.json`
+- `logs/summaries/pytest_plugin_variants_task034v32_002.md`
+- `logs/summaries/pytest_plugin_variants_task036v32_002.json`
+- `logs/summaries/pytest_plugin_variants_task036v32_002.md`
+- `logs/summaries/pytest_plugin_variants_task038v32_002.json`
+- `logs/summaries/pytest_plugin_variants_task038v32_002.md`
+- `logs/summaries/pytest_plugin_variants_task040v32_002.json`
+- `logs/summaries/pytest_plugin_variants_task040v32_002.md`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_002.json`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_002.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 修正 `scripts/benchmark_pytest_plugin_variants.py`
+  - 不再手工拼出错误的 `python -X importtime python -m pytest ...`
+  - 统一复用：
+    - `scripts/benchmark_pytest_importtime.py` 里的 `_build_collect_only_command`
+    - `scripts/benchmark_pytest_importtime.py` 里的 `_build_importtime_command`
+- 更新 `tests/test_benchmark_pytest_plugin_variants.py`
+  - 让命令断言和真实正确命令保持一致
+- 重新生成四个热点任务和 cohort 的 `_002` 样本
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_benchmark_pytest_plugin_variants.py tests/test_analyze_pytest_plugin_variant_cohort.py tests/test_analyze_pytest_importtime_groups.py tests/test_benchmark_pytest_importtime.py tests/test_analyze_pytest_importtime_cohort.py -q`
+  - 结果：`16 passed`
+- 真实日志验证：
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_pytest_plugin_variant_cohort.py --benchmark-summary logs/summaries/pytest_plugin_variants_task034v32_002.json --benchmark-summary logs/summaries/pytest_plugin_variants_task036v32_002.json --benchmark-summary logs/summaries/pytest_plugin_variants_task038v32_002.json --benchmark-summary logs/summaries/pytest_plugin_variants_task040v32_002.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- 修正后的 `_002` cohort：
+  - `minimal_safe_plugins`
+    - `avg_wall_delta = -0.0317`
+    - `avg_import_delta_us = -5853`
+    - `avg_module_delta = -22`
+  - `light_terminal_plugins`
+    - `avg_wall_delta = 0.0012`
+    - `avg_import_delta_us = 2804`
+    - `avg_module_delta = -15`
+- 稳定 removed modules 包括：
+  - `_pytest.junitxml`
+  - `_pytest.pastebin`
+  - `_pytest.setuponly`
+  - `_pytest.setupplan`
+  - `_pytest.stepwise`
+  - `_pytest.faulthandler`
+  - `_pytest.terminalprogress`
+
+### 结论
+
+- 上一轮 `_001` 的“负结论”不能再作为当前判断依据
+- 修正后的 `_002` 已证明：
+  - `minimal_safe_plugins` 确实能稳定降本
+  - `light_terminal_plugins` 基本没有稳定收益
+- 这进一步说明：
+  - 主要收益不只是来自轻量终端相关项
+  - 更可能来自 `pytest_optional_plugins` 这组更完整的 builtin optional plugin 集合
+
+### 剩余问题
+
+- 还需要把 `minimal_safe_plugins` 再拆成更细子组
+- 还需要确认哪些 builtin plugin 可以长期安全关闭，哪些只适合 benchmark 诊断
+- 下一步最值得做的是 optional plugin 子组 benchmark，而不是回到更粗粒度的 plugin on/off 对比
+
+## 2026-06-11 Phase 6 pytest optional plugin 子组切分
+
+### 背景
+
+修正后的 `plugin variants` `_002` 已经说明：
+
+- `minimal_safe_plugins` 稳定降本
+- 但我们还不知道主要收益来自哪一组 plugin 开关
+
+### 目标
+
+- 把 `minimal_safe_plugins` 再切开一层
+- 尽快判断主要 wall time 收益是否来自 `debugging / unraisableexception / threadexception`
+
+### 改动类型
+
+- `benchmark`
+
+### 主要文件
+
+- `scripts/benchmark_pytest_plugin_variants.py`
+- `tests/test_benchmark_pytest_plugin_variants.py`
+- `logs/summaries/pytest_plugin_variants_task034v32_003.json`
+- `logs/summaries/pytest_plugin_variants_task034v32_003.md`
+- `logs/summaries/pytest_plugin_variants_task036v32_003.json`
+- `logs/summaries/pytest_plugin_variants_task036v32_003.md`
+- `logs/summaries/pytest_plugin_variants_task038v32_003.json`
+- `logs/summaries/pytest_plugin_variants_task038v32_003.md`
+- `logs/summaries/pytest_plugin_variants_task040v32_003.json`
+- `logs/summaries/pytest_plugin_variants_task040v32_003.md`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.json`
+- `logs/summaries/pytest_plugin_variants_cohort_run_tests_hotspots_v32_003.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 在现有 plugin variant benchmark 中新增：
+  - `debug_exception_plugins`
+    - `-p no:debugging`
+    - `-p no:unraisableexception`
+    - `-p no:threadexception`
+- 保持原有：
+  - `default_plugins`
+  - `light_terminal_plugins`
+  - `minimal_safe_plugins`
+- 重新生成四个热点任务与 cohort 的 `_003` 样本
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_benchmark_pytest_plugin_variants.py tests/test_analyze_pytest_plugin_variant_cohort.py -q`
+  - 结果：`6 passed`
+- 真实日志验证：
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_034.json --repetitions 3 --benchmark-label task034v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_036.json --repetitions 3 --benchmark-label task036v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_038.json --repetitions 3 --benchmark-label task038v32 --output-dir logs/summaries`
+  - `python scripts/benchmark_pytest_plugin_variants.py --task benchmarks/tasks/task_040.json --repetitions 3 --benchmark-label task040v32 --output-dir logs/summaries`
+  - `python scripts/analyze_pytest_plugin_variant_cohort.py --benchmark-summary logs/summaries/pytest_plugin_variants_task034v32_003.json --benchmark-summary logs/summaries/pytest_plugin_variants_task036v32_003.json --benchmark-summary logs/summaries/pytest_plugin_variants_task038v32_003.json --benchmark-summary logs/summaries/pytest_plugin_variants_task040v32_003.json --cohort-label run_tests_hotspots_v32 --output-dir logs/summaries`
+
+### 关键观察
+
+- `_003` cohort：
+  - `minimal_safe_plugins`
+    - `avg_wall_delta = -0.0331`
+    - `avg_import_delta_us = -6415`
+    - `avg_module_delta = -22`
+  - `debug_exception_plugins`
+    - `avg_wall_delta = -0.0235`
+    - `avg_import_delta_us = 2073`
+    - `avg_module_delta = -6`
+  - `light_terminal_plugins`
+    - `avg_wall_delta = -0.0123`
+    - `avg_import_delta_us = -4433`
+    - `avg_module_delta = -15`
+- `debug_exception_plugins` 稳定移除：
+  - `_pytest.threadexception`
+  - `_pytest.unraisableexception`
+  - `cmd`
+  - `code`
+  - `codeop`
+  - `pdb`
+
+### 结论
+
+- `debug_exception_plugins` 单独已经贡献了大部分 wall time 改善
+- `light_terminal_plugins` 也有收益，但量级明显更小
+- 这说明：
+  - 主要收益很可能来自 `debugging / unraisableexception / threadexception`
+  - 下一步最该做的是把这三个插件再拆成单插件验证，而不是继续粗粒度组合
+
+### 剩余问题
+
+- 还需要确认三者里哪一个是主导项，还是三者叠加才明显
+- 还需要确认关闭这些插件是否适合作为正式 runtime 默认行为，还是只应作为 benchmark 诊断能力
+- 下一步应优先做单插件切分实验
