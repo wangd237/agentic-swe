@@ -44,6 +44,7 @@
 - 当前已补充 `task_060`，并在真实 issue 派生任务集上完成 `improved_v30 -> improved_v31` 扩容对比
 - 当前已补充 `task_061`，并在真实 issue 派生任务集上完成 `improved_v31 -> improved_v32` 扩容对比
 - 当前已补充 `task_063`，并在真实 issue 派生任务集上完成 `improved_v33 -> improved_v34` 扩容对比
+- 当前已补充 `task_065`，并在真实 issue 派生任务集上完成 `improved_v34 -> improved_v35` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
@@ -1933,6 +1934,60 @@ trace 热点分析结果：
 - 结论：
   - 广泛度仍然提前达标
   - 下一阶段仍然要继续扩正式任务数，并尽快把 `frozen_20` 升级为 `frozen_40`
+
+`improved_v35` 正式 32 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v35.json`
+- 新增任务：
+  - `benchmarks/tasks/task_065.json`
+- 新增 repo：
+  - `benchmarks/repos/packaging_prerelease_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev35_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev35_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step15_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev35_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev35_001.json`
+- 指标：
+  - `task_count`: `31 -> 32`
+  - `success_count`: `31 -> 32`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5391 -> 0.535`
+- 结论：
+  - 这说明 `packaging#788` 已成功转化为正式第 `32` 条 semi_real 任务
+  - `improved_v35` 在扩容后继续保持全量成功，并把正式集平均耗时继续小幅压低
+
+`improved_v35` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v35_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v35_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step14_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v35_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v35_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5368 -> 0.5402`
+- 结论：
+  - 这说明 `improved_v35` 在固定 `20` 条真实任务上继续无功能回归
+  - 当前只有 `+0.0034s` 的轻微时延波动，仍明显低于长期目标允许的 `+3%` 回升边界
+
+`Benchmark Maturity v1` 最新量化审计更新：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_006.json`
+  - `logs/summaries/benchmark_maturity_maturity_006.md`
+- 当前结果：
+  - 正式任务数：`32 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续无回归版本：`0 / 5`
+- 结论：
+  - 当前又向目标推进了 `1` 条正式任务
+  - 下一阶段仍应继续优先消化 shortlist，并在任务数接近 `40` 时启动 `frozen_40` 构建
 
 `pytest importtime` 分组分析结果：
 

@@ -6632,3 +6632,124 @@
   - `pypa/packaging#788`
   - `python-poetry/tomlkit#442`
   - `python-poetry/tomlkit#431`
+
+## 2026-06-12 Phase 6 packaging `< prerelease` 扩容与 `improved_v35`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `packaging#638 -> task_063`
+- `improved_v34`
+- 正式任务数推进到 `31`
+
+因此这一轮继续沿 `packaging` 方向扩容，优先消化 shortlist 里另一个边界清晰、且与现有 `Specifier >` 语义互补的 `packaging#788`。
+
+### 目标
+
+- 把 `pypa/packaging#788` 转成新的 semi_real 正式任务
+- 为 `< prerelease` 比较场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v35`
+- 把 maturity 审计结果同步到 `32 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_064.json`
+- `benchmarks/tasks/task_065.json`
+- `benchmarks/repos/packaging_prerelease_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v35.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/candidate_shortlist.md`
+- `logs/summaries/batch_run_realissuev35_001.json`
+- `logs/summaries/batch_eval_realissuev35_001.json`
+- `logs/summaries/batch_compare_realissue_step15_002.json`
+- `logs/summaries/batch_run_frozen20v35_001.json`
+- `logs/summaries/batch_eval_frozen20v35_001.json`
+- `logs/summaries/batch_compare_frozen20_step14_001.json`
+- `logs/summaries/benchmark_maturity_maturity_006.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `packaging#788` 的 `real_issue` 草稿：
+  - `task_064`
+- 新增可运行的 semi_real 正式任务：
+  - `task_065`
+- 新增 repo：
+  - `benchmarks/repos/packaging_prerelease_repo`
+- 在 repo 中故意保留 bug：
+  - 当 specifier 自身是 prerelease 时，当前实现直接拒绝全部 prerelease 候选
+- 新增 `improved_v35`
+- 在 patcher 中新增 `< prerelease` 比较的专用规则
+- 把 `task_065` 加入正式 manifest
+- 更新候选池状态和短名单
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/packaging_prerelease_repo/tests/test_specifiers.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_065.json --policy optimization/policy_versions/improved_v35.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v35.json --run-label realissuev35 --compare-against-eval logs/summaries/batch_eval_realissuev34_001.json --compare-label realissue_step15`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v35.json --run-label frozen20v35 --compare-against-eval logs/summaries/batch_eval_frozen20v34_001.json --compare-label frozen20_step14`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `31 -> 32`
+- 候选池状态：
+  - `accepted = 31 -> 32`
+  - `to_review = 7 -> 6`
+- `improved_v35` 正式 `32` 条任务集结果：
+  - `success_count: 31 -> 32`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5391 -> 0.535`
+- `improved_v35` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5368 -> 0.5402`
+- 时延分析：
+  - 正式集公共 `31` 条任务平均耗时差值：`-0.003s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0034s`
+- maturity 审计：
+  - 正式任务数：`32 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `packaging#788` 已成功从候选进入正式 semi_real 任务集
+- `improved_v35` 在扩容后继续保持正式集和固定集双线无功能回归
+- 正式集平均耗时继续下降，固定集只有 `+0.0034s` 的轻微波动，仍远低于长期目标允许的耗时回升边界
+- 当前主线基线已经更新为：
+  - 正式任务数：`32`
+  - 最新策略：`improved_v35`
+  - 固定集合证据：`frozen_20`
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 还没有开始构建
+- 下一轮应继续优先吃 shortlist 中边界清晰的剩余候选，例如：
+  - `pypa/packaging#909`
+  - `python-poetry/tomlkit#442`
+  - `python-poetry/tomlkit#431`

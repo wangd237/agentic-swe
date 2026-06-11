@@ -828,6 +828,32 @@ def _handle_packaging_marker_extra_none(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_packaging_prerelease_less_than(content: str) -> str | None:
+    # improved_v35 处理 `< prerelease` 场景下更早 prerelease 被错误拒绝的问题。
+    target_block = (
+        "        if prospective_version.is_prerelease and self.spec_version.is_prerelease:\n"
+        "            # 这里故意保留真实 issue 中的缺陷：\n"
+        "            # 当前实现把“specifier 本身是 prerelease”的场景也直接拒绝掉，\n"
+        "            # 从而错误排除了更早的合法 prerelease 版本。\n"
+        "            return False\n\n"
+        "        if not prereleases and prospective_version.is_prerelease:\n"
+        "            return False\n\n"
+        "        return prospective_version < self.spec_version"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "        if prospective_version.is_prerelease and self.spec_version.is_prerelease:\n"
+        "            # specifier 自身是 prerelease 时，更早但不相等的 prerelease 仍应允许命中。\n"
+        "            return prospective_version < self.spec_version\n\n"
+        "        if not prereleases and prospective_version.is_prerelease:\n"
+        "            return False\n\n"
+        "        return prospective_version < self.spec_version"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2024,8 +2050,17 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34"}:
-            if policy_config.patch_strategy == "improved_v34":
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35"}:
+            run_v34_fallback_chain = False
+            if policy_config.patch_strategy == "improved_v35":
+                improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                if improved_v35_content is not None:
+                    updated_content = improved_v35_content
+                    patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                else:
+                    # v35 未命中新规则时，完整复用 v34 的既有回退链，保证旧任务能力不回退。
+                    run_v34_fallback_chain = True
+            if policy_config.patch_strategy == "improved_v34" or run_v34_fallback_chain:
                 improved_v34_content = _handle_packaging_marker_extra_none(original_content)
                 if improved_v34_content is not None:
                     updated_content = improved_v34_content

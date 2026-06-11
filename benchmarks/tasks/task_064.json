@@ -1,0 +1,29 @@
+{
+  "task_id": "task_064",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Specifier `<` that contains prerelease version does not match on valid prerelease versions",
+  "issue_text": "当前 `Specifier` 的 `<` 比较在 specifier 本身包含 prerelease 版本时，错误地把更早的合法 prerelease 也一起排除。例如 `<3.0.0a8` 应允许 `3.0.0a7` 这类更早的 prerelease 命中，但当前实现会直接返回 False。这个真实 issue 需要让 `< prerelease` 的语义符合规范：更早但不相等的 prerelease 应可匹配，而相同 prerelease 或更晚版本仍应不匹配。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 788,
+    "issue_url": "https://github.com/pypa/packaging/issues/788",
+    "candidate_id": "pypa_packaging_issue_788",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

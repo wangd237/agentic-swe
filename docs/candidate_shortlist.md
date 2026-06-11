@@ -9,7 +9,7 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 6
+## 当前 Top 5
 
 ### `pypa/packaging#909`
 
@@ -17,13 +17,6 @@
   - `parse_wheel_filename` 的压缩 tag 排序校验边界清晰
   - 目标文件和测试入口都很明确
   - 能补足当前 `packaging` 任务里还没有覆盖到的 wheel tag 校验能力
-
-### `pypa/packaging#788`
-
-- 原因：
-  - prerelease 比较逻辑有极小复现
-  - 与当前 `Specifier >` 方向形成互补，新增 `< prerelease` 语义
-  - 适合缩成单模块 specifier 回归任务
 
 ### `pypa/packaging#638`
 
@@ -140,6 +133,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_055 / task_056`
+
+### `pypa/packaging#788`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_064 / task_065`
 
 ## 使用方式
 
