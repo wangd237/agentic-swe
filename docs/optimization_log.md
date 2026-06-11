@@ -5019,3 +5019,81 @@
 - 最近几轮 `frozen_20` 主要提供无回归证据，而非新的同集合成功率提升
 - 对象定义阶段 alias 可见性、数据转换中的空值语义、profile 驱动的排序分派仍值得优先推进
 - 当前 patch 策略仍然是规则法，需要继续扩任务和扩能力
+
+## 2026-06-11 13:46 Phase 6 评测观测性与候选批量导入补强
+
+### 本轮目标
+
+- 给真实 issue 候选扩容链路补一个可复用的批量导入入口
+- 给最近几轮 `average_duration_sec` 回升补一个任务级定位工具
+- 用真实日志先验证这两个入口确实接上了当前流水线
+
+### 本轮新增文件
+
+- `scripts/import_issue_batch.py`
+- `scripts/analyze_duration_regressions.py`
+- `tests/test_import_issue_batch.py`
+- `tests/test_analyze_duration_regressions.py`
+- `logs/summaries/duration_compare_realissuev32_001.json`
+- `logs/summaries/duration_compare_realissuev32_001.md`
+- `logs/summaries/duration_compare_frozen20v32_001.json`
+- `logs/summaries/duration_compare_frozen20v32_001.md`
+
+### 本轮修改文件
+
+- `scripts/import_github_issue.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/results.md`
+
+### 本轮实现内容
+
+- 重构 `scripts/import_github_issue.py`：
+  - 抽出可复用的单条导入函数
+  - 抽出 task 草稿落盘函数
+  - 让后续批量导入复用同一套候选状态维护逻辑
+- 新增 `scripts/import_issue_batch.py`：
+  - 支持从文本或 JSON 文件批量读取 `repo + issue`
+  - 支持批量导入时直接生成 `real_issue` 草稿
+  - 继续保持候选备注追加式记录，不覆盖旧历史
+- 新增 `scripts/analyze_duration_regressions.py`：
+  - 支持直接传两份 `batch_run` summary
+  - 也支持从 `eval` 文件反推 `source_batch_run_id`
+  - 输出公共任务平均耗时差值、top regressions、top improvements
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_import_issue_batch.py tests/test_analyze_duration_regressions.py tests/test_run_real_issue_eval.py -q`
+  - 结果：`9 passed`
+- 真实日志验证：
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_frozen20v31_001.json --improved-batch-summary logs/summaries/batch_run_frozen20v32_001.json --run-label frozen20v32`
+
+### 关键观察
+
+- 扩容集时延分析：
+  - 公共 `29` 条任务平均耗时：`0.6115 -> 0.6767`
+  - 平均差值：`+0.0652s`
+- `frozen_20` 时延分析：
+  - 公共 `20` 条任务平均耗时：`0.6122 -> 0.6774`
+  - 平均差值：`+0.0652s`
+- 回升最明显的任务在两组分析里高度重合：
+  - `task_040`
+  - `task_038`
+  - `task_036`
+  - `task_034`
+
+### 结论
+
+- 最近一轮耗时回升不只是由于新增 `task_061`
+- 公共任务集合也出现了系统性变慢
+- 现在已经有了可以持续复用的批量导入和时延定位入口，后续能更稳地一边扩 benchmark，一边跟踪 runtime 效率变化
+
+### 剩余问题
+
+- 还没有对 `task_040 / task_038 / task_036 / task_034` 的 trace 做更细粒度分解
+- 下一步应继续围绕这些热点任务检查是否存在固定的额外搜索、读文件或 patch 分支开销
+- 新来源 issue 的扩容还需要尽快接上批量导入入口，避免候选池再次见底

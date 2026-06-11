@@ -12,6 +12,10 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from app.runtime.logger import write_json
 
 
 def run_gh_command(args: list[str]) -> dict:
@@ -90,7 +94,7 @@ def build_candidate(repo_full_name: str, issue_payload: dict) -> dict:
     }
 
 
-def upsert_candidate(dataset_path: Path, candidate: dict) -> dict:
+def upsert_candidate(dataset_path: Path, candidate: dict) -> tuple[dict, str]:
     payload = load_candidate_dataset(dataset_path)
     candidates = payload["candidates"]
 
@@ -104,11 +108,11 @@ def upsert_candidate(dataset_path: Path, candidate: dict) -> dict:
             )
             candidates[index] = candidate
             write_candidate_dataset(dataset_path, payload)
-            return candidate
+            return candidate, "updated"
 
     candidates.append(candidate)
     write_candidate_dataset(dataset_path, payload)
-    return candidate
+    return candidate, "created"
 
 
 def mark_candidate_as_drafted(dataset_path: Path, candidate_id: str) -> None:
@@ -174,6 +178,12 @@ def build_task_payload(candidate: dict, repo_path: str, test_command: str) -> di
     }
 
 
+def write_task_payload(task_payload: dict) -> Path:
+    task_path = REPO_ROOT / "benchmarks" / "tasks" / f"{task_payload['task_id']}.json"
+    write_json(task_path, task_payload)
+    return task_path
+
+
 def import_issue(repo_full_name: str, issue_number: int) -> dict:
     issue_payload = run_gh_command(
         [
@@ -195,6 +205,38 @@ def import_issue(repo_full_name: str, issue_number: int) -> dict:
         "state": issue_payload.get("state", "open"),
         "createdAt": issue_payload.get("createdAt"),
         "repository_url": f"https://github.com/{repo_full_name}",
+    }
+
+
+def import_issue_to_dataset(
+    *,
+    repo_full_name: str,
+    issue_number: int,
+    dataset_path: Path,
+    issue_payload: dict | None = None,
+) -> dict:
+    payload = issue_payload or import_issue(repo_full_name, issue_number)
+    candidate = build_candidate(repo_full_name, payload)
+    stored_candidate, operation = upsert_candidate(dataset_path, candidate)
+    return {
+        "candidate": stored_candidate,
+        "operation": operation,
+    }
+
+
+def draft_task_for_candidate(
+    *,
+    candidate: dict,
+    candidate_path: Path,
+    repo_path: str,
+    test_command: str,
+) -> dict:
+    task_payload = build_task_payload(candidate, repo_path, test_command)
+    task_path = write_task_payload(task_payload)
+    mark_candidate_as_drafted(candidate_path, candidate["candidate_id"])
+    return {
+        "task_payload": task_payload,
+        "task_path": task_path,
     }
 
 
@@ -229,30 +271,33 @@ def main() -> int:
     args = build_parser().parse_args()
     candidate_path = (REPO_ROOT / args.candidate_file).resolve()
 
-    issue_payload = import_issue(args.repo, args.issue)
-    candidate = build_candidate(args.repo, issue_payload)
-    upsert_candidate(candidate_path, candidate)
+    import_output = import_issue_to_dataset(
+        repo_full_name=args.repo,
+        issue_number=args.issue,
+        dataset_path=candidate_path,
+    )
+    candidate = import_output["candidate"]
 
     print("=== Candidate Imported ===")
     print(f"candidate_id: {candidate['candidate_id']}")
     print(f"issue_title: {candidate['issue_title']}")
     print(f"issue_url: {candidate['issue_url']}")
     print(f"candidate_file: {candidate_path}")
+    print(f"operation: {import_output['operation']}")
 
     if not args.draft_task:
         return 0
 
-    task_payload = build_task_payload(candidate, args.repo_path, args.test_command)
-    task_path = REPO_ROOT / "benchmarks" / "tasks" / f"{task_payload['task_id']}.json"
-    task_path.write_text(
-        json.dumps(task_payload, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+    draft_output = draft_task_for_candidate(
+        candidate=candidate,
+        candidate_path=candidate_path,
+        repo_path=args.repo_path,
+        test_command=args.test_command,
     )
-    mark_candidate_as_drafted(candidate_path, candidate["candidate_id"])
 
     print("=== Draft Task Generated ===")
-    print(f"task_id: {task_payload['task_id']}")
-    print(f"task_path: {task_path}")
+    print(f"task_id: {draft_output['task_payload']['task_id']}")
+    print(f"task_path: {draft_output['task_path']}")
     print("draft_status: needs_manual_completion")
     return 0
 

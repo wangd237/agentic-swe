@@ -587,6 +587,7 @@ scripts/
 - `benchmarks/real_world_candidates.json`
 - `scripts/validate_tasks.py`
 - `scripts/import_github_issue.py`
+- `scripts/import_issue_batch.py`
 
 它们的作用是：
 
@@ -608,8 +609,22 @@ scripts/
 - 可选生成 `real_issue` task 草稿
 - 保留已有候选状态并按时间追加备注
 - 把“候选收集”和“任务补全”拆成两步，避免一次性要求把所有字段都补齐
+- 支持从文本或 JSON 批量导入多个 issue，便于后续持续扩新来源
 
-### 8. 真实 issue 草稿到 semi_real 的脚手架入口已可用
+### 8. 真实 issue 批量导入入口已可用
+
+当前已经新增：
+
+- `scripts/import_issue_batch.py`
+
+当前能力如下：
+
+- 从文本或 JSON 文件批量读取多个 `repo + issue`
+- 逐条复用单 issue 导入逻辑
+- 支持批量导入时直接生成 `real_issue` 草稿
+- 保持候选备注继续采用追加式记录
+
+### 9. 真实 issue 草稿到 semi_real 的脚手架入口已可用
 
 当前已经新增：
 
@@ -625,7 +640,7 @@ scripts/
   - `accepted`
 - 在 `--ready` 模式下自动把任务追加到 `benchmarks/manifests/real_issue_tasks.json`
 
-### 9. 真实 issue 已推进到可运行 semi_real 任务
+### 10. 真实 issue 已推进到可运行 semi_real 任务
 
 当前已经完成：
 
@@ -990,7 +1005,28 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000
 
 如果再加 `--draft-task`，还会额外生成一个 `real_issue` task 草稿文件。
 
-### 方式 8：从 real_issue 草稿生成 semi_real 脚手架
+### 方式 8：批量导入一组真实 GitHub issue 候选
+
+在仓库根目录执行：
+
+```bash
+python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt
+```
+
+你会看到：
+
+- 本次批量导入的总数
+- `created_count`
+- `updated_count`
+- `drafted_count`
+- 每条 issue 对应的 `candidate_id`
+
+如果你加上 `--draft-task`：
+
+- 每条 issue 会在导入后继续生成一个 `real_issue` 草稿
+- 候选状态会自动追加草稿备注
+
+### 方式 9：从 real_issue 草稿生成 semi_real 脚手架
 
 在仓库根目录执行：
 
@@ -1011,7 +1047,7 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 - 任务 metadata 会带 `draft_status`
 - 适合先做人工缩题和最小复现
 
-### 方式 9：运行首条真实 issue 派生任务
+### 方式 10：运行首条真实 issue 派生任务
 
 在仓库根目录执行：
 
@@ -1025,7 +1061,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy
 - 修改文件是 `setup.py`
 - patch 原因是放宽 urllib3 依赖上界
 
-### 方式 10：运行第 2 条真实 issue 派生任务
+### 方式 11：运行第 2 条真实 issue 派生任务
 
 在仓库根目录执行：
 
@@ -1659,11 +1695,15 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充 `task_014` / `task_057` 与 `improved_v28`
 - 已补充 `task_058` 与 `improved_v29`
 - 已补充 `task_059` 与 `improved_v30`
+- 已补充 `task_060` 与 `improved_v31`
+- 已补充 `task_061` 与 `improved_v32`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
-- 下一步会继续扩充任务与优化策略
+- 已补充真实 issue 候选的批量导入入口
+- 已补充 batch run 时延回归分析入口
+- 下一步会继续扩新来源、定位时延回归并扩充任务与优化策略
 
 ### Phase 7
 
@@ -1697,4 +1737,5 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 扩充 report set
 - 逐步引入 GitHub 真实仓库 issue 作为正式评测候选
 - 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
+- 用新增的时延分析脚本定位最近几轮 `average_duration_sec` 回升原因
 - 继续追加优化前后差异说明

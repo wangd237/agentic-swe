@@ -12,6 +12,8 @@
   - 已完成 `30` 条真实 issue 派生 `semi_real` 正式任务
   - 已在 `frozen_20` 上补齐一轮 `improved_v31 -> improved_v32` 无回归验证
   - 已把当前高优先级 `to_review` 候选池清零
+  - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
+  - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
 ## 当前核心链路
@@ -28,6 +30,10 @@
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v32.json --run-label realissuev32`
+- 候选批量导入：
+  - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
+- 时延回归分析：
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
 
 ## 当前正式任务规模
 
@@ -83,6 +89,23 @@
 - 这是当前最新的一轮 `frozen_20` 无回归验证
 - 说明新增 profile 布局继承规则没有破坏已有 `20` 条固定任务
 - 当前最近一组真正带来同集合成功率提升的证据仍然是 `improved_v21 -> improved_v22`
+
+### 3. 最新时延分析结论
+
+- 扩容集分析：
+  - `logs/summaries/duration_compare_realissuev32_001.json`
+  - 公共 `29` 条任务平均耗时：`0.6115 -> 0.6767`
+  - 平均差值：`+0.0652s`
+- `frozen_20` 分析：
+  - `logs/summaries/duration_compare_frozen20v32_001.json`
+  - 公共 `20` 条任务平均耗时：`0.6122 -> 0.6774`
+  - 平均差值：`+0.0652s`
+
+说明：
+
+- 这说明最近一轮时延回升并不只是 `task_061` 新增导致
+- 当前更像是公共任务执行路径本身整体变慢
+- 时延回升最明显的任务集中在：`task_040`、`task_038`、`task_036`、`task_034`
 
 ## 最新新增任务
 
@@ -215,7 +238,7 @@
 ## 接下来最值得做的事
 
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
-- 当前高优先级 `to_review` 已清零，下一步应扩新来源并定位近期耗时回升原因
+- 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，并继续定位近期耗时回升原因
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

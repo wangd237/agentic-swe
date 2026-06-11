@@ -87,6 +87,8 @@
   - 已将 `PyCQA/isort#1815` 推进为 `task_061` 可运行 semi_real 任务
   - 已完成 `improved_v32` 策略迭代，补充 tuple 格式化分支继承 profile 布局策略
   - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
+  - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
+  - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已补充项目说明文档与阶段指南
 
 ## 项目目标
@@ -234,7 +236,26 @@ python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-
 - target_files_hint
 - success_criteria
 
-### 8. 从 real_issue 草稿生成 semi_real 脚手架
+### 8. 批量导入 GitHub 真实 issue 候选
+
+```bash
+python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt
+```
+
+这个命令当前会完成：
+
+- 从文本或 JSON 批量读取 `owner/repo issue_number`
+- 逐条复用 `import_github_issue.py` 的导入逻辑
+- 继续保留候选状态和历史备注，不会覆盖旧记录
+- 汇总输出 `created / updated / drafted` 数量
+
+如果你希望批量导入时直接生成 `real_issue` 草稿：
+
+```bash
+python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt --draft-task
+```
+
+### 9. 从 real_issue 草稿生成 semi_real 脚手架
 
 ```bash
 python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007.json --semi-repo-name requests_encoding_repo --module-path requests_encoding_repo/utils.py --test-path tests/test_utils.py --ready --success-criteria "Quoted 和 unquoted charset 都能正确解析，且测试全部通过。" --expected-failure-test "HeaderEncodingTests.test_double_quoted_charset_is_detected" --tag header-parsing --tag charset
@@ -255,7 +276,7 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 
 如果不加 `--ready`，脚本会生成一个待人工补齐的 semi_real 草稿，更适合先做 issue 缩减和最小复现。
 
-### 9. 一键运行真实 issue 评测流水线
+### 10. 一键运行真实 issue 评测流水线
 
 ```bash
 python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v8.json --run-label realissuev8 --compare-against-eval logs/summaries/batch_eval_realissuev7r2_001.json --compare-label realissue_step6
@@ -268,6 +289,20 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 自动生成对应的 batch eval 报告
 - 如提供 baseline eval，则自动生成 compare 报告
 - 同时输出当前候选状态统计，方便回看 `accepted / drafted / scaffolded`
+
+### 11. 分析两轮 batch run 的时延回归
+
+```bash
+python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32
+```
+
+这个命令当前会完成：
+
+- 读取两轮 batch run 指向的每个 `result.json`
+- 对齐公共任务，计算逐任务 `duration_sec` 差值
+- 汇总 top regressions / top improvements
+- 区分“扩容导致的任务集变化”和“公共任务本身变慢”
+- 生成追加式 JSON / Markdown 报告，便于后续长期跟踪
 
 ## 当前 benchmark 任务
 
@@ -486,6 +521,7 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `logs/summaries/batch_compare_realissue_step29_001.json`
   - `logs/summaries/batch_compare_realissue_step30_001.json`
   - `logs/summaries/batch_compare_realissue_step31_001.json`
+  - `logs/summaries/duration_compare_realissuev32_001.json`
   - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
   - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
   - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
@@ -575,6 +611,8 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `task_057` 在扩容后的任务集上完全通过
   - `task_058` 在扩容后的任务集上完全通过
   - `task_059` 在扩容后的任务集上完全通过
+  - 公共 `29` 条任务平均耗时从 `0.6115` 上升到 `0.6767`
+  - 说明这轮耗时回升不只是因为新增了 `task_061`
 
 冻结 15 条真实任务后的同集合对比产物：
 
@@ -659,6 +697,9 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_duration_sec: 0.548 -> 0.5584`
   - 说明新增 ErrorTree 只读访问规则没有破坏已有固定任务集
+  - `logs/summaries/duration_compare_frozen20v32_001.json`
+  - 公共 `20` 条任务平均耗时差值：`+0.0652s`
+  - 回升最明显的任务包括：`task_040`、`task_038`、`task_036`、`task_034`
 
 ## Harness 设计方向
 
@@ -686,9 +727,10 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 下一阶段将继续深化 `Phase 6 - 优化系统`，重点实现：
 
 - 扩充 report set
-- 增加更自动化的实验报告与案例沉淀
+- 增加更自动化的实验报告、候选导入与性能分析沉淀
 - 逐步接入 GitHub 真实仓库 issue 作为更正式的评测来源
-- 把真实 GitHub issue 入口跑成更稳定的评测流水线
+- 把真实 GitHub issue 入口跑成更稳定的批量评测流水线
+- 继续定位最近几轮 `average_duration_sec` 回升的具体原因
 - 继续做 prompt / policy / grader 组合优化
 - 形成更有说服力的 improved 对比
 

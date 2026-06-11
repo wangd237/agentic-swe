@@ -1,0 +1,4 @@
+# 每行一个候选，格式：owner/repo issue_number
+psf/requests 6432
+Textualize/rich 4090
+PyCQA/isort 1815

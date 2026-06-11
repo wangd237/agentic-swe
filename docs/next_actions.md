@@ -31,7 +31,21 @@
 - 新任务进入 `benchmarks/manifests/real_issue_tasks.json`
 - 扩容后仍保持任务集整体稳定
 
-### 3. 持续清理候选池
+### 3. 用时延分析脚本定位最近的系统性变慢
+
+目标：
+
+- 基于 `scripts/analyze_duration_regressions.py`
+- 持续比较相邻两轮 batch run 的公共任务耗时变化
+- 找出是少数热点任务异常，还是整组任务普遍变慢
+
+完成标准：
+
+- 至少保留 `1` 份扩容集时延分析报告
+- 至少保留 `1` 份 `frozen_20` 时延分析报告
+- 在优化日志里明确记录 top regressions 和后续假设
+
+### 4. 持续清理候选池
 
 目标：
 
@@ -48,13 +62,15 @@
 ## 建议执行顺序
 
 1. 先看 `docs/candidate_shortlist.md`
-2. 确认下一条要推进的 issue
-3. 生成 draft task 和 semi_real repo
-4. 补 patch 规则与 policy
-5. 跑单任务分辨测试
-6. 跑扩容对比
-7. 再用 `frozen_20` 跑同集合 compare
-8. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+2. 用 `scripts/import_issue_batch.py` 导入一批新来源 issue
+3. 确认下一条要推进的 issue
+4. 生成 draft task 和 semi_real repo
+5. 补 patch 规则与 policy
+6. 跑单任务分辨测试
+7. 跑扩容对比
+8. 再用 `frozen_20` 跑同集合 compare
+9. 用 `scripts/analyze_duration_regressions.py` 补一轮时延分析
+10. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
@@ -81,6 +97,8 @@
 - `benchmarks/manifests/`
 - `optimization/policy_versions/`
 - `logs/summaries/`
+- `scripts/import_issue_batch.py`
+- `scripts/analyze_duration_regressions.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`
