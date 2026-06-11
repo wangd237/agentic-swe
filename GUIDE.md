@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v32` 多轮策略迭代，正式真实任务扩充到 `30` 条，并在 `frozen_20` 上持续做同集合验证 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v33` 多轮策略迭代，正式真实任务扩充到 `30` 条，`v33` 已通过正式集与 `frozen_20` 验证，并开始向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -718,7 +718,15 @@ scripts/
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_duration_sec: 0.6774 -> 0.5379`
   - `run_tests` 总耗时下降：`-2.5941s`
-- 下一步应该继续拆 `pytest` 的 import/collection 内部差异和解释器抖动，并优先把 `improved_v33` 扩到正式 30 条任务集
+- `improved_v33` 已进一步在正式 `30` 条任务集上验证：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6778 -> 0.5423`
+  - `run_tests` 总耗时下降：`-3.6001s`
+- 这说明 `v33` 已经是当前主线里的强候选基线，而不只是局部热点优化
+- 下一步应该把重点切到两条主线：
+  - 继续扩真实 issue 正式任务，朝 `60+` 推进
+  - 构建 `frozen_40`，并累计连续 `5` 个策略版本的固定集合无回归证据
 
 ### 7. 真实 issue 导入入口已可用
 

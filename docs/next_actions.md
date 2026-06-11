@@ -82,7 +82,8 @@
 - 已新增 `improved_v33`，通过 policy 注入 `-p no:unraisableexception`
 - 已在热点 4 任务上验证 `improved_v33`：平均总耗时 `-0.002s`，成功率保持 `1.0`
 - 已在 `frozen_20` 上验证 `improved_v33`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.6774 -> 0.5379`
-- 下一步应判断 `v33` 是否值得作为后续扩容与 `frozen_40` 的候选基线推进
+- 已在正式 `30` 条任务集上验证 `improved_v33`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.6778 -> 0.5423`
+- 当前可以把 `v33` 视为后续扩容与 `frozen_40` 的候选基线推进
 
 ### 4. 持续清理候选池
 
@@ -114,17 +115,18 @@
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
 14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
-15. 把 `improved_v33` 扩到正式 `30` 条任务集，确认扩容集上也能保持无回归且不恶化时延
-16. 若 `v33` 在正式集也稳定，再拆 `unraisableexception + debugging` 的组合边界
-17. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+15. 继续扩真实 issue 正式任务，优先朝 `40+` 再到 `60+` 推进
+16. 构建 `frozen_40`，并开始累计连续 `5` 个策略版本的固定集合无回归证据
+17. 视情况继续拆 `unraisableexception + debugging` 的组合边界，但优先级低于 benchmark maturity 主线
+18. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
-3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，并优先把 `improved_v33` 扩到正式集，再拆解 `unraisableexception` 组合边界
+2. 以 `improved_v33` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 详细理由见：
 

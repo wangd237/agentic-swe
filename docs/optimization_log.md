@@ -6261,3 +6261,104 @@
 - 还需要把 `v33` 扩到正式 `30` 条任务集，确认扩容集也受益
 - 还需要决定后续是继续堆 `unraisableexception` 方向，还是开始构建 `frozen_40`
 - 下一步更适合做正式集验证，而不是回到更细碎的插件切分
+
+## 2026-06-11 Phase 6 improved_v33 正式 30 条任务集验证
+
+### 背景
+
+上一轮已经完成：
+
+- `improved_v33` 小集合热点验证
+- `improved_v33` `frozen_20` 同集合验证
+
+这两轮已经说明：
+
+- `-p no:unraisableexception` 不是明显有风险的 runtime 改动
+- 它在固定集合上已经带来强阳性的耗时改善
+
+但在进入长期 benchmark 主线之前，还需要确认它在正式 `30` 条真实任务集上是否同样成立。
+
+### 目标
+
+- 在正式 `30` 条真实任务集上比较 `improved_v32 -> improved_v33`
+- 确认功能无回归
+- 确认耗时改善不是只出现在热点小集合或 `frozen_20`
+- 判断 `v33` 是否已经足够成为后续 `60+` 扩容与 `frozen_40` 的候选基线
+
+### 改动类型
+
+- `benchmark`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `logs/summaries/batch_run_realissuev33_001.json`
+- `logs/summaries/batch_run_realissuev33_001.md`
+- `logs/summaries/batch_eval_realissuev33_001.json`
+- `logs/summaries/batch_eval_realissuev33_001.md`
+- `logs/summaries/batch_compare_realissue_step13_002.json`
+- `logs/summaries/batch_compare_realissue_step13_002.md`
+- `logs/summaries/duration_compare_realissuev33_001.json`
+- `logs/summaries/duration_compare_realissuev33_001.md`
+- `logs/summaries/trace_hotspots_realissuev33_001.json`
+- `logs/summaries/trace_hotspots_realissuev33_001.md`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 运行正式 `30` 条真实任务集上的 `improved_v33`
+- 生成 batch run、batch eval 与 compare 报告
+- 补齐正式集上的时延回归分析
+- 补齐正式集上的 trace 热点分析
+- 把 `v33` 的正式集结论同步进项目记忆、结果页、行动清单与指南
+
+### 测试与验证
+
+- 运行命令：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v33.json --run-label realissuev33 --compare-against-eval logs/summaries/batch_eval_realissuev32_001.json --compare-label realissue_step13`
+  - `python -m scripts.analyze_duration_regressions --baseline-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_realissuev32_001.json --improved-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_realissuev33_001.json --run-label realissuev33`
+  - `python -m scripts.analyze_trace_hotspots --baseline-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_realissuev32_001.json --improved-batch-summary E:\My_Projects\agentic-software-engineering-roadmap\logs\summaries\batch_run_realissuev33_001.json --run-label realissuev33`
+
+### 关键观察
+
+- 正式 `30` 条任务集结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6778 -> 0.5423`
+  - `average_steps: 9.3 -> 10.3`
+  - `average_tool_calls: 9.3 -> 9.3`
+- 时延分析：
+  - 公共 `30` 条任务平均耗时差值：`-0.1355s`
+  - 总耗时：`20.3351s -> 16.268s`
+  - 没有出现 task 级时延回归榜单
+- trace 热点：
+  - `run_tests` 总耗时：`18.6839 -> 15.0838`
+  - `delta_total_duration_sec = -3.6001`
+  - `copy_workspace` 仅增加 `0.0654s`
+  - `unattributed_overhead` 增加 `0.2978s`，但仍被 `run_tests` 收益显著覆盖
+- 任务级最大改善：
+  - `task_040`: `-0.3941s`
+  - `task_034`: `-0.2601s`
+  - `task_036`: `-0.2364s`
+  - `task_038`: `-0.2229s`
+  - `task_008`: `-0.2076s`
+
+### 结论
+
+- `improved_v33` 已经同时通过：
+  - 热点小集合验证
+  - `frozen_20` 固定集合验证
+  - 正式 `30` 条真实任务集验证
+- 它在三层集合上都保持了 `100%` 成功率和 `100%` 测试通过率
+- 同时它在正式集上也给出了与 `frozen_20` 量级接近的稳定耗时改善
+- 这说明 `-p no:unraisableexception` 已经从 benchmark 线索升级为主线可采用的 runtime 优化
+
+### 剩余问题
+
+- 还需要继续扩充真实任务规模，从 `30` 推到 `60+`
+- 还需要构建 `frozen_40`，并开始累计连续 `5` 个策略版本的同集合无回归证据
+- 如果后续继续做 runtime 细化，应该优先服务于 `frozen_40` 的长期稳定性目标，而不是只追求局部热点收益

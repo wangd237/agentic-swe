@@ -1822,6 +1822,43 @@ trace 热点分析结果：
 - 这说明 `-p no:unraisableexception` 已经不只是 benchmark 线索，而是当前主线里可落地、可复现的 runtime 优化
 - 下一步最值得做的是把 `v33` 扩到正式 30 条任务集，再决定是否把它作为后续 `frozen_40` 的候选基线
 
+`improved_v33` 正式 30 条真实 issue 任务集验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev33_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev33_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step13_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev33_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev33_001.json`
+- 指标：
+  - `task_count`: `30 -> 30`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.6778 -> 0.5423`
+  - `average_steps`: `9.3 -> 10.3`
+  - `average_tool_calls`: `9.3 -> 9.3`
+- 时延分析：
+  - 公共 `30` 条任务平均耗时差值：`-0.1355s`
+  - 总耗时：`20.3351s -> 16.268s`
+  - `run_tests` 总耗时：`18.6839s -> 15.0838s`
+  - `run_tests` 总增量：`-3.6001s`
+- 任务级最大改善：
+  - `task_040`: `-0.3941s`
+  - `task_034`: `-0.2601s`
+  - `task_036`: `-0.2364s`
+  - `task_038`: `-0.2229s`
+  - `task_008`: `-0.2076s`
+- trace 侧补充观察：
+  - `copy_workspace` 仅新增约 `0.0654s`，仍然不是主要因素
+  - `unattributed_overhead` 有所上升，但远小于 `run_tests` 的收益
+
+进一步结论：
+
+- `improved_v33` 现在已经同时通过了热点小集合、`frozen_20` 和正式 `30` 条真实任务集三层验证
+- 这说明 `-p no:unraisableexception` 不只是局部热点优化，而是对当前主线任务集具有广泛正收益
+- 目前 `v33` 已可以视为后续扩容到 `60+` 和构建 `frozen_40` 的强候选基线
+- 下一步重点应从“验证 `v33` 是否成立”切换为“继续扩真实任务规模，并累计 `frozen_40` 连续无回归证据”
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：
