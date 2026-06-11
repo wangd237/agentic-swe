@@ -44,6 +44,8 @@
 - 至少保留 `1` 份扩容集时延分析报告
 - 至少保留 `1` 份 `frozen_20` 时延分析报告
 - 在优化日志里明确记录 top regressions 和后续假设
+- 至少保留 `1` 份 trace 热点分析报告，确认主要热点工具
+- 至少保留 `1` 份单任务历史时延分析报告，确认热点任务是稳定变慢还是高方差抖动
 
 ### 4. 持续清理候选池
 
@@ -70,14 +72,17 @@
 7. 跑扩容对比
 8. 再用 `frozen_20` 跑同集合 compare
 9. 用 `scripts/analyze_duration_regressions.py` 补一轮时延分析
-10. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
+10. 用 `scripts/analyze_trace_hotspots.py` 补一轮 trace 热点分析
+11. 用 `scripts/analyze_task_history.py` 下钻热点任务历史分布
+12. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
 ## 当前推荐下一条 issue 候选
 
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 观察并定位最近三轮 `average_duration_sec` 回升的原因
+2. 沿 `run_tests` 链进一步定位最近三轮 `average_duration_sec` 回升的原因
+3. 把 `task_040` 这类热点任务的历史分析扩展到 `task_038 / task_036 / task_034`
 
 详细理由见：
 
@@ -99,6 +104,8 @@
 - `logs/summaries/`
 - `scripts/import_issue_batch.py`
 - `scripts/analyze_duration_regressions.py`
+- `scripts/analyze_trace_hotspots.py`
+- `scripts/analyze_task_history.py`
 - `README.md`
 - `GUIDE.md`
 - `docs/results.md`

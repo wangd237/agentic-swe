@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from time import perf_counter
 
 from app.tools.common import resolve_repo_path
 
@@ -45,6 +46,7 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
         resolved_repo_path = resolve_repo_path(repo_path)
         env = dict(os.environ)
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        started_at = perf_counter()
 
         completed_process = subprocess.run(
             command,
@@ -55,12 +57,16 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
             timeout=timeout_sec,
             env=env,
         )
+        subprocess_duration_sec = round(perf_counter() - started_at, 4)
 
+        summary_started_at = perf_counter()
         test_summary, observed_failure = _summarize_test_output(
             stdout=completed_process.stdout,
             stderr=completed_process.stderr,
             exit_code=completed_process.returncode,
         )
+        summary_extraction_duration_sec = round(perf_counter() - summary_started_at, 4)
+        duration_sec = round(subprocess_duration_sec + summary_extraction_duration_sec, 4)
 
         return {
             "ok": completed_process.returncode == 0,
@@ -73,7 +79,9 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
                 "exit_code": completed_process.returncode,
                 "stdout": completed_process.stdout,
                 "stderr": completed_process.stderr,
-                "duration_sec": None,
+                "duration_sec": duration_sec,
+                "subprocess_duration_sec": subprocess_duration_sec,
+                "summary_extraction_duration_sec": summary_extraction_duration_sec,
                 "observed_failure": observed_failure,
             },
             "error": None if completed_process.returncode == 0 else {
@@ -94,6 +102,8 @@ def run_tests(repo_path: str, command: str, timeout_sec: int = 120) -> dict:
                 "stdout": error.stdout or "",
                 "stderr": error.stderr or "",
                 "duration_sec": timeout_sec,
+                "subprocess_duration_sec": timeout_sec,
+                "summary_extraction_duration_sec": 0.0,
                 "observed_failure": "",
             },
             "error": {"type": "timeout", "message": str(error)},

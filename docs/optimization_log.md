@@ -5097,3 +5097,148 @@
 - 还没有对 `task_040 / task_038 / task_036 / task_034` 的 trace 做更细粒度分解
 - 下一步应继续围绕这些热点任务检查是否存在固定的额外搜索、读文件或 patch 分支开销
 - 新来源 issue 的扩容还需要尽快接上批量导入入口，避免候选池再次见底
+
+## 2026-06-11 14:04 Phase 6 trace 热点分析补强
+
+### 本轮目标
+
+- 把时延定位从任务总耗时继续下钻到 trace / tool 级别
+- 让新产生的 trace 显式记录每一步 `duration_sec`
+- 用真实日志确认最近一轮回升到底主要堆在哪类动作上
+
+### 本轮新增文件
+
+- `scripts/analyze_trace_hotspots.py`
+- `tests/test_analyze_trace_hotspots.py`
+- `logs/summaries/trace_hotspots_realissuev32_001.json`
+- `logs/summaries/trace_hotspots_realissuev32_001.md`
+- `logs/summaries/trace_hotspots_frozen20v32_001.json`
+- `logs/summaries/trace_hotspots_frozen20v32_001.md`
+
+### 本轮修改文件
+
+- `app/schemas/trace_schema.py`
+- `app/tools/run_tests.py`
+- `app/runtime/task_runner.py`
+- `README.md`
+- `GUIDE.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/results.md`
+
+### 本轮实现内容
+
+- 扩展 `TraceStep`：
+  - 新增显式 `duration_sec`
+- 扩展 `Trace`：
+  - 新增 `started_at / finished_at`
+- 优化 `run_tests`：
+  - 显式记录测试命令自身的执行耗时
+- 优化 `task_runner`：
+  - 为 `list_files / search_code / read_file / run_tests / rule_based_patch / show_diff` 写入步骤级耗时
+- 新增 `scripts/analyze_trace_hotspots.py`：
+  - 优先读取显式步骤耗时
+  - 兼容旧 trace 的时间戳差值回退
+  - 输出任务级热点和工具级热点
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_analyze_trace_hotspots.py tests/test_analyze_duration_regressions.py tests/test_import_issue_batch.py tests/test_run_real_issue_eval.py tests/test_scaffold_semi_real_task.py -q`
+  - 结果：`16 passed`
+- 真实日志验证：
+  - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+  - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_frozen20v31_001.json --improved-batch-summary logs/summaries/batch_run_frozen20v32_001.json --run-label frozen20v32`
+
+### 关键观察
+
+- 扩容集 trace 热点：
+  - `run_tests` 总耗时：`16.4937 -> 18.0086`
+  - 总增量：`+1.5149s`
+- `frozen_20` trace 热点：
+  - `run_tests` 总耗时：`11.48 -> 12.5496`
+  - 总增量：`+1.0696s`
+- 在任务级热点里，`task_040 / task_038 / task_036 / task_034` 的 dominant regression tool 都是 `run_tests`
+
+### 结论
+
+- 最近一轮系统性变慢的主因已经基本锁定到测试执行链
+- `search_code / list_files / rule_based_patch` 也有回升，但量级明显小于 `run_tests`
+- 后续性能优化应优先检查测试子进程启动、pytest 环境隔离和工作副本 I/O 对测试阶段的影响
+
+### 剩余问题
+
+- 还没有验证 `run_tests` 变慢是 pytest 启动、目录复制、环境变量注入还是文件系统抖动导致
+- 下一步可以补一层测试执行剖析，拆分“子进程启动前 / 测试命令本身 / 结果解析”三个阶段
+- 外部推送仍受 GitHub 凭据失效影响，但不妨碍继续推进本地实现和评测能力
+
+## 2026-06-11 14:15 Phase 6 单任务历史时延分析补强
+
+### 本轮目标
+
+- 把性能诊断从 batch 级 / trace 级继续下钻到单任务历史样本
+- 验证 `task_040` 在 `improved_v32` 的回升到底是稳定现象还是偶发抖动
+- 为后续继续排查 `run_tests` 子进程耗时建立可复用入口
+
+### 本轮新增文件
+
+- `scripts/analyze_task_history.py`
+- `tests/test_analyze_task_history.py`
+- `logs/summaries/task_history_task_040_003.json`
+- `logs/summaries/task_history_task_040_003.md`
+
+### 本轮修改文件
+
+- `GUIDE.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/results.md`
+
+### 本轮实现内容
+
+- 新增 `scripts/analyze_task_history.py`：
+  - 按任务目录聚合同一任务的全部历史 run
+  - 按 `tool_stats.policy_id` 分组统计
+  - 输出总耗时、`run_tests` 总耗时、`run_tests_subprocess`、`summary_extraction` 的均值、范围和波动
+  - 自动产出 JSON 和 Markdown 报告
+- 新增 `tests/test_analyze_task_history.py`：
+  - 验证按策略版本分组聚合
+  - 验证最近两版 delta 计算
+  - 验证输出文件落盘
+
+### 测试与验证
+
+- 自动化测试：
+  - `python -m pytest tests/test_analyze_task_history.py tests/test_runtime_diagnostics.py tests/test_analyze_trace_hotspots.py tests/test_analyze_duration_regressions.py tests/test_import_issue_batch.py tests/test_run_real_issue_eval.py tests/test_scaffold_semi_real_task.py -q`
+- 真实日志验证：
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
+
+### 关键观察
+
+- `task_040` 历史样本：
+  - `31` 次运行
+  - `15` 个策略版本
+- 最近两版：
+  - `improved_v31` 平均耗时：`0.6213`
+  - `improved_v32` 平均耗时：`0.8171`
+  - 平均增量：`+0.1958s`
+- `run_tests` 维度：
+  - 平均增量：`+0.2032s`
+  - `improved_v32` 的已观测 `run_tests_subprocess` 平均值：`0.5296`
+  - 由于旧 trace 没有该字段，当前不能直接计算跨版本 `run_tests_subprocess` 平均增量
+- `improved_v32` 最慢两个样本：
+  - `run_20260611T052406971975Z_3564`
+  - `run_20260611T052406972313Z_3830`
+  - 两者总耗时都接近 `0.946s`
+
+### 结论
+
+- `task_040` 的回升不是只靠单次样本才能观察到，按历史样本聚合后依然显著
+- 这进一步加强了“`run_tests` 子进程执行链是主要瓶颈”的判断
+- 现在线索已经从“哪一轮变慢”推进到“哪一类任务、哪一段执行链、在历史样本里如何持续变慢”
+
+### 剩余问题
+
+- 目前只对 `task_040` 做了历史分析，仍需扩展到 `task_038 / task_036 / task_034`
+- 旧 trace 缺少显式 `subprocess_duration_sec` 字段，因此更早样本只能看到 `run_tests` 总体耗时
+- 下一步应继续围绕 pytest 子进程启动、工作副本 I/O 和环境差异做更细的实验

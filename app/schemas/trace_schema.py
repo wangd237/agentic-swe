@@ -17,6 +17,8 @@ class TraceStep(BaseModel):
     observation: str = ""
     decision: str = ""
     timestamp: str = ""
+    duration_sec: float | None = None
+    tool_metrics: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
@@ -28,6 +30,8 @@ class Trace(BaseModel):
 
     task_id: str
     run_id: str
+    started_at: str = ""
+    finished_at: str = ""
     steps: list[TraceStep] = Field(default_factory=list)
     final_status: str = "not_started"
     total_tool_calls: int = 0

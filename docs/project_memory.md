@@ -14,6 +14,9 @@
   - 已把当前高优先级 `to_review` 候选池清零
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
+  - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
+  - 已新增单任务历史时延分析入口 `scripts/analyze_task_history.py`
+  - 已让新 trace 记录显式步骤耗时
   - 已形成追加式优化记录、候选池维护和 GitHub 推送节奏
 
 ## 当前核心链路
@@ -34,6 +37,10 @@
   - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
 - 时延回归分析：
   - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+- trace 热点分析：
+  - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+- 单任务历史时延分析：
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
 
 ## 当前正式任务规模
 
@@ -100,6 +107,19 @@
   - `logs/summaries/duration_compare_frozen20v32_001.json`
   - 公共 `20` 条任务平均耗时：`0.6122 -> 0.6774`
   - 平均差值：`+0.0652s`
+- trace 热点分析：
+  - `logs/summaries/trace_hotspots_realissuev32_001.json`
+  - `logs/summaries/trace_hotspots_frozen20v32_001.json`
+  - 两组分析都指向 `run_tests` 是最主要的时延回升来源
+  - 扩容集上的 `run_tests` 总耗时增量约 `+1.5149s`
+  - `frozen_20` 上的 `run_tests` 总耗时增量约 `+1.0696s`
+- 单任务历史分析：
+  - `logs/summaries/task_history_task_040_003.json`
+  - `task_040` 在 `improved_v31 -> improved_v32` 的历史平均耗时：`0.6213 -> 0.8171`
+  - 平均增量：`+0.1958s`
+  - 其中 `run_tests` 平均增量：`+0.2032s`
+  - `improved_v32` 的已观测 `run_tests_subprocess` 平均值是 `0.5296`
+  - 由于旧 trace 没有该字段，当前不能直接计算跨版本 `run_tests_subprocess` delta
 
 说明：
 
@@ -239,6 +259,8 @@
 
 - 围绕 `frozen_20` 继续积累后续版本的同集合对比证据
 - 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，并继续定位近期耗时回升原因
+- 当前性能定位已经收窄到 `run_tests` 链路，下一步应优先检查测试执行环境和子进程开销
+- 对热点任务的历史聚合已经证明 `task_040` 在 `improved_v32` 不只是单次偶发抖动，后续应优先补更多热点任务的历史分析
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序

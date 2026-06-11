@@ -55,6 +55,8 @@ def _append_tool_step(
     tool_output_summary: str,
     observation: str,
     decision: str,
+    duration_sec: float | None = None,
+    tool_metrics: dict | None = None,
 ) -> None:
     # 工具调用步骤统一从这里写入，保证 trace 结构稳定。
     trace.steps.append(
@@ -67,6 +69,8 @@ def _append_tool_step(
             observation=observation,
             decision=decision,
             timestamp=_utc_timestamp(),
+            duration_sec=duration_sec,
+            tool_metrics=tool_metrics or {},
         )
     )
     trace.total_tool_calls += 1
@@ -188,8 +192,9 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
 
     _copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
 
-    trace = Trace(task_id=task.task_id, run_id=run_id)
+    trace = Trace(task_id=task.task_id, run_id=run_id, started_at=_utc_timestamp())
     write_json(run_paths.task_json_path, task)
+    tool_started_at = perf_counter()
     list_result = list_files(str(run_paths.workspace_dir))
     _append_tool_step(
         trace=trace,
@@ -198,11 +203,14 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         tool_output_summary=list_result["summary"],
         observation=f"仓库中当前可见 {list_result['data'].get('count', 0)} 个文件。",
         decision="结合 issue 关键词筛选更可能相关的代码与测试文件。",
+        duration_sec=round(perf_counter() - tool_started_at, 4),
+        tool_metrics={"file_count": list_result["data"].get("count", 0)},
     )
 
     search_queries = derive_search_queries(task)
     search_results: list[dict] = []
     for query in search_queries:
+        tool_started_at = perf_counter()
         search_result = search_code(str(run_paths.workspace_dir), query)
         search_results.append(search_result)
         _append_tool_step(
@@ -212,10 +220,16 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             tool_output_summary=search_result["summary"],
             observation=f"搜索词 `{query}` 关联文件: {', '.join(search_result['data'].get('match_files', [])) or '无命中'}。",
             decision="保留命中文件，用于决定接下来需要读取的上下文。",
+            duration_sec=round(perf_counter() - tool_started_at, 4),
+            tool_metrics={
+                "match_count": search_result["data"].get("match_count", 0),
+                "match_file_count": len(search_result["data"].get("match_files", [])),
+            },
         )
 
     files_to_read = _select_files_to_read(task, search_results)
     for relative_path in files_to_read:
+        tool_started_at = perf_counter()
         read_result = read_file(str(run_paths.workspace_dir), relative_path)
         _append_tool_step(
             trace=trace,
@@ -224,10 +238,16 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             tool_output_summary=read_result["summary"],
             observation=f"已读取 `{relative_path}`，截断状态: {read_result['data'].get('truncated', False)}。",
             decision="继续汇总关键文件与可能的修复入口。",
+            duration_sec=round(perf_counter() - tool_started_at, 4),
+            tool_metrics={
+                "line_count": read_result["data"].get("line_count", 0),
+                "truncated": read_result["data"].get("truncated", False),
+            },
         )
         if read_result["ok"]:
             trace.read_files.append(relative_path)
 
+    tool_started_at = perf_counter()
     pre_test_result = run_tests(str(run_paths.workspace_dir), task.test_command, timeout_sec=30)
     _append_tool_step(
         trace=trace,
@@ -240,11 +260,18 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         tool_output_summary=pre_test_result["summary"],
         observation=f"测试退出码: {pre_test_result['data'].get('exit_code')}，失败位置: {pre_test_result['data'].get('observed_failure') or '未提取'}。",
         decision="将测试失败位置纳入 patch 生成的重点上下文。",
+        duration_sec=round(perf_counter() - tool_started_at, 4),
+        tool_metrics={
+            "exit_code": pre_test_result["data"].get("exit_code"),
+            "subprocess_duration_sec": pre_test_result["data"].get("subprocess_duration_sec"),
+            "summary_extraction_duration_sec": pre_test_result["data"].get("summary_extraction_duration_sec"),
+        },
     )
 
     write_text(run_paths.pre_test_stdout_path, pre_test_result["data"].get("stdout", ""))
     write_text(run_paths.pre_test_stderr_path, pre_test_result["data"].get("stderr", ""))
 
+    patch_started_at = perf_counter()
     patch_result = apply_rule_based_patch(
         task,
         str(run_paths.workspace_dir),
@@ -261,12 +288,18 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
             observation=patch_result.get("patch_reason", ""),
             decision="运行修复后测试，验证 patch 是否真正解决问题。",
             timestamp=_utc_timestamp(),
+            duration_sec=round(perf_counter() - patch_started_at, 4),
+            tool_metrics={
+                "write_performed": patch_result["write_result"] is not None,
+                "patch_applied": patch_result["ok"],
+            },
         )
     )
 
     if patch_result["write_result"] is not None:
         trace.total_tool_calls += 1
 
+    tool_started_at = perf_counter()
     post_test_result = run_tests(str(run_paths.workspace_dir), task.test_command, timeout_sec=30)
     _append_tool_step(
         trace=trace,
@@ -279,6 +312,12 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         tool_output_summary=post_test_result["summary"],
         observation=f"修复后测试退出码: {post_test_result['data'].get('exit_code')}。",
         decision="根据修复后测试结果决定当前任务是否成功。",
+        duration_sec=round(perf_counter() - tool_started_at, 4),
+        tool_metrics={
+            "exit_code": post_test_result["data"].get("exit_code"),
+            "subprocess_duration_sec": post_test_result["data"].get("subprocess_duration_sec"),
+            "summary_extraction_duration_sec": post_test_result["data"].get("summary_extraction_duration_sec"),
+        },
     )
 
     write_text(run_paths.post_test_stdout_path, post_test_result["data"].get("stdout", ""))
@@ -286,6 +325,7 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
     write_text(run_paths.test_stdout_path, post_test_result["data"].get("stdout", ""))
     write_text(run_paths.test_stderr_path, post_test_result["data"].get("stderr", ""))
 
+    tool_started_at = perf_counter()
     diff_result = show_diff(str(run_paths.workspace_dir), original_repo_path=str(source_repo_path))
     _append_tool_step(
         trace=trace,
@@ -297,11 +337,16 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         tool_output_summary=diff_result["summary"],
         observation=f"检测到变更文件: {', '.join(diff_result['data'].get('changed_files', [])) or '无'}。",
         decision="将差异内容落盘，作为 patch 证据。",
+        duration_sec=round(perf_counter() - tool_started_at, 4),
+        tool_metrics={
+            "changed_file_count": len(diff_result["data"].get("changed_files", [])),
+        },
     )
     write_text(run_paths.patch_diff_path, diff_result["data"].get("diff_text", ""))
 
     final_status = "success" if post_test_result["ok"] else "failed"
     trace.final_status = final_status
+    trace.finished_at = _utc_timestamp()
     duration_sec = round(perf_counter() - started_at, 4)
     summary_text = _build_summary(
         task,

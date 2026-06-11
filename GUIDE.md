@@ -588,13 +588,43 @@ scripts/
 - `scripts/validate_tasks.py`
 - `scripts/import_github_issue.py`
 - `scripts/import_issue_batch.py`
+- `scripts/analyze_duration_regressions.py`
+- `scripts/analyze_trace_hotspots.py`
+- `scripts/analyze_task_history.py`
 
 它们的作用是：
 
 - 让任务来源显式区分 `synthetic / semi_real / real_issue`
 - 先维护一份 GitHub 真实 issue 候选清单
 - 在真实任务真正接入前，先把格式与校验入口固定下来
+- 在出现性能回升时，既能看 batch 公共任务整体变化，也能继续下钻到单任务历史样本
 - 当前已成功导入十五条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`pytest-dev/pytest#14329`、`Textualize/rich#3877`、`pydantic/pydantic#9582`、`pallets/click#3111`、`dateutil/dateutil#1442`、`dateutil/dateutil#1432`、`python-attrs/attrs#1479`、`pallets/jinja#2069`、`pallets/jinja#2118`、`python-poetry/tomlkit#494`、`python-poetry/tomlkit#495`、`pypa/packaging#873`
+
+### 7. 当前新增的性能诊断链
+
+目前 Phase 6 的性能定位已经形成三层递进：
+
+1. `scripts/analyze_duration_regressions.py`
+   - 看相邻两轮 batch run 的公共任务总体时延变化
+2. `scripts/analyze_trace_hotspots.py`
+   - 看热点主要堆在哪个工具上
+3. `scripts/analyze_task_history.py`
+   - 看单个热点任务在不同策略版本和多次运行里的历史分布
+
+你可以这样体验：
+
+- 看扩容集的总体回升：
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+- 看热点工具：
+  - `python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32`
+- 看热点任务 `task_040` 的历史分布：
+  - `python scripts/analyze_task_history.py --task-dir logs/trajectories/task_040 --output-dir logs/summaries`
+
+当前这层新增能力的意义是：
+
+- 不再只能看到“v32 变慢了”
+- 还能判断它是公共任务系统性回升，还是少数任务高方差抖动
+- 还能继续区分 `run_tests` 里的总耗时、子进程耗时和摘要提取耗时
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -624,7 +654,23 @@ scripts/
 - 支持批量导入时直接生成 `real_issue` 草稿
 - 保持候选备注继续采用追加式记录
 
-### 9. 真实 issue 草稿到 semi_real 的脚手架入口已可用
+### 9. 性能诊断入口已可用
+
+当前已经新增：
+
+- `scripts/analyze_duration_regressions.py`
+- `scripts/analyze_trace_hotspots.py`
+
+当前能力如下：
+
+- 先在 `result.json` 层面对比两轮 batch run 的任务总耗时差异
+- 再在 `trace.json` 层面继续下钻到工具级热点
+- 再按单任务历史 run 聚合策略版本差异和波动范围
+- 新产生的 trace 已开始显式记录每一步 `duration_sec`
+- 旧 trace 没有显式耗时时，也可以回退到时间戳差值估算
+- 旧 trace 没有 `subprocess_duration_sec` 等细粒度字段时，会明确标记为“未观测”
+
+### 10. 真实 issue 草稿到 semi_real 的脚手架入口已可用
 
 当前已经新增：
 
@@ -640,7 +686,7 @@ scripts/
   - `accepted`
 - 在 `--ready` 模式下自动把任务追加到 `benchmarks/manifests/real_issue_tasks.json`
 
-### 10. 真实 issue 已推进到可运行 semi_real 任务
+### 11. 真实 issue 已推进到可运行 semi_real 任务
 
 当前已经完成：
 
@@ -1026,7 +1072,35 @@ python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt
 - 每条 issue 会在导入后继续生成一个 `real_issue` 草稿
 - 候选状态会自动追加草稿备注
 
-### 方式 9：从 real_issue 草稿生成 semi_real 脚手架
+### 方式 9：分析两轮 batch run 的时延回归
+
+在仓库根目录执行：
+
+```bash
+python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32
+```
+
+你会看到：
+
+- 公共任务平均耗时变化
+- top regressions / top improvements
+- 是否存在新增或移除的任务
+
+### 方式 10：分析两轮 batch run 的 trace 热点
+
+在仓库根目录执行：
+
+```bash
+python scripts/analyze_trace_hotspots.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32
+```
+
+你会看到：
+
+- 哪些任务最慢
+- 每个慢任务里哪个工具是主要热点
+- 工具级汇总里 `run_tests / search_code / show_diff` 等动作的总耗时变化
+
+### 方式 11：从 real_issue 草稿生成 semi_real 脚手架
 
 在仓库根目录执行：
 
@@ -1047,7 +1121,7 @@ python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007
 - 任务 metadata 会带 `draft_status`
 - 适合先做人工缩题和最小复现
 
-### 方式 10：运行首条真实 issue 派生任务
+### 方式 12：运行首条真实 issue 派生任务
 
 在仓库根目录执行：
 
@@ -1061,7 +1135,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy
 - 修改文件是 `setup.py`
 - patch 原因是放宽 urllib3 依赖上界
 
-### 方式 11：运行第 2 条真实 issue 派生任务
+### 方式 13：运行第 2 条真实 issue 派生任务
 
 在仓库根目录执行：
 
@@ -1703,6 +1777,9 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 已补充真实 issue 候选的批量导入入口
 - 已补充 batch run 时延回归分析入口
+- 已补充 trace 热点分析入口
+- 已补充单任务历史时延分析入口
+- 已让新 trace 记录显式步骤耗时
 - 下一步会继续扩新来源、定位时延回归并扩充任务与优化策略
 
 ### Phase 7
@@ -1738,4 +1815,5 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 逐步引入 GitHub 真实仓库 issue 作为正式评测候选
 - 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
 - 用新增的时延分析脚本定位最近几轮 `average_duration_sec` 回升原因
+- 沿 `run_tests` 链继续定位系统性时延回升来源
 - 继续追加优化前后差异说明

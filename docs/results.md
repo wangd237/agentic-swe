@@ -1508,3 +1508,40 @@
 - 最近一轮耗时回升并不只是扩容到 `task_061` 带来的表面变化
 - 公共任务集合本身也发生了明显变慢
 - 后续应优先围绕这些热点任务检查是否存在策略分支命中后带来的额外开销
+
+trace 热点分析结果：
+
+- 扩容集：
+  - `logs/summaries/trace_hotspots_realissuev32_001.json`
+  - 最主要的工具级热点是 `run_tests`
+  - `run_tests` 总耗时：`16.4937 -> 18.0086`
+  - 总增量：`+1.5149s`
+- 冻结同集合：
+  - `logs/summaries/trace_hotspots_frozen20v32_001.json`
+  - 最主要的工具级热点仍是 `run_tests`
+  - `run_tests` 总耗时：`11.48 -> 12.5496`
+  - 总增量：`+1.0696s`
+
+进一步结论：
+
+- 性能回升的主因已经基本收窄到测试执行链，而不是 patch 规则命中数明显增加
+- `search_code`、`list_files` 和 `rule_based_patch` 也有轻微回升，但量级明显小于 `run_tests`
+
+单任务历史时延分析结果：
+
+- `task_040`
+  - `logs/summaries/task_history_task_040_003.json`
+  - 历史样本数：`31`
+  - 覆盖策略数：`15`
+  - `improved_v31 -> improved_v32` 历史平均耗时：`0.6213 -> 0.8171`
+  - 平均差值：`+0.1958s`
+  - `run_tests` 平均耗时差值：`+0.2032s`
+  - `improved_v32` 的已观测 `run_tests_subprocess` 平均值：`0.5296`
+  - 旧 trace 缺少该字段，因此当前不能直接计算跨版本 `run_tests_subprocess` 差值
+  - `improved_v32` 的最慢两个样本都接近 `0.946s`
+
+进一步结论：
+
+- `task_040` 在 `improved_v32` 上并不只是单次偶发变慢，历史聚合后仍然明显高于 `improved_v31`
+- 回升的主要部分继续集中在 `run_tests`，而且新 trace 已能看到显式 `subprocess` 耗时
+- 下一步应继续对 `task_038 / task_036 / task_034` 做同样的历史聚合，判断它们是否呈现同样模式
