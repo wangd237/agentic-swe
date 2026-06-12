@@ -9,14 +9,7 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 5
-
-### `pypa/packaging#909`
-
-- 原因：
-  - `parse_wheel_filename` 的压缩 tag 排序校验边界清晰
-  - 目标文件和测试入口都很明确
-  - 能补足当前 `packaging` 任务里还没有覆盖到的 wheel tag 校验能力
+## 当前 Top 4
 
 ### `pypa/packaging#638`
 
@@ -139,6 +132,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_064 / task_065`
+
+### `pypa/packaging#909`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_066 / task_067`
 
 ## 使用方式
 

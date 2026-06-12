@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v35` 多轮策略迭代，正式真实任务扩充到 `32` 条，`v35` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v36` 多轮策略迭代，正式真实任务扩充到 `33` 条，`v36` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -728,7 +728,7 @@ scripts/
   - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
   - 它会自动汇总正式任务数、来源生态数、frozen 集合规模和 `frozen_40` 连续无回归版本数
   - 当前最新审计结果是：
-    - 正式任务数：`32 / 60`
+    - 正式任务数：`33 / 60`
     - 来源生态数：`13 / 6`
     - frozen 集合：`20 / 40`
     - `frozen_40` 连续版本：`0 / 5`
@@ -758,6 +758,19 @@ scripts/
     - `test_pass_rate: 1.0 -> 1.0`
     - `average_duration_sec: 0.5368 -> 0.5402`
 - 这说明当前主线已经成功把正式任务集推进到 `32` 条；`frozen_20` 上仅有 `+0.0034s` 的轻微时延波动，但功能仍然完全无回归
+- 当前已经继续新增 `packaging#909` 派生的 `task_067`，并落地 `improved_v36`
+  - 新增 repo：`benchmarks/repos/packaging_tag_order_repo`
+  - 新增策略：`optimization/policy_versions/improved_v36.json`
+  - 新规则覆盖 wheel compressed tag set 未排序时应直接拒绝
+  - 正式 `33` 条任务集验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.535 -> 0.5312`
+  - `frozen_20` 同集合验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5402 -> 0.5386`
+- 这说明当前主线已经成功把正式任务集推进到 `33` 条，并且这次扩容在正式集和固定集上都继续带来了小幅时延改善
 - 这说明当前真正缺的不是来源多样性，而是规模和稳定性证据
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
@@ -1913,6 +1926,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充 `task_061` 与 `improved_v32`
 - 已补充 `task_063` 与 `improved_v34`
 - 已补充 `task_065` 与 `improved_v35`
+- 已补充 `task_067` 与 `improved_v36`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果
@@ -2008,6 +2022,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `frozen_20` 固定集合保持无功能回归
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5368` 小幅波动到 `0.5402`
+
+### 方式 51：运行 packaging wheel compressed tag order 回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_067.json --policy optimization/policy_versions/improved_v36.json
+```
+
+你会看到：
+
+- `task_067` 被成功修复
+- 修改文件是 `packaging_tag_order_repo/utils.py`
+- patch 原因是 compressed tag set 必须按排序顺序出现，未排序时应直接拒绝
+
+### 方式 52：运行正式 `33` 条任务集上的 `improved_v36`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v36.json --run-label realissuev36 --compare-against-eval logs/summaries/batch_eval_realissuev35_001.json --compare-label realissue_step16
+```
+
+你会看到：
+
+- 正式任务集已经从 `32` 条扩到 `33` 条
+- `improved_v36` 在正式 `33` 条任务集上保持 `33/33` 成功
+- 平均耗时从 `0.535` 继续改善到 `0.5312`
+
+### 方式 53：运行 `frozen_20` 上的 `improved_v36` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v36.json --run-label frozen20v36 --compare-against-eval logs/summaries/batch_eval_frozen20v35_001.json --compare-label frozen20_step15
+```
+
+你会看到：
+
+- `frozen_20` 固定集合保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时从 `0.5402` 小幅改善到 `0.5386`
 
 ### Phase 7
 

@@ -1,0 +1,29 @@
+{
+  "task_id": "task_066",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Bug: `parse_wheel_filenames` accepts wheel filenames with unsorted compressed tag sets",
+  "issue_text": "当前 `parse_wheel_filename` 在处理 wheel 文件名里的 compressed tag set 时，没有校验 tag 顺序是否符合规范要求。根据相关规范，压缩 tag 集合中的每一段都应该是排序后的；例如 `py3.py2-none-any` 不应被接受，而应拒绝为无效 wheel 文件名。这个真实 issue 需要在不破坏合法 wheel 文件名解析的前提下，补上 unsorted compressed tag set 的拒绝逻辑。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 909,
+    "issue_url": "https://github.com/pypa/packaging/issues/909",
+    "candidate_id": "pypa_packaging_issue_909",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

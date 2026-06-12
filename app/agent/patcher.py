@@ -854,6 +854,30 @@ def _handle_packaging_prerelease_less_than(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_packaging_sorted_compressed_tags(content: str) -> str | None:
+    # improved_v36 处理 wheel compressed tag set 未排序仍被错误接受的问题。
+    target_block = (
+        "    # 这里故意保留真实 issue 中的缺陷：\n"
+        "    # 当前实现只拆出 compressed python tag，但没有校验它们是否已经排序。\n"
+        "    compressed_tags = python_tag.split(\".\")\n"
+        "    if not compressed_tags:\n"
+        "        raise InvalidWheelFilename(f\"Invalid python tag: {filename}\")\n\n"
+        "    return name, version, python_tag"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "    compressed_tags = python_tag.split(\".\")\n"
+        "    if not compressed_tags:\n"
+        "        raise InvalidWheelFilename(f\"Invalid python tag: {filename}\")\n"
+        "    if len(compressed_tags) > 1 and compressed_tags != sorted(compressed_tags):\n"
+        "        raise InvalidWheelFilename(f\"Unsorted compressed tag set in wheel filename: {filename}\")\n\n"
+        "    return name, version, python_tag"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2050,9 +2074,22 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v35":
+            if policy_config.patch_strategy == "improved_v36":
+                improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                if improved_v36_content is not None:
+                    updated_content = improved_v36_content
+                    patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                else:
+                    # v36 未命中新规则时，继续完整复用 v35/v34 的既有回退链。
+                    run_v34_fallback_chain = True
+                    improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                    if improved_v35_content is not None:
+                        updated_content = improved_v35_content
+                        patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                        run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v35":
                 improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
                 if improved_v35_content is not None:
                     updated_content = improved_v35_content
