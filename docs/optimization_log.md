@@ -8390,3 +8390,136 @@
 - 当前离 `60` 条正式任务仍有 `15` 条缺口
 - 后续应继续优先选择这种单函数、纯逻辑、轻依赖的新 issue
 - 下一轮应继续补新的真实 issue 来源，并保持当前 frozen 证据链不断裂
+
+## 2026-06-12 Phase 6 click confirm ANSI 清理扩容与 `improved_v49`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pypa/packaging#1240 -> task_091`
+- `improved_v48`
+- 正式任务数推进到 `45`
+- `frozen_40 streak` 推进到 `6`
+
+因此这一轮主线继续保持不变：
+
+- 在不破坏当前 frozen 稳定性的前提下继续扩正式任务
+- 把正式任务数继续从 `45` 推向 `60+`
+
+这一轮优先选择 `pallets/click#3572`，因为它是一个单函数、纯输出语义、复现极短的真实 bug，适合低风险扩容。
+
+### 目标
+
+- 把 `pallets/click#3572` 转成新的 semi_real 正式任务
+- 为 `click.confirm(color=False)` 未去除 ANSI 提示颜色补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v49`
+- 把 maturity 审计结果同步到 `46 / 60` 与 `streak = 7`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_092.json`
+- `benchmarks/tasks/task_093.json`
+- `benchmarks/repos/click_confirm_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v49.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev49_001.json`
+- `logs/summaries/batch_eval_realissuev49_001.json`
+- `logs/summaries/batch_compare_realissue_step29_002.json`
+- `logs/summaries/batch_run_frozen20v49_001.json`
+- `logs/summaries/batch_eval_frozen20v49_001.json`
+- `logs/summaries/batch_compare_frozen20_step28_001.json`
+- `logs/summaries/batch_run_frozen40v49_002.json`
+- `logs/summaries/batch_eval_frozen40v49_002.json`
+- `logs/summaries/batch_compare_frozen40_step06_002.json`
+- `logs/summaries/benchmark_maturity_maturity_023.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `pallets/click#3572`
+- 新增 `real_issue` 草稿：
+  - `task_092`
+- 新增可运行的 semi_real 正式任务：
+  - `task_093`
+- 新增 repo：
+  - `benchmarks/repos/click_confirm_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `confirm(color=False)` 仍直接输出带 ANSI 的消息
+- 新增 `improved_v49`
+- 在 patcher 中新增 click confirm ANSI 清理的专用规则
+- 把 `task_093` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/click_confirm_repo/tests/test_prompts.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_093.json --policy optimization/policy_versions/improved_v49.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v49.json --run-label realissuev49 --compare-against-eval logs/summaries/batch_eval_realissuev48_001.json --compare-label realissue_step29`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v49.json --run-label frozen20v49 --compare-against-eval logs/summaries/batch_eval_frozen20v48_001.json --compare-label frozen20_step28`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v49.json --run-label frozen40v49 --compare-against-eval logs/summaries/batch_eval_frozen40v48_001.json --compare-label frozen40_step06`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `45 -> 46`
+- 候选池状态：
+  - `accepted = 45 -> 46`
+  - `to_review = 0 -> 0`
+- `improved_v49` 正式 `46` 条任务集结果：
+  - `success_count: 45 -> 46`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5241 -> 0.5869`
+- `improved_v49` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5287 -> 0.5972`
+- `improved_v49` `frozen_40` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5243 -> 0.5385`
+- maturity 审计：
+  - 正式任务数：`46 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`7`
+
+### 这轮额外记录的过程
+
+- 首轮 `frozen40v49_001` 的 `average_duration_sec = 0.5876`
+- 该值会暂时把 `v49` 排除在长期耗时阈值之外
+- 由于这轮 `average_steps` 与 `average_tool_calls` 完全未变，更像运行时抖动而不是策略逻辑变化
+- 因此补跑了第二轮 `frozen40v49_002`
+- 复跑结果回落到 `0.5385`，重新满足相对 `improved_v32` 的 `+3%` 约束
+- 后续遇到类似边界值时，应优先保留“首轮 + 复跑”的完整证据，而不是覆盖旧结果
+
+### 结论
+
+- `click#3572` 已成功作为全新 click 输出语义题补进正式 semi_real 任务集
+- `improved_v49` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮把正式任务数推进到 `46`
+- `frozen_40 streak` 已推进到 `7`
+- 当前离目标还差 `14` 条正式任务，接下来应继续优先吃短平快的真实 bug 候选

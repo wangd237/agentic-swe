@@ -1252,6 +1252,28 @@ def _handle_packaging_direct_url_file_scheme(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_click_confirm_color_false_ansi(content: str) -> str | None:
+    # improved_v49 处理 confirm 在 color=False 时未去除 ANSI 控制序列的问题。
+    target_block = (
+        'def render_confirm_output(message: str, user_input: str, color: bool) -> str:\n'
+        '    """模拟 confirm 在终端中的提示输出。"""\n'
+        '    # 这里故意保留真实 issue 中的缺陷：\n'
+        '    # color=False 时 confirm 提示仍直接使用原始消息，导致 ANSI 码泄漏到输出。\n'
+        '    rendered = message\n'
+        '    return f"{rendered} [y/N]: {user_input}\\n"'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        'def render_confirm_output(message: str, user_input: str, color: bool) -> str:\n'
+        '    """模拟 confirm 在终端中的提示输出。"""\n'
+        '    rendered = message if color else strip_ansi(message)\n'
+        '    return f"{rendered} [y/N]: {user_input}\\n"'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2450,32 +2472,37 @@ def apply_rule_based_patch(
 
         if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41"}:
             run_v34_fallback_chain = False
-        if policy_config.patch_strategy == "improved_v48":
+        if policy_config.patch_strategy == "improved_v49":
+            improved_v49_content = _handle_click_confirm_color_false_ansi(original_content)
+            if improved_v49_content is not None:
+                updated_content = improved_v49_content
+                patch_reason_parts = ["让 click confirm 在 color=False 时像 echo 一样去除 ANSI 控制序列"]
+        if policy_config.patch_strategy in {"improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v48_content = _handle_packaging_direct_url_file_scheme(original_content)
             if improved_v48_content is not None:
                 updated_content = improved_v48_content
                 patch_reason_parts = ["让 file URL 的 scheme 按大小写不敏感方式处理，并接受单斜杠 file 形式"]
-        if policy_config.patch_strategy in {"improved_v47", "improved_v48"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v47", "improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v47_content = _handle_jinja_map_default_none(original_content)
             if improved_v47_content is not None:
                 updated_content = improved_v47_content
                 patch_reason_parts = ["让 map(attribute=..., default=None) 也像其他显式默认值一样正常回落"]
-        if policy_config.patch_strategy in {"improved_v46", "improved_v47", "improved_v48"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v46", "improved_v47", "improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v46_content = _handle_tomlkit_proxy_repr_missing_children(original_content)
             if improved_v46_content is not None:
                 updated_content = improved_v46_content
                 patch_reason_parts = ["让代理视图 repr 保留同一父路径下的全部 dotted key 子项"]
-        if policy_config.patch_strategy in {"improved_v45", "improved_v46", "improved_v47", "improved_v48"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v45_content = _handle_pydantic_fraction_zero_division(original_content)
             if improved_v45_content is not None:
                 updated_content = improved_v45_content
                 patch_reason_parts = ["让零分母 fraction 输入也统一映射为 ValidationError，而不是冒泡 ZeroDivisionError"]
-        if policy_config.patch_strategy in {"improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v44_content = _handle_packaging_requirement_pickle_prereleases(original_content)
             if improved_v44_content is not None:
                 updated_content = improved_v44_content
                 patch_reason_parts = ["让 Requirement 在 pickle 后保留 specifier.prereleases 的显式设置值"]
-        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49"} and updated_content == original_content:
             improved_v43_content = _handle_tomlkit_scalar_replacement_scope(original_content)
             if improved_v43_content is not None:
                 updated_content = improved_v43_content

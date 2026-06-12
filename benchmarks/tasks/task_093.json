@@ -1,0 +1,37 @@
+{
+  "task_id": "task_093",
+  "repo_name": "click_confirm_repo",
+  "repo_path": "benchmarks/repos/click_confirm_repo",
+  "issue_title": "ANSI codes not stripped from click.confirm after upgrading to click 8.4",
+  "issue_text": "当前 `render_confirm_output()` 在 `color=False` 时，没有像 `render_echo_output()` 一样先去掉 ANSI 颜色控制序列，导致确认提示输出中仍残留彩色转义码。semi-real 任务要求：`confirm` 在 `color=False` 时必须去掉 ANSI；`echo` 路径继续保持现有行为；`color=True` 时的彩色输出不回归。",
+  "test_command": "python -m pytest tests/test_prompts.py -q",
+  "success_criteria": "`confirm` 在 `color=False` 时必须输出纯文本提示，不再残留 ANSI 控制序列；`color=True` 时继续保留彩色输出；`echo` 路径保持正常；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "click",
+    "confirm",
+    "ansi"
+  ],
+  "target_files_hint": [
+    "click_confirm_repo/prompts.py",
+    "tests/test_prompts.py"
+  ],
+  "expected_failure_test": "ConfirmOutputTests.test_confirm_strips_ansi_when_color_false",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3572,
+    "issue_url": "https://github.com/pallets/click/issues/3572",
+    "candidate_id": "pallets_click_issue_3572",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_092",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

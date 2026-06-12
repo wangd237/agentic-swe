@@ -1,0 +1,29 @@
+{
+  "task_id": "task_092",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "ANSI codes not stripped from click.confirm after upgrading to click 8.4",
+  "issue_text": "当前在 confirm 提示链路里，即使调用方显式设置了 `color=False`，带 ANSI 样式的提示文本也不会像 `echo()` 那样先去掉颜色控制序列，导致测试输出中仍残留 `\\x1b[...m`。这个真实 issue 需要让 `click.confirm()` 在 `color=False` 时与普通输出保持一致，正确移除 ANSI 码，同时不影响 `color=True` 的彩色输出行为。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3572,
+    "issue_url": "https://github.com/pallets/click/issues/3572",
+    "candidate_id": "pallets_click_issue_3572",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

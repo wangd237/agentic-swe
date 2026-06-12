@@ -795,6 +795,22 @@
       "state": "OPEN",
       "created_at": "2026-06-02T23:45:36Z",
       "body_excerpt": "当前 `fraction_validator` 在解析分母为零的字符串输入时，只捕获 `ValueError`，导致 `Fraction(\"6/0\")` 抛出的 `ZeroDivisionError` 直接冒泡，而不是像其他非法输入一样统一转成 `ValidationError`。期望行为是把零分母也视为普通校验失败，并继续保持合法 fraction 的解析结果。"
+    },
+    {
+      "candidate_id": "pallets_click_issue_3572",
+      "repo_full_name": "pallets/click",
+      "repo_url": "https://github.com/pallets/click",
+      "issue_number": 3572,
+      "issue_title": "ANSI codes not stripped from click.confirm after upgrading to click 8.4",
+      "issue_url": "https://github.com/pallets/click/issues/3572",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T20:25:00: 通过 GitHub 公共 API 手工补录为新候选来源。\n2026-06-12T20:27:00: 已生成 real_issue task 草稿 task_092，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T20:30:00: 已生成 semi_real 可运行任务 task_093，仓库目录为 benchmarks/repos/click_confirm_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2026-06-08T14:41:37Z",
+      "body_excerpt": "当前 `click.confirm()` 在 `color=False` 时，没有像 `click.echo()` 一样去除 ANSI 颜色控制序列，导致测试输出中仍残留转义码。期望行为是 confirm 提示在禁用颜色时输出纯文本，同时保持 `color=True` 时的彩色输出行为不回归。"
     }
   ]
 }
