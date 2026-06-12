@@ -1,0 +1,22 @@
+{
+  "issues": [
+    {
+      "repo": "pypa/distlib",
+      "issue": "#238",
+      "draft_task": true,
+      "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+      "test_command": "python -m pytest -q",
+      "status": "to_review",
+      "difficulty": "easy",
+      "why_it_fits": "这是一个边界非常明确的元数据生成 bug。当前错误行为和期望输出都很清晰，而且修复看起来只涉及单个文本生成分支，非常适合压成最小 semi_real benchmark。",
+      "expected_target_files": [
+        "distlib_wheel_repo/wheel.py",
+        "tests/test_wheel.py"
+      ],
+      "expected_test_shape": "可用 2 到 3 个稳定测试覆盖带 build tag 时应写入 `Build:` 行、不带 build tag 时行为保持不变，以及 metadata 其它字段不受影响。",
+      "risk_notes": "需要把最小实现限制在 `WHEEL` metadata 生成，不把真实打包流程整体带进来。",
+      "recommendation": "high",
+      "note": "2026-06-12: 作为 v59 首选候选，用于继续把正式任务数从 55 推向 60+。"
+    }
+  ]
+}

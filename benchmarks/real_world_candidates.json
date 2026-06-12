@@ -962,6 +962,26 @@
         "click/formatting.py",
         "tests/test_formatting.py"
       ]
+    },
+    {
+      "candidate_id": "pypa_distlib_issue_238",
+      "repo_full_name": "pypa/distlib",
+      "repo_url": "https://github.com/pypa/distlib",
+      "issue_number": 238,
+      "issue_title": "Build tag is not correctly added to WHEEL metadata file",
+      "issue_url": "https://github.com/pypa/distlib/issues/238",
+      "language": "python",
+      "difficulty": "easy",
+      "status": "accepted",
+      "notes": "2026-06-12T18:48:31: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T18:48:31: why_it_fits: 这是一个边界非常明确的元数据生成 bug。当前错误行为和期望输出都很清晰，而且修复看起来只涉及单个文本生成分支，非常适合压成最小 semi_real benchmark。\n2026-06-12T18:48:31: expected_test_shape: 可用 2 到 3 个稳定测试覆盖带 build tag 时应写入 `Build:` 行、不带 build tag 时行为保持不变，以及 metadata 其它字段不受影响。\n2026-06-12T18:48:31: risk_notes: 需要把最小实现限制在 `WHEEL` metadata 生成，不把真实打包流程整体带进来。\n2026-06-12T18:48:31: recommendation: high\n2026-06-12T18:48:31: 2026-06-12: 作为 v59 首选候选，用于继续把正式任务数从 55 推向 60+。\n2026-06-12T18:48:31: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T18:48:42: 已生成 semi_real 可运行任务 task_113，仓库目录为 benchmarks/repos/distlib_wheel_repo。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2024-11-21T01:30:21Z",
+      "body_excerpt": "**Describe the bug**  \r\nThe build tag (`distlib.wheel.Wheel.buildver`) is not added to the `WHEEL` metadata file as prescribed by [PEP 491](https://peps.python.org/pep-0491/#file-contents).\r\n\r\n**To Reproduce**\r\nUse `distlib.wheel` to generate a wheel package with `buildver='1foo'`. Observe that the `WHEEL` metadata file does not contain a `Build: 1foo` line. Alternatively, <kbd>Ctrl+F</kbd> for `buildver` in [distlib/wheel.py](https://github.com/pypa/distlib/blob/c6fc08e9fbc81c4350ecc5c7e9729c5b",
+      "expected_target_files": [
+        "distlib_wheel_repo/wheel.py",
+        "tests/test_wheel.py"
+      ]
     }
   ]
 }

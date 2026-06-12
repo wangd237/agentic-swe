@@ -9824,3 +9824,117 @@
   - 正式集平均耗时为 `0.5234`
 - `v58` 当前已经完成正式集、`frozen_20` 与 `frozen_40` 三线验证
 - 下一轮应继续把正式任务数从 `55` 推向 `60+`，优先考虑 `packaging#810 / tomlkit#450 / jinja#2118` 这类高质量候选
+
+## 2026-06-12 Phase 6 distlib WHEEL metadata 扩容与 `improved_v59`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一个来自新生态 `pypa/distlib` 的真实 issue 派生任务
+- 保持 frozen 集功能稳定，并尽量不让平均耗时继续恶化
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v59_candidates.json`
+- `benchmarks/tasks/task_112.json`
+- `benchmarks/tasks/task_113.json`
+- `benchmarks/repos/distlib_wheel_repo/`
+- `optimization/policy_versions/improved_v59.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev59r1_001.json`
+- `logs/summaries/batch_eval_realissuev59r2_001.json`
+- `logs/summaries/batch_compare_realissue_step39_002.json`
+- `logs/summaries/batch_eval_frozen20v59r1_001.json`
+- `logs/summaries/batch_compare_frozen20_step38_001.json`
+- `logs/summaries/batch_eval_frozen40v59r1_001.json`
+- `logs/summaries/batch_compare_frozen40_step14_001.json`
+- `logs/summaries/benchmark_maturity_maturity_035.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `pypa/distlib#238`
+- 新增 `real_issue` 草稿：
+  - `task_112`
+- 新增可运行的 semi_real 正式任务：
+  - `task_113`
+- 新增 repo：
+  - `benchmarks/repos/distlib_wheel_repo`
+- 在 repo 中故意保留 bug：
+  - `buildver` 存在时仍没有把 `Build:` 行写入 WHEEL metadata
+- 新增 `improved_v59`
+- 在 patcher 中新增 distlib WHEEL metadata Build 行的专用规则
+- 把 `task_113` 加入正式 manifest
+- 把新生态 `pypa/distlib` 纳入正式任务来源集合
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/distlib_wheel_repo/tests/test_wheel.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_113.json --policy optimization/policy_versions/improved_v59.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_111.json --policy optimization/policy_versions/improved_v59.json`
+- 正式集首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v59.json --run-label realissuev59r1 --compare-against-eval logs/summaries/batch_eval_realissuev58r2_001.json --compare-label realissue_step39`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v59.json --run-label realissuev59r2 --compare-against-eval logs/summaries/batch_eval_realissuev58r2_001.json --compare-label realissue_step39`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v59.json --run-label frozen20v59r1 --compare-against-eval logs/summaries/batch_eval_frozen20v58r1_001.json --compare-label frozen20_step38`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v59.json --run-label frozen40v59r1 --compare-against-eval logs/summaries/batch_eval_frozen40v58r1_001.json --compare-label frozen40_step14`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `55 -> 56`
+- 来源生态数：
+  - `13 -> 14`
+- 候选池状态：
+  - `accepted = 55 -> 56`
+  - `to_review = 0 -> 0`
+- `improved_v59` 正式 `56` 条任务集最终结果：
+  - `success_count: 55 -> 56`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5234 -> 0.5197`
+- `improved_v59` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5506 -> 0.5605`
+- `improved_v59` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5294 -> 0.5296`
+
+### 这轮额外记录的过程
+
+- `v59r1` 首轮正式集只暴露 `task_111` 单点回归：
+  - 根因是 `v58` 的 click usage 连字符换行规则没有继续继承到 `improved_v59`
+- 修复后补跑 `v59r2`：
+  - 正式集恢复 `56 / 56`
+  - 正式集平均耗时不仅没有继续恶化，反而较 `v58` 进一步回落
+- 这再次说明：
+  - patcher 的版本继承链仍是当前策略演化里最高频、最真实的回归来源之一
+
+### 结论
+
+- `distlib#238` 已成功作为来自新生态的一条 metadata 生成语义题补进正式 semi_real 任务集
+- `improved_v59` 已把正式任务数推进到 `56`
+- 功能上，`improved_v59` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，正式集平均耗时进一步回落，`frozen_40` 几乎持平且仍稳定低于长期阈值
+- 下一轮应继续把正式任务数从 `56` 推向 `60+`

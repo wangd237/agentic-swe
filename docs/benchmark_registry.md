@@ -67,6 +67,7 @@
 | `task_107` | `python-poetry/tomlkit#430` | `tomlkit_single_key_repo` | 单元素列表 key 规范被错误构造成 DottedKey | `improved_v56` | `-` |
 | `task_109` | `pypa/packaging#1231` | `packaging_name_normalization_repo` | `is_normalized_name()` 错误拒绝 `canonicalize_name()` 已稳定的前后连字符名称 | `improved_v57` | `-` |
 | `task_111` | `pallets/click#3362` | `click_usage_repo` | usage 换行时在连字符处分裂长选项 | `improved_v58` | `-` |
+| `task_113` | `pypa/distlib#238` | `distlib_wheel_repo` | WHEEL metadata 漏写 `Build:` 行 | `improved_v59` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -117,6 +118,7 @@
 - 单元素列表 key 规范与单字符串 key 语义一致性
 - 名称规范化 roundtrip 语义与边界连字符 canonical 输出一致性
 - usage 帮助文本换行与连字符长选项的原子性保真
+- wheel metadata 生成与 build tag 文本保真
 
 ## 当前仍相对欠缺的方向
 

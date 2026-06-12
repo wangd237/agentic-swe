@@ -1,0 +1,29 @@
+{
+  "task_id": "task_112",
+  "repo_name": "distlib",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Build tag is not correctly added to WHEEL metadata file",
+  "issue_text": "**Describe the bug**  \r\nThe build tag (`distlib.wheel.Wheel.buildver`) is not added to the `WHEEL` metadata file as prescribed by [PEP 491](https://peps.python.org/pep-0491/#file-contents).\r\n\r\n**To Reproduce**\r\nUse `distlib.wheel` to generate a wheel package with `buildver='1foo'`. Observe that the `WHEEL` metadata file does not contain a `Build: 1foo` line. Alternatively, <kbd>Ctrl+F</kbd> for `buildver` in [distlib/wheel.py](https://github.com/pypa/distlib/blob/c6fc08e9fbc81c4350ecc5c7e9729c5b",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/distlib",
+    "repo_url": "https://github.com/pypa/distlib",
+    "issue_number": 238,
+    "issue_url": "https://github.com/pypa/distlib/issues/238",
+    "candidate_id": "pypa_distlib_issue_238",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
