@@ -982,6 +982,26 @@
         "distlib_wheel_repo/wheel.py",
         "tests/test_wheel.py"
       ]
+    },
+    {
+      "candidate_id": "pytest_dev_pytest_issue_14474",
+      "repo_full_name": "pytest-dev/pytest",
+      "repo_url": "https://github.com/pytest-dev/pytest",
+      "issue_number": 14474,
+      "issue_title": "mark expression scanner: backslash check in string literal searches entire input instead of the string value",
+      "issue_url": "https://github.com/pytest-dev/pytest/issues/14474",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T18:59:09: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T18:59:09: why_it_fits: 这是一个边界非常清楚的 scanner 范围判断 bug。问题不在复杂 CLI 语义，而在字符串字面量扫描时错误地搜索了整个输入，特别适合压成单模块、少量稳定回归测试的 semi_real 任务。\n2026-06-12T18:59:09: expected_test_shape: 可用 2 到 3 个固定表达式测试覆盖：带反斜杠的标识符单独出现应通过、字符串字面量里出现反斜杠应报错、标识符带反斜杠且同表达式里有正常字符串字面量时不应误报。\n2026-06-12T18:59:09: risk_notes: 需要把最小实现限制在表达式扫描范围判断，不把完整 pytest `-k` 解析器整体带入。\n2026-06-12T18:59:09: recommendation: high\n2026-06-12T18:59:09: 2026-06-12: 作为 v60 首选候选，用于继续把正式任务数从 56 推向 60+。\n2026-06-12T18:59:09: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T18:59:20: 已生成 semi_real 可运行任务 task_115，仓库目录为 benchmarks/repos/pytest_expression_repo。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2026-05-13T07:01:16Z",
+      "body_excerpt": "Was testing `-k` with a test name that contains backslash-escaped characters (like the `\\n` you get from parametrized test IDs) alongside a marker expression with string arguments, and ran into a false rejection.\n\nThe scanner in `src/_pytest/mark/expression.py` line 105:\n\n```python\nif (backslash_pos := input.find(\"\\\\\")) != -1:\n    raise SyntaxError(\n        r'escaping with \"\\\\\" not supported in marker expression',\n        (FILE_NAME, 1, backslash_pos + 1, input),\n    )\n```\n\nThis searches the **e",
+      "expected_target_files": [
+        "pytest_expression_repo/expression.py",
+        "tests/test_expression.py"
+      ]
     }
   ]
 }

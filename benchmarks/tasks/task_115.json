@@ -1,0 +1,37 @@
+{
+  "task_id": "task_115",
+  "repo_name": "pytest_expression_repo",
+  "repo_path": "benchmarks/repos/pytest_expression_repo",
+  "issue_title": "mark expression scanner: backslash check in string literal searches entire input instead of the string value",
+  "issue_text": "Was testing `-k` with a test name that contains backslash-escaped characters (like the `\\n` you get from parametrized test IDs) alongside a marker expression with string arguments, and ran into a false rejection.\n\nThe scanner in `src/_pytest/mark/expression.py` line 105:\n\n```python\nif (backslash_pos := input.find(\"\\\\\")) != -1:\n    raise SyntaxError(\n        r'escaping with \"\\\\\" not supported in marker expression',\n        (FILE_NAME, 1, backslash_pos + 1, input),\n    )\n```\n\nThis searches the **e",
+  "test_command": "python -m pytest tests/test_expression.py -q",
+  "success_criteria": "表达式扫描在解析字符串字面量时，只应检查当前字符串值里的反斜杠；标识符中的反斜杠不应因为同一表达式中存在正常字符串字面量而误报；真正出现在字符串字面量中的反斜杠仍应报错；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "pytest",
+    "expression",
+    "scanner"
+  ],
+  "target_files_hint": [
+    "pytest_expression_repo/expression.py",
+    "tests/test_expression.py"
+  ],
+  "expected_failure_test": "ExpressionScannerTests.test_backslash_in_identifier_does_not_break_later_string_literal",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pytest-dev/pytest",
+    "repo_url": "https://github.com/pytest-dev/pytest",
+    "issue_number": 14474,
+    "issue_url": "https://github.com/pytest-dev/pytest/issues/14474",
+    "candidate_id": "pytest_dev_pytest_issue_14474",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_114",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

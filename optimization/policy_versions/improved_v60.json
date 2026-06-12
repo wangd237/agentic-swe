@@ -1,0 +1,11 @@
+{
+  "policy_id": "improved_v60",
+  "description": "在 improved_v59 基础上，新增对 pytest mark expression scanner 反斜杠检查范围错误的规则型修复能力，同时继续保留 pytest -p no:unraisableexception 的 runtime 优化。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v60",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception"
+  ]
+}

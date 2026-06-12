@@ -1,0 +1,29 @@
+{
+  "task_id": "task_114",
+  "repo_name": "pytest",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "mark expression scanner: backslash check in string literal searches entire input instead of the string value",
+  "issue_text": "Was testing `-k` with a test name that contains backslash-escaped characters (like the `\\n` you get from parametrized test IDs) alongside a marker expression with string arguments, and ran into a false rejection.\n\nThe scanner in `src/_pytest/mark/expression.py` line 105:\n\n```python\nif (backslash_pos := input.find(\"\\\\\")) != -1:\n    raise SyntaxError(\n        r'escaping with \"\\\\\" not supported in marker expression',\n        (FILE_NAME, 1, backslash_pos + 1, input),\n    )\n```\n\nThis searches the **e",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pytest-dev/pytest",
+    "repo_url": "https://github.com/pytest-dev/pytest",
+    "issue_number": 14474,
+    "issue_url": "https://github.com/pytest-dev/pytest/issues/14474",
+    "candidate_id": "pytest_dev_pytest_issue_14474",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -9938,3 +9938,116 @@
 - 功能上，`improved_v59` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
 - 性能上，正式集平均耗时进一步回落，`frozen_40` 几乎持平且仍稳定低于长期阈值
 - 下一轮应继续把正式任务数从 `56` 推向 `60+`
+
+## 2026-06-12 Phase 6 pytest expression scanner 扩容与 `improved_v60`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一个来自 `pytest-dev/pytest` 的真实 issue 派生任务
+- 保持 frozen 集功能稳定，并继续验证版本继承链修复机制
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v60_candidates.json`
+- `benchmarks/tasks/task_114.json`
+- `benchmarks/tasks/task_115.json`
+- `benchmarks/repos/pytest_expression_repo/`
+- `optimization/policy_versions/improved_v60.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev60r1_001.json`
+- `logs/summaries/batch_eval_realissuev60r2_001.json`
+- `logs/summaries/batch_compare_realissue_step41_001.json`
+- `logs/summaries/batch_eval_frozen20v60r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step40_001.json`
+- `logs/summaries/batch_eval_frozen40v60r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step16_001.json`
+- `logs/summaries/benchmark_maturity_maturity_037.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `pytest-dev/pytest#14474`
+- 新增 `real_issue` 草稿：
+  - `task_114`
+- 新增可运行的 semi_real 正式任务：
+  - `task_115`
+- 新增 repo：
+  - `benchmarks/repos/pytest_expression_repo`
+- 在 repo 中故意保留 bug：
+  - 扫描字符串字面量时错误地检查了整个输入里的反斜杠
+- 新增 `improved_v60`
+- 在 patcher 中新增 pytest expression scanner 的专用规则
+- 把 `task_115` 加入正式 manifest
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/pytest_expression_repo/tests/test_expression.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_115.json --policy optimization/policy_versions/improved_v60.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_113.json --policy optimization/policy_versions/improved_v60.json`
+- 正式集首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v60.json --run-label realissuev60r1 --compare-against-eval logs/summaries/batch_eval_realissuev59r2_001.json --compare-label realissue_step40`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v60.json --run-label realissuev60r2 --compare-against-eval logs/summaries/batch_eval_realissuev59r2_001.json --compare-label realissue_step41`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v60.json --run-label frozen20v60r2 --compare-against-eval logs/summaries/batch_eval_frozen20v59r1_001.json --compare-label frozen20_step40`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v60.json --run-label frozen40v60r2 --compare-against-eval logs/summaries/batch_eval_frozen40v59r1_001.json --compare-label frozen40_step16`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `56 -> 57`
+- 来源生态数：
+  - `14 -> 14`
+- 候选池状态：
+  - `accepted = 56 -> 57`
+  - `to_review = 0 -> 0`
+- `improved_v60` 正式 `57` 条任务集最终结果：
+  - `success_count: 56 -> 57`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5197 -> 0.5262`
+- `improved_v60` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5605 -> 0.5471`
+- `improved_v60` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5296 -> 0.5320`
+
+### 这轮额外记录的过程
+
+- `v60r1` 首轮正式集只暴露 `task_113` 单点回归：
+  - 根因是 `v59` 的 distlib WHEEL metadata 规则没有继续继承到 `improved_v60`
+- 修复后补跑 `v60r2`：
+  - 正式集恢复 `57 / 57`
+  - `frozen_20` 平均耗时相对 `v59` 反而回落
+- 这再次说明：
+  - patcher 的版本继承链仍是当前策略演化里最需要优先防守的回归来源
+
+### 结论
+
+- `pytest#14474` 已成功作为一条 scanner 作用域语义题补进正式 semi_real 任务集
+- `improved_v60` 已把正式任务数推进到 `57`
+- 功能上，`improved_v60` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，`frozen_40` 只有 `0.0024s` 的轻微回升，仍稳定低于长期阈值
+- 下一轮应继续把正式任务数从 `57` 推向 `60+`
