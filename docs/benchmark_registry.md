@@ -71,6 +71,7 @@
 | `task_115` | `pytest-dev/pytest#14474` | `pytest_expression_repo` | marker expression 扫描字符串字面量时错误检查整个输入里的反斜杠 | `improved_v60` | `-` |
 | `task_117` | `python-poetry/tomlkit#346` | `tomlkit_negative_int_repo` | 负整数原地翻转时文本符号循环污染 | `improved_v61` | `-` |
 | `task_119` | `python-poetry/tomlkit#450` | `tomlkit_bool_comment_repo` | table 中 bool 项退化成原生值导致 comment API 丢失 | `improved_v62` | `-` |
+| `task_121` | `python-poetry/tomlkit#412` | `tomlkit_int_key_repo` | 容器接口对整数 key 的规范化与解析路径语义不一致 | `improved_v63` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -125,6 +126,7 @@
 - marker expression 扫描作用域与字符串字面量边界保真
 - 数值原地更新后的文本符号规范化保真
 - item 包装保真与后续链式 comment API 可用性
+- 容器接口 key 规范化与解析入口语义一致性
 
 ## 当前仍相对欠缺的方向
 

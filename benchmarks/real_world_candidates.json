@@ -1042,6 +1042,26 @@
         "tomlkit_bool_comment_repo/items.py",
         "tests/test_table.py"
       ]
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_412",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 412,
+      "issue_title": "Unable to use `setdefault` or `add` with int",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/412",
+      "language": "python",
+      "difficulty": "easy",
+      "status": "accepted",
+      "notes": "2026-06-12T20:35:00: 通过 gh issue view 补录为新候选来源。\n2026-06-12T20:35:00: why_it_fits: 这是一个边界非常清楚的 key 包装 bug。解析路径已经能接受 `4=5` 这样的键值，但 `add` 和 `setdefault` 路径在遇到 int key 时错误假设 key 可迭代，特别适合压成单模块、少量稳定回归测试的 semi_real 任务。\n2026-06-12T20:35:00: expected_test_shape: 可用 3 到 4 个固定测试覆盖：`add(4, 5)` 正常工作、`setdefault(4, 5)` 正常工作、重复 `setdefault` 返回已有值、字符串 key 现有行为不回归。\n2026-06-12T20:35:00: risk_notes: 需要把最小实现限制在 key 归一化与 container add/setdefault，不把完整 parser 或 TOML 文档模型整体带入。\n2026-06-12T20:35:00: recommendation: high\n2026-06-12T20:35:00: 2026-06-12: 作为 v63 首选候选，用于继续把正式任务数从 59 推向 60+。\n2026-06-12T20:35:00: 已生成 real_issue task 草稿 task_120，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T20:35:00: 已生成 semi_real 可运行任务 task_121，仓库目录为 benchmarks/repos/tomlkit_int_key_repo。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2024-08-18T10:00:00Z",
+      "body_excerpt": "Parsing `4=5` already works, but `add(4, 5)` and `setdefault(4, 5)` fail because the key normalization path wrongly assumes the key is iterable and tries to inspect characters on the raw int.",
+      "expected_target_files": [
+        "tomlkit_int_key_repo/container.py",
+        "tests/test_container.py"
+      ]
     }
   ]
 }

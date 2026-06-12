@@ -1,0 +1,29 @@
+{
+  "task_id": "task_120",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Unable to use `setdefault` or `add` with int",
+  "issue_text": "Parsing `4=5` already works, but `add(4, 5)` and `setdefault(4, 5)` fail because the key normalization path wrongly assumes the key is iterable and tries to inspect characters on the raw int.",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 412,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/412",
+    "candidate_id": "python_poetry_tomlkit_issue_412",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

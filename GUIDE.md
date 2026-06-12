@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v62` 多轮策略迭代，正式真实任务扩充到 `59` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v62` 已继续把正式任务数推高，并新增一条 tomlkit bool item 注释包装修复能力；`v62r3` 已完成正式集全量验证并恢复 `59 / 59`，`frozen_20` 与 `frozen_40` 功能继续全绿，但当前 `frozen_40` 平均耗时为 `0.5554`，略高于 `improved_v32` 长期阈值 `0.5514`，因此性能门控仍需继续优化 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v63` 多轮策略迭代，正式真实任务扩充到 `60` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v63` 已继续把正式任务数推高，并新增一条 tomlkit 容器 int key 规范化修复能力；`v63r2` 已完成正式集全量验证并恢复 `60 / 60`，`frozen_20` 与 `frozen_40` 功能继续全绿，但当前 `frozen_40` 平均耗时为 `0.5594`，仍高于 `improved_v32` 长期阈值 `0.5514`，因此性能门控仍需继续优化 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -130,26 +130,26 @@ bug 设计如下：
 
 ## Phase 6 最新补充
 
-### 1. 当前最新落地到 `improved_v62`
+### 1. 当前最新落地到 `improved_v63`
 
 这一轮新增的真实 issue 来自：
 
-- `python-poetry/tomlkit#450`
+- `python-poetry/tomlkit#412`
 
 新增产物：
 
-- `benchmarks/issue_batch_v62_candidates.json`
-- `benchmarks/tasks/task_118.json`
-- `benchmarks/tasks/task_119.json`
-- `benchmarks/repos/tomlkit_bool_comment_repo/`
-- `optimization/policy_versions/improved_v62.json`
+- `benchmarks/issue_batch_v63_candidates.json`
+- `benchmarks/tasks/task_120.json`
+- `benchmarks/tasks/task_121.json`
+- `benchmarks/repos/tomlkit_int_key_repo/`
+- `optimization/policy_versions/improved_v63.json`
 
 当前最关键的新增能力：
 
-- agent 已能修复一种新的 tomlkit bool item 包装保真问题
-- 场景是“table 中的 bool 项不应退化成原生 `bool`，而应像其它 TOML item 一样支持后续 `.comment()` 链式编辑”
-- 同时这一轮再次验证了 patcher 版本继承链是高频回归点，`v62r1/r2` 先后暴露出旧规则集合漏接和 `v61` 新规则未继续继承的问题，`v62r3` 已修复正式集回归
-- 这让正式真实任务总数从 `58` 提升到 `59`
+- agent 已能修复一种新的 tomlkit 容器 int key 规范化问题
+- 场景是“解析路径已经接受 `4 = 5` 这种整数 key，但 `add(4, 5)` 与 `setdefault(4, 5)` 仍会把 `int` 当成可迭代对象并崩溃”
+- 同时这一轮再次验证了 patcher 版本继承链是高频回归点，`v63r1` 首轮暴露出从 `v47` 到 `v43` 的多段旧规则集合遗漏 `improved_v63`，`v63r2` 修复后恢复正式集回归
+- 这让正式真实任务总数从 `59` 提升到 `60`
 
 ### 2. 这一轮框架结构变化
 
@@ -163,41 +163,41 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 
 最新新增的目录入口：
 
-- `benchmarks/repos/tomlkit_bool_comment_repo`
+- `benchmarks/repos/tomlkit_int_key_repo`
 
 ### 3. 你现在可以怎么体验
 
 如果你想直接体验这轮新题，可以按下面顺序：
 
 1. 先看任务定义：
-   - `benchmarks/tasks/task_119.json`
+   - `benchmarks/tasks/task_121.json`
 2. 再看最小 repo：
-   - `benchmarks/repos/tomlkit_bool_comment_repo`
+   - `benchmarks/repos/tomlkit_int_key_repo`
 3. 先手工验证原始失败：
-   - `python -m pytest benchmarks/repos/tomlkit_bool_comment_repo/tests/test_table.py -q`
+   - `python -m pytest benchmarks/repos/tomlkit_int_key_repo/tests/test_container.py -q`
 4. 再跑单任务闭环：
-   - `python scripts/run_single_task.py --task benchmarks/tasks/task_119.json --policy optimization/policy_versions/improved_v62.json`
+   - `python scripts/run_single_task.py --task benchmarks/tasks/task_121.json --policy optimization/policy_versions/improved_v63.json`
 5. 如果你想看这轮正式集扩容验证：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v62.json --run-label realissuev62r3`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v63.json --run-label realissuev63r2`
 6. 如果你想体验新的结构化 issue 导入入口：
-   - `python -m scripts.import_issue_batch --input benchmarks/issue_batch_v62_candidates.json --candidate-file benchmarks/real_world_candidates.json`
+   - `python -m scripts.import_issue_batch --input benchmarks/issue_batch_v63_candidates.json --candidate-file benchmarks/real_world_candidates.json`
 
 ### 4. 当前最准确的状态口径
 
-- 正式真实任务数：`59`
+- 正式真实任务数：`60`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v62`
-- 当前最近完成正式集全绿验证的扩容版本：`improved_v62`
+- 当前最新扩容版本：`improved_v63`
+- 当前最近完成正式集全绿验证的扩容版本：`improved_v63`
 - 当前 `frozen_40 streak`：`8`
 
 注意：
 
-- `v62` 这一轮已经完成“新题落地 + 正式集全量验证 + frozen 集功能验证”
-- 它在正式 manifest 上把任务数从 `58` 推进到 `59`
-- `v62r3` 在正式集上达到 `59 / 59` 成功
-- `v62r2` 在 `frozen_40` 上的 `average_duration_sec` 为 `0.5554`
-- 这意味着当前固定 `40` 条集合功能上继续无回归，但性能暂时略高于 `improved_v32` 基线阈值 `0.5514`
-- 当前稳定基线仍保持为 `v50`，而 `v62` 已经把规模目标继续向 `60+` 推进
+- `v63` 这一轮已经完成“新题落地 + 正式集全量验证 + frozen 集功能验证”
+- 它在正式 manifest 上把任务数从 `59` 推进到 `60`
+- `v63r2` 在正式集上达到 `60 / 60` 成功
+- `v63r2` 在 `frozen_40` 上的 `average_duration_sec` 为 `0.5594`
+- 这意味着当前固定 `40` 条集合功能上继续无回归，但性能仍高于 `improved_v32` 基线阈值 `0.5514`
+- 当前稳定基线仍保持为 `v50`，而 `v63` 已经把规模目标正式推进到 `60`
 
 ## 当前框架结构
 

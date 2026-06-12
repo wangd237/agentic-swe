@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v62`
+- 当前最新扩容策略：`improved_v63`
 - 当前主分支最近重要能力：
-  - 已完成 `59` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `60` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -29,12 +29,14 @@
   - 已把 `pytest-dev/pytest#14474` 从新来源候选推进为正式任务 `task_115`
   - 已把 `python-poetry/tomlkit#346` 从新来源候选推进为正式任务 `task_117`
   - 已把 `python-poetry/tomlkit#450` 从新来源候选推进为正式任务 `task_119`
+  - 已把 `python-poetry/tomlkit#412` 从新来源候选推进为正式任务 `task_121`
   - 已落地 `improved_v57` 的 packaging 名称规范化边界修复规则
   - 已落地 `improved_v58` 的 click usage 连字符换行修复规则
   - 已落地 `improved_v59` 的 distlib WHEEL metadata Build 行修复规则
   - 已落地 `improved_v60` 的 pytest expression 反斜杠检查作用域修复规则
   - 已落地 `improved_v61` 的 tomlkit 负整数翻转规范渲染修复规则
   - 已落地 `improved_v62` 的 tomlkit bool item 包装保真修复规则
+  - 已落地 `improved_v63` 的 tomlkit 容器 int key 规范化修复规则
   - 已完成 `v57` 的正式集、`frozen_20`、`frozen_40` 功能验证及复跑
   - 已确认 `v57` 相对 `v56` 在功能上继续全绿，并继续把 `frozen_40` 保持在长期阈值以内
   - 已完成 `v58` 的正式集、`frozen_20`、`frozen_40` 验证
@@ -47,6 +49,8 @@
   - 已确认 `v61r1` 首轮出现多段旧规则集合与 fallback 链漏接，`v61r2` 修复后已恢复正式集 `58 / 58`
   - 已完成 `v62` 的正式集、`frozen_20`、`frozen_40` 验证
   - 已确认 `v62r1 / v62r2` 首轮先后暴露旧规则集合漏接与 `v61` 新规则未继续继承的问题，`v62r3` 修复后已恢复正式集 `59 / 59`
+  - 已完成 `v63` 的正式集、`frozen_20`、`frozen_40` 验证
+  - 已确认 `v63r1` 首轮再次暴露从 `v47` 到 `v43` 的旧规则集合漏接，`v63r2` 修复后已恢复正式集 `60 / 60`
   - 已确认 issue 导入脚本支持结构化候选说明追加写入
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
@@ -91,7 +95,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`59`
+- 正式 `semi_real` 真实 issue 任务数：`60`
 - 当前正式任务来源生态数：`14`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -104,10 +108,10 @@
 
 ## 当前候选池状态
 
-- `accepted = 59`
+- `accepted = 60`
 - `drafted = 0`
 - `to_review = 0`
-- 当前已存在 `59` 条 accepted 候选，其中最新的 `tomlkit#450` 已完成落地；下一阶段仍需继续补新来源以向 `60+` 推进
+- 当前已存在 `60` 条 accepted 候选，其中最新的 `tomlkit#412` 已完成落地；正式任务数 `60` 的规模目标已达成，下一阶段主缺口转为性能门控
 
 候选来源文件：
 
@@ -118,6 +122,42 @@
   - `pallets/jinja`
 
 ## 最新评测结论
+
+### 0. 当前最新扩容对比
+
+- 对比：`improved_v62 -> improved_v63`
+- 任务集：`59 -> 60` 条
+- 结果：
+  - `success_count: 59 -> 60`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - 正式集 compare 口径 `average_duration_sec: 0.5289 -> 0.5411`
+
+说明：
+
+- 这说明 `improved_v63` 已成功把正式真实任务集从 `59` 条推进到 `60` 条
+- 新增任务是 `task_121`，来源于 `python-poetry/tomlkit#412`
+- 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
+- 但性能上正式集平均耗时回升了 `0.0122s`，说明当前已经完成规模目标，后续更该优先收敛性能门控
+
+### 0.1 当前最新冻结集观察
+
+- `improved_v63` `frozen_20` compare：
+  - `success_rate = 1.0`
+  - `test_pass_rate = 1.0`
+  - `average_duration_sec: 0.5564 -> 0.5704`
+- `improved_v63` `frozen_40` compare：
+  - `success_rate = 1.0`
+  - `test_pass_rate = 1.0`
+  - `average_duration_sec: 0.5554 -> 0.5594`
+- 当前稳定 streak：
+  - 仍为 `8`
+
+说明：
+
+- `v63` 在固定集合上没有功能回归
+- 但 `frozen_40` 当前 `0.5594` 仍高于 `improved_v32` 的长期阈值 `0.5514`
+- 因此当前 long-term goal 已满足规模、生态和稳定性门槛，但尚未满足性能门控
 
 ### 1. 当前最新扩容对比
 

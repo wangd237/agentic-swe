@@ -48,6 +48,7 @@
 - 当前已补充 `task_067`，并在真实 issue 派生任务集上完成 `improved_v35 -> improved_v36` 扩容对比
 - 当前已补充 `task_117`，并在真实 issue 派生任务集上完成 `improved_v60 -> improved_v61` 扩容对比
 - 当前已补充 `task_119`，并在真实 issue 派生任务集上完成 `improved_v61 -> improved_v62` 扩容对比
+- 当前已补充 `task_121`，并在真实 issue 派生任务集上完成 `improved_v62 -> improved_v63` 扩容对比
 - 当前已补充冻结 15 条真实任务的同集合评测，对比 `improved_v16 -> improved_v17`
 - 当前已补充冻结 18 条真实任务的同集合评测，对比 `improved_v19 -> improved_v20`
 - 当前已补充冻结 20 条真实任务的同集合评测，对比 `improved_v21 -> improved_v22`
@@ -3532,3 +3533,56 @@ trace 热点分析结果：
   - `frozen_40` 在功能上继续无回归
   - 相对 `v61` 平均耗时回升了 `0.0177s`
   - 当前 `0.5554` 略高于 `improved_v32` 的长期阈值 `0.5514`，因此性能门控仍需后续版本继续收敛
+
+`improved_v63` 正式 60 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v63.json`
+- 新增任务：
+  - `benchmarks/tasks/task_120.json`
+  - `benchmarks/tasks/task_121.json`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_int_key_repo`
+- 运行结果：
+  - 原始 repo 测试失败：`python -m pytest benchmarks/repos/tomlkit_int_key_repo/tests/test_container.py -q`
+  - 单任务闭环成功：`python scripts/run_single_task.py --task benchmarks/tasks/task_121.json --policy optimization/policy_versions/improved_v63.json`
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_realissuev63r1_001.json`
+  - 继承链修复后最终 batch eval：`logs/summaries/batch_eval_realissuev63r2_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step48_001.json`
+- 指标：
+  - `task_count`: `59 -> 60`
+  - `success_count`: `59 -> 60`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5289 -> 0.5411`
+- 结论：
+  - 这说明 `tomlkit#412` 已成功转化为正式第 `60` 条 semi_real 任务
+  - `improved_v63` 已成功命中新引入的容器 int key 规范化问题
+  - `v63r1` 首轮暴露出 patcher 旧规则集合继承链漏接，`v63r2` 已修复并恢复正式集全绿
+
+`improved_v63` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch eval：`logs/summaries/batch_eval_frozen20v63r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step46_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5564 -> 0.5704`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 相对 `v62` 平均耗时回升了 `0.014s`
+
+`improved_v63` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - batch eval：`logs/summaries/batch_eval_frozen40v63r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step22_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5554 -> 0.5594`
+- 结论：
+  - `frozen_40` 在功能上继续无回归
+  - 相对 `v62` 平均耗时继续回升了 `0.004s`
+  - 当前 `0.5594` 仍高于 `improved_v32` 的长期阈值 `0.5514`，因此 Benchmark Maturity v1 仍卡在性能门控

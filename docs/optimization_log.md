@@ -10300,3 +10300,124 @@
 - 功能上，`improved_v62` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
 - 性能上，正式集相对 `v61` 反而回落，但 `frozen_40` 当前 `0.5554` 略高于长期阈值 `0.5514`
 - 下一轮应继续把正式任务数从 `59` 推向 `60+`，并优先观察是否能把 `frozen_40` 拉回阈值以内
+
+## 2026-06-12 Phase 6 tomlkit 容器 int key 规范化扩容与 `improved_v63`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一个来自 `python-poetry/tomlkit` 的真实 issue 派生任务
+- 在保持 frozen 集功能无回归的前提下，把 `formal_task_count` 推进到 `60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v63_candidates.json`
+- `benchmarks/tasks/task_120.json`
+- `benchmarks/tasks/task_121.json`
+- `benchmarks/repos/tomlkit_int_key_repo/`
+- `optimization/policy_versions/improved_v63.json`
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev63r1_001.json`
+- `logs/summaries/batch_eval_realissuev63r2_001.json`
+- `logs/summaries/batch_compare_realissue_step48_001.json`
+- `logs/summaries/batch_eval_frozen20v63r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step46_001.json`
+- `logs/summaries/batch_eval_frozen40v63r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step22_001.json`
+- `logs/summaries/benchmark_maturity_maturity_043.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 issue 查询补录新候选：
+  - `python-poetry/tomlkit#412`
+- 新增 `real_issue` 草稿：
+  - `task_120`
+- 新增可运行的 semi_real 正式任务：
+  - `task_121`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_int_key_repo`
+- 在 repo 中故意保留 bug：
+  - `add(4, 5)` 与 `setdefault(4, 5)` 没有像解析入口那样把整数 key 规范化成字符串，而是错误把 `int` 当成可迭代对象处理并崩溃
+- 新增 `improved_v63`
+- 在 patcher 中新增 tomlkit 容器 int key 规范化的专用规则
+- 把 `task_121` 加入正式 manifest
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_int_key_repo/tests/test_container.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_121.json --policy optimization/policy_versions/improved_v63.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_119.json --policy optimization/policy_versions/improved_v63.json`
+- 正式集首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v63.json --run-label realissuev63r1 --compare-against-eval logs/summaries/batch_eval_realissuev62r3_001.json --compare-label realissue_step47`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v63.json --run-label realissuev63r2 --compare-against-eval logs/summaries/batch_eval_realissuev62r3_001.json --compare-label realissue_step48`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v63.json --run-label frozen20v63r2 --compare-against-eval logs/summaries/batch_eval_frozen20v62r2_001.json --compare-label frozen20_step46`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v63.json --run-label frozen40v63r2 --compare-against-eval logs/summaries/batch_eval_frozen40v62r2_001.json --compare-label frozen40_step22`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `59 -> 60`
+- 来源生态数：
+  - `14 -> 14`
+- 候选池状态：
+  - `accepted = 59 -> 60`
+  - `to_review = 0 -> 0`
+- `improved_v63` 正式 `60` 条任务集最终结果：
+  - `success_count: 59 -> 60`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5289 -> 0.5411`
+- `improved_v63` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5564 -> 0.5704`
+- `improved_v63` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5554 -> 0.5594`
+- 最新 maturity：
+  - `formal_task_count = 60`
+  - `ecosystem_count = 14`
+  - `latest_frozen_count = 40`
+  - `frozen_40_streak = 8`
+
+### 这轮额外记录的过程
+
+- `v63r1` 首轮出现了系统性回归，不是新题本身的问题：
+  - 旧规则继承链从 `v47` 到 `v43` 的多段版本集合遗漏了 `improved_v63`
+- 修复后补跑 `v63r2`：
+  - 正式集恢复 `60 / 60`
+  - `frozen_20` 恢复 `20 / 20`
+  - `frozen_40` 恢复 `40 / 40`
+- 这再次说明：
+  - patcher 的“版本继承链完整性”仍是当前策略演化里最需要优先防守的工程风险
+  - 后续 `v64+` 每次新增策略后，都必须同时检查新规则入口、旧规则集合，以及从 `v47` 到 `v43` 那几段是否已带上新版本
+
+### 结论
+
+- `tomlkit#412` 已成功作为新的容器 key 规范化语义题补进正式 semi_real 任务集
+- `improved_v63` 已把正式任务数推进到 `60`
+- 功能上，`improved_v63` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 性能上，当前 `frozen_40` 为 `0.5594`，仍高于长期阈值 `0.5514`
+- 这意味着 Benchmark Maturity v1 已满足规模、生态和稳定性门槛，但仍未满足性能门控；下一轮应优先做性能友好型扩容或专项时延收敛

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_121",
+  "repo_name": "tomlkit_int_key_repo",
+  "repo_path": "benchmarks/repos/tomlkit_int_key_repo",
+  "issue_title": "Unable to use `setdefault` or `add` with int",
+  "issue_text": "Container key normalization should accept int keys the same way parsing `4=5` already does; `add(4, 5)` and `setdefault(4, 5)` should not crash with a TypeError from iterating over the raw int.",
+  "test_command": "python -m pytest tests/test_container.py -q",
+  "success_criteria": "容器的 `add` 与 `setdefault` 在遇到 int key 时应像解析路径一样把 key 规范化成字符串；不应再因把 int 当成可迭代对象而抛出 TypeError；回归测试全部通过。",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "container",
+    "keys"
+  ],
+  "target_files_hint": [
+    "tomlkit_int_key_repo/container.py",
+    "tests/test_container.py"
+  ],
+  "expected_failure_test": "ContainerIntegerKeyTests.test_add_accepts_integer_key",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 412,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/412",
+    "candidate_id": "python_poetry_tomlkit_issue_412",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_120",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

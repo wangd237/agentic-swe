@@ -1,0 +1,43 @@
+# Batch Eval Report
+
+## Metrics
+
+- task_count: `20`
+- success_rate: `0.0`
+- test_pass_rate: `0.0`
+- partial_fix_rate: `0.0`
+- average_steps: `10.25`
+- average_tool_calls: `8.25`
+- average_duration_sec: `0.6304`
+- average_modified_files: `0.0`
+- key_file_read_rate: `1.0`
+- test_execution_rate: `1.0`
+- repeated_search_rate: `0.0`
+- reasonable_finish_rate: `1.0`
+
+## Error Taxonomy Counts
+
+- `Premature Finish`: `20`
+
+## Per-Task Labels
+
+- `task_006`: Premature Finish
+- `task_008`: Premature Finish
+- `task_010`: Premature Finish
+- `task_013`: Premature Finish
+- `task_016`: Premature Finish
+- `task_017`: Premature Finish
+- `task_019`: Premature Finish
+- `task_022`: Premature Finish
+- `task_024`: Premature Finish
+- `task_026`: Premature Finish
+- `task_028`: Premature Finish
+- `task_030`: Premature Finish
+- `task_032`: Premature Finish
+- `task_034`: Premature Finish
+- `task_036`: Premature Finish
+- `task_038`: Premature Finish
+- `task_040`: Premature Finish
+- `task_042`: Premature Finish
+- `task_044`: Premature Finish
+- `task_046`: Premature Finish
