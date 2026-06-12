@@ -1,0 +1,37 @@
+{
+  "task_id": "task_085",
+  "repo_name": "pydantic_fraction_repo",
+  "repo_path": "benchmarks/repos/pydantic_fraction_repo",
+  "issue_title": "'fraction_validator' raises unhandled 'ZeroDivisionError' for zero-denominator string input instead of 'ValidationError'",
+  "issue_text": "当前 `fraction_validator` 在解析分母为零的字符串输入时，会让 `ZeroDivisionError` 直接冒泡，而不是像其他非法输入一样统一转成 `ValidationError`。semi-real 任务要求：`6/0` 这样的输入也要返回统一的校验错误；普通非法 fraction 文本继续映射为同类错误；合法 fraction 的解析结果不回归。",
+  "test_command": "python -m pytest tests/test_validators.py -q",
+  "success_criteria": "fraction validator 遇到零分母或非法文本时，都应统一抛出 `ValidationError`；合法 fraction 解析结果保持正确；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "pydantic",
+    "fraction",
+    "validation"
+  ],
+  "target_files_hint": [
+    "pydantic_fraction_repo/validators.py",
+    "tests/test_validators.py"
+  ],
+  "expected_failure_test": "FractionValidatorTests.test_zero_denominator_is_mapped_to_validation_error",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pydantic/pydantic",
+    "repo_url": "https://github.com/pydantic/pydantic",
+    "issue_number": 13257,
+    "issue_url": "https://github.com/pydantic/pydantic/issues/13257",
+    "candidate_id": "pydantic_pydantic_issue_13257",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_084",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

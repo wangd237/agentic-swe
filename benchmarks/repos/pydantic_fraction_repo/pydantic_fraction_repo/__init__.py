@@ -1,0 +1,1 @@
+"""pydantic fraction benchmark package。"""

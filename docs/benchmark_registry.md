@@ -53,6 +53,7 @@
 | `task_079` | `python-poetry/tomlkit#440` | `tomlkit_inline_newline_repo` | dotted inline table 后续追加普通键时缺少换行 | `improved_v42` | `40` |
 | `task_081` | `python-poetry/tomlkit#504` | `tomlkit_scalar_capture_repo` | 中间表替换成标量后被错误吸附到相邻表作用域 | `improved_v43` | `40` |
 | `task_083` | `pypa/packaging#1204` | `packaging_pickle_repo` | Requirement pickle 后丢失 `specifier.prereleases` 显式状态 | `improved_v44` | `-` |
+| `task_085` | `pydantic/pydantic#13257` | `pydantic_fraction_repo` | fraction 零分母输入未被统一映射为 `ValidationError` | `improved_v45` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -89,6 +90,7 @@
 - inline table 后续渲染换行边界
 - table 替换成 scalar 后的作用域保真
 - pickle / unpickle 后的显式配置状态保真
+- 验证器异常映射与用户态错误语义保真
 
 ## 当前仍相对欠缺的方向
 

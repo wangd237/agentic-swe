@@ -729,6 +729,24 @@
       "state": "CLOSED",
       "created_at": "2026-05-31T03:38:09Z",
       "body_excerpt": "当前 `Requirement` 在 pickle / unpickle 后会丢失 `specifier.prereleases` 上显式设置过的布尔值。例如先把 `prereleases` 设为 `True`，反序列化后却回落成 `None`。期望行为是在保留默认 `None` 语义的同时，显式设置过的 prereleases 状态也能跨序列化保真。"
+    },
+    {
+      "candidate_id": "pydantic_pydantic_issue_13257",
+      "repo_full_name": "pydantic/pydantic",
+      "repo_url": "https://github.com/pydantic/pydantic",
+      "issue_number": 13257,
+      "issue_title": "'fraction_validator' raises unhandled 'ZeroDivisionError' for zero-denominator string input instead of 'ValidationError'",
+      "issue_url": "https://github.com/pydantic/pydantic/issues/13257",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T12:20:00: 通过 GitHub issue 查询补录为新候选来源。\n2026-06-12T12:21:00: 已生成 real_issue task 草稿 task_084，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T12:22:00: 已生成 semi_real 可运行任务 task_085，仓库目录为 benchmarks/repos/pydantic_fraction_repo。",
+      "labels": [
+        "bug V2"
+      ],
+      "state": "OPEN",
+      "created_at": "2026-06-02T23:45:36Z",
+      "body_excerpt": "当前 `fraction_validator` 在解析分母为零的字符串输入时，只捕获 `ValueError`，导致 `Fraction(\"6/0\")` 抛出的 `ZeroDivisionError` 直接冒泡，而不是像其他非法输入一样统一转成 `ValidationError`。期望行为是把零分母也视为普通校验失败，并继续保持合法 fraction 的解析结果。"
     }
   ]
 }

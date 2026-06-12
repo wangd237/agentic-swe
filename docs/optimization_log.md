@@ -7854,3 +7854,136 @@
 - 当前离 `60` 条正式任务仍有 `19` 条缺口
 - `frozen_40` 连续无回归版本仍为 `2 / 5`
 - 下一轮应优先扩新来源、补新正式任务，并让 `improved_v45` 在 `frozen_40` 上拿到第 `3` 个 streak 证据
+
+## 2026-06-12 Phase 6 pydantic fraction 错误映射扩容与 `improved_v45`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pypa/packaging#1204 -> task_083`
+- `improved_v44`
+- 正式任务数推进到 `41`
+- `frozen_40 streak` 推进到 `2 / 5`
+
+因此这一轮继续围绕长期 goal 做两件事：
+
+- 继续把正式任务从 `41` 推向 `60`
+- 继续让 `frozen_40` streak 往 `5` 靠近
+
+在候选选择上，这一轮优先落地复现极短、单模块、异常映射边界清晰的 `pydantic/pydantic#13257`。
+
+### 目标
+
+- 把 `pydantic/pydantic#13257` 转成新的 semi_real 正式任务
+- 为 fraction validator 未捕获 `ZeroDivisionError` 的场景补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v45`
+- 把 maturity 审计结果同步到 `42 / 60` 与 `streak = 3 / 5`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_084.json`
+- `benchmarks/tasks/task_085.json`
+- `benchmarks/repos/pydantic_fraction_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v45.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev45_001.json`
+- `logs/summaries/batch_eval_realissuev45_001.json`
+- `logs/summaries/batch_compare_realissue_step25_002.json`
+- `logs/summaries/batch_run_frozen20v45_001.json`
+- `logs/summaries/batch_eval_frozen20v45_001.json`
+- `logs/summaries/batch_compare_frozen20_step24_001.json`
+- `logs/summaries/batch_run_frozen40v45_001.json`
+- `logs/summaries/batch_eval_frozen40v45_001.json`
+- `logs/summaries/batch_compare_frozen40_step02_001.json`
+- `logs/summaries/benchmark_maturity_maturity_018.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `pydantic#13257` 的 `real_issue` 草稿：
+  - `task_084`
+- 新增可运行的 semi_real 正式任务：
+  - `task_085`
+- 新增 repo：
+  - `benchmarks/repos/pydantic_fraction_repo`
+- 在 repo 中故意保留 bug：
+  - 当前零分母 fraction 输入会抛出原始 `ZeroDivisionError`，而不是统一映射成 `ValidationError`
+- 新增 `improved_v45`
+- 在 patcher 中新增 fraction validator 错误映射的专用规则
+- 把 `task_085` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/pydantic_fraction_repo/tests/test_validators.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_085.json --policy optimization/policy_versions/improved_v45.json`
+- 旧任务回归抽检：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_083.json --policy optimization/policy_versions/improved_v45.json`
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_081.json --policy optimization/policy_versions/improved_v45.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v45.json --run-label realissuev45 --compare-against-eval logs/summaries/batch_eval_realissuev44_002.json --compare-label realissue_step25`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v45.json --run-label frozen20v45 --compare-against-eval logs/summaries/batch_eval_frozen20v44_002.json --compare-label frozen20_step24`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v45.json --run-label frozen40v45 --compare-against-eval logs/summaries/batch_eval_frozen40v44_002.json --compare-label frozen40_step02`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `41 -> 42`
+- 候选池状态：
+  - `accepted = 41 -> 42`
+  - `to_review = 0 -> 0`
+- `improved_v45` 正式 `42` 条任务集结果：
+  - `success_count: 41 -> 42`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5173 -> 0.5175`
+- `improved_v45` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.528 -> 0.512`
+- `improved_v45` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5188 -> 0.5175`
+- 时延分析：
+  - 正式集公共 `41` 条任务平均耗时差值：`+0.0008s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`-0.016s`
+- maturity 审计：
+  - 正式任务数：`42 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`3 / 5`
+
+### 结论
+
+- `pydantic#13257` 已成功从新来源候选进入正式 semi_real 任务集
+- `improved_v45` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮不仅把正式任务数推进到 `42`，还把 `frozen_40 streak` 从 `2` 推进到 `3`
+- 时延仍然稳定，尤其 `frozen_20` 与 `frozen_40` 继续回落
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `18` 条缺口
+- `frozen_40` 连续无回归版本仍为 `3 / 5`
+- 下一轮应优先扩新来源、补新正式任务，并让 `improved_v46` 在 `frozen_40` 上拿到第 `4` 个 streak 证据
