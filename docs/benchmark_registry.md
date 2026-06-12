@@ -54,6 +54,7 @@
 | `task_081` | `python-poetry/tomlkit#504` | `tomlkit_scalar_capture_repo` | 中间表替换成标量后被错误吸附到相邻表作用域 | `improved_v43` | `40` |
 | `task_083` | `pypa/packaging#1204` | `packaging_pickle_repo` | Requirement pickle 后丢失 `specifier.prereleases` 显式状态 | `improved_v44` | `-` |
 | `task_085` | `pydantic/pydantic#13257` | `pydantic_fraction_repo` | fraction 零分母输入未被统一映射为 `ValidationError` | `improved_v45` | `-` |
+| `task_087` | `python-poetry/tomlkit#439` | `tomlkit_repr_repo` | 代理视图 `repr` 漏掉同父路径早期 dotted key 子项 | `improved_v46` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -91,6 +92,7 @@
 - table 替换成 scalar 后的作用域保真
 - pickle / unpickle 后的显式配置状态保真
 - 验证器异常映射与用户态错误语义保真
+- 代理视图表示层与真实嵌套语义一致性
 
 ## 当前仍相对欠缺的方向
 

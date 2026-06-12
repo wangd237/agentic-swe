@@ -1,0 +1,29 @@
+{
+  "task_id": "task_086",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Missing keys in repr of tomlkit.container.OutOfOrderTableProxy",
+  "issue_text": "当前在解析带有多个 dotted key 的文档后，访问代理视图再执行 `repr()` 时会漏掉同一父路径下较早的子项。例如 `a.b.c = \"d\"` 与 `a.b.e = \"f\"` 同时存在时，代理对象的 `repr` 只保留了后者。这个真实 issue 需要让代理视图的字符串表示保留全部子项，同时不破坏对象本身的嵌套语义。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 439,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/439",
+    "candidate_id": "python_poetry_tomlkit_issue_439",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

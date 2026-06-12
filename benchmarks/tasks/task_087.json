@@ -1,0 +1,37 @@
+{
+  "task_id": "task_087",
+  "repo_name": "tomlkit_repr_repo",
+  "repo_path": "benchmarks/repos/tomlkit_repr_repo",
+  "issue_title": "Missing keys in repr of tomlkit.container.OutOfOrderTableProxy",
+  "issue_text": "当前 `OutOfOrderTableProxy.__repr__()` 在同一父路径下存在多个 dotted key 子项时，会错误只保留最后一个子项。例如 `b.c = \"d\"` 与 `b.e = \"f\"` 同时存在时，代理对象的 `repr` 只显示 `{'b': {'e': 'f'}}`。semi-real 任务要求：代理对象的 `repr` 必须保留所有子项；真实嵌套结构保持不变；其他单子项与多父组场景不回归。",
+  "test_command": "python -m pytest tests/test_proxy.py -q",
+  "success_criteria": "代理对象的 `repr` 必须完整保留同一父路径下的全部子项；`to_nested_dict()` 语义保持正确；单子项与多父组场景都通过回归测试。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "repr",
+    "proxy"
+  ],
+  "target_files_hint": [
+    "tomlkit_repr_repo/proxy.py",
+    "tests/test_proxy.py"
+  ],
+  "expected_failure_test": "OutOfOrderTableProxyReprTests.test_repr_keeps_all_children_under_same_parent",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 439,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/439",
+    "candidate_id": "python_poetry_tomlkit_issue_439",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_086",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

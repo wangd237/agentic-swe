@@ -1157,6 +1157,35 @@ def _handle_pydantic_fraction_zero_division(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_tomlkit_proxy_repr_missing_children(content: str) -> str | None:
+    # improved_v46 处理代理视图 repr 在同父路径下漏掉早期子项的问题。
+    target_block = (
+        "    def __repr__(self) -> str:\n"
+        '        """返回代理视图的稳定字符串表示。"""\n'
+        "        nested = self.to_nested_dict()\n\n"
+        "        # 这里故意保留真实 issue 中的缺陷：\n"
+        "        # 当同一个父路径下有多个 dotted key 子项时，错误只保留最后一个子项。\n"
+        "        filtered: dict[str, object] = {}\n"
+        "        for parent_key, child_value in nested.items():\n"
+        "            if isinstance(child_value, dict) and len(child_value) > 1:\n"
+        "                last_key = next(reversed(child_value))\n"
+        "                filtered[parent_key] = {last_key: child_value[last_key]}\n"
+        "            else:\n"
+        "                filtered[parent_key] = child_value\n\n"
+        "        return repr(filtered)"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "    def __repr__(self) -> str:\n"
+        '        """返回代理视图的稳定字符串表示。"""\n'
+        "        nested = self.to_nested_dict()\n"
+        "        return repr(nested)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2355,17 +2384,22 @@ def apply_rule_based_patch(
 
         if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41"}:
             run_v34_fallback_chain = False
-        if policy_config.patch_strategy == "improved_v45":
+        if policy_config.patch_strategy == "improved_v46":
+            improved_v46_content = _handle_tomlkit_proxy_repr_missing_children(original_content)
+            if improved_v46_content is not None:
+                updated_content = improved_v46_content
+                patch_reason_parts = ["让代理视图 repr 保留同一父路径下的全部 dotted key 子项"]
+        if policy_config.patch_strategy in {"improved_v45", "improved_v46"} and updated_content == original_content:
             improved_v45_content = _handle_pydantic_fraction_zero_division(original_content)
             if improved_v45_content is not None:
                 updated_content = improved_v45_content
                 patch_reason_parts = ["让零分母 fraction 输入也统一映射为 ValidationError，而不是冒泡 ZeroDivisionError"]
-        if policy_config.patch_strategy in {"improved_v44", "improved_v45"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v44", "improved_v45", "improved_v46"} and updated_content == original_content:
             improved_v44_content = _handle_packaging_requirement_pickle_prereleases(original_content)
             if improved_v44_content is not None:
                 updated_content = improved_v44_content
                 patch_reason_parts = ["让 Requirement 在 pickle 后保留 specifier.prereleases 的显式设置值"]
-        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45", "improved_v46"} and updated_content == original_content:
             improved_v43_content = _handle_tomlkit_scalar_replacement_scope(original_content)
             if improved_v43_content is not None:
                 updated_content = improved_v43_content

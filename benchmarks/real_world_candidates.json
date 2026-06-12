@@ -731,6 +731,22 @@
       "body_excerpt": "当前 `Requirement` 在 pickle / unpickle 后会丢失 `specifier.prereleases` 上显式设置过的布尔值。例如先把 `prereleases` 设为 `True`，反序列化后却回落成 `None`。期望行为是在保留默认 `None` 语义的同时，显式设置过的 prereleases 状态也能跨序列化保真。"
     },
     {
+      "candidate_id": "python_poetry_tomlkit_issue_439",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 439,
+      "issue_title": "Missing keys in repr of tomlkit.container.OutOfOrderTableProxy",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/439",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T17:05:00: 通过 GitHub 公共 API 手工补录为新候选来源。\n2026-06-12T17:08:00: 已生成 real_issue task 草稿 task_086，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T17:12:00: 已生成 semi_real 可运行任务 task_087，仓库目录为 benchmarks/repos/tomlkit_repr_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-08-01T17:12:21Z",
+      "body_excerpt": "当解析 `a.b.c = \"d\"` 与 `a.b.e = \"f\"` 这样的 dotted key 文档后，访问代理视图再执行 `repr()` 时，会漏掉较早的子项，只显示最后一个键。期望行为是 `repr` 与真实嵌套结构保持一致，完整保留所有子项。"
+    },
+    {
       "candidate_id": "pydantic_pydantic_issue_13257",
       "repo_full_name": "pydantic/pydantic",
       "repo_url": "https://github.com/pydantic/pydantic",

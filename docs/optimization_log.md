@@ -7987,3 +7987,137 @@
 - 当前离 `60` 条正式任务仍有 `18` 条缺口
 - `frozen_40` 连续无回归版本仍为 `3 / 5`
 - 下一轮应优先扩新来源、补新正式任务，并让 `improved_v46` 在 `frozen_40` 上拿到第 `4` 个 streak 证据
+
+## 2026-06-12 Phase 6 tomlkit 代理 repr 完整性扩容与 `improved_v46`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pydantic/pydantic#13257 -> task_085`
+- `improved_v45`
+- 正式任务数推进到 `42`
+- `frozen_40 streak` 推进到 `3 / 5`
+
+这一轮继续围绕长期 goal 做两件事：
+
+- 继续把正式任务从 `42` 推向 `60`
+- 继续让 `frozen_40` streak 往 `5` 靠近
+
+由于当前候选池和外部 `15` 条候选清单都已经吃空，这一轮先补一条全新的真实 issue 来源，再立刻转成新的 semi-real 正式任务。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#439` 转成新的 semi_real 正式任务
+- 为 `OutOfOrderTableProxy.__repr__()` 漏掉同父路径早期子项的问题补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v46`
+- 把 maturity 审计结果同步到 `43 / 60` 与 `streak = 4 / 5`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_086.json`
+- `benchmarks/tasks/task_087.json`
+- `benchmarks/repos/tomlkit_repr_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v46.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev46_001.json`
+- `logs/summaries/batch_eval_realissuev46_001.json`
+- `logs/summaries/batch_compare_realissue_step26_002.json`
+- `logs/summaries/batch_run_frozen20v46_001.json`
+- `logs/summaries/batch_eval_frozen20v46_001.json`
+- `logs/summaries/batch_compare_frozen20_step25_001.json`
+- `logs/summaries/batch_run_frozen40v46_001.json`
+- `logs/summaries/batch_eval_frozen40v46_001.json`
+- `logs/summaries/batch_compare_frozen40_step03_001.json`
+- `logs/summaries/benchmark_maturity_maturity_019.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `python-poetry/tomlkit#439`
+- 新增 `real_issue` 草稿：
+  - `task_086`
+- 新增可运行的 semi_real 正式任务：
+  - `task_087`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_repr_repo`
+- 在 repo 中故意保留 bug：
+  - 当前代理视图 `repr` 在同一父路径下存在多个 dotted key 子项时，只保留最后一个子项
+- 新增 `improved_v46`
+- 在 patcher 中新增代理视图 repr 完整性的专用规则
+- 把 `task_087` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_repr_repo/tests/test_proxy.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_087.json --policy optimization/policy_versions/improved_v46.json`
+- 旧任务回归抽检：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_085.json --policy optimization/policy_versions/improved_v46.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v46.json --run-label realissuev46 --compare-against-eval logs/summaries/batch_eval_realissuev45_001.json --compare-label realissue_step26`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v46.json --run-label frozen20v46 --compare-against-eval logs/summaries/batch_eval_frozen20v45_001.json --compare-label frozen20_step25`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v46.json --run-label frozen40v46 --compare-against-eval logs/summaries/batch_eval_frozen40v45_001.json --compare-label frozen40_step03`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `42 -> 43`
+- 候选池状态：
+  - `accepted = 42 -> 43`
+  - `to_review = 0 -> 0`
+- `improved_v46` 正式 `43` 条任务集结果：
+  - `success_count: 42 -> 43`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5175 -> 0.5243`
+- `improved_v46` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.512 -> 0.5321`
+- `improved_v46` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5175 -> 0.525`
+- 时延分析：
+  - 正式集公共 `42` 条任务平均耗时差值：`+0.0077s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0201s`
+- maturity 审计：
+  - 正式任务数：`43 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`4 / 5`
+
+### 结论
+
+- `tomlkit#439` 已成功作为全新来源补进正式 semi_real 任务集
+- `improved_v46` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮不仅把正式任务数推进到 `43`，还把 `frozen_40 streak` 从 `3` 推进到 `4`
+- 时延出现小幅回升，但 `frozen_40` 仍满足相对 `improved_v32` 基线“不超过 +3%”的长期约束
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `17` 条缺口
+- `frozen_40` 连续无回归版本仍差最后 `1 / 5`
+- 下一轮应继续补新的真实 issue 来源，并让 `improved_v47` 在 `frozen_40` 上拿到第 `5` 个 streak 证据

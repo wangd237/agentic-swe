@@ -1,0 +1,652 @@
+{
+  "created_at": "2026-06-12T04:31:10.997293+00:00",
+  "baseline_batch_run_id": "batch_run_realissuev45_001",
+  "improved_batch_run_id": "batch_run_realissuev46_001",
+  "baseline_batch_summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_run_realissuev45_001.json",
+  "improved_batch_summary_path": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\summaries\\batch_run_realissuev46_001.json",
+  "task_set": {
+    "baseline_task_count": 42,
+    "improved_task_count": 43,
+    "common_task_count": 42,
+    "added_task_ids": [
+      "task_087"
+    ],
+    "removed_task_ids": []
+  },
+  "aggregate": {
+    "baseline_average_duration_sec_all": 0.5175,
+    "improved_average_duration_sec_all": 0.5243,
+    "baseline_average_duration_sec_common": 0.5175,
+    "improved_average_duration_sec_common": 0.5252,
+    "common_average_delta_sec": 0.0077,
+    "baseline_total_duration_sec_common": 21.7371,
+    "improved_total_duration_sec_common": 22.0565
+  },
+  "top_regressions": [
+    {
+      "task_id": "task_019",
+      "baseline_duration_sec": 0.4977,
+      "improved_duration_sec": 0.5549,
+      "delta_duration_sec": 0.0572,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_016",
+      "baseline_duration_sec": 0.4983,
+      "improved_duration_sec": 0.5503,
+      "delta_duration_sec": 0.052,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_036",
+      "baseline_duration_sec": 0.5245,
+      "improved_duration_sec": 0.5682,
+      "delta_duration_sec": 0.0437,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_013",
+      "baseline_duration_sec": 0.507,
+      "improved_duration_sec": 0.5443,
+      "delta_duration_sec": 0.0373,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_032",
+      "baseline_duration_sec": 0.5069,
+      "improved_duration_sec": 0.5418,
+      "delta_duration_sec": 0.0349,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_022",
+      "baseline_duration_sec": 0.5201,
+      "improved_duration_sec": 0.5541,
+      "delta_duration_sec": 0.034,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_060",
+      "baseline_duration_sec": 0.4913,
+      "improved_duration_sec": 0.5225,
+      "delta_duration_sec": 0.0312,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_042",
+      "baseline_duration_sec": 0.5239,
+      "improved_duration_sec": 0.5534,
+      "delta_duration_sec": 0.0295,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_079",
+      "baseline_duration_sec": 0.4907,
+      "improved_duration_sec": 0.5161,
+      "delta_duration_sec": 0.0254,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_017",
+      "baseline_duration_sec": 0.5045,
+      "improved_duration_sec": 0.5285,
+      "delta_duration_sec": 0.024,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    }
+  ],
+  "top_improvements": [
+    {
+      "task_id": "task_065",
+      "baseline_duration_sec": 0.5315,
+      "improved_duration_sec": 0.4957,
+      "delta_duration_sec": -0.0358,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_044",
+      "baseline_duration_sec": 0.542,
+      "improved_duration_sec": 0.5153,
+      "delta_duration_sec": -0.0267,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_040",
+      "baseline_duration_sec": 0.5402,
+      "improved_duration_sec": 0.5139,
+      "delta_duration_sec": -0.0263,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_067",
+      "baseline_duration_sec": 0.5029,
+      "improved_duration_sec": 0.478,
+      "delta_duration_sec": -0.0249,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_058",
+      "baseline_duration_sec": 0.534,
+      "improved_duration_sec": 0.5109,
+      "delta_duration_sec": -0.0231,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_081",
+      "baseline_duration_sec": 0.4995,
+      "improved_duration_sec": 0.4797,
+      "delta_duration_sec": -0.0198,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_052",
+      "baseline_duration_sec": 0.5214,
+      "improved_duration_sec": 0.5025,
+      "delta_duration_sec": -0.0189,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_073",
+      "baseline_duration_sec": 0.5265,
+      "improved_duration_sec": 0.5092,
+      "delta_duration_sec": -0.0173,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_038",
+      "baseline_duration_sec": 0.529,
+      "improved_duration_sec": 0.513,
+      "delta_duration_sec": -0.016,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_054",
+      "baseline_duration_sec": 0.5185,
+      "improved_duration_sec": 0.5029,
+      "delta_duration_sec": -0.0156,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    }
+  ],
+  "per_task_deltas": [
+    {
+      "task_id": "task_006",
+      "baseline_duration_sec": 0.515,
+      "improved_duration_sec": 0.5372,
+      "delta_duration_sec": 0.0222,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_008",
+      "baseline_duration_sec": 0.5109,
+      "improved_duration_sec": 0.5223,
+      "delta_duration_sec": 0.0114,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_010",
+      "baseline_duration_sec": 0.4959,
+      "improved_duration_sec": 0.5094,
+      "delta_duration_sec": 0.0135,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_013",
+      "baseline_duration_sec": 0.507,
+      "improved_duration_sec": 0.5443,
+      "delta_duration_sec": 0.0373,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_016",
+      "baseline_duration_sec": 0.4983,
+      "improved_duration_sec": 0.5503,
+      "delta_duration_sec": 0.052,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_017",
+      "baseline_duration_sec": 0.5045,
+      "improved_duration_sec": 0.5285,
+      "delta_duration_sec": 0.024,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_019",
+      "baseline_duration_sec": 0.4977,
+      "improved_duration_sec": 0.5549,
+      "delta_duration_sec": 0.0572,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_022",
+      "baseline_duration_sec": 0.5201,
+      "improved_duration_sec": 0.5541,
+      "delta_duration_sec": 0.034,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_024",
+      "baseline_duration_sec": 0.5168,
+      "improved_duration_sec": 0.5237,
+      "delta_duration_sec": 0.0069,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_026",
+      "baseline_duration_sec": 0.5213,
+      "improved_duration_sec": 0.5359,
+      "delta_duration_sec": 0.0146,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_028",
+      "baseline_duration_sec": 0.5054,
+      "improved_duration_sec": 0.5181,
+      "delta_duration_sec": 0.0127,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_030",
+      "baseline_duration_sec": 0.5287,
+      "improved_duration_sec": 0.5247,
+      "delta_duration_sec": -0.004,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_032",
+      "baseline_duration_sec": 0.5069,
+      "improved_duration_sec": 0.5418,
+      "delta_duration_sec": 0.0349,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_034",
+      "baseline_duration_sec": 0.5087,
+      "improved_duration_sec": 0.5114,
+      "delta_duration_sec": 0.0027,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 11,
+      "improved_tool_calls": 11
+    },
+    {
+      "task_id": "task_036",
+      "baseline_duration_sec": 0.5245,
+      "improved_duration_sec": 0.5682,
+      "delta_duration_sec": 0.0437,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_038",
+      "baseline_duration_sec": 0.529,
+      "improved_duration_sec": 0.513,
+      "delta_duration_sec": -0.016,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_040",
+      "baseline_duration_sec": 0.5402,
+      "improved_duration_sec": 0.5139,
+      "delta_duration_sec": -0.0263,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_042",
+      "baseline_duration_sec": 0.5239,
+      "improved_duration_sec": 0.5534,
+      "delta_duration_sec": 0.0295,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_044",
+      "baseline_duration_sec": 0.542,
+      "improved_duration_sec": 0.5153,
+      "delta_duration_sec": -0.0267,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_046",
+      "baseline_duration_sec": 0.5185,
+      "improved_duration_sec": 0.5364,
+      "delta_duration_sec": 0.0179,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_048",
+      "baseline_duration_sec": 0.523,
+      "improved_duration_sec": 0.5132,
+      "delta_duration_sec": -0.0098,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_050",
+      "baseline_duration_sec": 0.4892,
+      "improved_duration_sec": 0.5102,
+      "delta_duration_sec": 0.021,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_052",
+      "baseline_duration_sec": 0.5214,
+      "improved_duration_sec": 0.5025,
+      "delta_duration_sec": -0.0189,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 12,
+      "improved_tool_calls": 12
+    },
+    {
+      "task_id": "task_054",
+      "baseline_duration_sec": 0.5185,
+      "improved_duration_sec": 0.5029,
+      "delta_duration_sec": -0.0156,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_056",
+      "baseline_duration_sec": 0.7867,
+      "improved_duration_sec": 0.7863,
+      "delta_duration_sec": -0.0004,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_057",
+      "baseline_duration_sec": 0.4942,
+      "improved_duration_sec": 0.5142,
+      "delta_duration_sec": 0.02,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_058",
+      "baseline_duration_sec": 0.534,
+      "improved_duration_sec": 0.5109,
+      "delta_duration_sec": -0.0231,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_059",
+      "baseline_duration_sec": 0.5079,
+      "improved_duration_sec": 0.5038,
+      "delta_duration_sec": -0.0041,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_060",
+      "baseline_duration_sec": 0.4913,
+      "improved_duration_sec": 0.5225,
+      "delta_duration_sec": 0.0312,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_061",
+      "baseline_duration_sec": 0.4946,
+      "improved_duration_sec": 0.5135,
+      "delta_duration_sec": 0.0189,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_063",
+      "baseline_duration_sec": 0.4911,
+      "improved_duration_sec": 0.5054,
+      "delta_duration_sec": 0.0143,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_065",
+      "baseline_duration_sec": 0.5315,
+      "improved_duration_sec": 0.4957,
+      "delta_duration_sec": -0.0358,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_067",
+      "baseline_duration_sec": 0.5029,
+      "improved_duration_sec": 0.478,
+      "delta_duration_sec": -0.0249,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_069",
+      "baseline_duration_sec": 0.5185,
+      "improved_duration_sec": 0.5042,
+      "delta_duration_sec": -0.0143,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_071",
+      "baseline_duration_sec": 0.514,
+      "improved_duration_sec": 0.5275,
+      "delta_duration_sec": 0.0135,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_073",
+      "baseline_duration_sec": 0.5265,
+      "improved_duration_sec": 0.5092,
+      "delta_duration_sec": -0.0173,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_075",
+      "baseline_duration_sec": 0.4992,
+      "improved_duration_sec": 0.5223,
+      "delta_duration_sec": 0.0231,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 10,
+      "improved_tool_calls": 10
+    },
+    {
+      "task_id": "task_077",
+      "baseline_duration_sec": 0.5093,
+      "improved_duration_sec": 0.5051,
+      "delta_duration_sec": -0.0042,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_079",
+      "baseline_duration_sec": 0.4907,
+      "improved_duration_sec": 0.5161,
+      "delta_duration_sec": 0.0254,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_081",
+      "baseline_duration_sec": 0.4995,
+      "improved_duration_sec": 0.4797,
+      "delta_duration_sec": -0.0198,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    },
+    {
+      "task_id": "task_083",
+      "baseline_duration_sec": 0.4821,
+      "improved_duration_sec": 0.4928,
+      "delta_duration_sec": 0.0107,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 8,
+      "improved_tool_calls": 8
+    },
+    {
+      "task_id": "task_085",
+      "baseline_duration_sec": 0.4957,
+      "improved_duration_sec": 0.4837,
+      "delta_duration_sec": -0.012,
+      "baseline_status": "success",
+      "improved_status": "success",
+      "baseline_tool_calls": 9,
+      "improved_tool_calls": 9
+    }
+  ],
+  "compare_id": "duration_compare_realissuev46_001"
+}
