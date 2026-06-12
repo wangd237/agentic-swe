@@ -1,0 +1,12 @@
+{
+  "issues": [
+    {
+      "repo": "python-poetry/tomlkit",
+      "issue_number": 450,
+      "why_it_fits": "这是一个边界非常清楚的包装保真 bug。table 里的 bool 项被错误保留成原生 bool，导致后续无法像其它 TOML item 一样继续追加 comment，特别适合压成单模块、少量稳定回归测试的 semi_real 任务。",
+      "expected_test_shape": "可用 3 个固定测试覆盖：bool 项应支持 .comment()、字符串和整数项现有行为保持不变、渲染结果里新增的 bool 注释应落在正确键后。",
+      "risk_notes": "需要把最小实现限制在 table.add/item 包装与 comment 能力，不把完整 TOML parser 或复杂文档重渲染整体带入。",
+      "recommendation": "high"
+    }
+  ]
+}

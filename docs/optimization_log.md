@@ -10174,3 +10174,129 @@
 - 功能上，`improved_v61` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
 - 性能上，`frozen_40` 只有 `0.0057s` 的轻微回升，仍稳定低于长期阈值
 - 下一轮应继续把正式任务数从 `58` 推向 `60+`
+
+## 2026-06-12 Phase 6 tomlkit bool item comment 包装扩容与 `improved_v62`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一个来自 `python-poetry/tomlkit` 的真实 issue 派生任务
+- 在保持 frozen 集功能无回归的前提下，把 `formal_task_count` 推进到 `59`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v62_candidates.json`
+- `benchmarks/tasks/task_118.json`
+- `benchmarks/tasks/task_119.json`
+- `benchmarks/repos/tomlkit_bool_comment_repo/`
+- `optimization/policy_versions/improved_v62.json`
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev62r1_001.json`
+- `logs/summaries/batch_eval_realissuev62r2_001.json`
+- `logs/summaries/batch_eval_realissuev62r3_001.json`
+- `logs/summaries/batch_compare_realissue_step46_001.json`
+- `logs/summaries/batch_eval_frozen20v62r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step44_001.json`
+- `logs/summaries/batch_eval_frozen40v62r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step20_001.json`
+- `logs/summaries/benchmark_maturity_maturity_041.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 issue 查询补录新候选：
+  - `python-poetry/tomlkit#450`
+- 新增 `real_issue` 草稿：
+  - `task_118`
+- 新增可运行的 semi_real 正式任务：
+  - `task_119`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_bool_comment_repo`
+- 在 repo 中故意保留 bug：
+  - table 里的 bool 项被错误保留成原生 `bool`，导致后续取回后无法继续调用 `.comment()`
+- 新增 `improved_v62`
+- 在 patcher 中新增 tomlkit bool item 包装保真的专用规则
+- 把 `task_119` 加入正式 manifest
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_bool_comment_repo/tests/test_table.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_119.json --policy optimization/policy_versions/improved_v62.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_117.json --policy optimization/policy_versions/improved_v62.json`
+- 正式集首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v62.json --run-label realissuev62r1 --compare-against-eval logs/summaries/batch_eval_realissuev61r2_001.json --compare-label realissue_step44`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v62.json --run-label realissuev62r2 --compare-against-eval logs/summaries/batch_eval_realissuev61r2_001.json --compare-label realissue_step45`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v62.json --run-label realissuev62r3 --compare-against-eval logs/summaries/batch_eval_realissuev61r2_001.json --compare-label realissue_step46`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v62.json --run-label frozen20v62r2 --compare-against-eval logs/summaries/batch_eval_frozen20v61r2_001.json --compare-label frozen20_step44`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v62.json --run-label frozen40v62r2 --compare-against-eval logs/summaries/batch_eval_frozen40v61r2_001.json --compare-label frozen40_step20`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `58 -> 59`
+- 来源生态数：
+  - `14 -> 14`
+- 候选池状态：
+  - `accepted = 58 -> 59`
+  - `to_review = 0 -> 0`
+- `improved_v62` 正式 `59` 条任务集最终结果：
+  - `success_count: 58 -> 59`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5465 -> 0.5289`
+- `improved_v62` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5518 -> 0.5564`
+- `improved_v62` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5377 -> 0.5554`
+- 最新 maturity：
+  - `formal_task_count = 59`
+  - `ecosystem_count = 14`
+  - `latest_frozen_count = 40`
+  - `frozen_40_streak = 8`
+
+### 这轮额外记录的过程
+
+- `v62r1` 首轮出现了系统性回归，不是新题本身的问题：
+  - 旧规则继承链从 `v47` 到 `v43` 的多段版本集合遗漏了 `improved_v62`
+- 修复后补跑 `v62r2`：
+  - `frozen_20` 与 `frozen_40` 恢复全绿
+  - 但正式集仍剩 `task_117` 单点回归
+- 继续定位后发现：
+  - `v61` 的 tomlkit 负整数翻转规则没有继续继承到 `improved_v62`
+- 再补跑 `v62r3`：
+  - 正式集恢复 `59 / 59`
+- 这再次说明：
+  - patcher 的“版本继承链完整性”仍是当前策略演化里最需要优先防守的工程风险
+  - 后续 `v63+` 每次新增策略后，都必须同时检查新规则入口、旧规则集合和上一版新题的继续继承
+
+### 结论
+
+- `tomlkit#450` 已成功作为新的 item 包装保真语义题补进正式 semi_real 任务集
+- `improved_v62` 已把正式任务数推进到 `59`
+- 功能上，`improved_v62` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 性能上，正式集相对 `v61` 反而回落，但 `frozen_40` 当前 `0.5554` 略高于长期阈值 `0.5514`
+- 下一轮应继续把正式任务数从 `59` 推向 `60+`，并优先观察是否能把 `frozen_40` 拉回阈值以内

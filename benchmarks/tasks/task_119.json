@@ -1,0 +1,37 @@
+{
+  "task_id": "task_119",
+  "repo_name": "tomlkit_bool_comment_repo",
+  "repo_path": "benchmarks/repos/tomlkit_bool_comment_repo",
+  "issue_title": "Bug: Adding .comment after key = bool in table does not work",
+  "issue_text": "When a bool is added to a table, reading the entry back returns a plain bool instead of a TOML item object, so calling `.comment()` raises `AttributeError` instead of preserving the usual TOML item comment workflow.",
+  "test_command": "python -m pytest tests/test_table.py -q",
+  "success_criteria": "table 中的 bool 项应和字符串、整数项一样被包装成支持 `.comment()` 的最小 TOML item；给 bool 项追加注释时不应抛出 AttributeError；渲染结果应保留该注释并且其它类型现有行为不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "table",
+    "comment"
+  ],
+  "target_files_hint": [
+    "tomlkit_bool_comment_repo/items.py",
+    "tests/test_table.py"
+  ],
+  "expected_failure_test": "TableBoolCommentTests.test_bool_entry_supports_comment_after_add",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 450,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/450",
+    "candidate_id": "python_poetry_tomlkit_issue_450",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_118",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

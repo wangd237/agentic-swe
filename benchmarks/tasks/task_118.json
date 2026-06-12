@@ -1,0 +1,29 @@
+{
+  "task_id": "task_118",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Bug: Adding .comment after key = bool in table does not work",
+  "issue_text": "Can't use .comment to add a comment to a table entry that is of type bool. all other types work.\n\nWhen a bool is added to a table, reading the entry back returns a plain bool instead of a TOML item object, so calling `.comment()` raises `AttributeError`.",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 450,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/450",
+    "candidate_id": "python_poetry_tomlkit_issue_450",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
