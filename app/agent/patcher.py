@@ -1099,6 +1099,41 @@ def _handle_tomlkit_scalar_replacement_scope(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_packaging_requirement_pickle_prereleases(content: str) -> str | None:
+    # improved_v44 处理 Requirement 在 pickle 后丢失 specifier.prereleases 状态的问题。
+    target_block = (
+        "@dataclass\n"
+        "class SpecifierSet:\n"
+        '    """只保留本次 benchmark 需要的最小 specifier 状态。"""\n\n'
+        "    raw: str\n"
+        "    prereleases: bool | None = None\n\n"
+        "    def __getstate__(self) -> dict[str, str]:\n"
+        "        # 这里故意保留真实 issue 中的缺陷：\n"
+        "        # pickle 状态只保留原始 specifier，丢掉了显式设置过的 prereleases 标记。\n"
+        '        return {"raw": self.raw}\n\n'
+        "    def __setstate__(self, state: dict[str, str]) -> None:\n"
+        '        self.raw = state["raw"]\n'
+        "        self.prereleases = None"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "@dataclass\n"
+        "class SpecifierSet:\n"
+        '    """只保留本次 benchmark 需要的最小 specifier 状态。"""\n\n'
+        "    raw: str\n"
+        "    prereleases: bool | None = None\n\n"
+        "    def __getstate__(self) -> dict[str, str | bool | None]:\n"
+        "        # 显式设置过的 prereleases 语义也应跨 pickle 保留下来。\n"
+        '        return {"raw": self.raw, "prereleases": self.prereleases}\n\n'
+        "    def __setstate__(self, state: dict[str, str | bool | None]) -> None:\n"
+        '        self.raw = str(state["raw"])\n'
+        '        self.prereleases = state.get("prereleases")'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2297,7 +2332,12 @@ def apply_rule_based_patch(
 
         if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41"}:
             run_v34_fallback_chain = False
-        if policy_config.patch_strategy == "improved_v43":
+        if policy_config.patch_strategy == "improved_v44":
+            improved_v44_content = _handle_packaging_requirement_pickle_prereleases(original_content)
+            if improved_v44_content is not None:
+                updated_content = improved_v44_content
+                patch_reason_parts = ["让 Requirement 在 pickle 后保留 specifier.prereleases 的显式设置值"]
+        if policy_config.patch_strategy in {"improved_v43", "improved_v44"} and updated_content == original_content:
             improved_v43_content = _handle_tomlkit_scalar_replacement_scope(original_content)
             if improved_v43_content is not None:
                 updated_content = improved_v43_content

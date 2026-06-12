@@ -7715,3 +7715,142 @@
 - 当前离 `60` 条正式任务仍有 `20` 条缺口
 - `frozen_40` 连续无回归版本仍为 `0 / 5`
 - 下一轮应优先扩新来源、补新正式任务，并让 `improved_v44` 在 `frozen_40` 上拿到第 `1` 个 streak 证据
+
+## 2026-06-12 Phase 6 packaging pickle 状态保真扩容与 `improved_v44`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#504 -> task_081`
+- `improved_v43`
+- 正式任务数推进到 `40`
+- `frozen_40` 首版建立完成
+
+因此这一轮开始同时推进两件对长期 goal 更关键的事：
+
+- 继续把正式任务从 `40` 推向 `60`
+- 让 `frozen_40` 真正开始累计连续无回归版本
+
+在候选选择上，这一轮优先落地边界极清晰、单模块、序列化状态保真类的 `pypa/packaging#1204`。
+
+### 目标
+
+- 把 `pypa/packaging#1204` 转成新的 semi_real 正式任务
+- 为 `Requirement` 在 pickle 后丢失 `specifier.prereleases` 状态补一条规则型修复能力
+- 补齐 `frozen_40` 上的 `improved_v32` 基线评测，让 streak 计算真正有起点
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v44`
+- 把 maturity 审计结果同步到 `41 / 60` 与 `streak = 2 / 5`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_082.json`
+- `benchmarks/tasks/task_083.json`
+- `benchmarks/repos/packaging_pickle_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v44.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_frozen40v32_001.json`
+- `logs/summaries/batch_eval_frozen40v32_001.json`
+- `logs/summaries/batch_run_realissuev44_002.json`
+- `logs/summaries/batch_eval_realissuev44_002.json`
+- `logs/summaries/batch_compare_realissue_step24_003.json`
+- `logs/summaries/batch_run_frozen20v44_002.json`
+- `logs/summaries/batch_eval_frozen20v44_002.json`
+- `logs/summaries/batch_compare_frozen20_step23_002.json`
+- `logs/summaries/batch_run_frozen40v44_002.json`
+- `logs/summaries/batch_eval_frozen40v44_002.json`
+- `logs/summaries/batch_compare_frozen40_step01_002.json`
+- `logs/summaries/benchmark_maturity_maturity_017.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `packaging#1204` 的 `real_issue` 草稿：
+  - `task_082`
+- 新增可运行的 semi_real 正式任务：
+  - `task_083`
+- 新增 repo：
+  - `benchmarks/repos/packaging_pickle_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `Requirement` 在 pickle / unpickle 后会丢失 `specifier.prereleases` 上显式设置过的布尔值
+- 新增 `improved_v44`
+- 在 patcher 中新增 Requirement pickle 状态保真的专用规则
+- 把 `task_083` 加入正式 manifest
+- 补齐 `frozen_40` 的 `improved_v32` 基线评测
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/packaging_pickle_repo/tests/test_requirements.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_083.json --policy optimization/policy_versions/improved_v44.json`
+- 旧任务回归抽检：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_081.json --policy optimization/policy_versions/improved_v44.json`
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_079.json --policy optimization/policy_versions/improved_v44.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v44.json --run-label realissuev44 --compare-against-eval logs/summaries/batch_eval_realissuev43_001.json --compare-label realissue_step24`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v44.json --run-label frozen20v44 --compare-against-eval logs/summaries/batch_eval_frozen20v43_001.json --compare-label frozen20_step23`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v44.json --run-label frozen40v44 --compare-against-eval logs/summaries/batch_eval_frozen40v43_001.json --compare-label frozen40_step01`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `40 -> 41`
+- 候选池状态：
+  - `accepted = 40 -> 41`
+  - `to_review = 0 -> 0`
+- `improved_v44` 正式 `41` 条任务集结果：
+  - `success_count: 40 -> 41`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5241 -> 0.5173`
+- `improved_v44` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5291 -> 0.528`
+- `improved_v44` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.523 -> 0.5188`
+- `frozen_40` 基线结果：
+  - `improved_v32 average_duration_sec = 0.5353`
+- 时延分析：
+  - 正式集公共 `40` 条任务平均耗时差值：`-0.0054s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`-0.0011s`
+- maturity 审计：
+  - 正式任务数：`41 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`2 / 5`
+
+### 结论
+
+- `packaging#1204` 已成功从新来源候选进入正式 semi_real 任务集
+- `improved_v44` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮不仅把正式任务数推进到 `41`，还把 `frozen_40 streak` 从 `1` 推进到 `2`
+- 并且时延没有恶化，正式集、`frozen_20` 与 `frozen_40` 都出现了小幅回落
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `19` 条缺口
+- `frozen_40` 连续无回归版本仍为 `2 / 5`
+- 下一轮应优先扩新来源、补新正式任务，并让 `improved_v45` 在 `frozen_40` 上拿到第 `3` 个 streak 证据

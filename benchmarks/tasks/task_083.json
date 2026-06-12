@@ -1,0 +1,37 @@
+{
+  "task_id": "task_083",
+  "repo_name": "packaging_pickle_repo",
+  "repo_path": "benchmarks/repos/packaging_pickle_repo",
+  "issue_title": "Requirement pickle drops specifier prereleases",
+  "issue_text": "当前 `Requirement` 在 pickle / unpickle 后会丢失 `specifier.prereleases` 上显式设置过的布尔值。例如先把 `prereleases` 设为 `True`，反序列化后却回落成 `None`。semi-real 任务要求：显式设置为 `True` 或 `False` 的状态都要在序列化后保留；默认未设置的 `None` 语义不应回归；回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_requirements.py -q",
+  "success_criteria": "pickle / unpickle `Requirement` 后，应保留 `specifier.prereleases` 上显式设置过的 `True` / `False`；默认 `None` 场景保持不变；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "packaging",
+    "pickle",
+    "serialization"
+  ],
+  "target_files_hint": [
+    "packaging_pickle_repo/requirements.py",
+    "tests/test_requirements.py"
+  ],
+  "expected_failure_test": "RequirementPickleTests.test_pickle_preserves_prereleases_true",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 1204,
+    "issue_url": "https://github.com/pypa/packaging/issues/1204",
+    "candidate_id": "pypa_packaging_issue_1204",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_082",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

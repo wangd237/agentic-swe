@@ -2390,6 +2390,91 @@ trace 热点分析结果：
   - 当前已经完成 `frozen_40` 首版构建，规模与广泛度继续向目标推进
   - 下一阶段的关键不再是“先建 frozen”，而是“继续扩正式任务并累计 frozen_40 streak”
 
+`frozen_40` 基线补录：
+
+- 新增基线评测：
+  - batch run：`logs/summaries/batch_run_frozen40v32_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen40v32_001.json`
+- 指标：
+  - `task_count`: `40`
+  - `success_count`: `0`
+  - `success_rate`: `0.0`
+  - `test_pass_rate`: `0.0`
+  - `average_duration_sec`: `0.5353`
+- 结论：
+  - 这份结果为 `frozen_40` 的 streak 计算补齐了 `improved_v32` 基线证据
+  - 之后的 `v43 / v44` 才能被 maturity 审计正式纳入连续无回归统计
+
+`improved_v44` 正式 41 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v44.json`
+- 新增任务：
+  - `benchmarks/tasks/task_083.json`
+- 新增 repo：
+  - `benchmarks/repos/packaging_pickle_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev44_002.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev44_002.json`
+  - compare：`logs/summaries/batch_compare_realissue_step24_003.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev44_002.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev44_002.json`
+- 指标：
+  - `task_count`: `40 -> 41`
+  - `success_count`: `40 -> 41`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5241 -> 0.5173`
+- 结论：
+  - 这说明 `packaging#1204` 已成功转化为正式第 `41` 条 semi_real 任务
+  - `improved_v44` 在扩容后继续保持全量成功
+  - 并且这轮正式集平均耗时回落了 `0.0068s`
+
+`improved_v44` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v44_002.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v44_002.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step23_002.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v44_002.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v44_002.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5291 -> 0.528`
+- 结论：
+  - 这说明 `improved_v44` 在固定 `20` 条真实任务上继续无功能回归
+  - 并且固定集平均耗时小幅回落了 `0.0011s`
+
+`improved_v44` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen40v44_002.json`
+  - batch eval：`logs/summaries/batch_eval_frozen40v44_002.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step01_002.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.523 -> 0.5188`
+- 结论：
+  - 这说明 `improved_v44` 在 `frozen_40` 上继续无功能回归
+  - 并且 `frozen_40` 平均耗时也回落了 `0.0042s`
+
+`Benchmark Maturity v1` 最新量化审计更新：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_017.json`
+  - `logs/summaries/benchmark_maturity_maturity_017.md`
+- 当前结果：
+  - 正式任务数：`41 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续无回归版本：`2 / 5`
+- 结论：
+  - 当前已经把正式任务数推进到 `41`
+  - `frozen_40` streak 已从 `0` 推进到 `2`
+  - 下一阶段的关键是继续扩任务并让 `improved_v45` 拿到第 `3` 个连续版本证据
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：

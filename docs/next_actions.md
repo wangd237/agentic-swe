@@ -23,10 +23,10 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`40 / 60`
+  - 正式任务数：`41 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`40 / 40`
-  - `frozen_40` 连续版本：`0 / 5`
+  - `frozen_40` 连续版本：`2 / 5`
 
 ### 1. 以 `frozen_20` 作为后续策略升级的固定基线
 
@@ -60,7 +60,8 @@
 
 - 当前高优先级 shortlist 仍为空
 - `real_issue_tasks_frozen_40_v1.json` 已正式创建
-- 下一轮重点应转为继续扩新来源，并开始累计 `frozen_40` 连续 `5` 个版本的无回归证据
+- 当前已经累计到 `frozen_40 streak = 2 / 5`
+- 下一轮重点应继续扩新来源，并让 `improved_v45` 拿到第 `3 / 5` 个 streak 证据
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
@@ -174,13 +175,14 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v43` 为候选基线，继续扩正式任务数并累计 `frozen_40` streak
+2. 以 `improved_v44` 为候选基线，继续扩正式任务数并累计 `frozen_40` streak
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
 - 当前 `tomlkit#440` 已经落地为 `task_079`
 - 当前 `tomlkit#504` 已经落地为 `task_081`
+- 当前 `packaging#1204` 已经落地为 `task_083`
 - 当前新的候选库存已清空高优先级存量，`to_review = 0`
 - 因此下一轮更应该优先“扩新来源 + 跑下一版 `frozen_40`”，而不是继续停留在候选筛选阶段
 
