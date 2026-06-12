@@ -7237,3 +7237,122 @@
 - 下一轮应继续优先吃 shortlist 中边界清晰的剩余候选，例如：
   - `pallets/jinja#2151`
   - `pallets/jinja#2176`
+
+## 2026-06-12 Phase 6 jinja async repr 扩容与 `improved_v40`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `tomlkit#431 -> task_073`
+- `improved_v39`
+- 正式任务数推进到 `36`
+
+因此这一轮转向 `jinja`，优先消化能补 async/runtime 表示层语义的候选 `pallets/jinja#2151`。
+
+### 目标
+
+- 把 `pallets/jinja#2151` 转成新的 semi_real 正式任务
+- 为 `AsyncLoopContext.__repr__` 暴露协程对象并触发未 awaited 警告的场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v40`
+- 把 maturity 审计结果同步到 `37 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_074.json`
+- `benchmarks/tasks/task_075.json`
+- `benchmarks/repos/jinja_async_repr_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v40.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev40_001.json`
+- `logs/summaries/batch_eval_realissuev40_001.json`
+- `logs/summaries/batch_compare_realissue_step20_002.json`
+- `logs/summaries/batch_run_frozen20v40_001.json`
+- `logs/summaries/batch_eval_frozen20v40_001.json`
+- `logs/summaries/batch_compare_frozen20_step19_001.json`
+- `logs/summaries/benchmark_maturity_maturity_011.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `jinja#2151` 的 `real_issue` 草稿：
+  - `task_074`
+- 新增可运行的 semi_real 正式任务：
+  - `task_075`
+- 新增 repo：
+  - `benchmarks/repos/jinja_async_repr_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `AsyncLoopContext.__repr__` 直接把协程对象拼进字符串表示
+- 新增 `improved_v40`
+- 在 patcher 中新增 async repr 的专用规则
+- 把 `task_075` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/jinja_async_repr_repo/tests/test_runtime.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_075.json --policy optimization/policy_versions/improved_v40.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v40.json --run-label realissuev40 --compare-against-eval logs/summaries/batch_eval_realissuev39_001.json --compare-label realissue_step20`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v40.json --run-label frozen20v40 --compare-against-eval logs/summaries/batch_eval_frozen20v39_001.json --compare-label frozen20_step19`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `36 -> 37`
+- 候选池状态：
+  - `accepted = 36 -> 37`
+  - `to_review = 2 -> 1`
+- `improved_v40` 正式 `37` 条任务集结果：
+  - `success_count: 36 -> 37`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5453 -> 0.5717`
+- `improved_v40` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5443 -> 0.5682`
+- 时延分析：
+  - 正式集公共 `36` 条任务平均耗时差值：`+0.0269s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0239s`
+- maturity 审计：
+  - 正式任务数：`37 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `jinja#2151` 已成功从候选进入正式 semi_real 任务集
+- `improved_v40` 在扩容后继续保持正式集和固定集双线无功能回归
+- 但这轮扩容带来了可见的时延回升，因此需要后续版本继续做性能回收
+- 当前主线基线已经更新为：
+  - 正式任务数：`37`
+  - 最新策略：`improved_v40`
+  - 固定集合证据：`frozen_20`
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 还没有开始构建
+- 下一轮应继续优先处理剩余 shortlist 候选：
+  - `pallets/jinja#2176`

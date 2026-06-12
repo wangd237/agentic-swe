@@ -11,15 +11,6 @@
 
 ## 当前 Top 1
 
-### `pallets/jinja#2151`
-
-- 原因：
-  - async runtime 的 `__repr__` 警告问题，目标方法和修复方向都很清楚
-  - 能给 `jinja` 来源新增 async/runtime 表示层能力面
-  - 与现有 `meta` / `slice` 两条任务形成明显互补
-
-## 当前备选 1
-
 ### `pallets/jinja#2176`
 
 - 原因：
@@ -99,6 +90,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_072 / task_073`
+
+### `pallets/jinja#2151`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_074 / task_075`
 
 ### `dateutil/dateutil#1191`
 

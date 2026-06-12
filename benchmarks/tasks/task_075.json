@@ -1,0 +1,37 @@
+{
+  "task_id": "task_075",
+  "repo_name": "jinja_async_repr_repo",
+  "repo_path": "benchmarks/repos/jinja_async_repr_repo",
+  "issue_title": "AsyncLoopContext.__repr__ triggers 'coroutine was never awaited' warning",
+  "issue_text": "当前 `AsyncLoopContext.__repr__` 直接读取 async `length()`，结果把协程对象拼进字符串表示里，并触发未 awaited 警告。semi-real 任务要求：async loop context 的 `repr()` 不应再访问协程对象本身；输出应稳定可读；并且回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_runtime.py -q",
+  "success_criteria": "`repr(AsyncLoopContext(...))` 不应包含协程对象文本，不应触发未 awaited 警告，并应返回稳定字符串；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jinja",
+    "async",
+    "runtime"
+  ],
+  "target_files_hint": [
+    "jinja_async_repr_repo/runtime.py",
+    "tests/test_runtime.py"
+  ],
+  "expected_failure_test": "AsyncLoopContextTests.test_repr_does_not_expose_coroutine_object",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2151,
+    "issue_url": "https://github.com/pallets/jinja/issues/2151",
+    "candidate_id": "pallets_jinja_issue_2151",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_074",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

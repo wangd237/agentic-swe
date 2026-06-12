@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v39` 多轮策略迭代，正式真实任务扩充到 `36` 条，`v39` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v40` 多轮策略迭代，正式真实任务扩充到 `37` 条，`v40` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -810,6 +810,19 @@ scripts/
     - `test_pass_rate: 1.0 -> 1.0`
     - `average_duration_sec: 0.5427 -> 0.5443`
 - 这说明当前主线已经成功把正式任务集推进到 `36` 条，并且这轮扩容在正式集上继续带来了小幅时延改善
+- 当前已经继续新增 `jinja#2151` 派生的 `task_075`，并落地 `improved_v40`
+  - 新增 repo：`benchmarks/repos/jinja_async_repr_repo`
+  - 新增策略：`optimization/policy_versions/improved_v40.json`
+  - 新规则覆盖 AsyncLoopContext.__repr__ 暴露协程对象并触发未 awaited 警告的场景
+  - 正式 `37` 条任务集验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5453 -> 0.5717`
+  - `frozen_20` 同集合验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5443 -> 0.5682`
+- 这说明当前主线已经成功把正式任务集推进到 `37` 条，但这轮扩容伴随了时延回升，后续需要继续做性能回收
 - 这说明当前真正缺的不是来源多样性，而是规模和稳定性证据
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
@@ -2229,6 +2242,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `frozen_20` 固定集合继续保持无功能回归
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时只从 `0.5427` 轻微波动到 `0.5443`
+
+### 方式 63：运行 jinja async repr 回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_075.json --policy optimization/policy_versions/improved_v40.json
+```
+
+你会看到：
+
+- `task_075` 被成功修复
+- 修改文件是 `jinja_async_repr_repo/runtime.py`
+- patch 原因是 AsyncLoopContext 的 repr 不应再暴露协程对象
+
+### 方式 64：运行正式 `37` 条任务集上的 `improved_v40`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v40.json --run-label realissuev40 --compare-against-eval logs/summaries/batch_eval_realissuev39_001.json --compare-label realissue_step20
+```
+
+你会看到：
+
+- 正式任务集已经从 `36` 条扩到 `37` 条
+- `improved_v40` 在正式 `37` 条任务集上保持 `37/37` 成功
+- 平均耗时从 `0.5453` 回升到 `0.5717`
+
+### 方式 65：运行 `frozen_20` 上的 `improved_v40` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v40.json --run-label frozen20v40 --compare-against-eval logs/summaries/batch_eval_frozen20v39_001.json --compare-label frozen20_step19
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时从 `0.5443` 回升到 `0.5682`
 
 ### Phase 7
 

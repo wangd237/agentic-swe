@@ -953,6 +953,36 @@ def _handle_tomlkit_super_table_dotted_key_prefix(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_jinja_async_loop_repr(content: str) -> str | None:
+    # improved_v40 处理 AsyncLoopContext 继承同步 repr 导致暴露协程对象的问题。
+    target_block = (
+        "class AsyncLoopContext(LoopContext):\n"
+        '    """最小异步 loop context。"""\n\n'
+        "    async def _resolve_length(self) -> int:\n"
+        "        return self._length\n\n"
+        "    @property\n"
+        "    def length(self):  # type: ignore[override]\n"
+        "        return self._resolve_length()\n\n"
+        "    # 这里故意保留真实 issue 中的缺陷：继承同步 repr，直接把协程对象拼进表示字符串。\n"
+        "    __repr__ = LoopContext.__repr__"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "class AsyncLoopContext(LoopContext):\n"
+        '    """最小异步 loop context。"""\n\n'
+        "    async def _resolve_length(self) -> int:\n"
+        "        return self._length\n\n"
+        "    @property\n"
+        "    def length(self):  # type: ignore[override]\n"
+        "        return self._resolve_length()\n\n"
+        "    def __repr__(self) -> str:\n"
+        "        return f\"<{type(self).__name__} {self.index}/{self._length}>\""
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2149,9 +2179,45 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v39":
+            if policy_config.patch_strategy == "improved_v40":
+                improved_v40_content = _handle_jinja_async_loop_repr(original_content)
+                if improved_v40_content is not None:
+                    updated_content = improved_v40_content
+                    patch_reason_parts = ["让 AsyncLoopContext 的 repr 不再暴露协程对象"]
+                else:
+                    run_v34_fallback_chain = True
+                    improved_v39_content = _handle_tomlkit_super_table_dotted_key_prefix(original_content)
+                    if improved_v39_content is not None:
+                        updated_content = improved_v39_content
+                        patch_reason_parts = ["让 super table 下新增 dotted key 时继续保留父级前缀"]
+                        run_v34_fallback_chain = False
+                    else:
+                        improved_v38_content = _handle_tomlkit_proxy_pop_deletes_underlying_key(original_content)
+                        if improved_v38_content is not None:
+                            updated_content = improved_v38_content
+                            patch_reason_parts = ["让代理 pop 在返回原值的同时真正删除底层键"]
+                            run_v34_fallback_chain = False
+                        else:
+                            improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
+                            if improved_v37_content is not None:
+                                updated_content = improved_v37_content
+                                patch_reason_parts = ["让 toml 布尔值序列化在 True 场景下返回 true 字面量"]
+                                run_v34_fallback_chain = False
+                            else:
+                                improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                                if improved_v36_content is not None:
+                                    updated_content = improved_v36_content
+                                    patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                                    run_v34_fallback_chain = False
+                                else:
+                                    improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                                    if improved_v35_content is not None:
+                                        updated_content = improved_v35_content
+                                        patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                                        run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v39":
                 improved_v39_content = _handle_tomlkit_super_table_dotted_key_prefix(original_content)
                 if improved_v39_content is not None:
                     updated_content = improved_v39_content

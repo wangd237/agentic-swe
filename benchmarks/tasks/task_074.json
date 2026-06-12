@@ -1,0 +1,29 @@
+{
+  "task_id": "task_074",
+  "repo_name": "jinja",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "AsyncLoopContext.__repr__ triggers 'coroutine was never awaited' warning",
+  "issue_text": "当前 `AsyncLoopContext.__repr__` 复用了同步 `LoopContext` 的表示逻辑，直接访问了 async length 属性，导致返回协程对象并触发 `coroutine was never awaited` 警告。这个真实 issue 需要让 async loop context 的字符串表示不再创建未 awaited 协程，同时仍然输出稳定、可读的 repr。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2151,
+    "issue_url": "https://github.com/pallets/jinja/issues/2151",
+    "candidate_id": "pallets_jinja_issue_2151",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
