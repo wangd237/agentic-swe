@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v53`
+- 当前最新扩容策略：`improved_v54`
 - 当前主分支最近重要能力：
-  - 已完成 `50` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `51` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -20,9 +20,10 @@
   - 已把 `pallets/click#3571` 从新来源候选推进为正式任务 `task_097`
   - 已把 `pallets/jinja#2108` 从新来源候选推进为正式任务 `task_099`
   - 已把 `python-poetry/tomlkit#505` 从新来源候选推进为正式任务 `task_101`
-  - 已落地 `improved_v53` 的 tomlkit out-of-order proxy 修复规则
-  - 已完成 `v53` 的正式集与 `frozen_20` 功能验证
-  - 已确认 `v53` 相对 `v52` 在功能上继续全绿，但正式集与 `frozen_20` 平均耗时再次回升
+  - 已把 `python-poetry/tomlkit#295` 从新来源候选推进为正式任务 `task_103`
+  - 已落地 `improved_v54` 的 tomlkit comment anchor 修复规则
+  - 已完成 `v54` 的正式集与 `frozen_20` 功能验证
+  - 已确认 `v54` 相对 `v53` 在功能上继续全绿，并把正式集与 `frozen_20` 平均耗时重新拉回
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -66,7 +67,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`50`
+- 正式 `semi_real` 真实 issue 任务数：`51`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -79,7 +80,7 @@
 
 ## 当前候选池状态
 
-- `accepted = 50`
+- `accepted = 51`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -96,35 +97,35 @@
 
 ### 1. 当前最新扩容对比
 
-- 对比：`improved_v52 -> improved_v53`
-- 任务集：`49 -> 50` 条
+- 对比：`improved_v53 -> improved_v54`
+- 任务集：`50 -> 51` 条
 - 结果：
-  - `success_count: 49 -> 50`
+  - `success_count: 50 -> 51`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - 正式集 compare 口径 `average_duration_sec: 0.6618 -> 0.7143`
+  - 正式集 compare 口径 `average_duration_sec: 0.7143 -> 0.6544`
 
 说明：
 
-- 这说明 `improved_v53` 已成功把正式真实任务集从 `49` 条推进到 `50` 条
-- 新增任务是 `task_101`，来源于 `python-poetry/tomlkit#505`
+- 这说明 `improved_v54` 已成功把正式真实任务集从 `50` 条推进到 `51` 条
+- 新增任务是 `task_103`，来源于 `python-poetry/tomlkit#295`
 - 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
-- 但当前正式集平均耗时再次回升了 `0.0525s`
-- 因此当前还不能把 `v53` 直接视为新的稳定 streak 版本
+- 并且当前正式集平均耗时回落了 `0.0599s`
+- 但由于还没补 `frozen_40` 同集合验证，因此当前还不能把 `v54` 直接视为新的稳定 streak 版本
 
 ### 2. 当前最新冻结集观察
 
-- `improved_v53` `frozen_20` compare：
+- `improved_v54` `frozen_20` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.6732 -> 0.7361`
+  - `average_duration_sec: 0.7361 -> 0.6697`
 - 当前稳定 streak：
   - 仍为 `8`
 
 说明：
 
-- `v53` 在固定集合上没有功能回归
-- 但它在 `frozen_20` 上相对 `v52` 再次回升了 `0.0629s`
+- `v54` 在固定集合上没有功能回归
+- 并且它在 `frozen_20` 上相对 `v53` 回落了 `0.0664s`
 - 因此 `frozen_40 streak` 仍然停留在 `v50` 时的 `8`
 
 ### 3. 最新环境级诊断结论
@@ -144,8 +145,8 @@
 
 说明：
 
-- `v53` 继续证明了扩题链路稳定可用
-- 但当前最强证据仍然表明：系统还处在环境级漂移后的恢复阶段
+- `v54` 继续证明了扩题链路稳定可用
+- 当前最强证据表明：正式集与 `frozen_20` 的恢复已经重新取得进展
 - 后续文档与结论仍然必须把“扩题成功”和“稳定性门控通过”分开记录
 
 ### 4. 上一轮稳定扩容对比
@@ -468,6 +469,25 @@
 - 当前已经确认：来源广泛度不是瓶颈，真正缺口集中在正式任务规模和 `frozen_40` 稳定性证据
 - 当前最新状态是：规模侧已经推进到 `49 / 60`，稳定性侧 `frozen_40 streak = 8` 已满足长期目标，但需要继续守住；新的实际缺口是继续扩容并把 `frozen_40` 性能重新拉回长期阈值
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
+
+### `improved_v54`
+
+- 来源：`python-poetry/tomlkit#295`
+- 新增任务：`task_103`
+- 结论：
+  - 扩容成功，正式任务数推进到 `51`
+  - 正式集与 `frozen_20` 继续保持全绿
+  - 相对 `v53`，正式集 `average_duration_sec: 0.7143 -> 0.6544`
+  - 相对 `v53`，`frozen_20` `average_duration_sec: 0.7361 -> 0.6697`
+  - 但由于还没有补 `frozen_40` 同集合验证，所以当前仍不能把它视为新的稳定基线
+- 这一轮还暴露了一个重要过程性经验：
+  - `v54r1` 首轮批量评测曾因为 patcher 继承链条件漏掉 `improved_v54` 而大面积回归
+  - 修复继承链后，`v54r2` 已恢复到正式集与 `frozen_20` 双 `100%`
+- 当前主线口径应更新为：
+  - 稳定基线仍是 `improved_v50`
+  - 最新扩容版本是 `improved_v54`
+  - 正式任务数是 `51`
+  - `frozen_40 streak` 仍是 `8`
 
 ## 建议冷启动顺序
 

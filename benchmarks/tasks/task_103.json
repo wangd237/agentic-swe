@@ -1,0 +1,37 @@
+{
+  "task_id": "task_103",
+  "repo_name": "tomlkit_comment_anchor_repo",
+  "repo_path": "benchmarks/repos/tomlkit_comment_anchor_repo",
+  "issue_title": "Comments from original TOML end up in the wrong spot",
+  "issue_text": "Hello,\r\n\r\nI am using the tomlkit Python library to modify an existing TOML file.\r\n\r\nThe original file looks like this:\r\n\r\n```\r\n## My POST route comment\r\n[[routes]]\r\nmethod = 'POST'\r\npath = '/my/post/path'\r\ntopic = 'my-topic.0'\r\n\r\n## My GET route comment\r\n[[routes]]\r\nmethod = 'GET'\r\npath = '/my/get/path/{key}'\r\ntopic = 'my-topic.1'\r\n```\r\n\r\nI add two tables to that original array of tables \"[[routes]]\", with method = 'POST' and path = '/my/post/path'. When I do that, the resulting file becomes:\r\n\r",
+  "test_command": "python -m pytest tests/test_renderer.py -q",
+  "success_criteria": "向原始 array-of-tables 追加子表后，原有注释必须继续锚定在对应 routes 表之前；新增子表应插入到目标 routes 后；其他 routes 顺序与内容不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "comments",
+    "aot"
+  ],
+  "target_files_hint": [
+    "tomlkit_comment_anchor_repo/renderer.py",
+    "tests/test_renderer.py"
+  ],
+  "expected_failure_test": "CommentAnchorRendererTests.test_comment_stays_with_second_route_after_appending_subtables",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 295,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/295",
+    "candidate_id": "python_poetry_tomlkit_issue_295",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_102",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

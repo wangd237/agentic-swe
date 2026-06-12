@@ -878,6 +878,22 @@
       "state": "OPEN",
       "created_at": "2026-06-12T06:12:54Z",
       "body_excerpt": "### Description\n\n`tomlkit.parse()` accepts a TOML document, but later accessing a parsed table with `doc.get(\"hooks\")` can raise:\n\n```text\ntomlkit.exceptions.KeyAlreadyPresent: Key \"Stop\" already exists.\n```\nThis happened with a valid TOML config that contains repeated array tables such as [[hooks.Stop]] plus sibling/subtables under [hooks].\n\nThe failure appears to happen while constructing an OutOfOrderTableProxy, not during parsing.\n\nObserved behavior\nThis code path fails:\n```python\nimport tom"
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_295",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 295,
+      "issue_title": "Comments from original TOML end up in the wrong spot",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/295",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T16:39:01: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T16:39:01: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T16:39:25: 已生成 semi_real 可运行任务 task_103，仓库目录为 benchmarks/repos/tomlkit_comment_anchor_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2023-06-02T04:02:06Z",
+      "body_excerpt": "Hello,\r\n\r\nI am using the tomlkit Python library to modify an existing TOML file.\r\n\r\nThe original file looks like this:\r\n\r\n```\r\n## My POST route comment\r\n[[routes]]\r\nmethod = 'POST'\r\npath = '/my/post/path'\r\ntopic = 'my-topic.0'\r\n\r\n## My GET route comment\r\n[[routes]]\r\nmethod = 'GET'\r\npath = '/my/get/path/{key}'\r\ntopic = 'my-topic.1'\r\n```\r\n\r\nI add two tables to that original array of tables \"[[routes]]\", with method = 'POST' and path = '/my/post/path'. When I do that, the resulting file becomes:\r\n\r"
     }
   ]
 }

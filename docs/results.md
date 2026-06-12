@@ -2962,12 +2962,12 @@ trace 热点分析结果：
 
 当前状态补充：
 
-- 正式任务数：`50 / 60`
+- 正式任务数：`51 / 60`
 - 来源生态数：`13 / 6`
 - frozen 集合：`40 / 40`
 - `frozen_40` 稳定 streak：`8`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v53`
+- 当前最新扩容版本：`improved_v54`
 
 `improved_v53` 正式 50 条真实 issue 任务集验证：
 
@@ -3016,6 +3016,57 @@ trace 热点分析结果：
 - 当前最准确口径仍然是：
   - `v50` 是稳定基线
   - `v53` 是扩容成功、性能恢复中
+
+`improved_v54` 正式 51 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v54.json`
+- 新增任务：
+  - `benchmarks/tasks/task_103.json`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_comment_anchor_repo`
+- 运行结果：
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_realissuev54r1_001.json`
+  - 修复后 batch eval：`logs/summaries/batch_eval_realissuev54r2_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step34_002.json`
+  - 时延对比：`logs/summaries/duration_compare_realissuev54_001.json`
+- 指标：
+  - `task_count`: `50 -> 51`
+  - `success_count`: `50 -> 51`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.7143 -> 0.6544`
+- 结论：
+  - 这说明 `tomlkit#295` 已成功转化为正式第 `51` 条 semi_real 任务
+  - `improved_v54` 在修复 patcher 继承链后恢复为全量成功
+  - 公共 `50` 条任务平均耗时回落了 `0.0593s`
+
+`improved_v54` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_frozen20v54r1_001.json`
+  - 修复后 batch eval：`logs/summaries/batch_eval_frozen20v54r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step33_002.json`
+  - 时延对比：`logs/summaries/duration_compare_frozen20v54_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.7361 -> 0.6697`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 公共 `20` 条任务平均耗时回落了 `0.0664s`
+
+`v54` 结论补充：
+
+- 这一轮最重要的不只是新增任务，还有一次真实的策略继承链回归修复
+- `v54r1` 的失败不是题目本身失效，而是 patcher 中多段版本集合遗漏了 `improved_v54`
+- 修复后 `v54r2` 已恢复正式集与 `frozen_20` 双 `100%`
+- 当前最准确口径更新为：
+  - `v50` 是稳定基线
+  - `v54` 是最新扩容成功版本
+  - 正式任务数已推进到 `51`
+  - `frozen_40 streak` 仍保持 `8`
+  - 在还没补 `frozen_40` 同集合验证之前，`v54` 仍不能记为新的稳定版本
 
 `improved_v52` 正式 49 条真实 issue 任务集验证：
 

@@ -1,0 +1,62 @@
+# Batch Run Summary
+
+## Run
+
+- batch_run_id: `batch_run_realissuev54r2_001`
+- task_count: `51`
+- success_count: `51`
+- success_rate: `1.0`
+
+## Task Results
+
+- `task_006` -> `success` (run: `run_20260612T084606554420Z_1065`, post_test_exit_code: `0`)
+- `task_008` -> `success` (run: `run_20260612T084607207615Z_9338`, post_test_exit_code: `0`)
+- `task_010` -> `success` (run: `run_20260612T084607938375Z_8883`, post_test_exit_code: `0`)
+- `task_013` -> `success` (run: `run_20260612T084608590976Z_5940`, post_test_exit_code: `0`)
+- `task_016` -> `success` (run: `run_20260612T084609251450Z_7551`, post_test_exit_code: `0`)
+- `task_017` -> `success` (run: `run_20260612T084609947190Z_7831`, post_test_exit_code: `0`)
+- `task_019` -> `success` (run: `run_20260612T084610616378Z_3257`, post_test_exit_code: `0`)
+- `task_022` -> `success` (run: `run_20260612T084611301925Z_2565`, post_test_exit_code: `0`)
+- `task_024` -> `success` (run: `run_20260612T084612026566Z_9351`, post_test_exit_code: `0`)
+- `task_026` -> `success` (run: `run_20260612T084612688922Z_9365`, post_test_exit_code: `0`)
+- `task_028` -> `success` (run: `run_20260612T084613345185Z_7389`, post_test_exit_code: `0`)
+- `task_030` -> `success` (run: `run_20260612T084614015654Z_0530`, post_test_exit_code: `0`)
+- `task_032` -> `success` (run: `run_20260612T084614660718Z_6666`, post_test_exit_code: `0`)
+- `task_034` -> `success` (run: `run_20260612T084615324676Z_5521`, post_test_exit_code: `0`)
+- `task_036` -> `success` (run: `run_20260612T084615992958Z_1548`, post_test_exit_code: `0`)
+- `task_038` -> `success` (run: `run_20260612T084616649722Z_1085`, post_test_exit_code: `0`)
+- `task_040` -> `success` (run: `run_20260612T084617319336Z_7912`, post_test_exit_code: `0`)
+- `task_042` -> `success` (run: `run_20260612T084617995391Z_1286`, post_test_exit_code: `0`)
+- `task_044` -> `success` (run: `run_20260612T084618690925Z_5457`, post_test_exit_code: `0`)
+- `task_046` -> `success` (run: `run_20260612T084619382885Z_8048`, post_test_exit_code: `0`)
+- `task_048` -> `success` (run: `run_20260612T084620030443Z_7236`, post_test_exit_code: `0`)
+- `task_050` -> `success` (run: `run_20260612T084620697830Z_7686`, post_test_exit_code: `0`)
+- `task_052` -> `success` (run: `run_20260612T084621378595Z_4323`, post_test_exit_code: `0`)
+- `task_054` -> `success` (run: `run_20260612T084622016049Z_7992`, post_test_exit_code: `0`)
+- `task_056` -> `success` (run: `run_20260612T084622647450Z_4394`, post_test_exit_code: `0`)
+- `task_057` -> `success` (run: `run_20260612T084623473721Z_2305`, post_test_exit_code: `0`)
+- `task_058` -> `success` (run: `run_20260612T084624108840Z_0665`, post_test_exit_code: `0`)
+- `task_059` -> `success` (run: `run_20260612T084624738132Z_5187`, post_test_exit_code: `0`)
+- `task_060` -> `success` (run: `run_20260612T084625440822Z_6740`, post_test_exit_code: `0`)
+- `task_061` -> `success` (run: `run_20260612T084626071783Z_0602`, post_test_exit_code: `0`)
+- `task_063` -> `success` (run: `run_20260612T084626730497Z_1550`, post_test_exit_code: `0`)
+- `task_065` -> `success` (run: `run_20260612T084627401925Z_5067`, post_test_exit_code: `0`)
+- `task_067` -> `success` (run: `run_20260612T084628052868Z_2687`, post_test_exit_code: `0`)
+- `task_069` -> `success` (run: `run_20260612T084628671583Z_7788`, post_test_exit_code: `0`)
+- `task_071` -> `success` (run: `run_20260612T084629292317Z_6133`, post_test_exit_code: `0`)
+- `task_073` -> `success` (run: `run_20260612T084629934644Z_9950`, post_test_exit_code: `0`)
+- `task_075` -> `success` (run: `run_20260612T084630558207Z_0516`, post_test_exit_code: `0`)
+- `task_077` -> `success` (run: `run_20260612T084631204575Z_9871`, post_test_exit_code: `0`)
+- `task_079` -> `success` (run: `run_20260612T084631829872Z_0159`, post_test_exit_code: `0`)
+- `task_081` -> `success` (run: `run_20260612T084632456121Z_1526`, post_test_exit_code: `0`)
+- `task_083` -> `success` (run: `run_20260612T084633062429Z_3000`, post_test_exit_code: `0`)
+- `task_085` -> `success` (run: `run_20260612T084633691224Z_0287`, post_test_exit_code: `0`)
+- `task_087` -> `success` (run: `run_20260612T084634336476Z_8444`, post_test_exit_code: `0`)
+- `task_089` -> `success` (run: `run_20260612T084634964497Z_6289`, post_test_exit_code: `0`)
+- `task_091` -> `success` (run: `run_20260612T084635612364Z_5338`, post_test_exit_code: `0`)
+- `task_093` -> `success` (run: `run_20260612T084636252957Z_3697`, post_test_exit_code: `0`)
+- `task_095` -> `success` (run: `run_20260612T084636876491Z_4701`, post_test_exit_code: `0`)
+- `task_097` -> `success` (run: `run_20260612T084637512766Z_2645`, post_test_exit_code: `0`)
+- `task_099` -> `success` (run: `run_20260612T084638192795Z_5652`, post_test_exit_code: `0`)
+- `task_101` -> `success` (run: `run_20260612T084638815262Z_5577`, post_test_exit_code: `0`)
+- `task_103` -> `success` (run: `run_20260612T084639420076Z_5539`, post_test_exit_code: `0`)

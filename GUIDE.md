@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v53` 多轮策略迭代，正式真实任务扩充到 `50` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v53` 已继续把正式任务数推高，但相对 `v52` 的正式集与 `frozen_20` 平均耗时再次回升，因此稳定 `streak` 仍保持 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v54` 多轮策略迭代，正式真实任务扩充到 `51` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v54` 已继续把正式任务数推高，并把相对 `v53` 的正式集与 `frozen_20` 平均耗时重新拉回，但由于尚未补 `frozen_40` 同集合验证，因此稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -130,24 +130,24 @@ bug 设计如下：
 
 ## Phase 6 最新补充
 
-### 1. 当前最新落地到 `improved_v53`
+### 1. 当前最新落地到 `improved_v54`
 
 这一轮新增的真实 issue 来自：
 
-- `python-poetry/tomlkit#505`
+- `python-poetry/tomlkit#295`
 
 新增产物：
 
-- `benchmarks/tasks/task_100.json`
-- `benchmarks/tasks/task_101.json`
-- `benchmarks/repos/tomlkit_out_of_order_repo/`
-- `optimization/policy_versions/improved_v53.json`
+- `benchmarks/tasks/task_102.json`
+- `benchmarks/tasks/task_103.json`
+- `benchmarks/repos/tomlkit_comment_anchor_repo/`
+- `optimization/policy_versions/improved_v54.json`
 
 当前最关键的新增能力：
 
-- agent 已能修复一种新的 tomlkit 代理重建问题
-- 场景是“重复 array table 与同级子表共存时，访问阶段错误触发 `KeyAlreadyPresent`”
-- 这让正式真实任务总数从 `49` 提升到 `50`
+- agent 已能修复一种新的 tomlkit array-of-tables 注释锚点问题
+- 场景是“给首个 `[[routes]]` 追加子表后，原本应属于第二个 route 的注释被错误吸附到前一个条目附近”
+- 这让正式真实任务总数从 `50` 提升到 `51`
 
 ### 2. 这一轮框架结构变化
 
@@ -161,35 +161,35 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 
 最新新增的目录入口：
 
-- `benchmarks/repos/tomlkit_out_of_order_repo`
+- `benchmarks/repos/tomlkit_comment_anchor_repo`
 
 ### 3. 你现在可以怎么体验
 
 如果你想直接体验这轮新题，可以按下面顺序：
 
 1. 先看任务定义：
-   - `benchmarks/tasks/task_101.json`
+   - `benchmarks/tasks/task_103.json`
 2. 再看最小 repo：
-   - `benchmarks/repos/tomlkit_out_of_order_repo`
+   - `benchmarks/repos/tomlkit_comment_anchor_repo`
 3. 先手工验证原始失败：
-   - `python -m pytest benchmarks/repos/tomlkit_out_of_order_repo/tests/test_proxy.py -q`
+   - `python -m pytest benchmarks/repos/tomlkit_comment_anchor_repo/tests/test_renderer.py -q`
 4. 再跑单任务闭环：
-   - `python scripts/run_single_task.py --task benchmarks/tasks/task_101.json --policy optimization/policy_versions/improved_v53.json`
+   - `python scripts/run_single_task.py --task benchmarks/tasks/task_103.json --policy optimization/policy_versions/improved_v54.json`
 5. 如果你想看全量扩容效果：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v53.json --run-label realissuev53r1`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v54.json --run-label realissuev54r2`
 
 ### 4. 当前最准确的状态口径
 
-- 正式真实任务数：`50`
+- 正式真实任务数：`51`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v53`
+- 当前最新扩容版本：`improved_v54`
 - 当前 `frozen_40 streak`：`8`
 
 注意：
 
-- `v53` 这一轮是“扩容成功”
-- 但它不是新的稳定版本
-- 因为相对 `v52`，正式集与 `frozen_20` 的平均耗时都再次回升
+- `v54` 这一轮是“扩容成功并恢复了相对 `v53` 的正式集与 `frozen_20` 时延”
+- 但它还不是新的稳定版本
+- 因为这轮还没有补 `frozen_40` 的同集合验证，所以当前稳定 `streak` 仍然只能保持在 `8`
 
 ## 当前框架结构
 
@@ -629,40 +629,40 @@ scripts/
 
 截至目前，Phase 6 主线已经继续推进到：
 
-- 正式 `semi_real` 真实任务数：`48`
+- 正式 `semi_real` 真实任务数：`51`
 - 冻结集合：`frozen_40 v1`
 - 当前稳定 streak：`8`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v52`
+- 当前最新扩容策略：`improved_v54`
 
 其中最新一轮新增的是：
 
-- 来源 issue：`pallets/jinja#2108`
-- draft 任务：`task_098`
-- 正式 semi_real 任务：`task_099`
-- semi_real repo：`benchmarks/repos/jinja_include_repo`
+- 来源 issue：`python-poetry/tomlkit#295`
+- draft 任务：`task_102`
+- 正式 semi_real 任务：`task_103`
+- semi_real repo：`benchmarks/repos/tomlkit_comment_anchor_repo`
 
 这轮新增能力覆盖的场景是：
 
-- `include ... without context` 放进 macro 后
-- 不能再把 include 过程中的生成器对象直接拼成 `<generator object ...>`
-- 最终必须输出被 include 模板的真实内容
+- 给第一个 `[[routes]]` 追加子表后
+- 原本属于第二个 route 的注释不能被错误吸附到前一个 route 的新增子表附近
+- 最终必须继续保持注释与第二个 route 的相对锚定关系
 
 当前这一轮的关键结论要分开看：
 
 - 功能面：
-  - `improved_v52` 已在正式 `49` 条任务集、`frozen_20`、`frozen_40` 上全部保持 `100%` 成功率和 `100%` 测试通过率
+  - `improved_v54` 已在正式 `51` 条任务集与 `frozen_20` 上保持 `100%` 成功率和 `100%` 测试通过率
 - 性能面：
-  - `v52` 的正式集对比 `v51` 回落到 `average_duration_sec = 0.6707`
-  - `v52` 的 `frozen_20` 对比 `v51` 回落到 `average_duration_sec = 0.6912`
-  - `v52` 的 `frozen_40` 对比环境复跑基线 `v50check` 仍是 `average_duration_sec = 0.6824`
-  - 同环境 `improved_v50` 的 `frozen_40` 参考值仍为 `0.6616`
+  - `v54` 的正式集对比 `v53` 回落到 `average_duration_sec = 0.6544`
+  - `v54` 的 `frozen_20` 对比 `v53` 回落到 `average_duration_sec = 0.6697`
+  - 正式集公共 `50` 条任务平均耗时增量为 `-0.0593s`
+  - `frozen_20` 公共 `20` 条任务平均耗时增量为 `-0.0664s`
 
 因此当前更可信的判断是：
 
-- `v52` 已经成功把正式任务数从 `48` 扩到 `49`
-- 它还把 `v51` 上的明显环境级回升重新拉回了一部分
-- 但 `frozen_40` 仍然没有回到长期阈值以内
+- `v54` 已经成功把正式任务数从 `50` 扩到 `51`
+- 它还把 `v53` 上已经出现的正式集与 `frozen_20` 时延回升重新拉回
+- 但这轮还没有补 `frozen_40` 的同集合验证
 - 因此这轮仍应记为“扩容成功、性能恢复中”，而不是新的稳定 streak 版本
 
 ### 5. 当前新增的 improved_v2 结论

@@ -9085,3 +9085,160 @@
   - `improved_v50` 是稳定基线
   - `improved_v53` 是扩容成功、性能恢复中
   - 当前 `frozen_40 streak` 仍保持 `8`
+
+## 2026-06-12 Phase 6 tomlkit 注释锚点扩容与 `improved_v54`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#505 -> task_101`
+- `improved_v53`
+- 正式任务数推进到 `50`
+
+但当时的关键结论也很明确：
+
+- 扩容链路继续可用
+- `v53` 功能全绿
+- 不过正式集与 `frozen_20` 的平均耗时再次回升
+
+因此这一轮的目标是：
+
+- 继续把正式真实任务数往上推
+- 尽量选择单模块、可稳定回归、语义增量明确的新题
+- 同时把每次实现中的“回归过程”也记录下来，方便后续持续复盘
+
+这一轮选择 `python-poetry/tomlkit#295`，因为它是很典型的 AoT 文档保真问题：追加子表后，原始注释锚点不应跑到错误位置。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#295` 转成新的 semi_real 正式任务
+- 为 AoT 条目追加子表后的注释锚点跑偏问题补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上验证 `improved_v54`
+- 同步 maturity 审计，把正式任务数推进到 `51`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_102.json`
+- `benchmarks/tasks/task_103.json`
+- `benchmarks/repos/tomlkit_comment_anchor_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v54.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev54r1_001.json`
+- `logs/summaries/batch_eval_realissuev54r2_001.json`
+- `logs/summaries/batch_compare_realissue_step34_002.json`
+- `logs/summaries/batch_eval_frozen20v54r1_001.json`
+- `logs/summaries/batch_eval_frozen20v54r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step33_002.json`
+- `logs/summaries/duration_compare_realissuev54_001.json`
+- `logs/summaries/duration_compare_frozen20v54_001.json`
+- `logs/summaries/benchmark_maturity_maturity_029.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 GitHub issue 导入入口补录新候选：
+  - `python-poetry/tomlkit#295`
+- 新增 `real_issue` 草稿：
+  - `task_102`
+- 新增可运行的 semi_real 正式任务：
+  - `task_103`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_comment_anchor_repo`
+- 在 repo 中故意保留 bug：
+  - 给第一个 `[[routes]]` 条目追加子表后
+  - 原本属于第二个 route 的注释会被错误吸附到前一个 route 的新增子表附近
+- 新增 `improved_v54`
+- 在 patcher 中新增 tomlkit comment anchor 的专用规则
+- 把 `task_103` 加入正式 manifest
+- 更新候选池状态、结果文档、项目记忆与注册表
+
+### 额外记录的过程性回归
+
+- `v54r1` 首轮批量评测出现严重回归：
+  - 正式集只成功 `6 / 51`
+  - `frozen_20` 只成功 `0 / 20`
+  - taxonomy 大量落到 `Premature Finish`
+- 这轮失败并不是新题语义本身有问题
+- 根因是 `app/agent/patcher.py` 里多段版本集合漏掉了 `improved_v54`
+- 结果是旧规则链没有被完整继承
+- 修复后补齐了 `improved_v54` 对以下规则链的继承：
+  - `improved_v43`
+  - `improved_v44`
+  - `improved_v45`
+  - `improved_v46`
+  - `improved_v47`
+  - `improved_v48`
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_comment_anchor_repo/tests/test_renderer.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_103.json --policy optimization/policy_versions/improved_v54.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v54.json --run-label realissuev54r2 --compare-against-eval logs/summaries/batch_eval_realissuev53r1_001.json --compare-label realissue_step34`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v54.json --run-label frozen20v54r2 --compare-against-eval logs/summaries/batch_eval_frozen20v53r1_001.json --compare-label frozen20_step33`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `50 -> 51`
+- 候选池状态：
+  - `accepted = 50 -> 51`
+  - `to_review = 0 -> 0`
+- `improved_v54` 正式 `51` 条任务集结果：
+  - `success_count: 50 -> 51`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.7143 -> 0.6544`
+- `improved_v54` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.7361 -> 0.6697`
+- maturity 审计：
+  - 正式任务数：`51 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 正式集时延对比显示：
+  - 公共 `50` 条任务平均耗时增量：`-0.0593s`
+- `frozen_20` 时延对比显示：
+  - 公共 `20` 条任务平均耗时增量：`-0.0664s`
+- 这说明 `v54` 的核心结论不是“又一次无变化扩容”
+- 而是：
+  - 新题扩容成功
+  - 首轮真实暴露出策略继承链回归
+  - 修复后功能口径恢复全绿
+  - 性能相对 `v53` 重新回落
+
+### 结论
+
+- `tomlkit#295` 已成功作为新的 AoT 注释锚点保真题补进正式 semi_real 任务集
+- `improved_v54` 已把正式任务数推进到 `51`
+- 功能上，`improved_v54` 继续保持正式集与 `frozen_20` 无回归
+- 并且它把相对 `v53` 的正式集与 `frozen_20` 平均耗时重新拉回
+- 但这轮还没有补 `frozen_40` 同集合验证
+- 当前最准确口径仍然是：
+  - `improved_v50` 是稳定基线
+  - `improved_v54` 是扩容成功、性能恢复中的最新版本
+  - 当前 `frozen_40 streak` 仍保持 `8`
