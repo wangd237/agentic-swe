@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v37` 多轮策略迭代，正式真实任务扩充到 `34` 条，`v37` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v38` 多轮策略迭代，正式真实任务扩充到 `35` 条，`v38` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -784,6 +784,19 @@ scripts/
     - `test_pass_rate: 1.0 -> 1.0`
     - `average_duration_sec: 0.5386 -> 0.5687`
 - 这说明当前主线已经成功把正式任务集推进到 `34` 条，但这轮扩容伴随时延回升，后续需要继续做性能回收
+- 当前已经继续新增 `tomlkit#383` 派生的 `task_071`，并落地 `improved_v38`
+  - 新增 repo：`benchmarks/repos/tomlkit_proxy_repo`
+  - 新增策略：`optimization/policy_versions/improved_v38.json`
+  - 新规则覆盖 `OutOfOrderTableProxy.pop()` 返回值正确但未同步删除底层键的场景
+  - 正式 `35` 条任务集验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.6038 -> 0.553`
+  - `frozen_20` 同集合验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5687 -> 0.5427`
+- 这说明当前主线已经成功把正式任务集推进到 `35` 条，而且这一轮还把前一版的时延回升重新拉回来了
 - 这说明当前真正缺的不是来源多样性，而是规模和稳定性证据
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
@@ -2119,6 +2132,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `frozen_20` 固定集合继续保持无功能回归
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5386` 回升到 `0.5687`
+
+### 方式 57：运行 tomlkit 代理删除回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_071.json --policy optimization/policy_versions/improved_v38.json
+```
+
+你会看到：
+
+- `task_071` 被成功修复
+- 修改文件是 `tomlkit_proxy_repo/proxy.py`
+- patch 原因是代理 `pop()` 应真正删除底层键，而不是只返回原值
+
+### 方式 58：运行正式 `35` 条任务集上的 `improved_v38`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v38.json --run-label realissuev38 --compare-against-eval logs/summaries/batch_eval_realissuev37_001.json --compare-label realissue_step18
+```
+
+你会看到：
+
+- 正式任务集已经从 `34` 条扩到 `35` 条
+- `improved_v38` 在正式 `35` 条任务集上保持 `35/35` 成功
+- 平均耗时从 `0.6038` 回落到 `0.553`
+
+### 方式 59：运行 `frozen_20` 上的 `improved_v38` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v38.json --run-label frozen20v38 --compare-against-eval logs/summaries/batch_eval_frozen20v37_001.json --compare-label frozen20_step17
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时从 `0.5687` 回落到 `0.5427`
 
 ### Phase 7
 

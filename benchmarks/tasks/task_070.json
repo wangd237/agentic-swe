@@ -1,0 +1,29 @@
+{
+  "task_id": "task_070",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Failed to delete an item of OutOfOrderTableProxy",
+  "issue_text": "当前 `OutOfOrderTableProxy` 在调用 `pop()` 删除已有键时行为错误，删除没有真正作用到其底层表结构，导致值仍然残留在渲染结果里。这个真实 issue 需要让代理删除语义与普通映射保持一致：删除后应返回原值，且后续内容中不再出现该键。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 383,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/383",
+    "candidate_id": "python_poetry_tomlkit_issue_383",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_071",
+  "repo_name": "tomlkit_proxy_repo",
+  "repo_path": "benchmarks/repos/tomlkit_proxy_repo",
+  "issue_title": "Failed to delete an item of OutOfOrderTableProxy",
+  "issue_text": "当前 `OutOfOrderTableProxy.pop()` 在删除已有键时没有真正同步到底层表结构，导致删除后渲染结果里依然保留该键。semi-real 任务要求：`pop()` 应返回被删除的原值，目标键应从底层内容中消失，其余键保持不变，且回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_proxy.py -q",
+  "success_criteria": "`OutOfOrderTableProxy.pop()` 应返回原值，并真正从底层表内容中删除目标键；其余内容保持不变；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "proxy",
+    "deletion"
+  ],
+  "target_files_hint": [
+    "tomlkit_proxy_repo/proxy.py",
+    "tests/test_proxy.py"
+  ],
+  "expected_failure_test": "OutOfOrderTableProxyTests.test_pop_removes_key_from_underlying_table",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 383,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/383",
+    "candidate_id": "python_poetry_tomlkit_issue_383",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_070",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

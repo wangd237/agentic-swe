@@ -2071,19 +2071,60 @@ trace 热点分析结果：
   - 这说明 `improved_v37` 在固定 `20` 条真实任务上继续无功能回归
   - 但固定集平均耗时也上升了 `0.0301s`，说明这次扩容版本还不是性能最优状态
 
+`improved_v38` 正式 35 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v38.json`
+- 新增任务：
+  - `benchmarks/tasks/task_071.json`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_proxy_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev38_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev38_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step18_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev38_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev38_001.json`
+- 指标：
+  - `task_count`: `34 -> 35`
+  - `success_count`: `34 -> 35`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.6038 -> 0.553`
+- 结论：
+  - 这说明 `tomlkit#383` 已成功转化为正式第 `35` 条 semi_real 任务
+  - `improved_v38` 在扩容后继续保持全量成功
+  - 并且这轮同时把 `v37` 的平均耗时回升回收了 `0.0508s`
+
+`improved_v38` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v38_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v38_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step17_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v38_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v38_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5687 -> 0.5427`
+- 结论：
+  - 这说明 `improved_v38` 在固定 `20` 条真实任务上继续无功能回归
+  - 并且固定集平均耗时也回落了 `0.026s`
+
 `Benchmark Maturity v1` 最新量化审计更新：
 
 - 最新产物：
-  - `logs/summaries/benchmark_maturity_maturity_008.json`
-  - `logs/summaries/benchmark_maturity_maturity_008.md`
+  - `logs/summaries/benchmark_maturity_maturity_009.json`
+  - `logs/summaries/benchmark_maturity_maturity_009.md`
 - 当前结果：
-  - 正式任务数：`34 / 60`
+  - 正式任务数：`35 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续无回归版本：`0 / 5`
 - 结论：
   - 当前又向目标推进了 `1` 条正式任务
-  - 下一阶段可以继续优先处理 `tomlkit#431`、`tomlkit#383` 与 `jinja#2151`，并在任务数接近 `40` 时启动 `frozen_40`
+  - 下一阶段可以继续优先处理 `tomlkit#431` 与 `jinja#2151`，并在任务数接近 `40` 时启动 `frozen_40`
 
 `pytest importtime` 分组分析结果：
 

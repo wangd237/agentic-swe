@@ -897,6 +897,31 @@ def _handle_tomlkit_boolean_true_literal(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_tomlkit_proxy_pop_deletes_underlying_key(content: str) -> str | None:
+    # improved_v38 处理代理 pop 返回值正确但没有真正删除底层键的问题。
+    target_block = (
+        '    def pop(self, key: str) -> str:\n'
+        '        """删除一个键并返回它原本的值。"""\n'
+        "        if key not in self._data:\n"
+        "            raise KeyError(key)\n\n"
+        "        value = self._data[key]\n"
+        "        # 这里故意保留真实 issue 中的缺陷：返回值正确，但没有真正删除底层键。\n"
+        "        return value"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        '    def pop(self, key: str) -> str:\n'
+        '        """删除一个键并返回它原本的值。"""\n'
+        "        if key not in self._data:\n"
+        "            raise KeyError(key)\n\n"
+        "        value = self._data.pop(key)\n"
+        "        return value"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2093,9 +2118,33 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v37":
+            if policy_config.patch_strategy == "improved_v38":
+                improved_v38_content = _handle_tomlkit_proxy_pop_deletes_underlying_key(original_content)
+                if improved_v38_content is not None:
+                    updated_content = improved_v38_content
+                    patch_reason_parts = ["让代理 pop 在返回原值的同时真正删除底层键"]
+                else:
+                    run_v34_fallback_chain = True
+                    improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
+                    if improved_v37_content is not None:
+                        updated_content = improved_v37_content
+                        patch_reason_parts = ["让 toml 布尔值序列化在 True 场景下返回 true 字面量"]
+                        run_v34_fallback_chain = False
+                    else:
+                        improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                        if improved_v36_content is not None:
+                            updated_content = improved_v36_content
+                            patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                            run_v34_fallback_chain = False
+                        else:
+                            improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                            if improved_v35_content is not None:
+                                updated_content = improved_v35_content
+                                patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                                run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v37":
                 improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
                 if improved_v37_content is not None:
                     updated_content = improved_v37_content

@@ -9,7 +9,7 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 3
+## 当前 Top 2
 
 ### `python-poetry/tomlkit#431`
 
@@ -17,13 +17,6 @@
   - dotted key + super table 的渲染输出差异非常明确
   - 与现有 `tomlkit` 两条任务相比，新增了 super table / dotted key 组合语义
   - 仍然是单模块渲染逻辑，不会把修复边界拉太大
-
-### `python-poetry/tomlkit#383`
-
-- 原因：
-  - 当前 `tomlkit` 任务更偏序列化，这条能补容器删除语义
-  - `OutOfOrderTableProxy.pop()` 失败是很典型的容器状态 bug
-  - 语义有增量，不会和现有两个 `tomlkit` 任务过度重复
 
 ### `pallets/jinja#2151`
 
@@ -101,6 +94,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_068 / task_069`
+
+### `python-poetry/tomlkit#383`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_070 / task_071`
 
 ### `dateutil/dateutil#1191`
 

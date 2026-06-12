@@ -6996,3 +6996,124 @@
   - `python-poetry/tomlkit#431`
   - `python-poetry/tomlkit#383`
   - `pallets/jinja#2151`
+
+## 2026-06-12 Phase 6 tomlkit 代理删除扩容与 `improved_v38`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `tomlkit#442 -> task_069`
+- `improved_v37`
+- 正式任务数推进到 `34`
+
+因此这一轮继续沿 `tomlkit` 方向扩容，优先消化边界清晰且能补容器删除语义的候选 `python-poetry/tomlkit#383`。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#383` 转成新的 semi_real 正式任务
+- 为代理容器 `pop()` 删除未同步到底层表结构的场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v38`
+- 把 maturity 审计结果同步到 `35 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_070.json`
+- `benchmarks/tasks/task_071.json`
+- `benchmarks/repos/tomlkit_proxy_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v38.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev38_001.json`
+- `logs/summaries/batch_eval_realissuev38_001.json`
+- `logs/summaries/batch_compare_realissue_step18_002.json`
+- `logs/summaries/batch_run_frozen20v38_001.json`
+- `logs/summaries/batch_eval_frozen20v38_001.json`
+- `logs/summaries/batch_compare_frozen20_step17_001.json`
+- `logs/summaries/benchmark_maturity_maturity_009.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `tomlkit#383` 的 `real_issue` 草稿：
+  - `task_070`
+- 新增可运行的 semi_real 正式任务：
+  - `task_071`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_proxy_repo`
+- 在 repo 中故意保留 bug：
+  - 当前实现返回值正确，但 `pop()` 没有真正删除底层键
+- 新增 `improved_v38`
+- 在 patcher 中新增代理 `pop()` 删除同步的专用规则
+- 把 `task_071` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_proxy_repo/tests/test_proxy.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_071.json --policy optimization/policy_versions/improved_v38.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v38.json --run-label realissuev38 --compare-against-eval logs/summaries/batch_eval_realissuev37_001.json --compare-label realissue_step18`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v38.json --run-label frozen20v38 --compare-against-eval logs/summaries/batch_eval_frozen20v37_001.json --compare-label frozen20_step17`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `34 -> 35`
+- 候选池状态：
+  - `accepted = 34 -> 35`
+  - `to_review = 4 -> 3`
+- `improved_v38` 正式 `35` 条任务集结果：
+  - `success_count: 34 -> 35`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6038 -> 0.553`
+- `improved_v38` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5687 -> 0.5427`
+- 时延分析：
+  - 正式集公共 `34` 条任务平均耗时差值：`-0.0499s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`-0.026s`
+- maturity 审计：
+  - 正式任务数：`35 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `tomlkit#383` 已成功从候选进入正式 semi_real 任务集
+- `improved_v38` 在扩容后继续保持正式集和固定集双线无功能回归
+- 并且这轮不只是扩容，还把 `v37` 的时延回升明显回收
+- 当前主线基线已经更新为：
+  - 正式任务数：`35`
+  - 最新策略：`improved_v38`
+  - 固定集合证据：`frozen_20`
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 还没有开始构建
+- 下一轮应继续优先吃 shortlist 中边界清晰的剩余候选，例如：
+  - `python-poetry/tomlkit#431`
+  - `pallets/jinja#2151`
+  - `pallets/jinja#2176`

@@ -46,6 +46,7 @@
 | `task_065` | `pypa/packaging#788` | `packaging_prerelease_repo` | `< prerelease` 比较错误排除了更早的合法 prerelease | `improved_v35` | `-` |
 | `task_067` | `pypa/packaging#909` | `packaging_tag_order_repo` | wheel compressed tag set 未排序时仍被错误接受 | `improved_v36` | `-` |
 | `task_069` | `python-poetry/tomlkit#442` | `tomlkit_boolean_repo` | `boolean(True)` 被错误序列化为 `false` | `improved_v37` | `-` |
+| `task_071` | `python-poetry/tomlkit#383` | `tomlkit_proxy_repo` | `OutOfOrderTableProxy.pop()` 未同步删除底层键 | `improved_v38` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -75,6 +76,7 @@
 - 模型继承链上的 validator 追加执行
 - CLI 命令解析回落
 - TOML 布尔字面量序列化
+- 代理容器删除语义
 
 ## 当前仍相对欠缺的方向
 
