@@ -63,6 +63,7 @@
 | `task_099` | `pallets/jinja#2108` | `jinja_include_repo` | macro 内部 `include without context` 错误输出 generator repr | `improved_v52` | `-` |
 | `task_101` | `python-poetry/tomlkit#505` | `tomlkit_out_of_order_repo` | out-of-order table 访问阶段重复 array table 与同级子表共存时触发重复键异常 | `improved_v53` | `-` |
 | `task_103` | `python-poetry/tomlkit#295` | `tomlkit_comment_anchor_repo` | AoT 条目追加子表后原有注释锚点跑偏 | `improved_v54` | `-` |
+| `task_105` | `pytest-dev/pytest#14189` | `pytest_caplog_filter_repo` | 嵌套 caplog filtering 提前移除外层 filter | `improved_v55` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -109,6 +110,7 @@
 - macro 内部 include 渲染与 without-context 语义保真
 - out-of-order table 代理重建与 repeated array table 聚合语义保真
 - array-of-tables 条目扩写后的注释锚点与原始文档相对位置保真
+- 嵌套日志过滤上下文与外层 filter 生命周期保真
 
 ## 当前仍相对欠缺的方向
 

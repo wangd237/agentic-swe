@@ -1,0 +1,29 @@
+{
+  "task_id": "task_104",
+  "repo_name": "pytest",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Nested `caplog.filtering` usage may remove filters early",
+  "issue_text": "- [x] a detailed description of the bug or problem you are having\n- [ ] ~output of `pip list` from the virtual environment you are using~ (N/A, design bug)\n- [ ] ~pytest and operating system versions~ (N/A, design bug)\n- [x] minimal example if possible\n\nI had a baffling case where a caplog filter set up by a yield fixture with `caplog.filtering` was gone by the time the test case using the fixture was executed. I eventually traced the problem down to a separate non-yielding fixture that used `ca",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pytest-dev/pytest",
+    "repo_url": "https://github.com/pytest-dev/pytest",
+    "issue_number": 14189,
+    "issue_url": "https://github.com/pytest-dev/pytest/issues/14189",
+    "candidate_id": "pytest_dev_pytest_issue_14189",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

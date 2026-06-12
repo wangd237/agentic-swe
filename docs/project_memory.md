@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v54`
+- 当前最新扩容策略：`improved_v55`
 - 当前主分支最近重要能力：
-  - 已完成 `51` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `52` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -21,9 +21,10 @@
   - 已把 `pallets/jinja#2108` 从新来源候选推进为正式任务 `task_099`
   - 已把 `python-poetry/tomlkit#505` 从新来源候选推进为正式任务 `task_101`
   - 已把 `python-poetry/tomlkit#295` 从新来源候选推进为正式任务 `task_103`
-  - 已落地 `improved_v54` 的 tomlkit comment anchor 修复规则
-  - 已完成 `v54` 的正式集与 `frozen_20` 功能验证
-  - 已确认 `v54` 相对 `v53` 在功能上继续全绿，并把正式集与 `frozen_20` 平均耗时重新拉回
+  - 已把 `pytest-dev/pytest#14189` 从新来源候选推进为正式任务 `task_105`
+  - 已落地 `improved_v55` 的 pytest nested caplog filtering 修复规则
+  - 已完成 `v55` 的正式集与 `frozen_20` 功能验证及复跑
+  - 已确认 `v55` 相对 `v54` 在功能上继续全绿，并在复跑口径下把平均耗时波动压到很小
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -67,7 +68,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`51`
+- 正式 `semi_real` 真实 issue 任务数：`52`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -80,7 +81,7 @@
 
 ## 当前候选池状态
 
-- `accepted = 51`
+- `accepted = 52`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -97,35 +98,35 @@
 
 ### 1. 当前最新扩容对比
 
-- 对比：`improved_v53 -> improved_v54`
-- 任务集：`50 -> 51` 条
+- 对比：`improved_v54 -> improved_v55`
+- 任务集：`51 -> 52` 条
 - 结果：
-  - `success_count: 50 -> 51`
+  - `success_count: 51 -> 52`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - 正式集 compare 口径 `average_duration_sec: 0.7143 -> 0.6544`
+  - 正式集 compare 口径 `average_duration_sec: 0.6544 -> 0.6551`
 
 说明：
 
-- 这说明 `improved_v54` 已成功把正式真实任务集从 `50` 条推进到 `51` 条
-- 新增任务是 `task_103`，来源于 `python-poetry/tomlkit#295`
+- 这说明 `improved_v55` 已成功把正式真实任务集从 `51` 条推进到 `52` 条
+- 新增任务是 `task_105`，来源于 `pytest-dev/pytest#14189`
 - 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
-- 并且当前正式集平均耗时回落了 `0.0599s`
-- 但由于还没补 `frozen_40` 同集合验证，因此当前还不能把 `v54` 直接视为新的稳定 streak 版本
+- 复跑口径下当前正式集平均耗时只轻微波动了 `0.0007s`
+- 但由于还没补 `frozen_40` 同集合验证，因此当前还不能把 `v55` 直接视为新的稳定 streak 版本
 
 ### 2. 当前最新冻结集观察
 
-- `improved_v54` `frozen_20` compare：
+- `improved_v55` `frozen_20` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.7361 -> 0.6697`
+  - `average_duration_sec: 0.6697 -> 0.6835`
 - 当前稳定 streak：
   - 仍为 `8`
 
 说明：
 
-- `v54` 在固定集合上没有功能回归
-- 并且它在 `frozen_20` 上相对 `v53` 回落了 `0.0664s`
+- `v55` 在固定集合上没有功能回归
+- 复跑口径下它在 `frozen_20` 上相对 `v54` 仅轻微回升了 `0.0138s`
 - 因此 `frozen_40 streak` 仍然停留在 `v50` 时的 `8`
 
 ### 3. 最新环境级诊断结论
@@ -145,8 +146,8 @@
 
 说明：
 
-- `v54` 继续证明了扩题链路稳定可用
-- 当前最强证据表明：正式集与 `frozen_20` 的恢复已经重新取得进展
+- `v55` 继续证明了扩题链路稳定可用
+- 当前最强证据表明：新题扩容后功能稳定，而且复跑已把性能波动压缩到很小范围
 - 后续文档与结论仍然必须把“扩题成功”和“稳定性门控通过”分开记录
 
 ### 4. 上一轮稳定扩容对比
@@ -487,6 +488,23 @@
   - 稳定基线仍是 `improved_v50`
   - 最新扩容版本是 `improved_v54`
   - 正式任务数是 `51`
+  - `frozen_40 streak` 仍是 `8`
+
+### `improved_v55`
+
+- 来源：`pytest-dev/pytest#14189`
+- 新增任务：`task_105`
+- 结论：
+  - 扩容成功，正式任务数推进到 `52`
+  - 正式集与 `frozen_20` 继续保持全绿
+  - 首轮时延对比有回升，但复跑后正式集 `average_duration_sec: 0.6544 -> 0.6551`
+  - 复跑后 `frozen_20` `average_duration_sec: 0.6697 -> 0.6835`
+  - 因此这轮更准确的口径是“功能稳定扩容，性能轻微波动但已收敛”
+  - 但由于还没有补 `frozen_40` 同集合验证，所以当前仍不能把它视为新的稳定基线
+- 当前主线口径应更新为：
+  - 稳定基线仍是 `improved_v50`
+  - 最新扩容版本是 `improved_v55`
+  - 正式任务数是 `52`
   - `frozen_40 streak` 仍是 `8`
 
 ## 建议冷启动顺序

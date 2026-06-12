@@ -2962,12 +2962,12 @@ trace 热点分析结果：
 
 当前状态补充：
 
-- 正式任务数：`51 / 60`
+- 正式任务数：`52 / 60`
 - 来源生态数：`13 / 6`
 - frozen 集合：`40 / 40`
 - `frozen_40` 稳定 streak：`8`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v54`
+- 当前最新扩容版本：`improved_v55`
 
 `improved_v53` 正式 50 条真实 issue 任务集验证：
 
@@ -3067,6 +3067,57 @@ trace 热点分析结果：
   - 正式任务数已推进到 `51`
   - `frozen_40 streak` 仍保持 `8`
   - 在还没补 `frozen_40` 同集合验证之前，`v54` 仍不能记为新的稳定版本
+
+`improved_v55` 正式 52 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v55.json`
+- 新增任务：
+  - `benchmarks/tasks/task_105.json`
+- 新增 repo：
+  - `benchmarks/repos/pytest_caplog_filter_repo`
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_realissuev55r1_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_realissuev55r2_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step35_002.json`
+  - 时延对比：`logs/summaries/duration_compare_realissuev55_001.json`
+- 指标：
+  - `task_count`: `51 -> 52`
+  - `success_count`: `51 -> 52`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 复跑口径 `average_duration_sec`: `0.6544 -> 0.6551`
+- 结论：
+  - 这说明 `pytest#14189` 已成功转化为正式第 `52` 条 semi_real 任务
+  - `improved_v55` 在正式集复跑口径下继续保持全量成功
+  - 相对 `v54` 的正式集平均耗时只轻微波动了 `0.0007s`
+
+`improved_v55` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen20v55r1_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_frozen20v55r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step34_002.json`
+  - 时延对比：`logs/summaries/duration_compare_frozen20v55_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 复跑口径 `average_duration_sec`: `0.6697 -> 0.6835`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 复跑口径下平均耗时只回升了 `0.0138s`
+
+`v55` 结论补充：
+
+- 这一轮最重要的是：正式任务数已经推进到 `52`
+- 新增的是 `pytest` 生态的第二条正式题，补强了当前偏薄生态
+- 这轮首跑时延有一小段回升，但复跑后已经明显收敛
+- 当前最准确口径更新为：
+  - `v50` 是稳定基线
+  - `v55` 是最新扩容成功版本
+  - 正式任务数已推进到 `52`
+  - `frozen_40 streak` 仍保持 `8`
+  - 在还没补 `frozen_40` 同集合验证之前，`v55` 仍不能记为新的稳定版本
 
 `improved_v52` 正式 49 条真实 issue 任务集验证：
 

@@ -9242,3 +9242,154 @@
   - `improved_v50` 是稳定基线
   - `improved_v54` 是扩容成功、性能恢复中的最新版本
   - 当前 `frozen_40 streak` 仍保持 `8`
+
+## 2026-06-12 Phase 6 pytest nested filtering 扩容与 `improved_v55`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#295 -> task_103`
+- `improved_v54`
+- 正式任务数推进到 `51`
+
+但此时本地候选池也出现了一个新拐点：
+
+- `accepted = 51`
+- `to_review = 0`
+- 也就是说，已有离线候选已经基本消耗完
+
+因此这一轮的目标不只是继续扩题，还包括：
+
+- 重新打开真实 GitHub issue 的新来源入口
+- 优先给覆盖还偏薄的生态补新题
+- 继续保持“扩容成功”和“稳定版本判断”分开记录
+
+这一轮选择 `pytest-dev/pytest#14189`，因为它是非常干净的嵌套上下文管理问题：相同 filter 嵌套使用时，内层退出不应提前移除外层仍在使用的 filter。
+
+### 目标
+
+- 把 `pytest-dev/pytest#14189` 转成新的 semi_real 正式任务
+- 为嵌套 caplog filtering 提前移除外层 filter 的问题补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上验证 `improved_v55`
+- 补一轮复跑，区分真实性能回归与一次性环境抖动
+- 同步 maturity 审计，把正式任务数推进到 `52`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_104.json`
+- `benchmarks/tasks/task_105.json`
+- `benchmarks/repos/pytest_caplog_filter_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v55.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev55r1_001.json`
+- `logs/summaries/batch_eval_realissuev55r2_001.json`
+- `logs/summaries/batch_compare_realissue_step35_002.json`
+- `logs/summaries/batch_eval_frozen20v55r1_001.json`
+- `logs/summaries/batch_eval_frozen20v55r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step34_002.json`
+- `logs/summaries/duration_compare_realissuev55_001.json`
+- `logs/summaries/duration_compare_frozen20v55_001.json`
+- `logs/summaries/benchmark_maturity_maturity_030.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `pytest-dev/pytest#14189`
+- 新增 `real_issue` 草稿：
+  - `task_104`
+- 新增可运行的 semi_real 正式任务：
+  - `task_105`
+- 新增 repo：
+  - `benchmarks/repos/pytest_caplog_filter_repo`
+- 在 repo 中故意保留 bug：
+  - 相同 filter 嵌套进入两个 filtering 上下文
+  - 内层退出时错误把外层仍在使用的 filter 提前移除
+- 新增 `improved_v55`
+- 在 patcher 中新增 pytest nested caplog filtering 的专用规则
+- 把 `task_105` 加入正式 manifest
+- 更新候选池状态、结果文档、项目记忆与注册表
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/pytest_caplog_filter_repo/tests/test_logging_utils.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_105.json --policy optimization/policy_versions/improved_v55.json`
+- 正式集首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v55.json --run-label realissuev55r1 --compare-against-eval logs/summaries/batch_eval_realissuev54r2_001.json --compare-label realissue_step35`
+- 正式集复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v55.json --run-label realissuev55r2 --compare-against-eval logs/summaries/batch_eval_realissuev54r2_001.json --compare-label realissue_step35`
+- 固定 `20` 首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v55.json --run-label frozen20v55r1 --compare-against-eval logs/summaries/batch_eval_frozen20v54r2_001.json --compare-label frozen20_step34`
+- 固定 `20` 复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v55.json --run-label frozen20v55r2 --compare-against-eval logs/summaries/batch_eval_frozen20v54r2_001.json --compare-label frozen20_step34`
+- 时延分析：
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev54r2_001.json --improved-batch-summary logs/summaries/batch_run_realissuev55r1_001.json --run-label realissuev55`
+  - `python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_frozen20v54r2_001.json --improved-batch-summary logs/summaries/batch_run_frozen20v55r1_001.json --run-label frozen20v55`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `51 -> 52`
+- 候选池状态：
+  - `accepted = 51 -> 52`
+  - `to_review = 0 -> 0`
+- `improved_v55` 正式 `52` 条任务集复跑结果：
+  - `success_count: 51 -> 52`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6544 -> 0.6551`
+- `improved_v55` `frozen_20` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6697 -> 0.6835`
+- maturity 审计：
+  - 正式任务数：`52 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 首轮正式集时延对比显示：
+  - 公共 `51` 条任务平均耗时增量：`+0.0251s`
+- 首轮 `frozen_20` 时延对比显示：
+  - 公共 `20` 条任务平均耗时增量：`+0.0345s`
+- 复跑后关键口径收敛为：
+  - 正式集 `0.6544 -> 0.6551`
+  - `frozen_20` `0.6697 -> 0.6835`
+- 这说明 `v55` 的更准确结论不是“明显回归”
+- 而是：
+  - 新题扩容成功
+  - 功能口径保持全绿
+  - 首轮有轻微时延波动
+  - 复跑后已经明显收敛
+
+### 结论
+
+- `pytest#14189` 已成功作为新的嵌套过滤上下文生命周期题补进正式 semi_real 任务集
+- `improved_v55` 已把正式任务数推进到 `52`
+- 功能上，`improved_v55` 继续保持正式集与 `frozen_20` 无回归
+- 性能上，这轮复跑口径已经把相对 `v54` 的回升压缩到很小范围
+- 但这轮还没有补 `frozen_40` 同集合验证
+- 当前最准确口径仍然是：
+  - `improved_v50` 是稳定基线
+  - `improved_v55` 是扩容成功、性能轻微波动但已收敛的最新版本
+  - 当前 `frozen_40 streak` 仍保持 `8`
