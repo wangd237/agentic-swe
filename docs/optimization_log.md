@@ -7473,3 +7473,120 @@
 - 当前离 `60` 条正式任务仍有明显距离
 - `frozen_40` 还没有开始构建
 - 下一轮应优先补新的 GitHub issue 来源，并开始规划哪些任务进入 `frozen_40`
+
+## 2026-06-12 Phase 6 tomlkit inline table 换行扩容与 `improved_v42`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/jinja#2176 -> task_077`
+- `improved_v41`
+- 正式任务数推进到 `38`
+
+因此这一轮继续从新来源里补新的 `tomlkit` 候选，并优先选择边界清晰、单文件可修的 `python-poetry/tomlkit#440`，同时验证扩容后能否保持时延稳定。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#440` 转成新的 semi_real 正式任务
+- 为 dotted inline table 后继续追加普通键时缺少换行的场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v42`
+- 把 maturity 审计结果同步到 `39 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_078.json`
+- `benchmarks/tasks/task_079.json`
+- `benchmarks/repos/tomlkit_inline_newline_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v42.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev42_001.json`
+- `logs/summaries/batch_eval_realissuev42_001.json`
+- `logs/summaries/batch_compare_realissue_step22_002.json`
+- `logs/summaries/batch_run_frozen20v42_001.json`
+- `logs/summaries/batch_eval_frozen20v42_001.json`
+- `logs/summaries/batch_compare_frozen20_step21_001.json`
+- `logs/summaries/benchmark_maturity_maturity_013.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `tomlkit#440` 的 `real_issue` 草稿：
+  - `task_078`
+- 新增可运行的 semi_real 正式任务：
+  - `task_079`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_inline_newline_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 dotted inline table 后继续追加普通键时，如果原始文本末尾没有换行，会把后续键错误黏连到同一行
+- 新增 `improved_v42`
+- 在 patcher 中新增 inline table 缺少换行的专用规则
+- 把 `task_079` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_inline_newline_repo/tests/test_renderer.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_079.json --policy optimization/policy_versions/improved_v42.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v42.json --run-label realissuev42 --compare-against-eval logs/summaries/batch_eval_realissuev41_001.json --compare-label realissue_step22`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v42.json --run-label frozen20v42 --compare-against-eval logs/summaries/batch_eval_frozen20v41_001.json --compare-label frozen20_step21`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `38 -> 39`
+- 候选池状态：
+  - `accepted = 38 -> 39`
+  - `to_review = 0 -> 0`
+- `improved_v42` 正式 `39` 条任务集结果：
+  - `success_count: 38 -> 39`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5173 -> 0.5157`
+- `improved_v42` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5185 -> 0.5186`
+- 时延分析：
+  - 正式集公共 `38` 条任务平均耗时差值：`-0.0008s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0001s`
+- maturity 审计：
+  - 正式任务数：`39 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `tomlkit#440` 已成功从新来源候选进入正式 semi_real 任务集
+- `improved_v42` 在扩容后继续保持正式集和固定集双线无功能回归
+- 并且这轮没有引入新的性能恶化，时延基本保持稳定
+- 当前主线已经非常接近下一里程碑：
+  - 再补 `1` 条正式任务
+  - 立即构建 `frozen_40`
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 仍未创建
+- 下一轮应优先再落 `1` 条正式任务，并把 `real_issue_tasks_frozen_40_v1.json` 正式建起来

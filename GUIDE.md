@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v41` 多轮策略迭代，正式真实任务扩充到 `38` 条，`v41` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v42` 多轮策略迭代，正式真实任务扩充到 `39` 条，`v42` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -2327,6 +2327,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5682` 回落到 `0.5185`
 
+### 方式 69：运行 tomlkit inline table 缺少换行回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_079.json --policy optimization/policy_versions/improved_v42.json
+```
+
+你会看到：
+
+- `task_079` 被成功修复
+- 修改文件是 `tomlkit_inline_newline_repo/renderer.py`
+- patch 原因是 dotted inline table 后续追加普通键时必须落到下一行
+
+### 方式 70：运行正式 `39` 条任务集上的 `improved_v42`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v42.json --run-label realissuev42 --compare-against-eval logs/summaries/batch_eval_realissuev41_001.json --compare-label realissue_step22
+```
+
+你会看到：
+
+- 正式任务集已经从 `38` 条扩到 `39` 条
+- `improved_v42` 在正式 `39` 条任务集上保持 `39/39` 成功
+- 平均耗时从 `0.5173` 进一步小幅回落到 `0.5157`
+
+### 方式 71：运行 `frozen_20` 上的 `improved_v42` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v42.json --run-label frozen20v42 --compare-against-eval logs/summaries/batch_eval_frozen20v41_001.json --compare-label frozen20_step21
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时仅从 `0.5185` 轻微波动到 `0.5186`
+
 ### Phase 7
 
 - 在主线稳定后，尝试轻量 SFT / preference / LoRA 实验
@@ -2361,6 +2403,6 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
 - 用新增的时延分析脚本定位最近几轮 `average_duration_sec` 回升原因
 - 沿 `run_tests` 链继续定位系统性时延回升来源
-- 扩新来源，把正式真实任务从 `38` 条继续推向 `40+` 再到 `60+`
-- 开始设计并构建 `frozen_40`
+- 扩新来源，把正式真实任务从 `39` 条继续推向 `40+` 再到 `60+`
+- 再补 `1` 条正式任务后立刻创建 `frozen_40` manifest
 - 继续追加优化前后差异说明

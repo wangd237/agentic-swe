@@ -1,0 +1,29 @@
+{
+  "task_id": "task_078",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Missing newline after inline table",
+  "issue_text": "当前在 dotted inline table 后继续追加普通键时，如果原始文本末尾没有换行，渲染结果会把后续键错误地直接黏连在 inline table 同一行，例如把 `a.b = {}` 和 `c = 3` 输出成 `a.b = {}c = 3`。这个真实 issue 需要在追加键值时正确插入换行，同时保持已有无缺陷场景不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 440,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/440",
+    "candidate_id": "python_poetry_tomlkit_issue_440",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -23,7 +23,7 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`38 / 60`
+  - 正式任务数：`39 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`
@@ -58,8 +58,9 @@
 
 当前状态：
 
-- 当前高优先级 shortlist 已清空
-- 下一轮应先补新的 GitHub issue 来源，再选择最合适的 `1` 到 `3` 条推进
+- 当前高优先级 shortlist 仍为空
+- 当前离构建 `frozen_40` 只差 `1` 条正式任务
+- 下一轮应优先再补 `1` 条正式任务，并立即创建 `real_issue_tasks_frozen_40_v1.json`
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
@@ -127,7 +128,10 @@
 - 已新增 `improved_v41`，在 `improved_v40` 基础上补充 jinja indent 首行空白与 `blank=False` 交互规则
 - 已在 `frozen_20` 上验证 `improved_v41`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5682 -> 0.5185`
 - 已在正式 `38` 条任务集上验证 `improved_v41`：`success_count = 37 -> 38`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5717 -> 0.5173`
-- 当前可以把 `v41` 视为继续扩容与规划 `frozen_40` 的候选基线
+- 已新增 `improved_v42`，在 `improved_v41` 基础上补充 tomlkit dotted inline table 后续键值换行规则
+- 已在 `frozen_20` 上验证 `improved_v42`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5185 -> 0.5186`
+- 已在正式 `39` 条任务集上验证 `improved_v42`：`success_count = 38 -> 39`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5173 -> 0.5157`
+- 当前可以把 `v42` 视为继续扩容与创建 `frozen_40` 的候选基线
 
 ### 4. 持续清理候选池
 
@@ -159,8 +163,8 @@
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
 14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
-15. 继续扩真实 issue 正式任务，优先朝 `40+` 再到 `60+` 推进
-16. 构建 `frozen_40`，并开始累计连续 `5` 个策略版本的固定集合无回归证据
+15. 继续扩真实 issue 正式任务，先把总数补到 `40`
+16. 一达到 `40` 条就构建 `frozen_40`，并开始累计连续 `5` 个策略版本的固定集合无回归证据
 17. 视情况继续拆 `unraisableexception + debugging` 的组合边界，但优先级低于 benchmark maturity 主线
 18. 跑一轮 `python -m scripts.analyze_benchmark_maturity --run-label maturity` 更新量化缺口
 19. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
@@ -170,14 +174,14 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v41` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+2. 以 `improved_v42` 为候选基线，继续扩正式任务数并构建 `frozen_40`
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
-- 当前 `jinja#2176` 已经落地为 `task_077`
+- 当前 `tomlkit#440` 已经落地为 `task_079`
 - 当前新的候选库存已清空高优先级存量，`to_review = 0`
-- 因此下一轮更应该优先“扩新来源 + 规划 frozen_40”，而不是继续消化旧 shortlist
+- 因此下一轮更应该优先“再补 1 条正式任务 + 创建 frozen_40”，而不是继续停留在候选筛选阶段
 
 详细理由见：
 

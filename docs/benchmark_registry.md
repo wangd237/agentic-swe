@@ -50,6 +50,7 @@
 | `task_073` | `python-poetry/tomlkit#431` | `tomlkit_super_table_repo` | super table 下新增 dotted key 时父级前缀丢失 | `improved_v39` | `-` |
 | `task_075` | `pallets/jinja#2151` | `jinja_async_repr_repo` | `AsyncLoopContext.__repr__` 暴露协程对象并触发未 awaited 警告 | `improved_v40` | `-` |
 | `task_077` | `pallets/jinja#2176` | `jinja_indent_repo` | `indent` 首行空白时错误无视 `blank=False` | `improved_v41` | `-` |
+| `task_079` | `python-poetry/tomlkit#440` | `tomlkit_inline_newline_repo` | dotted inline table 后续追加普通键时缺少换行 | `improved_v42` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -83,6 +84,7 @@
 - super table / dotted key 组合渲染
 - async runtime 表示层
 - filter 参数交互边界
+- inline table 后续渲染换行边界
 
 ## 当前仍相对欠缺的方向
 

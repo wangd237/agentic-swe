@@ -1,0 +1,37 @@
+{
+  "task_id": "task_079",
+  "repo_name": "tomlkit_inline_newline_repo",
+  "repo_path": "benchmarks/repos/tomlkit_inline_newline_repo",
+  "issue_title": "Missing newline after inline table",
+  "issue_text": "当前在 dotted inline table 后继续追加普通键时，如果原始文本末尾没有换行，`render_document_after_inline_table_append()` 会把 `c = 3` 错误地直接拼到 `a.b = {}` 后面，生成 `a.b = {}c = 3`。semi-real 任务要求：在这种场景下应正确插入换行；而原本就带末尾换行、或非 dotted inline table 的场景不应回归。",
+  "test_command": "python -m pytest tests/test_renderer.py -q",
+  "success_criteria": "当 dotted inline table 后继续追加普通键且原始文本末尾没有换行时，输出中必须在 inline table 后插入换行；已有带末尾换行和非 dotted inline table 的场景保持正确；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "renderer",
+    "inline-table"
+  ],
+  "target_files_hint": [
+    "tomlkit_inline_newline_repo/renderer.py",
+    "tests/test_renderer.py"
+  ],
+  "expected_failure_test": "InlineTableNewlineTests.test_dotted_inline_table_without_trailing_newline_gets_split_line",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 440,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/440",
+    "candidate_id": "python_poetry_tomlkit_issue_440",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_078",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
