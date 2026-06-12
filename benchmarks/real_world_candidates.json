@@ -910,6 +910,22 @@
       "state": "OPEN",
       "created_at": "2026-02-13T01:22:16Z",
       "body_excerpt": "- [x] a detailed description of the bug or problem you are having\n- [ ] ~output of `pip list` from the virtual environment you are using~ (N/A, design bug)\n- [ ] ~pytest and operating system versions~ (N/A, design bug)\n- [x] minimal example if possible\n\nI had a baffling case where a caplog filter set up by a yield fixture with `caplog.filtering` was gone by the time the test case using the fixture was executed. I eventually traced the problem down to a separate non-yielding fixture that used `ca"
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_430",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 430,
+      "issue_title": "Different behavior for SingleKey and DottedKey with single value",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/430",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T17:45:28: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T17:45:28: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T17:46:23: 已生成 semi_real 可运行任务 task_107，仓库目录为 benchmarks/repos/tomlkit_single_key_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-06-24T14:35:47Z",
+      "body_excerpt": "I am building a tomlkit document and want to generate keys dynamically. Sometimes the lengths of my key specifications are only 1 long, but tomlkit still generates a DottedKey out of it. The documentation of `tomlkit.key` is very clear about it: specifying a list will return a DottedKey.\n\nBut I think it would be a nice addition if the function checks the length of the list before making that decision.\n\nA minimal example of what goes wrong now:\n\n```py\nimport tomlkit\n\ndoc = tomlkit.document()\ndoc."
     }
   ]
 }

@@ -9405,3 +9405,156 @@
   - `improved_v50` 是稳定基线
   - `improved_v55` 是扩容成功、性能轻微波动但已收敛的最新版本
   - 当前 `frozen_40 streak` 仍保持 `8`
+
+## 2026-06-12 Phase 6 tomlkit 单元素 key 规范扩容与 `improved_v56`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pytest-dev/pytest#14189 -> task_105`
+- `improved_v55`
+- 正式任务数推进到 `52`
+
+同时，`v55` 虽然已经在 `frozen_40` 上功能全绿，但绝对耗时仍高于长期阈值：
+
+- `0.6527 > 0.5514`
+
+因此这一轮除了继续扩新题，还希望验证两件事：
+
+- 能否继续把正式任务数推高到 `53`
+- 能否把固定 `40` 条集合的平均耗时重新拉回长期阈值以内
+
+这一轮选择 `python-poetry/tomlkit#430`，因为它是一个非常干净的 key 构造语义问题：单元素列表 key 规范不应继续构造成 DottedKey，而应与单字符串输入保持一致。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#430` 转成新的 semi_real 正式任务
+- 为单元素列表 key 规范错误构造成 DottedKey 的问题补一条规则型修复能力
+- 在正式扩容集、`frozen_20`、`frozen_40` 上验证 `improved_v56`
+- 同步 maturity 审计，把正式任务数推进到 `53`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_106.json`
+- `benchmarks/tasks/task_107.json`
+- `benchmarks/repos/tomlkit_single_key_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v56.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev56r1_001.json`
+- `logs/summaries/batch_eval_realissuev56r2_001.json`
+- `logs/summaries/batch_compare_realissue_step36_002.json`
+- `logs/summaries/batch_eval_frozen20v56r1_001.json`
+- `logs/summaries/batch_eval_frozen20v56r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step35_002.json`
+- `logs/summaries/batch_eval_frozen40v56r1_001.json`
+- `logs/summaries/batch_eval_frozen40v56r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step11_002.json`
+- `logs/summaries/benchmark_maturity_maturity_032.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `python-poetry/tomlkit#430`
+- 新增 `real_issue` 草稿：
+  - `task_106`
+- 新增可运行的 semi_real 正式任务：
+  - `task_107`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_single_key_repo`
+- 在 repo 中故意保留 bug：
+  - `build_key(["my_key"])` 被错误构造成 `DottedKey`
+  - 导致单元素列表 key 规范与普通字符串 key 的存在性判断不一致
+- 新增 `improved_v56`
+- 在 patcher 中新增 tomlkit 单元素 key 规范的专用规则
+- 修复 `v56r1` 首轮暴露出的 `task_105` 继承链漏接问题
+- 把 `task_107` 加入正式 manifest
+- 更新候选池状态、结果文档、项目记忆与注册表
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_single_key_repo/tests/test_keys.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_107.json --policy optimization/policy_versions/improved_v56.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_105.json --policy optimization/policy_versions/improved_v56.json`
+- 正式集首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v56.json --run-label realissuev56r1 --compare-against-eval logs/summaries/batch_eval_realissuev55r2_001.json --compare-label realissue_step36`
+- 正式集复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v56.json --run-label realissuev56r2 --compare-against-eval logs/summaries/batch_eval_realissuev55r2_001.json --compare-label realissue_step36`
+- 固定 `20` 首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen20v56r1 --compare-against-eval logs/summaries/batch_eval_frozen20v55r2_001.json --compare-label frozen20_step35`
+- 固定 `20` 复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen20v56r2 --compare-against-eval logs/summaries/batch_eval_frozen20v55r2_001.json --compare-label frozen20_step35`
+- 固定 `40` 首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen40v56r1 --compare-against-eval logs/summaries/batch_eval_frozen40v55r1_001.json --compare-label frozen40_step11`
+- 固定 `40` 复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen40v56r2 --compare-against-eval logs/summaries/batch_eval_frozen40v55r1_001.json --compare-label frozen40_step11`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `52 -> 53`
+- 候选池状态：
+  - `accepted = 52 -> 53`
+  - `to_review = 0 -> 0`
+- `improved_v56` 正式 `53` 条任务集复跑结果：
+  - `success_count: 52 -> 53`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6551 -> 0.5237`
+- `improved_v56` `frozen_20` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6835 -> 0.5313`
+- `improved_v56` `frozen_40` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6527 -> 0.5293`
+- maturity 审计：
+  - 正式任务数：`53 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- `v56r1` 首轮正式集出现了 `task_105` 的单点回归：
+  - 标签：`Premature Finish`
+  - 根因：`improved_v56` 首轮漏继承 `improved_v55` 的 pytest nested caplog filtering 规则
+- 修复后补跑 `v56r2`：
+  - 正式集恢复 `53 / 53`
+  - `frozen_20` 继续 `20 / 20`
+  - `frozen_40` 继续 `40 / 40`
+- 这说明这轮最重要的不只是新增题：
+  - 还再次验证了 patcher 版本继承链必须显式维护
+  - 同时修复后性能结果反而比 `v55` 更好
+
+### 结论
+
+- `tomlkit#430` 已成功作为新的 key 规范一致性题补进正式 semi_real 任务集
+- `improved_v56` 已把正式任务数推进到 `53`
+- 功能上，`improved_v56` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，这轮不仅正式集平均耗时继续回落，`frozen_40` 也重新回到长期阈值以内
+- 当前最准确口径更新为：
+  - `improved_v50` 是稳定基线
+  - `improved_v56` 是扩容成功且三线验证通过的最新版本
+  - 当前 `frozen_40 streak` 仍保持 `8`
+  - 正式任务数已经推进到 `53`

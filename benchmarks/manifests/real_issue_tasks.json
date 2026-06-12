@@ -53,6 +53,7 @@
     "benchmarks/tasks/task_099.json",
     "benchmarks/tasks/task_101.json",
     "benchmarks/tasks/task_103.json",
-    "benchmarks/tasks/task_105.json"
+    "benchmarks/tasks/task_105.json",
+    "benchmarks/tasks/task_107.json"
   ]
 }

@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v55` 多轮策略迭代，正式真实任务扩充到 `52` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v55` 已继续把正式任务数推高，并已补上 `frozen_40` 首轮同集合验证，功能继续全绿且相对 `v52r2` 更快，但由于固定 `40` 条集合耗时仍高于 `improved_v32` 阈值，因此稳定 `streak` 仍保持 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v56` 多轮策略迭代，正式真实任务扩充到 `53` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v56` 已继续把正式任务数推高，并在正式集、`frozen_20`、`frozen_40` 三线保持功能全绿；同时 `frozen_40` 平均耗时已回落到 `0.5293`，重新落回 `improved_v32` 长期阈值以内，稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -130,24 +130,24 @@ bug 设计如下：
 
 ## Phase 6 最新补充
 
-### 1. 当前最新落地到 `improved_v55`
+### 1. 当前最新落地到 `improved_v56`
 
 这一轮新增的真实 issue 来自：
 
-- `pytest-dev/pytest#14189`
+- `python-poetry/tomlkit#430`
 
 新增产物：
 
-- `benchmarks/tasks/task_104.json`
-- `benchmarks/tasks/task_105.json`
-- `benchmarks/repos/pytest_caplog_filter_repo/`
-- `optimization/policy_versions/improved_v55.json`
+- `benchmarks/tasks/task_106.json`
+- `benchmarks/tasks/task_107.json`
+- `benchmarks/repos/tomlkit_single_key_repo/`
+- `optimization/policy_versions/improved_v56.json`
 
 当前最关键的新增能力：
 
-- agent 已能修复一种新的 pytest 嵌套过滤上下文问题
-- 场景是“嵌套使用相同 filter 时，内层退出会把外层仍在使用的 filter 提前移除”
-- 这让正式真实任务总数从 `51` 提升到 `52`
+- agent 已能修复一种新的 tomlkit key 规范退化问题
+- 场景是“单元素列表 key 规范不应继续构造成无法按普通字符串命中的 DottedKey”
+- 这让正式真实任务总数从 `52` 提升到 `53`
 
 ### 2. 这一轮框架结构变化
 
@@ -161,38 +161,38 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 
 最新新增的目录入口：
 
-- `benchmarks/repos/pytest_caplog_filter_repo`
+- `benchmarks/repos/tomlkit_single_key_repo`
 
 ### 3. 你现在可以怎么体验
 
 如果你想直接体验这轮新题，可以按下面顺序：
 
 1. 先看任务定义：
-   - `benchmarks/tasks/task_105.json`
+   - `benchmarks/tasks/task_107.json`
 2. 再看最小 repo：
-   - `benchmarks/repos/pytest_caplog_filter_repo`
+   - `benchmarks/repos/tomlkit_single_key_repo`
 3. 先手工验证原始失败：
-   - `python -m pytest benchmarks/repos/pytest_caplog_filter_repo/tests/test_logging_utils.py -q`
+   - `python -m pytest benchmarks/repos/tomlkit_single_key_repo/tests/test_keys.py -q`
 4. 再跑单任务闭环：
-   - `python scripts/run_single_task.py --task benchmarks/tasks/task_105.json --policy optimization/policy_versions/improved_v55.json`
+   - `python scripts/run_single_task.py --task benchmarks/tasks/task_107.json --policy optimization/policy_versions/improved_v56.json`
 5. 如果你想看全量扩容效果：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v55.json --run-label realissuev55r2`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v56.json --run-label realissuev56r2`
 6. 如果你想看固定 `40` 条集合验证：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v55.json --run-label frozen40v55r1 --compare-against-eval logs/summaries/batch_eval_frozen40v52r2_001.json --compare-label frozen40_step10`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen40v56r2 --compare-against-eval logs/summaries/batch_eval_frozen40v55r1_001.json --compare-label frozen40_step11`
 
 ### 4. 当前最准确的状态口径
 
-- 正式真实任务数：`52`
+- 正式真实任务数：`53`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v55`
+- 当前最新扩容版本：`improved_v56`
 - 当前 `frozen_40 streak`：`8`
 
 注意：
 
-- `v55` 这一轮已经完成“扩容成功 + `frozen_40` 首轮功能验证”
-- 它在 `frozen_40` 上相对 `v52r2` 的 `average_duration_sec` 从 `0.6824` 回落到 `0.6527`
-- 但它还不是新的稳定版本
-- 因为相对 `improved_v32` 基线阈值 `0.5514` 仍然偏高，所以当前稳定 `streak` 仍然只能保持在 `8`
+- `v56` 这一轮已经完成“扩容成功 + 正式集/`frozen_20`/`frozen_40` 三线验证”
+- 它在 `frozen_40` 上相对 `v55r1` 的 `average_duration_sec` 从 `0.6527` 回落到 `0.5293`
+- 这意味着当前固定 `40` 条集合已经重新落回 `improved_v32` 基线阈值 `0.5514` 以内
+- 当前稳定基线仍保持为 `v50`，但后续版本已经重新具备继续积累稳定证据的条件
 
 ## 当前框架结构
 
@@ -632,41 +632,41 @@ scripts/
 
 截至目前，Phase 6 主线已经继续推进到：
 
-- 正式 `semi_real` 真实任务数：`52`
+- 正式 `semi_real` 真实任务数：`53`
 - 冻结集合：`frozen_40 v1`
 - 当前稳定 streak：`8`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v55`
+- 当前最新扩容策略：`improved_v56`
 
 其中最新一轮新增的是：
 
-- 来源 issue：`pytest-dev/pytest#14189`
-- draft 任务：`task_104`
-- 正式 semi_real 任务：`task_105`
-- semi_real repo：`benchmarks/repos/pytest_caplog_filter_repo`
+- 来源 issue：`python-poetry/tomlkit#430`
+- draft 任务：`task_106`
+- 正式 semi_real 任务：`task_107`
+- semi_real repo：`benchmarks/repos/tomlkit_single_key_repo`
 
 这轮新增能力覆盖的场景是：
 
-- 嵌套使用相同 filter 的过滤上下文时
-- 内层退出后不能提前移除外层仍在使用的 filter
-- 最终必须保持外层过滤语义直到最外层上下文结束
+- 单元素列表 key 规范输入时
+- 不应继续错误构造成 `DottedKey`
+- 必须与单字符串 key 输入保持一致的匹配与存在性语义
 
 当前这一轮的关键结论要分开看：
 
 - 功能面：
-  - `improved_v55` 已在正式 `52` 条任务集与 `frozen_20` 上保持 `100%` 成功率和 `100%` 测试通过率
+  - `improved_v56` 已在正式 `53` 条任务集、`frozen_20` 与 `frozen_40` 上保持 `100%` 成功率和 `100%` 测试通过率
 - 性能面：
-  - `v55` 的正式集复跑口径对比 `v54` 是 `average_duration_sec = 0.6544 -> 0.6551`
-  - `v55` 的 `frozen_20` 复跑口径对比 `v54` 是 `average_duration_sec = 0.6697 -> 0.6835`
-  - 正式集公共 `51` 条任务平均耗时增量首轮为 `+0.0251s`，复跑后整体收敛到近乎持平
-  - `frozen_20` 公共 `20` 条任务平均耗时增量首轮为 `+0.0345s`，复跑后回落到 `+0.0138s`
+  - `v56` 的正式集复跑口径对比 `v55` 是 `average_duration_sec = 0.6551 -> 0.5237`
+  - `v56` 的 `frozen_20` 复跑口径对比 `v55` 是 `average_duration_sec = 0.6835 -> 0.5313`
+  - `v56` 的 `frozen_40` 复跑口径对比 `v55` 是 `average_duration_sec = 0.6527 -> 0.5293`
+  - 当前固定 `40` 条集合已经重新落回 `improved_v32` 阈值 `0.5514` 以内
 
 因此当前更可信的判断是：
 
-- `v55` 已经成功把正式任务数从 `51` 扩到 `52`
-- 它在复跑口径下把相对 `v54` 的性能回升压缩到了很小范围
-- 但这轮还没有补 `frozen_40` 的同集合验证
-- 因此这轮仍应记为“扩容成功、性能恢复中”，而不是新的稳定 streak 版本
+- `v56` 已经成功把正式任务数从 `52` 扩到 `53`
+- 它在复跑口径下把正式集、`frozen_20`、`frozen_40` 的平均耗时都明显拉回
+- 它仍然不改变当前稳定基线是 `v50` 这一事实
+- 但这轮已经重新把后续版本带回“可以继续积累稳定证据”的轨道
 
 ### 5. 当前新增的 improved_v2 结论
 

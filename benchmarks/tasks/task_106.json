@@ -1,0 +1,29 @@
+{
+  "task_id": "task_106",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Different behavior for SingleKey and DottedKey with single value",
+  "issue_text": "I am building a tomlkit document and want to generate keys dynamically. Sometimes the lengths of my key specifications are only 1 long, but tomlkit still generates a DottedKey out of it. The documentation of `tomlkit.key` is very clear about it: specifying a list will return a DottedKey.\n\nBut I think it would be a nice addition if the function checks the length of the list before making that decision.\n\nA minimal example of what goes wrong now:\n\n```py\nimport tomlkit\n\ndoc = tomlkit.document()\ndoc.",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 430,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/430",
+    "candidate_id": "python_poetry_tomlkit_issue_430",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

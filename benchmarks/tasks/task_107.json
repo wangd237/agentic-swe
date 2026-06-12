@@ -1,0 +1,37 @@
+{
+  "task_id": "task_107",
+  "repo_name": "tomlkit_single_key_repo",
+  "repo_path": "benchmarks/repos/tomlkit_single_key_repo",
+  "issue_title": "Different behavior for SingleKey and DottedKey with single value",
+  "issue_text": "I am building a tomlkit document and want to generate keys dynamically. Sometimes the lengths of my key specifications are only 1 long, but tomlkit still generates a DottedKey out of it. The documentation of `tomlkit.key` is very clear about it: specifying a list will return a DottedKey.\n\nBut I think it would be a nice addition if the function checks the length of the list before making that decision.\n\nA minimal example of what goes wrong now:\n\n```py\nimport tomlkit\n\ndoc = tomlkit.document()\ndoc.",
+  "test_command": "python -m pytest tests/test_keys.py -q",
+  "success_criteria": "当 key 规范只有 1 个元素时，列表形式不应退化成无法按普通字符串命中的 DottedKey；单元素列表与单字符串输入应表现一致；多元素列表仍应保持 dotted key 语义；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "key",
+    "dotted-key"
+  ],
+  "target_files_hint": [
+    "tomlkit_single_key_repo/keys.py",
+    "tests/test_keys.py"
+  ],
+  "expected_failure_test": "SingleKeyNormalizationTests.test_single_element_list_key_matches_string_lookup",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 430,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/430",
+    "candidate_id": "python_poetry_tomlkit_issue_430",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_106",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}
