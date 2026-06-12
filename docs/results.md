@@ -3264,3 +3264,56 @@ trace 热点分析结果：
   - 正式任务数已推进到 `54`
   - `frozen_40 streak` 仍保持 `8`
   - `v57` 继续把 `frozen_40` 保持在长期阈值以内
+
+`improved_v58` 正式 55 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v58.json`
+- 新增任务：
+  - `benchmarks/tasks/task_110.json`
+  - `benchmarks/tasks/task_111.json`
+- 新增 repo：
+  - `benchmarks/repos/click_usage_repo`
+- 运行结果：
+  - 原始 repo 测试失败：`python -m pytest benchmarks/repos/click_usage_repo/tests/test_formatting.py -q`
+  - 单任务闭环成功：`python scripts/run_single_task.py --task benchmarks/tasks/task_111.json --policy optimization/policy_versions/improved_v58.json`
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_realissuev58r1_001.json`
+  - 继承链修复后 batch eval：`logs/summaries/batch_eval_realissuev58r2_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step38_002.json`
+- 指标：
+  - `task_count`: `54 -> 55`
+  - `success_count`: `54 -> 55`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.523 -> 0.5234`
+- 结论：
+  - 这说明 `click#3362` 已成功转化为正式第 `55` 条 semi_real 任务
+  - `improved_v58` 已成功命中新引入的 click usage 连字符换行问题
+  - `v58r1` 首轮暴露出 `task_109` 的继承链漏接，但 `v58r2` 已修复并恢复正式集全绿
+
+`improved_v58` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch eval：`logs/summaries/batch_eval_frozen20v58r1_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step37_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5385 -> 0.5506`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 相对 `v57` 只有 `0.0121s` 的轻微耗时波动
+
+`improved_v58` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - batch eval：`logs/summaries/batch_eval_frozen40v58r1_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step13_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5437 -> 0.5294`
+- 结论：
+  - `frozen_40` 在功能上继续无回归
+  - 相对 `v57` 平均耗时回落了 `0.0143s`
+  - 当前 `0.5294` 仍继续低于 `improved_v32` 的长期阈值 `0.5514`

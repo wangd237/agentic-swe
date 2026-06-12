@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v57`
+- 当前最新扩容策略：`improved_v58`
 - 当前主分支最近重要能力：
-  - 已完成 `54` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `55` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -24,9 +24,14 @@
   - 已把 `pytest-dev/pytest#14189` 从新来源候选推进为正式任务 `task_105`
   - 已把 `python-poetry/tomlkit#430` 从新来源候选推进为正式任务 `task_107`
   - 已把 `pypa/packaging#1231` 从新来源候选推进为正式任务 `task_109`
+  - 已把 `pallets/click#3362` 从新来源候选推进为正式任务 `task_111`
   - 已落地 `improved_v57` 的 packaging 名称规范化边界修复规则
+  - 已落地 `improved_v58` 的 click usage 连字符换行修复规则
   - 已完成 `v57` 的正式集、`frozen_20`、`frozen_40` 功能验证及复跑
   - 已确认 `v57` 相对 `v56` 在功能上继续全绿，并继续把 `frozen_40` 保持在长期阈值以内
+  - 已完成 `v58` 的正式集、`frozen_20`、`frozen_40` 验证
+  - 已确认 `v58r1` 首轮只暴露 `task_109` 的继承链漏接，`v58r2` 修复后已恢复正式集 `55 / 55`
+  - 已确认 issue 导入脚本支持结构化候选说明追加写入
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -70,7 +75,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`54`
+- 正式 `semi_real` 真实 issue 任务数：`55`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -83,10 +88,10 @@
 
 ## 当前候选池状态
 
-- `accepted = 54`
+- `accepted = 55`
 - `drafted = 0`
 - `to_review = 0`
-- 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
+- 当前已存在 `55` 条 accepted 候选，其中最新的 `click#3362` 已完成落地；下一阶段仍需继续补新来源以向 `60+` 推进
 
 候选来源文件：
 
@@ -100,41 +105,41 @@
 
 ### 1. 当前最新扩容对比
 
-- 对比：`improved_v56 -> improved_v57`
-- 任务集：`53 -> 54` 条
+- 对比：`improved_v57 -> improved_v58`
+- 任务集：`54 -> 55` 条
 - 结果：
-  - `success_count: 53 -> 54`
+  - `success_count: 54 -> 55`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - 正式集 compare 口径 `average_duration_sec: 0.5237 -> 0.523`
+  - 正式集 compare 口径 `average_duration_sec: 0.523 -> 0.5234`
 
 说明：
 
-- 这说明 `improved_v57` 已成功把正式真实任务集从 `53` 条推进到 `54` 条
-- 新增任务是 `task_109`，来源于 `pypa/packaging#1231`
+- 这说明 `improved_v58` 已成功把正式真实任务集从 `54` 条推进到 `55` 条
+- 新增任务是 `task_111`，来源于 `pallets/click#3362`
 - 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
-- 复跑口径下当前正式集平均耗时继续小幅改善了 `0.0007s`
-- 这说明这轮不只是扩题成功，还顺带修复了 `v57r1` 中暴露出的两处 patcher 版本继承链漏接问题
+- 复跑口径下当前正式集平均耗时只轻微波动了 `0.0004s`
+- 这说明这轮不只是扩题成功，还顺带修复了 `v58r1` 中暴露出的 `task_109` 继承链漏接问题
 
 ### 2. 当前最新冻结集观察
 
-- `improved_v57` `frozen_20` compare：
+- `improved_v58` `frozen_20` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.5313 -> 0.5385`
-- `improved_v57` `frozen_40` compare：
+  - `average_duration_sec: 0.5385 -> 0.5506`
+- `improved_v58` `frozen_40` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.5293 -> 0.5437`
+  - `average_duration_sec: 0.5437 -> 0.5294`
 - 当前稳定 streak：
   - 仍为 `8`
 
 说明：
 
-- `v57` 在固定集合上没有功能回归
-- 它在 `frozen_20` 上相对 `v56` 只有 `0.0072s` 的轻微波动
-- 它在 `frozen_40` 上相对 `v56` 只有 `0.0144s` 的轻微波动
-- 当前 `0.5437` 仍低于 `improved_v32` 基线阈值 `0.5514`
+- `v58` 在固定集合上没有功能回归
+- 它在 `frozen_20` 上相对 `v57` 只有 `0.0121s` 的轻微波动
+- 它在 `frozen_40` 上相对 `v57` 反而回落了 `0.0143s`
+- 当前 `0.5294` 仍低于 `improved_v32` 基线阈值 `0.5514`
 - 因此 `frozen_40 streak` 仍然停留在 `v50` 时的 `8`
 
 ### 3. 最新环境级诊断结论

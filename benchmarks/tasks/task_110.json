@@ -1,0 +1,29 @@
+{
+  "task_id": "task_110",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`HelpFormatter.write_usage` breaks options at a hyphen",
+  "issue_text": "If an option containing a hyphen in its name is printed at the line break limit, it’s broken at the hyphen.\n\n### Reproduction\n\n```python\nimport click\n\noptions = [\n    \"--enable-verbose-logging\",\n    \"--output-file-path\",\n    \"--max-retry-count\",\n    \"--disable-cache-mode\",\n    \"--config-file-location\",\n    \"--user-auth-token\",\n    \"--auto-update-interval\",\n    \"--force-overwrite-existing\",\n    \"--network-timeout-seconds\",\n    \"--debug-trace-enabled\",\n]\n\nf = click.HelpFormatter(width=65)\nf.write_",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3362,
+    "issue_url": "https://github.com/pallets/click/issues/3362",
+    "candidate_id": "pallets_click_issue_3362",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

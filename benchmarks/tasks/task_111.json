@@ -1,0 +1,37 @@
+{
+  "task_id": "task_111",
+  "repo_name": "click_usage_repo",
+  "repo_path": "benchmarks/repos/click_usage_repo",
+  "issue_title": "`HelpFormatter.write_usage` breaks options at a hyphen",
+  "issue_text": "If an option containing a hyphen in its name is printed at the line break limit, it’s broken at the hyphen.\n\n### Reproduction\n\n```python\nimport click\n\noptions = [\n    \"--enable-verbose-logging\",\n    \"--output-file-path\",\n    \"--max-retry-count\",\n    \"--disable-cache-mode\",\n    \"--config-file-location\",\n    \"--user-auth-token\",\n    \"--auto-update-interval\",\n    \"--force-overwrite-existing\",\n    \"--network-timeout-seconds\",\n    \"--debug-trace-enabled\",\n]\n\nf = click.HelpFormatter(width=65)\nf.write_",
+  "test_command": "python -m pytest tests/test_formatting.py -q",
+  "success_criteria": "usage 文本在宽度限制下换行时，不应把带连字符的长选项拆成两行；普通空格分隔的换行行为保持稳定；短 usage 文本仍保持单行；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "click",
+    "formatting",
+    "usage"
+  ],
+  "target_files_hint": [
+    "click_usage_repo/formatting.py",
+    "tests/test_formatting.py"
+  ],
+  "expected_failure_test": "UsageFormattingTests.test_hyphenated_option_is_not_split_across_lines",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3362,
+    "issue_url": "https://github.com/pallets/click/issues/3362",
+    "candidate_id": "pallets_click_issue_3362",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_110",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

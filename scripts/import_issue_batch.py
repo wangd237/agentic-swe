@@ -42,6 +42,21 @@ def load_batch_entries(input_path: Path) -> list[dict]:
                     "draft_task": bool(item.get("draft_task", False)),
                     "repo_path": item.get("repo_path"),
                     "test_command": item.get("test_command"),
+                    "candidate_overrides": item.get("candidate_overrides")
+                    or {
+                        key: item[key]
+                        for key in (
+                            "status",
+                            "difficulty",
+                            "why_it_fits",
+                            "expected_target_files",
+                            "expected_test_shape",
+                            "risk_notes",
+                            "recommendation",
+                            "note",
+                        )
+                        if key in item
+                    },
                 }
             )
         return entries
@@ -61,6 +76,7 @@ def load_batch_entries(input_path: Path) -> list[dict]:
                 "draft_task": False,
                 "repo_path": None,
                 "test_command": None,
+                "candidate_overrides": None,
             }
         )
     return entries
@@ -82,6 +98,7 @@ def import_issue_batch(
             repo_full_name=entry["repo"],
             issue_number=entry["issue"],
             dataset_path=candidate_file,
+            candidate_overrides=entry.get("candidate_overrides"),
         )
         result_item = {
             "repo": entry["repo"],

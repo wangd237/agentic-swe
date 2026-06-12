@@ -94,6 +94,54 @@ def build_candidate(repo_full_name: str, issue_payload: dict) -> dict:
     }
 
 
+def apply_candidate_overrides(candidate: dict, overrides: dict | None) -> dict:
+    if not overrides:
+        return candidate
+
+    updated_candidate = dict(candidate)
+    note_messages: list[str] = []
+
+    simple_fields = (
+        "difficulty",
+        "status",
+    )
+    for field_name in simple_fields:
+        field_value = overrides.get(field_name)
+        if field_value:
+            updated_candidate[field_name] = field_value
+
+    list_fields = (
+        "expected_target_files",
+    )
+    for field_name in list_fields:
+        field_value = overrides.get(field_name)
+        if field_value:
+            updated_candidate[field_name] = list(field_value)
+
+    text_note_fields = (
+        "why_it_fits",
+        "expected_test_shape",
+        "risk_notes",
+        "recommendation",
+    )
+    for field_name in text_note_fields:
+        field_value = overrides.get(field_name)
+        if field_value:
+            note_messages.append(f"{field_name}: {field_value}")
+
+    extra_note = overrides.get("note")
+    if extra_note:
+        note_messages.append(str(extra_note))
+
+    if note_messages:
+        existing_notes = updated_candidate.get("notes", "")
+        for message in note_messages:
+            existing_notes = append_note(existing_notes, message)
+        updated_candidate["notes"] = existing_notes
+
+    return updated_candidate
+
+
 def upsert_candidate(dataset_path: Path, candidate: dict) -> tuple[dict, str]:
     payload = load_candidate_dataset(dataset_path)
     candidates = payload["candidates"]
@@ -214,9 +262,13 @@ def import_issue_to_dataset(
     issue_number: int,
     dataset_path: Path,
     issue_payload: dict | None = None,
+    candidate_overrides: dict | None = None,
 ) -> dict:
     payload = issue_payload or import_issue(repo_full_name, issue_number)
-    candidate = build_candidate(repo_full_name, payload)
+    candidate = apply_candidate_overrides(
+        build_candidate(repo_full_name, payload),
+        candidate_overrides,
+    )
     stored_candidate, operation = upsert_candidate(dataset_path, candidate)
     return {
         "candidate": stored_candidate,

@@ -9725,3 +9725,102 @@
   - `improved_v57` 是扩容成功且三线验证通过的最新版本
   - 当前 `frozen_40 streak` 仍保持 `8`
   - 正式任务数已经推进到 `54`
+
+## 2026-06-12 Phase 6 click usage 连字符换行扩容与 `improved_v58`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一条边界清晰、单模块可修的真实 issue 派生任务
+- 顺手增强 issue 导入链路，让后续结构化候选清单可以直接导入并保留筛选理由
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `tooling`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v58_candidates.json`
+- `benchmarks/tasks/task_110.json`
+- `benchmarks/tasks/task_111.json`
+- `benchmarks/repos/click_usage_repo/`
+- `optimization/policy_versions/improved_v58.json`
+- `app/agent/patcher.py`
+- `scripts/import_github_issue.py`
+- `scripts/import_issue_batch.py`
+- `tests/test_import_issue_batch.py`
+- `benchmarks/real_world_candidates.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 从 GitHub 新增候选导入：
+  - `pallets/click#3362`
+- 新增 `real_issue` 草稿：
+  - `task_110`
+- 新增可运行的 semi_real 正式任务：
+  - `task_111`
+- 新增 repo：
+  - `benchmarks/repos/click_usage_repo`
+- 在 repo 中故意保留 bug：
+  - usage 文本通过 `textwrap.wrap` 直接换行
+  - 默认允许在连字符处断行，导致 `--max-retry-count` 这类长选项被错误拆成两行
+- 新增 `improved_v58`
+- 在 patcher 中新增 click usage 连字符换行的专用规则
+- 批量 issue 导入脚本支持结构化候选说明：
+  - 可接收 `why_it_fits / expected_target_files / expected_test_shape / risk_notes / recommendation`
+  - 并把这些说明追加进候选池备注，而不是覆盖历史
+- 把 `task_111` 加入正式 manifest
+- 更新候选池状态与主文档口径
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/click_usage_repo/tests/test_formatting.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_111.json --policy optimization/policy_versions/improved_v58.json`
+- 核心回归测试：
+  - `python -m pytest tests/test_import_issue_batch.py tests/test_scaffold_semi_real_task.py tests/test_run_real_issue_eval.py -q`
+
+### 关键观察
+
+- 正式任务数：
+  - `54 -> 55`
+- 候选池状态：
+  - `accepted = 54 -> 55`
+  - `to_review = 0 -> 0`
+- 单任务 `task_111`：
+  - `pre_test_exit_code: 1`
+  - `post_test_exit_code: 0`
+  - `patch_applied: true`
+  - `duration_sec: 0.4886`
+
+### 这轮额外记录的过程
+
+- 先对多个候选进行了风险筛选：
+  - `packaging#934` 因规范争议暂不适合
+  - `jsonschema#1465` 更像底层依赖行为，不够干净
+  - 最终选择 `click#3362` 作为 `v58` 首条落地任务
+- 这一轮没有先跑全量评测，而是优先保证：
+  - 新题语义边界清楚
+  - 单任务闭环能稳定成功
+  - issue 导入基础设施更适合后续扩容
+
+### 结论
+
+- `click#3362` 已成功作为新的 usage 文本换行语义题补进正式 semi_real 任务集
+- `improved_v58` 已把正式任务数推进到 `55`
+- `v58r1` 首轮正式集只暴露 `task_109` 单点回归：
+  - 根因是 `v57` 的 packaging 名称规范化规则没有继续继承到 `improved_v58`
+- 修复后补跑 `v58r2`：
+  - 正式集恢复 `55 / 55`
+  - 正式集平均耗时为 `0.5234`
+- `v58` 当前已经完成正式集、`frozen_20` 与 `frozen_40` 三线验证
+- 下一轮应继续把正式任务数从 `55` 推向 `60+`，优先考虑 `packaging#810 / tomlkit#450 / jinja#2118` 这类高质量候选
