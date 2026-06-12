@@ -2881,3 +2881,90 @@ trace 热点分析结果：
 - 这让下一步优化目标更清晰了：
   - 优先验证 `pytest_optional_plugins` 是否能通过更激进但安全的命令形态继续削减
   - 同时继续验证 `windows_ctypes / xml_stack / terminal_chain` 哪些属于不可避免的 collection 成本，哪些还有可降空间
+
+`improved_v51` 正式 48 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v51.json`
+- 新增任务：
+  - `benchmarks/tasks/task_097.json`
+- 新增 repo：
+  - `benchmarks/repos/click_progressbar_repo`
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_realissuev51_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_realissuev51_002.json`
+  - 时延对比：`logs/summaries/duration_compare_realissuev51_001.json`
+  - trace 热点：`logs/summaries/trace_hotspots_realissuev51_001.json`
+- 指标：
+  - `task_count`: `47 -> 48`
+  - `success_count`: `47 -> 48`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 首轮 `average_duration_sec`: `0.5583 -> 0.6687`
+  - 复跑 `average_duration_sec`: `0.5583 -> 0.6987`
+- 结论：
+  - 这说明 `click#3571` 已成功转化为正式第 `48` 条 semi_real 任务
+  - `improved_v51` 在扩容后继续保持全量成功
+  - 但公共 `47` 条任务平均耗时回升了 `0.1412s`，这一轮当前不能直接记成新的稳定版本
+
+`improved_v51` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen20v51_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_frozen20v51_002.json`
+  - 时延对比：`logs/summaries/duration_compare_frozen20v51_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 复跑 `average_duration_sec`: `0.5672 -> 0.7361`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 但固定集平均耗时回升显著，当前需要先诊断环境与 `run_tests` 链路
+
+`improved_v51` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen40v51_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_frozen40v51_002.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 复跑 `average_duration_sec`: `0.5410 -> 0.7098`
+- 结论：
+  - `frozen_40` 在功能上继续无回归
+  - 但这轮不能推进新的 streak，当前稳定 streak 仍保持在 `8`
+
+同环境 `improved_v50` `frozen_40` 复跑校验：
+
+- 运行结果：
+  - compare：`logs/summaries/batch_compare_frozen40_envcheck_v50_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen40v50check_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5410 -> 0.6616`
+- 结论：
+  - 即使不引入 `v51` 新规则，同环境下 `v50` 也明显变慢
+  - 因此当前更可信的解释是运行环境或 `run_tests` 执行链路整体漂移
+  - 后续应把“新增任务成功扩容”和“是否通过性能门控”分开记录
+
+`v51` 热点任务集合历史观察：
+
+- cohort 汇总产物：
+  - `logs/summaries/task_history_cohort_run_tests_hotspots_v51_001.json`
+- 聚合结果：
+  - `average_duration_delta_sec = 0.1869`
+  - `average_run_tests_delta_sec = 0.1796`
+  - `positive_duration_delta_count = 4 / 4`
+- 结论：
+  - `task_034 / task_036 / task_038 / task_040` 全部继续一起变慢
+  - 这进一步支持“系统性漂移”而不是单条新规则局部变慢
+
+当前状态补充：
+
+- 正式任务数：`48 / 60`
+- 来源生态数：`13 / 6`
+- frozen 集合：`40 / 40`
+- `frozen_40` 稳定 streak：`8`
+- 当前稳定基线：`improved_v50`
+- 当前最新扩容版本：`improved_v51`

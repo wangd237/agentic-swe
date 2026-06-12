@@ -8656,3 +8656,153 @@
 - 这轮把正式任务数推进到 `47`
 - `frozen_40 streak` 已推进到 `8`
 - 当前离目标还差 `13` 条正式任务，下一轮可优先继续推进 `click#3571`、`jinja#2108`、`tomlkit#505`
+
+## 2026-06-12 Phase 6 click progressbar 结束态位置扩容与 `improved_v51`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/click#3125 -> task_095`
+- `improved_v50`
+- 正式任务数推进到 `47`
+- `frozen_40 streak` 推进到 `8`
+
+因此这一轮继续沿用 click 生态里的短平快真实 bug：
+
+- 继续扩正式任务数
+- 尽量选择单文件、纯显示语义、复现路径短的问题
+- 同时继续观察近期时延是否只是单轮波动，还是已经演变成环境级漂移
+
+这一轮优先选择 `pallets/click#3571`，因为它聚焦 progressbar 的结束态显示逻辑，边界清晰、语义稳定，适合继续做低风险扩容。
+
+### 目标
+
+- 把 `pallets/click#3571` 转成新的 semi_real 正式任务
+- 为 progressbar 在 `show_pos=True` 且 `update_min_steps` 不整除长度时补一条结束态完整位置修复规则
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v51`
+- 判断这轮时延回升究竟来自新规则，还是来自当前运行环境整体漂移
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_096.json`
+- `benchmarks/tasks/task_097.json`
+- `benchmarks/repos/click_progressbar_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v51.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev51_001.json`
+- `logs/summaries/batch_eval_realissuev51_002.json`
+- `logs/summaries/batch_eval_frozen20v51_002.json`
+- `logs/summaries/batch_eval_frozen40v51_002.json`
+- `logs/summaries/duration_compare_realissuev51_001.json`
+- `logs/summaries/duration_compare_frozen20v51_001.json`
+- `logs/summaries/trace_hotspots_realissuev51_001.json`
+- `logs/summaries/task_history_cohort_run_tests_hotspots_v51_001.json`
+- `logs/summaries/batch_compare_frozen40_envcheck_v50_001.json`
+- `logs/summaries/benchmark_maturity_maturity_026.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `pallets/click#3571`
+- 新增 `real_issue` 草稿：
+  - `task_096`
+- 新增可运行的 semi_real 正式任务：
+  - `task_097`
+- 新增 repo：
+  - `benchmarks/repos/click_progressbar_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `show_pos=True` 时结束态会停留在最后一次中间刷新位置，而不是完整的 `length/length`
+- 新增 `improved_v51`
+- 在 patcher 中新增 progressbar 结束态完整位置的专用规则
+- 把 `task_097` 加入正式 manifest
+- 更新候选池状态、项目记忆、结果文档与注册表
+- 继续保留 runtime 侧 `-p no:unraisableexception`
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+- 额外补了一轮同环境 `v50` 复跑校验，用来区分“策略变慢”和“环境变慢”
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/click_progressbar_repo/tests/test_progressbar.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_097.json --policy optimization/policy_versions/improved_v51.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v51.json --run-label realissuev51`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v51.json --run-label frozen20v51`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v51.json --run-label frozen40v51`
+- 环境级复跑校验：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v50.json --run-label frozen40v50check`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `47 -> 48`
+- 候选池状态：
+  - `accepted = 47 -> 48`
+  - `to_review = 0 -> 0`
+- `improved_v51` 正式 `48` 条任务集结果：
+  - `success_count: 47 -> 48`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - 首轮 `average_duration_sec: 0.5583 -> 0.6687`
+  - 复跑 `average_duration_sec: 0.5583 -> 0.6987`
+- `improved_v51` `frozen_20` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5672 -> 0.7361`
+- `improved_v51` `frozen_40` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5410 -> 0.7098`
+- maturity 审计：
+  - 正式任务数：`48 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 正式集时延对比显示：
+  - 公共 `47` 条任务平均耗时增量：`+0.1412s`
+- `frozen_20` 时延对比显示：
+  - 公共 `20` 条任务平均耗时增量：`+0.1689s`
+- trace 热点分析显示：
+  - 最主要回升来源仍然是 `run_tests`
+- 热点任务集合历史分析显示：
+  - `task_034 / task_036 / task_038 / task_040` 四条任务全部继续一起变慢
+- 最关键的新增证据是：
+  - 同环境下重新复跑 `improved_v50` 的 `frozen_40`
+  - `average_duration_sec` 从 `0.5410` 回升到 `0.6616`
+- 这说明当前时延回升并不只发生在 `v51`
+- 因此这一轮不能直接下结论说“progressbar 新规则让系统变慢”
+- 更可信的判断是当前运行环境或 `run_tests` 链路出现了整体漂移
+
+### 结论
+
+- `click#3571` 已成功作为新的 click progressbar 显示语义题补进正式 semi_real 任务集
+- `improved_v51` 已把正式任务数推进到 `48`
+- 功能上，`improved_v51` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 但这轮当前不能推进新的 `frozen_40 streak`
+- 当前稳定 streak 仍保持 `8`
+- 下一轮应优先并行推进两条线：
+  - 继续扩新来源，把正式任务数从 `48` 推向 `60+`
+  - 优先诊断环境级时延漂移，确认下一版谁能成为新的稳定版本

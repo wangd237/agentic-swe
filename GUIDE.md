@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v50` 多轮策略迭代，正式真实任务扩充到 `47` 条，已建立 `frozen_40 v1`，`v50` 已通过正式集、`frozen_20` 与 `frozen_40` 验证，并把 `frozen_40 streak` 推进到 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v51` 多轮策略迭代，正式真实任务扩充到 `48` 条，已建立 `frozen_40 v1`，`v50` 仍是当前稳定基线；`v51` 已功能全绿，但因同环境出现时延漂移，暂未计入新的 `frozen_40 streak` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -562,6 +562,46 @@ scripts/
 
 这说明 improved_v1 的收益不是靠增加额外步骤换来的。
 
+### 4.1 当前最新推进状态
+
+截至目前，Phase 6 主线已经继续推进到：
+
+- 正式 `semi_real` 真实任务数：`48`
+- 冻结集合：`frozen_40 v1`
+- 当前稳定 streak：`8`
+- 当前稳定基线策略：`improved_v50`
+- 当前最新扩容策略：`improved_v51`
+
+其中最新一轮新增的是：
+
+- 来源 issue：`pallets/click#3571`
+- draft 任务：`task_096`
+- 正式 semi_real 任务：`task_097`
+- semi_real repo：`benchmarks/repos/click_progressbar_repo`
+
+这轮新增能力覆盖的场景是：
+
+- `click.progressbar` 在 `show_pos=True` 且 `update_min_steps` 不整除总长度时
+- 结束态不应停留在最后一次中间刷新位置
+- 最终必须稳定显示完整的 `length/length`
+
+当前这一轮的关键结论要分开看：
+
+- 功能面：
+  - `improved_v51` 已在正式 `48` 条任务集、`frozen_20`、`frozen_40` 上全部保持 `100%` 成功率和 `100%` 测试通过率
+- 性能面：
+  - `v51` 的正式集复跑 `average_duration_sec = 0.6987`
+  - `v51` 的 `frozen_20` 复跑 `average_duration_sec = 0.7361`
+  - `v51` 的 `frozen_40` 复跑 `average_duration_sec = 0.7098`
+  - 同环境下重新复跑 `improved_v50` 的 `frozen_40` 也从 `0.5410` 回升到 `0.6616`
+
+因此当前更可信的判断是：
+
+- `v51` 已经成功把正式任务数从 `47` 扩到 `48`
+- 但这轮耗时回升更像运行环境或 `run_tests` 链路整体漂移
+- 不能直接把这次回升归因为 progressbar 新规则本身
+- 也不能把 `v51` 直接记成新的稳定 streak 版本
+
 ### 5. 当前新增的 improved_v2 结论
 
 本轮继续扩充 report set 后，新的结果是：
@@ -605,6 +645,16 @@ scripts/
 - 在真实任务真正接入前，先把格式与校验入口固定下来
 - 在出现性能回升时，既能看 batch 公共任务整体变化，也能继续下钻到单任务历史样本
 - 当前已成功导入十五条候选：`psf/requests#6432`、`psf/requests#7234`、`Textualize/rich#4090`、`pytest-dev/pytest#14329`、`Textualize/rich#3877`、`pydantic/pydantic#9582`、`pallets/click#3111`、`dateutil/dateutil#1442`、`dateutil/dateutil#1432`、`python-attrs/attrs#1479`、`pallets/jinja#2069`、`pallets/jinja#2118`、`python-poetry/tomlkit#494`、`python-poetry/tomlkit#495`、`pypa/packaging#873`
+
+最新又继续补进：
+
+- `pallets/click#3125`
+- `pallets/click#3571`
+
+其中：
+
+- `click#3125` 已落地为 `task_095`
+- `click#3571` 已落地为 `task_097`
 
 ### 7. 当前新增的性能诊断链
 
@@ -827,6 +877,13 @@ scripts/
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
   - 构建 `frozen_40`，并累计连续 `5` 个策略版本的固定集合无回归证据
+- 最新又补了一层环境级校验：
+  - `logs/summaries/batch_compare_frozen40_envcheck_v50_001.json`
+  - 它直接比较了同一策略 `improved_v50` 在当前环境下的两次 `frozen_40` 结果
+  - `average_duration_sec` 从 `0.5410` 回升到 `0.6616`
+- 这说明当前 `v51` 看到的耗时回升，并不充分支持“是新规则让系统变慢了”这个结论
+- 更可信的解释是当前运行环境或测试执行链路出现了整体漂移
+- 因此后续应继续把“扩容成功”和“性能门控是否通过”分开记录
 
 ### 7. 真实 issue 导入入口已可用
 
@@ -1979,9 +2036,13 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充 `task_063` 与 `improved_v34`
 - 已补充 `task_065` 与 `improved_v35`
 - 已补充 `task_067` 与 `improved_v36`
+- 已补充 `task_093` 与 `improved_v49`
+- 已补充 `task_095` 与 `improved_v50`
+- 已补充 `task_097` 与 `improved_v51`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果
+- 已补充冻结 40 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充真实 issue 任务集的一键 batch/eval/compare 流水线入口
 - 已补充真实 issue 候选的批量导入入口
 - 已补充 batch run 时延回归分析入口
@@ -1989,6 +2050,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充单任务历史时延分析入口
 - 已补充热点任务集合历史分析入口
 - 已让新 trace 记录显式步骤耗时
+- 已补充环境级复跑对比，能判断“策略变慢”还是“当前环境整体漂移”
 - 下一步会继续扩新来源、定位时延回归并扩充任务与优化策略
 
 ### 方式 45：运行 packaging marker `extra=None` 回归任务

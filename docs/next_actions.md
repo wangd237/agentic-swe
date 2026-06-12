@@ -23,7 +23,7 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`47 / 60`
+  - 正式任务数：`48 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`40 / 40`
   - `frozen_40` 连续版本：`8 / 5`
@@ -61,7 +61,8 @@
 - 当前高优先级 shortlist 仍为空
 - `real_issue_tasks_frozen_40_v1.json` 已正式创建
 - 当前已经累计到 `frozen_40 streak = 8`
-- 下一轮重点应继续扩新来源，并在保持当前 `frozen_40` 稳定性的前提下继续把正式任务数从 `47` 推向 `60+`
+- 当前已经完成 `task_097 / improved_v51` 的功能扩容，但这轮暂未进入新的稳定 streak
+- 下一轮重点应继续扩新来源，并在保持当前 `frozen_40` 稳定性的前提下继续把正式任务数从 `48` 推向 `60+`
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
@@ -109,6 +110,9 @@
 - 已用 `_004` 样本继续拆成单插件
 - 已确认 `unraisableexception_only` 单独可稳定减少约 `28.2ms`
 - 已确认 `threadexception_only` 没有稳定收益
+- 已完成 `v51` 的环境级复跑校验
+- 已确认同环境下 `improved_v50` 的 `frozen_40` 也从 `0.5410` 回升到 `0.6616`
+- 当前更应优先排查环境或 `run_tests` 执行链路整体漂移，而不是直接把回升归因到新 patch 规则
 - 已完成一轮 `pytest importtime` 分组分析
 - 已确认新增 import 开销主要落在 `pytest_optional_plugins / windows_ctypes / xml_stack / terminal_chain`
 - 已新增 `improved_v36`，在 `improved_v35` 基础上补充 `packaging wheel compressed tag order` 修复规则
@@ -175,8 +179,8 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v50` 为候选基线，继续扩正式任务数并累计 `frozen_40` streak
-3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
+2. 以 `improved_v50` 为当前稳定基线继续扩正式任务数，同时把 `v51` 记为“功能扩容成功、性能待确认”
+3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，优先解释当前环境级时延漂移
 
 补充说明：
 
@@ -189,8 +193,9 @@
 - 当前 `packaging#1240` 已经落地为 `task_091`
 - 当前 `click#3572` 已经落地为 `task_093`
 - 当前 `click#3125` 已经落地为 `task_095`
+- 当前 `click#3571` 已经落地为 `task_097`
 - 当前新的候选库存已清空高优先级存量，`to_review = 0`
-- 因此下一轮更应该优先“扩新来源 + 跑下一版 `frozen_40`”，而不是继续停留在候选筛选阶段
+- 因此下一轮更应该优先“扩新来源 + 诊断环境漂移 + 再决定谁是下一版稳定 streak”，而不是继续停留在候选筛选阶段
 
 详细理由见：
 

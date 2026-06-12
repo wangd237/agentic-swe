@@ -1,0 +1,29 @@
+{
+  "task_id": "task_096",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`click.progressbar` doesn't show full completion when using `show_pos=True` combined with `update_min_steps`",
+  "issue_text": "当前 progressbar 的位置显示逻辑在 `show_pos=True` 且 `update_min_steps` 不是总长度约数时，会在结束阶段错误保留上一次刷新位置，导致最终输出不是完整的 `length/length`。这个真实 issue 需要让 progressbar 在结束时无论中间刷新步长如何，都能正确显示完整完成位置，同时保持百分比模式与普通位置显示行为不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3571,
+    "issue_url": "https://github.com/pallets/click/issues/3571",
+    "candidate_id": "pallets_click_issue_3571",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

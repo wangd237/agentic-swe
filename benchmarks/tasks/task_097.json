@@ -1,0 +1,37 @@
+{
+  "task_id": "task_097",
+  "repo_name": "click_progressbar_repo",
+  "repo_path": "benchmarks/repos/click_progressbar_repo",
+  "issue_title": "`click.progressbar` doesn't show full completion when using `show_pos=True` combined with `update_min_steps`",
+  "issue_text": "当前 `render_progress_output()` 在 `show_pos=True` 且 `update_min_steps` 不是总长度约数时，会错误显示最后一次中间刷新位置，而不是最终的完整进度。semi-real 任务要求：开启 `show_pos=True` 时最终输出必须显示 `length/length`；百分比模式继续显示 `100%`；普通整除或无步长限制场景不回归。",
+  "test_command": "python -m pytest tests/test_progressbar.py -q",
+  "success_criteria": "当 `show_pos=True` 且 `update_min_steps` 不整除总长度时，最终输出必须显示完整位置；百分比模式继续显示 `100%`；其他位置显示场景不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "click",
+    "progressbar",
+    "position"
+  ],
+  "target_files_hint": [
+    "click_progressbar_repo/progressbar.py",
+    "tests/test_progressbar.py"
+  ],
+  "expected_failure_test": "ProgressbarTests.test_show_pos_uses_final_length_at_completion",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3571,
+    "issue_url": "https://github.com/pallets/click/issues/3571",
+    "candidate_id": "pallets_click_issue_3571",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_096",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

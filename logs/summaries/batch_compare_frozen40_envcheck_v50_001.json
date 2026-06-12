@@ -1,0 +1,313 @@
+{
+  "compare_id": "batch_compare_frozen40_envcheck_v50_001",
+  "created_at": "2026-06-12T07:39:02.741063+00:00",
+  "baseline_eval_id": "batch_eval_frozen40v50_002",
+  "improved_eval_id": "batch_eval_frozen40v50check_001",
+  "baseline_policy_id": "improved_v50",
+  "improved_policy_id": "improved_v50",
+  "baseline_source_batch_run_id": "batch_run_frozen40v50_002",
+  "improved_source_batch_run_id": "batch_run_frozen40v50check_001",
+  "metric_deltas": {
+    "average_duration_sec": {
+      "baseline": 0.541,
+      "improved": 0.6616,
+      "delta": 0.1206,
+      "outcome": "regressed"
+    },
+    "average_modified_files": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "average_steps": {
+      "baseline": 10.15,
+      "improved": 10.15,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "average_tool_calls": {
+      "baseline": 9.15,
+      "improved": 9.15,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "key_file_read_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "partial_fix_count": {
+      "baseline": 0,
+      "improved": 0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "partial_fix_rate": {
+      "baseline": 0.0,
+      "improved": 0.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "reasonable_finish_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "repeated_search_rate": {
+      "baseline": 0.0,
+      "improved": 0.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "success_count": {
+      "baseline": 40,
+      "improved": 40,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "success_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "task_count": {
+      "baseline": 40,
+      "improved": 40,
+      "delta": 0.0,
+      "outcome": "neutral"
+    },
+    "test_execution_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "test_pass_count": {
+      "baseline": 40,
+      "improved": 40,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "test_pass_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    }
+  },
+  "taxonomy_deltas": {
+    "label_deltas": {},
+    "task_label_changes": {
+      "task_006": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_008": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_010": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_013": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_016": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_017": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_019": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_022": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_024": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_026": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_028": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_030": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_032": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_034": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_036": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_038": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_040": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_042": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_044": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_046": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_048": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_050": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_052": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_054": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_056": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_057": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_058": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_059": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_060": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_061": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_063": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_065": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_067": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_069": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_071": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_073": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_075": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_077": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_079": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_081": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      }
+    }
+  },
+  "headline": [
+    "- `success_rate`: `1.0` -> `1.0` (delta: `0.0`, outcome: `unchanged`)",
+    "- `test_pass_rate`: `1.0` -> `1.0` (delta: `0.0`, outcome: `unchanged`)",
+    "- `partial_fix_rate`: `0.0` -> `0.0` (delta: `0.0`, outcome: `unchanged`)",
+    "- `average_duration_sec`: `0.541` -> `0.6616` (delta: `0.1206`, outcome: `regressed`)"
+  ]
+}
