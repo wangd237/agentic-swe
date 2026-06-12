@@ -50,6 +50,7 @@
     "benchmarks/tasks/task_093.json",
     "benchmarks/tasks/task_095.json",
     "benchmarks/tasks/task_097.json",
-    "benchmarks/tasks/task_099.json"
+    "benchmarks/tasks/task_099.json",
+    "benchmarks/tasks/task_101.json"
   ]
 }

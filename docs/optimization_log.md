@@ -8949,3 +8949,139 @@
 - 下一轮应继续沿两条线推进：
   - 扩新来源，把正式任务数从 `49` 推向 `60+`
   - 继续恢复 `frozen_40` 性能，争取把后续版本重新拉回长期阈值以内
+
+## 2026-06-12 Phase 6 tomlkit out-of-order 访问扩容与 `improved_v53`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/jinja#2108 -> task_099`
+- `improved_v52`
+- 正式任务数推进到 `49`
+
+但当时的关键结论已经很明确：
+
+- 扩容链路稳定可用
+- `v52` 相对 `v51` 有回落
+- 不过稳定性能门控还没有恢复完成
+
+因此这一轮的目标是：
+
+- 继续把正式真实任务数往上推
+- 同时严格把“扩容成功”和“是否能进入新稳定 streak”分开记录
+
+这一轮优先选择 `python-poetry/tomlkit#505`，因为它仍然是单模块、最小复现清晰、回归测试稳定的代理访问语义问题，而且虽然同属 tomlkit，但语义上不同于此前的 `pop / repr / scalar capture` 三类题。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#505` 转成新的 semi_real 正式任务
+- 为 out-of-order table 访问阶段的重复 array table 聚合问题补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上验证 `improved_v53`
+- 同步 maturity 审计，把正式任务数推进到 `50`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_100.json`
+- `benchmarks/tasks/task_101.json`
+- `benchmarks/repos/tomlkit_out_of_order_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v53.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev53r1_001.json`
+- `logs/summaries/batch_compare_realissue_step33_001.json`
+- `logs/summaries/batch_eval_frozen20v53r1_001.json`
+- `logs/summaries/batch_compare_frozen20_step32_001.json`
+- `logs/summaries/duration_compare_realissuev53_001.json`
+- `logs/summaries/duration_compare_frozen20v53_001.json`
+- `logs/summaries/benchmark_maturity_maturity_028.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 GitHub issue 导入入口补录新候选：
+  - `python-poetry/tomlkit#505`
+- 新增 `real_issue` 草稿：
+  - `task_100`
+- 新增可运行的 semi_real 正式任务：
+  - `task_101`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_out_of_order_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `parse_document()` 能接受合法最小 TOML 文本
+  - 但后续 `doc.get("hooks")` 在代理重建阶段会因重复写入 `Stop` 键而触发 `KeyAlreadyPresent`
+- 新增 `improved_v53`
+- 在 patcher 中新增 tomlkit out-of-order repeated array table 的专用规则
+- 把 `task_101` 加入正式 manifest
+- 更新候选池状态、结果文档、项目记忆与注册表
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_out_of_order_repo/tests/test_proxy.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_101.json --policy optimization/policy_versions/improved_v53.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v53.json --run-label realissuev53r1 --compare-against-eval logs/summaries/batch_eval_realissuev52_001.json --compare-label realissue_step33`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v53.json --run-label frozen20v53r1 --compare-against-eval logs/summaries/batch_eval_frozen20v52_001.json --compare-label frozen20_step32`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `49 -> 50`
+- 候选池状态：
+  - `accepted = 49 -> 50`
+  - `to_review = 0 -> 0`
+- `improved_v53` 正式 `50` 条任务集结果：
+  - `success_count: 49 -> 50`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6618 -> 0.7143`
+- `improved_v53` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6732 -> 0.7361`
+- maturity 审计：
+  - 正式任务数：`50 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 正式集时延对比显示：
+  - 公共 `49` 条任务平均耗时增量：`+0.0535s`
+- `frozen_20` 时延对比显示：
+  - 公共 `20` 条任务平均耗时增量：`+0.0629s`
+- 这说明 `v53` 的核心结论不是“性能恢复完成”
+- 而是：
+  - 新题扩容成功
+  - 功能口径继续保持全绿
+  - 但性能恢复仍未结束
+
+### 结论
+
+- `tomlkit#505` 已成功作为新的 tomlkit 代理访问语义题补进正式 semi_real 任务集
+- `improved_v53` 已把正式任务数推进到 `50`
+- 功能上，`improved_v53` 继续保持正式集与 `frozen_20` 无回归
+- 但这轮当前不能推进新的稳定版本判断
+- 当前最准确口径仍然是：
+  - `improved_v50` 是稳定基线
+  - `improved_v53` 是扩容成功、性能恢复中
+  - 当前 `frozen_40 streak` 仍保持 `8`

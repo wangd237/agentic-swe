@@ -1,0 +1,37 @@
+{
+  "task_id": "task_101",
+  "repo_name": "tomlkit_out_of_order_repo",
+  "repo_path": "benchmarks/repos/tomlkit_out_of_order_repo",
+  "issue_title": "KeyAlreadyPresent when accessing valid TOML with repeated array tables under an out-of-order table",
+  "issue_text": "### Description\n\n`tomlkit.parse()` accepts a TOML document, but later accessing a parsed table with `doc.get(\"hooks\")` can raise:\n\n```text\ntomlkit.exceptions.KeyAlreadyPresent: Key \"Stop\" already exists.\n```\nThis happened with a valid TOML config that contains repeated array tables such as [[hooks.Stop]] plus sibling/subtables under [hooks].\n\nThe failure appears to happen while constructing an OutOfOrderTableProxy, not during parsing.\n\nObserved behavior\nThis code path fails:\n```python\nimport tom",
+  "test_command": "python -m pytest tests/test_proxy.py -q",
+  "success_criteria": "访问包含重复 array table 与同级子表的有效 TOML 文档时，不得因代理重建抛出 KeyAlreadyPresent；重复 array table 项必须全部保留；同级子表内容不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "proxy",
+    "out-of-order"
+  ],
+  "target_files_hint": [
+    "tomlkit_out_of_order_repo/proxy.py",
+    "tests/test_proxy.py"
+  ],
+  "expected_failure_test": "OutOfOrderTableProxyAccessTests.test_accessing_valid_hooks_table_keeps_repeated_array_tables",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 505,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/505",
+    "candidate_id": "python_poetry_tomlkit_issue_505",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_100",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

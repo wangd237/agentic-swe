@@ -1,0 +1,29 @@
+{
+  "task_id": "task_100",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "KeyAlreadyPresent when accessing valid TOML with repeated array tables under an out-of-order table",
+  "issue_text": "### Description\n\n`tomlkit.parse()` accepts a TOML document, but later accessing a parsed table with `doc.get(\"hooks\")` can raise:\n\n```text\ntomlkit.exceptions.KeyAlreadyPresent: Key \"Stop\" already exists.\n```\nThis happened with a valid TOML config that contains repeated array tables such as [[hooks.Stop]] plus sibling/subtables under [hooks].\n\nThe failure appears to happen while constructing an OutOfOrderTableProxy, not during parsing.\n\nObserved behavior\nThis code path fails:\n```python\nimport tom",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 505,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/505",
+    "candidate_id": "python_poetry_tomlkit_issue_505",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -61,6 +61,7 @@
 | `task_095` | `pallets/click#3125` | `click_version_repo` | `version_option(package_name=...)` 忽略显式包名 | `improved_v50` | `-` |
 | `task_097` | `pallets/click#3571` | `click_progressbar_repo` | `show_pos=True` 且 `update_min_steps` 不整除时结束态位置未显示完整进度 | `improved_v51` | `-` |
 | `task_099` | `pallets/jinja#2108` | `jinja_include_repo` | macro 内部 `include without context` 错误输出 generator repr | `improved_v52` | `-` |
+| `task_101` | `python-poetry/tomlkit#505` | `tomlkit_out_of_order_repo` | out-of-order table 访问阶段重复 array table 与同级子表共存时触发重复键异常 | `improved_v53` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -105,6 +106,7 @@
 - 版本选项元数据渲染与显式参数优先级
 - progressbar 结束态位置渲染与中间刷新位置解耦
 - macro 内部 include 渲染与 without-context 语义保真
+- out-of-order table 代理重建与 repeated array table 聚合语义保真
 
 ## 当前仍相对欠缺的方向
 

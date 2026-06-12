@@ -862,6 +862,22 @@
       "state": "OPEN",
       "created_at": "2025-09-24T10:54:44Z",
       "body_excerpt": "当前 `include ... without context` 放进 macro 后，会错误把 include 过程中的生成器对象直接转成字符串，最终输出 `<generator object ...>`，而不是 include 模板的实际内容。期望行为是 macro 内部的 without-context include 仍然输出模板内容，同时不泄漏调用方上下文。"
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_505",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 505,
+      "issue_title": "KeyAlreadyPresent when accessing valid TOML with repeated array tables under an out-of-order table",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/505",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T16:20:39: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T16:20:39: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T16:21:27: 已生成 semi_real 可运行任务 task_101，仓库目录为 benchmarks/repos/tomlkit_out_of_order_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2026-06-12T06:12:54Z",
+      "body_excerpt": "### Description\n\n`tomlkit.parse()` accepts a TOML document, but later accessing a parsed table with `doc.get(\"hooks\")` can raise:\n\n```text\ntomlkit.exceptions.KeyAlreadyPresent: Key \"Stop\" already exists.\n```\nThis happened with a valid TOML config that contains repeated array tables such as [[hooks.Stop]] plus sibling/subtables under [hooks].\n\nThe failure appears to happen while constructing an OutOfOrderTableProxy, not during parsing.\n\nObserved behavior\nThis code path fails:\n```python\nimport tom"
     }
   ]
 }

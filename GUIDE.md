@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v52` 多轮策略迭代，正式真实任务扩充到 `49` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v52` 已成功把 `v51` 的大部分环境级时延回升拉回，但 `frozen_40` 仍未回到长期阈值，因此稳定 `streak` 仍保持 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v53` 多轮策略迭代，正式真实任务扩充到 `50` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v53` 已继续把正式任务数推高，但相对 `v52` 的正式集与 `frozen_20` 平均耗时再次回升，因此稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -127,6 +127,69 @@ bug 设计如下：
 - 验证任务 JSON 结构是否完整
 - 检查目标 repo 是否存在
 - 输出当前任务的关键信息
+
+## Phase 6 最新补充
+
+### 1. 当前最新落地到 `improved_v53`
+
+这一轮新增的真实 issue 来自：
+
+- `python-poetry/tomlkit#505`
+
+新增产物：
+
+- `benchmarks/tasks/task_100.json`
+- `benchmarks/tasks/task_101.json`
+- `benchmarks/repos/tomlkit_out_of_order_repo/`
+- `optimization/policy_versions/improved_v53.json`
+
+当前最关键的新增能力：
+
+- agent 已能修复一种新的 tomlkit 代理重建问题
+- 场景是“重复 array table 与同级子表共存时，访问阶段错误触发 `KeyAlreadyPresent`”
+- 这让正式真实任务总数从 `49` 提升到 `50`
+
+### 2. 这一轮框架结构变化
+
+Phase 6 当前在真实任务扩容侧已经形成稳定模板：
+
+- 先导入 GitHub issue，生成 `real_issue` 草稿
+- 再生成 `semi_real` 可运行 repo
+- 在 `app/agent/patcher.py` 中补一条专用规则
+- 为每轮扩容生成新的 `optimization/policy_versions/improved_vXX.json`
+- 最后跑正式集、`frozen_20`、maturity 审计并同步文档
+
+最新新增的目录入口：
+
+- `benchmarks/repos/tomlkit_out_of_order_repo`
+
+### 3. 你现在可以怎么体验
+
+如果你想直接体验这轮新题，可以按下面顺序：
+
+1. 先看任务定义：
+   - `benchmarks/tasks/task_101.json`
+2. 再看最小 repo：
+   - `benchmarks/repos/tomlkit_out_of_order_repo`
+3. 先手工验证原始失败：
+   - `python -m pytest benchmarks/repos/tomlkit_out_of_order_repo/tests/test_proxy.py -q`
+4. 再跑单任务闭环：
+   - `python scripts/run_single_task.py --task benchmarks/tasks/task_101.json --policy optimization/policy_versions/improved_v53.json`
+5. 如果你想看全量扩容效果：
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v53.json --run-label realissuev53r1`
+
+### 4. 当前最准确的状态口径
+
+- 正式真实任务数：`50`
+- 当前稳定基线：`improved_v50`
+- 当前最新扩容版本：`improved_v53`
+- 当前 `frozen_40 streak`：`8`
+
+注意：
+
+- `v53` 这一轮是“扩容成功”
+- 但它不是新的稳定版本
+- 因为相对 `v52`，正式集与 `frozen_20` 的平均耗时都再次回升
 
 ## 当前框架结构
 
