@@ -7,15 +7,15 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v49`
+- 当前最新策略：`improved_v50`
 - 当前主分支最近重要能力：
-  - 已完成 `46` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `47` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
-  - 已在 `frozen_20` 上补齐一轮 `improved_v48 -> improved_v49` 无回归验证
-  - 已在正式 `46` 条真实任务集上补齐 `improved_v48 -> improved_v49` 全量验证
-  - 已在 `frozen_40` 上补齐一轮 `improved_v48 -> improved_v49` 无回归验证
-  - 已把 `pallets/click#3572` 从新来源候选推进为正式任务 `task_093`
+  - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
+  - 已在正式 `47` 条真实任务集上补齐 `improved_v49 -> improved_v50` 全量验证
+  - 已在 `frozen_40` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
+  - 已把 `pallets/click#3125` 从新来源候选推进为正式任务 `task_095`
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -45,7 +45,7 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v49.json --run-label realissuev49`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v50.json --run-label realissuev50`
 - 候选批量导入：
   - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
 - 时延回归分析：
@@ -59,7 +59,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`46`
+- 正式 `semi_real` 真实 issue 任务数：`47`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -72,7 +72,7 @@
 
 ## 当前候选池状态
 
-- `accepted = 46`
+- `accepted = 47`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -106,51 +106,51 @@
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v48 -> improved_v49`
+- 对比：`improved_v49 -> improved_v50`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_steps: 10.25 -> 10.25`
-  - `average_duration_sec: 0.5287 -> 0.5972`
+  - `average_duration_sec: 0.5972 -> 0.5672`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增 click confirm ANSI 清理规则没有破坏已有 `20` 条固定任务
-- 这一轮固定集平均耗时上升了 `0.0685s`，需要继续跟踪运行时抖动
+- 说明新增 click version_option package_name 规则没有破坏已有 `20` 条固定任务
+- 这一轮固定集平均耗时回落了 `0.03s`
 
 ### 3. 当前最新正式集证据
 
-- 对比：`improved_v48 -> improved_v49`
-- 任务集：扩容到正式 `46` 条
+- 对比：`improved_v49 -> improved_v50`
+- 任务集：扩容到正式 `47` 条
 - 结果：
-  - `success_count: 45 -> 46`
+  - `success_count: 46 -> 47`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.5241 -> 0.5869`
+  - `average_duration_sec: 0.5869 -> 0.5583`
 
 说明：
 
-- 这说明 `improved_v49` 不只是保住了 `v48` 的已有能力
-- 它还把正式真实任务集从 `45` 条稳定扩到 `46` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
-- 同时它让 `frozen_40` 连续无回归版本从 `6` 推进到 `7`
-- 因此当前主线基线已经从 `v48 / 45 条 + streak 6` 前进到 `v49 / 46 条 + streak 7`
+- 这说明 `improved_v50` 不只是保住了 `v49` 的已有能力
+- 它还把正式真实任务集从 `46` 条稳定扩到 `47` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
+- 同时它让 `frozen_40` 连续无回归版本从 `7` 推进到 `8`
+- 因此当前主线基线已经从 `v49 / 46 条 + streak 7` 前进到 `v50 / 47 条 + streak 8`
 
 ### 4. 最新时延分析结论
 
 - 扩容集分析：
-  - `logs/summaries/duration_compare_realissuev49_001.json`
-  - 公共 `45` 条任务平均耗时差值：`+0.0635s`
+  - `logs/summaries/duration_compare_realissuev50_001.json`
+  - 公共 `46` 条任务平均耗时差值：`-0.0287s`
 - `frozen_20` 分析：
-  - `logs/summaries/duration_compare_frozen20v49_001.json`
-  - 公共 `20` 条任务平均耗时差值：`+0.0685s`
+  - `logs/summaries/duration_compare_frozen20v50_001.json`
+  - 公共 `20` 条任务平均耗时差值：`-0.03s`
 - trace 热点分析：
-  - `logs/summaries/trace_hotspots_realissuev49_001.json`
-- 当前结果说明 `v49` 在继续扩容后仍保持功能稳定，但这轮出现了可见的时延回升
-- 正式扩容集公共 `45` 条任务平均耗时差值约 `+0.0635s`
-- `frozen_20` 公共 `20` 条任务平均耗时差值约 `+0.0685s`
-- 相比 `improved_v32` 基线，当前 `frozen_40` 复跑口径 `batch_eval_frozen40v49_002.json` 仍保持在长期约束内
+  - `logs/summaries/trace_hotspots_realissuev50_001.json`
+- 当前结果说明 `v50` 在继续扩容后仍保持功能稳定，而且这轮正式集与 `frozen_20` 耗时都有回落
+- 正式扩容集公共 `46` 条任务平均耗时差值约 `-0.0287s`
+- `frozen_20` 公共 `20` 条任务平均耗时差值约 `-0.03s`
+- 相比 `improved_v32` 基线，当前 `frozen_40` 复跑口径 `batch_eval_frozen40v50_002.json` 仍保持在长期约束内
 - 单任务历史分析：
   - `logs/summaries/task_history_task_040_003.json`
   - `task_040` 在 `improved_v31 -> improved_v32` 的历史平均耗时：`0.6213 -> 0.8171`

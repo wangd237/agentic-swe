@@ -1,0 +1,29 @@
+{
+  "task_id": "task_094",
+  "repo_name": "click",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`version_option` ignores `package_name`",
+  "issue_text": "当前版本选项渲染链路在构造版本字符串时，会错误忽略调用方显式传入的 `package_name`，仍回落到脚本名或命令名。这个真实 issue 需要让 `click.version_option(package_name=...)` 在版本输出中优先使用传入的包名，同时保持默认未传入 `package_name` 时的原有回落行为。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3125,
+    "issue_url": "https://github.com/pallets/click/issues/3125",
+    "candidate_id": "pallets_click_issue_3125",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

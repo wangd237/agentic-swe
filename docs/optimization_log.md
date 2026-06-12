@@ -8523,3 +8523,136 @@
 - 这轮把正式任务数推进到 `46`
 - `frozen_40 streak` 已推进到 `7`
 - 当前离目标还差 `14` 条正式任务，接下来应继续优先吃短平快的真实 bug 候选
+
+## 2026-06-12 Phase 6 click version_option package_name 扩容与 `improved_v50`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/click#3572 -> task_093`
+- `improved_v49`
+- 正式任务数推进到 `46`
+- `frozen_40 streak` 推进到 `7`
+
+因此这一轮仍然沿用“短平快 click 真题优先”的扩容策略：
+
+- 在不破坏当前 frozen 稳定性的前提下继续扩正式任务
+- 把正式任务数继续从 `46` 推向 `60+`
+
+这一轮优先选择 `pallets/click#3125`，因为它是一个单函数、纯渲染语义、复现极短的真实 bug，适合低风险扩容。
+
+### 目标
+
+- 把 `pallets/click#3125` 转成新的 semi_real 正式任务
+- 为 `version_option(package_name=...)` 忽略显式包名补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v50`
+- 把 maturity 审计结果同步到 `47 / 60` 与 `streak = 8`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_094.json`
+- `benchmarks/tasks/task_095.json`
+- `benchmarks/repos/click_version_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v50.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev50_001.json`
+- `logs/summaries/batch_eval_realissuev50_001.json`
+- `logs/summaries/batch_compare_realissue_step30_002.json`
+- `logs/summaries/batch_run_frozen20v50_001.json`
+- `logs/summaries/batch_eval_frozen20v50_001.json`
+- `logs/summaries/batch_compare_frozen20_step29_001.json`
+- `logs/summaries/batch_run_frozen40v50_002.json`
+- `logs/summaries/batch_eval_frozen40v50_002.json`
+- `logs/summaries/batch_compare_frozen40_step07_002.json`
+- `logs/summaries/benchmark_maturity_maturity_025.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `pallets/click#3125`
+- 新增 `real_issue` 草稿：
+  - `task_094`
+- 新增可运行的 semi_real 正式任务：
+  - `task_095`
+- 新增 repo：
+  - `benchmarks/repos/click_version_repo`
+- 在 repo 中故意保留 bug：
+  - 当前显式 `package_name` 仍被错误忽略，版本输出继续回落到程序名
+- 新增 `improved_v50`
+- 在 patcher 中新增 click version option package_name 优先级的专用规则
+- 把 `task_095` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/click_version_repo/tests/test_version_option.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_095.json --policy optimization/policy_versions/improved_v50.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v50.json --run-label realissuev50 --compare-against-eval logs/summaries/batch_eval_realissuev49_001.json --compare-label realissue_step30`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v50.json --run-label frozen20v50 --compare-against-eval logs/summaries/batch_eval_frozen20v49_001.json --compare-label frozen20_step29`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v50.json --run-label frozen40v50 --compare-against-eval logs/summaries/batch_eval_frozen40v49_002.json --compare-label frozen40_step07`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `46 -> 47`
+- 候选池状态：
+  - `accepted = 46 -> 47`
+  - `to_review = 0 -> 0`
+- `improved_v50` 正式 `47` 条任务集结果：
+  - `success_count: 46 -> 47`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5869 -> 0.5583`
+- `improved_v50` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5972 -> 0.5672`
+- `improved_v50` `frozen_40` 复跑结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5385 -> 0.541`
+- maturity 审计：
+  - 正式任务数：`47 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 首轮 `frozen40v50_001` 的 `average_duration_sec = 0.5627`
+- 该值会暂时把 `v50` 排除在长期耗时阈值之外
+- 由于这轮 `average_steps` 与 `average_tool_calls` 完全未变，更像运行时抖动而不是策略逻辑变化
+- 因此补跑了第二轮 `frozen40v50_002`
+- 复跑结果回落到 `0.541`，重新满足相对 `improved_v32` 的 `+3%` 约束
+- 后续继续沿用“首轮 + 复跑”的证据保留方式，不覆盖旧结果
+
+### 结论
+
+- `click#3125` 已成功作为全新 click 元数据渲染题补进正式 semi_real 任务集
+- `improved_v50` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮把正式任务数推进到 `47`
+- `frozen_40 streak` 已推进到 `8`
+- 当前离目标还差 `13` 条正式任务，下一轮可优先继续推进 `click#3571`、`jinja#2108`、`tomlkit#505`

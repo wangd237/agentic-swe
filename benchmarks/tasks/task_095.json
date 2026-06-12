@@ -1,0 +1,37 @@
+{
+  "task_id": "task_095",
+  "repo_name": "click_version_repo",
+  "repo_path": "benchmarks/repos/click_version_repo",
+  "issue_title": "`version_option` ignores `package_name`",
+  "issue_text": "当前 `render_version_output()` 在调用方显式传入 `package_name` 时，仍错误地优先使用程序名，导致版本输出中的名字不正确。semi-real 任务要求：显式 `package_name` 必须优先于程序名；未显式传入时继续回落到程序名；版本号渲染不回归。",
+  "test_command": "python -m pytest tests/test_version_option.py -q",
+  "success_criteria": "显式传入 `package_name` 时版本输出必须使用该包名；未传入时继续回落到程序名；版本号输出保持正确；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "click",
+    "version-option",
+    "metadata"
+  ],
+  "target_files_hint": [
+    "click_version_repo/version_option.py",
+    "tests/test_version_option.py"
+  ],
+  "expected_failure_test": "VersionOptionTests.test_explicit_package_name_is_used",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/click",
+    "repo_url": "https://github.com/pallets/click",
+    "issue_number": 3125,
+    "issue_url": "https://github.com/pallets/click/issues/3125",
+    "candidate_id": "pallets_click_issue_3125",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_094",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

@@ -58,6 +58,7 @@
 | `task_089` | `pallets/jinja#2165` | `jinja_map_default_repo` | `map(attribute=..., default=None)` 未回落 `None` 默认值 | `improved_v47` | `-` |
 | `task_091` | `pypa/packaging#1240` | `packaging_direct_url_repo` | file URL scheme 大小写与单斜杠形式校验错误 | `improved_v48` | `-` |
 | `task_093` | `pallets/click#3572` | `click_confirm_repo` | `confirm(color=False)` 未去除 ANSI 提示颜色 | `improved_v49` | `-` |
+| `task_095` | `pallets/click#3125` | `click_version_repo` | `version_option(package_name=...)` 忽略显式包名 | `improved_v50` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -99,6 +100,7 @@
 - filter 默认值语义与显式 `None` 回落一致性
 - URL scheme 规范化与 file URL 合法形式兼容性
 - prompt / confirm 输出链路中的 ANSI 清理一致性
+- 版本选项元数据渲染与显式参数优先级
 
 ## 当前仍相对欠缺的方向
 

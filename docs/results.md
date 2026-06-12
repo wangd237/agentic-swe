@@ -2742,14 +2742,66 @@ trace 热点分析结果：
   - `logs/summaries/benchmark_maturity_maturity_021.json`
   - `logs/summaries/benchmark_maturity_maturity_021.md`
 - 当前结果：
-  - 正式任务数：`46 / 60`
+  - 正式任务数：`47 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`40 / 40`
-  - `frozen_40` 连续无回归版本：`7`
+  - `frozen_40` 连续无回归版本：`8`
 - 结论：
-  - 当前已经把正式任务数推进到 `46`
+  - 当前已经把正式任务数推进到 `47`
   - `frozen_40` 的连续稳定性证据仍在继续增长
-  - 下一阶段的关键是继续补新任务，把规模缺口从 `14` 条继续压缩
+  - 下一阶段的关键是继续补新任务，把规模缺口从 `13` 条继续压缩
+
+`improved_v50` 正式 47 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v50.json`
+- 新增任务：
+  - `benchmarks/tasks/task_095.json`
+- 新增 repo：
+  - `benchmarks/repos/click_version_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev50_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev50_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step30_002.json`
+- 指标：
+  - `task_count`: `46 -> 47`
+  - `success_count`: `46 -> 47`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5869 -> 0.5583`
+- 结论：
+  - 这说明 `click#3125` 已成功转化为正式第 `47` 条 semi_real 任务
+  - `improved_v50` 在扩容后继续保持全量成功
+  - 这一轮正式集平均耗时回落了 `0.0286s`
+
+`improved_v50` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v50_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v50_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step29_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5972 -> 0.5672`
+- 结论：
+  - 这说明 `improved_v50` 在固定 `20` 条真实任务上继续无功能回归
+  - 固定集平均耗时回落了 `0.03s`
+
+`improved_v50` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen40v50_001.json`
+  - 复跑 batch eval：`logs/summaries/batch_eval_frozen40v50_002.json`
+  - 复跑 compare：`logs/summaries/batch_compare_frozen40_step07_002.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - 复跑口径 `average_duration_sec`: `0.5385 -> 0.541`
+- 结论：
+  - `frozen_40` 在功能上继续无回归
+  - 首轮评测存在运行时抖动，复跑后重新落回长期阈值内
+  - 因此当前 `frozen_40 streak` 已推进到 `8`
 
 `improved_v49` 正式 46 条真实 issue 任务集验证：
 
