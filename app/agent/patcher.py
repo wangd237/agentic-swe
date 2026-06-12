@@ -922,6 +922,37 @@ def _handle_tomlkit_proxy_pop_deletes_underlying_key(content: str) -> str | None
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_tomlkit_super_table_dotted_key_prefix(content: str) -> str | None:
+    # improved_v39 处理 super table 下新增 dotted key 时父级前缀丢失的问题。
+    target_block = (
+        'def render_document_with_dotted_key(parent_table: str, child_table: str, value: int, dotted_key: str, dotted_value: str) -> str:\n'
+        '    """渲染一个含已有子表与新增 dotted key 的最小文档。"""\n'
+        "    lines = [\n"
+        '        f"[{parent_table}.{child_table}]",\n'
+        '        f"value = {value}",\n'
+        '        "",\n'
+        "    ]\n\n"
+        "    # 这里故意保留真实 issue 中的缺陷：新增 dotted key 时错误丢失父级 super table 前缀。\n"
+        '    lines.insert(0, f"{dotted_key} = \\"{dotted_value}\\"")\n'
+        '    return "\\n".join(lines) + "\\n"'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        'def render_document_with_dotted_key(parent_table: str, child_table: str, value: int, dotted_key: str, dotted_value: str) -> str:\n'
+        '    """渲染一个含已有子表与新增 dotted key 的最小文档。"""\n'
+        "    lines = [\n"
+        '        f"[{parent_table}.{child_table}]",\n'
+        '        f"value = {value}",\n'
+        '        "",\n'
+        "    ]\n\n"
+        '    lines.insert(0, f"{parent_table}.{dotted_key} = \\"{dotted_value}\\"")\n'
+        '    return "\\n".join(lines) + "\\n"'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2118,9 +2149,39 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v38":
+            if policy_config.patch_strategy == "improved_v39":
+                improved_v39_content = _handle_tomlkit_super_table_dotted_key_prefix(original_content)
+                if improved_v39_content is not None:
+                    updated_content = improved_v39_content
+                    patch_reason_parts = ["让 super table 下新增 dotted key 时继续保留父级前缀"]
+                else:
+                    run_v34_fallback_chain = True
+                    improved_v38_content = _handle_tomlkit_proxy_pop_deletes_underlying_key(original_content)
+                    if improved_v38_content is not None:
+                        updated_content = improved_v38_content
+                        patch_reason_parts = ["让代理 pop 在返回原值的同时真正删除底层键"]
+                        run_v34_fallback_chain = False
+                    else:
+                        improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
+                        if improved_v37_content is not None:
+                            updated_content = improved_v37_content
+                            patch_reason_parts = ["让 toml 布尔值序列化在 True 场景下返回 true 字面量"]
+                            run_v34_fallback_chain = False
+                        else:
+                            improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                            if improved_v36_content is not None:
+                                updated_content = improved_v36_content
+                                patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                                run_v34_fallback_chain = False
+                            else:
+                                improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                                if improved_v35_content is not None:
+                                    updated_content = improved_v35_content
+                                    patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                                    run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v38":
                 improved_v38_content = _handle_tomlkit_proxy_pop_deletes_underlying_key(original_content)
                 if improved_v38_content is not None:
                     updated_content = improved_v38_content

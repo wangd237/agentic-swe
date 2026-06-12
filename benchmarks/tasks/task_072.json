@@ -1,0 +1,29 @@
+{
+  "task_id": "task_072",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Add DottedKey to a super table gives wrong output",
+  "issue_text": "当前在一个已经存在的 super table 上新增 dotted key 时，渲染逻辑错误地把新增键提到了顶层，导致输出缺失父级前缀。这个真实 issue 需要让 dotted key 继续保留所属 super table 的上下文，输出中的完整路径不能丢失。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 431,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/431",
+    "candidate_id": "python_poetry_tomlkit_issue_431",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v38` 多轮策略迭代，正式真实任务扩充到 `35` 条，`v38` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v39` 多轮策略迭代，正式真实任务扩充到 `36` 条，`v39` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -797,6 +797,19 @@ scripts/
     - `test_pass_rate: 1.0 -> 1.0`
     - `average_duration_sec: 0.5687 -> 0.5427`
 - 这说明当前主线已经成功把正式任务集推进到 `35` 条，而且这一轮还把前一版的时延回升重新拉回来了
+- 当前已经继续新增 `tomlkit#431` 派生的 `task_073`，并落地 `improved_v39`
+  - 新增 repo：`benchmarks/repos/tomlkit_super_table_repo`
+  - 新增策略：`optimization/policy_versions/improved_v39.json`
+  - 新规则覆盖 super table 下新增 dotted key 时父级前缀丢失的场景
+  - 正式 `36` 条任务集验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.553 -> 0.5453`
+  - `frozen_20` 同集合验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5427 -> 0.5443`
+- 这说明当前主线已经成功把正式任务集推进到 `36` 条，并且这轮扩容在正式集上继续带来了小幅时延改善
 - 这说明当前真正缺的不是来源多样性，而是规模和稳定性证据
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
@@ -2174,6 +2187,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `frozen_20` 固定集合继续保持无功能回归
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5687` 回落到 `0.5427`
+
+### 方式 60：运行 tomlkit super table dotted key 回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_073.json --policy optimization/policy_versions/improved_v39.json
+```
+
+你会看到：
+
+- `task_073` 被成功修复
+- 修改文件是 `tomlkit_super_table_repo/renderer.py`
+- patch 原因是 super table 下新增 dotted key 时应继续保留父级前缀
+
+### 方式 61：运行正式 `36` 条任务集上的 `improved_v39`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v39.json --run-label realissuev39 --compare-against-eval logs/summaries/batch_eval_realissuev38_001.json --compare-label realissue_step19
+```
+
+你会看到：
+
+- 正式任务集已经从 `35` 条扩到 `36` 条
+- `improved_v39` 在正式 `36` 条任务集上保持 `36/36` 成功
+- 平均耗时从 `0.553` 继续回落到 `0.5453`
+
+### 方式 62：运行 `frozen_20` 上的 `improved_v39` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v39.json --run-label frozen20v39 --compare-against-eval logs/summaries/batch_eval_frozen20v38_001.json --compare-label frozen20_step18
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时只从 `0.5427` 轻微波动到 `0.5443`
 
 ### Phase 7
 

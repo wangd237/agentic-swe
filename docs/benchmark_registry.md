@@ -47,6 +47,7 @@
 | `task_067` | `pypa/packaging#909` | `packaging_tag_order_repo` | wheel compressed tag set 未排序时仍被错误接受 | `improved_v36` | `-` |
 | `task_069` | `python-poetry/tomlkit#442` | `tomlkit_boolean_repo` | `boolean(True)` 被错误序列化为 `false` | `improved_v37` | `-` |
 | `task_071` | `python-poetry/tomlkit#383` | `tomlkit_proxy_repo` | `OutOfOrderTableProxy.pop()` 未同步删除底层键 | `improved_v38` | `-` |
+| `task_073` | `python-poetry/tomlkit#431` | `tomlkit_super_table_repo` | super table 下新增 dotted key 时父级前缀丢失 | `improved_v39` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -77,11 +78,11 @@
 - CLI 命令解析回落
 - TOML 布尔字面量序列化
 - 代理容器删除语义
+- super table / dotted key 组合渲染
 
 ## 当前仍相对欠缺的方向
 
 - profile 驱动的排序 / 分派语义
-- super table / dotted key 组合渲染
 - async runtime 表示层与告警边界
 
 ## 相关文件

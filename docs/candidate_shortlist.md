@@ -9,14 +9,7 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 2
-
-### `python-poetry/tomlkit#431`
-
-- 原因：
-  - dotted key + super table 的渲染输出差异非常明确
-  - 与现有 `tomlkit` 两条任务相比，新增了 super table / dotted key 组合语义
-  - 仍然是单模块渲染逻辑，不会把修复边界拉太大
+## 当前 Top 1
 
 ### `pallets/jinja#2151`
 
@@ -100,6 +93,12 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_070 / task_071`
+
+### `python-poetry/tomlkit#431`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_072 / task_073`
 
 ### `dateutil/dateutil#1191`
 

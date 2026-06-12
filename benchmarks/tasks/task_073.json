@@ -1,0 +1,37 @@
+{
+  "task_id": "task_073",
+  "repo_name": "tomlkit_super_table_repo",
+  "repo_path": "benchmarks/repos/tomlkit_super_table_repo",
+  "issue_title": "Add DottedKey to a super table gives wrong output",
+  "issue_text": "当前在已存在的 super table 上新增 dotted key 时，渲染结果把新键错误提升到顶层，导致 `output.csv.path` 被写成 `csv.path`。semi-real 任务要求：新增 dotted key 后应保留父级 `output` 前缀，其他已有子表渲染不能回归，且回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_renderer.py -q",
+  "success_criteria": "在 super table 上新增 dotted key 后，输出应继续保留完整前缀路径，例如 `output.csv.path = \"output.csv\"`；已有 `output.netcdf_scalar` 子表保持不变；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "renderer",
+    "dotted-key"
+  ],
+  "target_files_hint": [
+    "tomlkit_super_table_repo/renderer.py",
+    "tests/test_renderer.py"
+  ],
+  "expected_failure_test": "SuperTableRendererTests.test_dotted_key_keeps_super_table_prefix",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 431,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/431",
+    "candidate_id": "python_poetry_tomlkit_issue_431",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_072",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
