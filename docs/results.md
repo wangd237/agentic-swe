@@ -2208,6 +2208,61 @@ trace 热点分析结果：
   - 当前又向目标推进了 `1` 条正式任务
   - 下一阶段可以继续优先处理 `jinja#2176`，并在任务数接近 `40` 时启动 `frozen_40`
 
+`improved_v41` 正式 38 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v41.json`
+- 新增任务：
+  - `benchmarks/tasks/task_077.json`
+- 新增 repo：
+  - `benchmarks/repos/jinja_indent_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev41_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev41_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step21_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev41_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev41_001.json`
+- 指标：
+  - `task_count`: `37 -> 38`
+  - `success_count`: `37 -> 38`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5717 -> 0.5173`
+- 结论：
+  - 这说明 `jinja#2176` 已成功转化为正式第 `38` 条 semi_real 任务
+  - `improved_v41` 在扩容后继续保持全量成功
+  - 并且这轮把 `v40` 的平均耗时回升回收了 `0.0544s`
+
+`improved_v41` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v41_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v41_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step20_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v41_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v41_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5682 -> 0.5185`
+- 结论：
+  - 这说明 `improved_v41` 在固定 `20` 条真实任务上继续无功能回归
+  - 并且固定集平均耗时也回落了 `0.0497s`
+
+`Benchmark Maturity v1` 最新量化审计更新：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_012.json`
+  - `logs/summaries/benchmark_maturity_maturity_012.md`
+- 当前结果：
+  - 正式任务数：`38 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续无回归版本：`0 / 5`
+- 结论：
+  - 当前高优先级 shortlist 已经清空
+  - 下一阶段更应该转向扩新来源，并同步规划 `frozen_40`
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：

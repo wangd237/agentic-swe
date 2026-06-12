@@ -23,7 +23,7 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`37 / 60`
+  - 正式任务数：`38 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`
@@ -41,7 +41,7 @@
 - 至少保留 `1` 份 compare 报告
 - 报告里明确记录成功率、测试通过率和 taxonomy 变化
 
-### 2. 继续扩容正式任务，朝 `40+` 再到 `60+`
+### 2. 继续扩新来源并扩容正式任务，朝 `40+` 再到 `60+`
 
 目标：
 
@@ -56,9 +56,10 @@
 - 新任务进入 `benchmarks/manifests/real_issue_tasks.json`
 - 扩容后仍保持任务集整体稳定
 
-当前优先候选：
+当前状态：
 
-- `pallets/jinja#2176`
+- 当前高优先级 shortlist 已清空
+- 下一轮应先补新的 GitHub issue 来源，再选择最合适的 `1` 到 `3` 条推进
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
@@ -123,7 +124,10 @@
 - 已新增 `improved_v40`，在 `improved_v39` 基础上补充 AsyncLoopContext.__repr__ 的 async 表示层修复规则
 - 已在 `frozen_20` 上验证 `improved_v40`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5443 -> 0.5682`
 - 已在正式 `37` 条任务集上验证 `improved_v40`：`success_count = 36 -> 37`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5453 -> 0.5717`
-- 当前可以把 `v40` 视为继续扩容的候选基线，但需要继续跟踪这轮时延回升
+- 已新增 `improved_v41`，在 `improved_v40` 基础上补充 jinja indent 首行空白与 `blank=False` 交互规则
+- 已在 `frozen_20` 上验证 `improved_v41`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5682 -> 0.5185`
+- 已在正式 `38` 条任务集上验证 `improved_v41`：`success_count = 37 -> 38`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5717 -> 0.5173`
+- 当前可以把 `v41` 视为继续扩容与规划 `frozen_40` 的候选基线
 
 ### 4. 持续清理候选池
 
@@ -143,7 +147,7 @@
 
 1. 先看 `docs/candidate_shortlist.md`
 2. 用 `scripts/import_issue_batch.py` 导入一批新来源 issue
-3. 确认下一条要推进的 issue
+3. 从新来源里确认下一条要推进的 issue
 4. 生成 draft task 和 semi_real repo
 5. 补 patch 规则与 policy
 6. 跑单任务分辨测试
@@ -161,19 +165,19 @@
 18. 跑一轮 `python -m scripts.analyze_benchmark_maturity --run-label maturity` 更新量化缺口
 19. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
 
-## 当前推荐下一条 issue 候选
+## 当前推荐下一阶段动作
 
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v40` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+2. 以 `improved_v41` 为候选基线，继续扩正式任务数并构建 `frozen_40`
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
-- 当前 `jinja#2151` 已经落地为 `task_075`
-- 当前新的候选库存仍需继续消化，剩余 `to_review = 1`
-- 因此下一轮更应该优先“吃库存”，而不是继续先扩更多来源
+- 当前 `jinja#2176` 已经落地为 `task_077`
+- 当前新的候选库存已清空高优先级存量，`to_review = 0`
+- 因此下一轮更应该优先“扩新来源 + 规划 frozen_40”，而不是继续消化旧 shortlist
 
 详细理由见：
 

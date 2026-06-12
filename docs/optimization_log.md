@@ -7356,3 +7356,120 @@
 - `frozen_40` 还没有开始构建
 - 下一轮应继续优先处理剩余 shortlist 候选：
   - `pallets/jinja#2176`
+
+## 2026-06-12 Phase 6 jinja indent 首行空白扩容与 `improved_v41`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/jinja#2151 -> task_075`
+- `improved_v40`
+- 正式任务数推进到 `37`
+
+因此这一轮继续消化最后一个高优先级 shortlist 候选 `pallets/jinja#2176`，并顺手验证能否把 `v40` 的时延回升一起回收。
+
+### 目标
+
+- 把 `pallets/jinja#2176` 转成新的 semi_real 正式任务
+- 为 `indent` filter 在 `first=True` 且首行为空时错误无视 `blank=False` 的场景补一条规则型修复能力
+- 在正式扩容集与 `frozen_20` 上同时验证 `improved_v41`
+- 把 maturity 审计结果同步到 `38 / 60`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_076.json`
+- `benchmarks/tasks/task_077.json`
+- `benchmarks/repos/jinja_indent_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v41.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev41_001.json`
+- `logs/summaries/batch_eval_realissuev41_001.json`
+- `logs/summaries/batch_compare_realissue_step21_002.json`
+- `logs/summaries/batch_run_frozen20v41_001.json`
+- `logs/summaries/batch_eval_frozen20v41_001.json`
+- `logs/summaries/batch_compare_frozen20_step20_001.json`
+- `logs/summaries/benchmark_maturity_maturity_012.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `jinja#2176` 的 `real_issue` 草稿：
+  - `task_076`
+- 新增可运行的 semi_real 正式任务：
+  - `task_077`
+- 新增 repo：
+  - `benchmarks/repos/jinja_indent_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `indent_text()` 在 `first=True` 且首行为空时，错误地无视 `blank=False`
+- 新增 `improved_v41`
+- 在 patcher 中新增 indent 首行空白处理的专用规则
+- 把 `task_077` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/jinja_indent_repo/tests/test_filters.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_077.json --policy optimization/policy_versions/improved_v41.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v41.json --run-label realissuev41 --compare-against-eval logs/summaries/batch_eval_realissuev40_001.json --compare-label realissue_step21`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v41.json --run-label frozen20v41 --compare-against-eval logs/summaries/batch_eval_frozen20v40_001.json --compare-label frozen20_step20`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `37 -> 38`
+- 候选池状态：
+  - `accepted = 37 -> 38`
+  - `to_review = 1 -> 0`
+- `improved_v41` 正式 `38` 条任务集结果：
+  - `success_count: 37 -> 38`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5717 -> 0.5173`
+- `improved_v41` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5682 -> 0.5185`
+- 时延分析：
+  - 正式集公共 `37` 条任务平均耗时差值：`-0.054s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`-0.0497s`
+- maturity 审计：
+  - 正式任务数：`38 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`20 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `jinja#2176` 已成功从候选进入正式 semi_real 任务集
+- `improved_v41` 在扩容后继续保持正式集和固定集双线无功能回归
+- 并且这轮还明显回收了 `v40` 的时延回升
+- 当前高优先级 shortlist 已清空，主线该切换到：
+  - 扩新来源
+  - 构建 `frozen_40`
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有明显距离
+- `frozen_40` 还没有开始构建
+- 下一轮应优先补新的 GitHub issue 来源，并开始规划哪些任务进入 `frozen_40`

@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v40` 多轮策略迭代，正式真实任务扩充到 `37` 条，`v40` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v41` 多轮策略迭代，正式真实任务扩充到 `38` 条，`v41` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -2285,6 +2285,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5443` 回升到 `0.5682`
 
+### 方式 66：运行 jinja indent 首行空白回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_077.json --policy optimization/policy_versions/improved_v41.json
+```
+
+你会看到：
+
+- `task_077` 被成功修复
+- 修改文件是 `jinja_indent_repo/filters.py`
+- patch 原因是 `first=True` 时，空白首行仍应继续遵守 `blank=False`
+
+### 方式 67：运行正式 `38` 条任务集上的 `improved_v41`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v41.json --run-label realissuev41 --compare-against-eval logs/summaries/batch_eval_realissuev40_001.json --compare-label realissue_step21
+```
+
+你会看到：
+
+- 正式任务集已经从 `37` 条扩到 `38` 条
+- `improved_v41` 在正式 `38` 条任务集上保持 `38/38` 成功
+- 平均耗时从 `0.5717` 回落到 `0.5173`
+
+### 方式 68：运行 `frozen_20` 上的 `improved_v41` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v41.json --run-label frozen20v41 --compare-against-eval logs/summaries/batch_eval_frozen20v40_001.json --compare-label frozen20_step20
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时从 `0.5682` 回落到 `0.5185`
+
 ### Phase 7
 
 - 在主线稳定后，尝试轻量 SFT / preference / LoRA 实验
@@ -2319,4 +2361,6 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
 - 用新增的时延分析脚本定位最近几轮 `average_duration_sec` 回升原因
 - 沿 `run_tests` 链继续定位系统性时延回升来源
+- 扩新来源，把正式真实任务从 `38` 条继续推向 `40+` 再到 `60+`
+- 开始设计并构建 `frozen_40`
 - 继续追加优化前后差异说明

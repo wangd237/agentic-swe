@@ -49,6 +49,7 @@
 | `task_071` | `python-poetry/tomlkit#383` | `tomlkit_proxy_repo` | `OutOfOrderTableProxy.pop()` 未同步删除底层键 | `improved_v38` | `-` |
 | `task_073` | `python-poetry/tomlkit#431` | `tomlkit_super_table_repo` | super table 下新增 dotted key 时父级前缀丢失 | `improved_v39` | `-` |
 | `task_075` | `pallets/jinja#2151` | `jinja_async_repr_repo` | `AsyncLoopContext.__repr__` 暴露协程对象并触发未 awaited 警告 | `improved_v40` | `-` |
+| `task_077` | `pallets/jinja#2176` | `jinja_indent_repo` | `indent` 首行空白时错误无视 `blank=False` | `improved_v41` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -81,11 +82,11 @@
 - 代理容器删除语义
 - super table / dotted key 组合渲染
 - async runtime 表示层
+- filter 参数交互边界
 
 ## 当前仍相对欠缺的方向
 
 - profile 驱动的排序 / 分派语义
-- filter 参数组合边界
 
 ## 相关文件
 

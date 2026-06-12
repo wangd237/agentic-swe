@@ -1,0 +1,29 @@
+{
+  "task_id": "task_076",
+  "repo_name": "jinja",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`indent` filter ignores `blank`=`False` when `first`=`True` on first line",
+  "issue_text": "当前 `indent` filter 在 `first=True` 且首行为空时，仍然错误地缩进了第一行，即便 `blank=False`。这个真实 issue 需要让空白首行继续遵守 `blank=False` 的语义，不应因为 `first=True` 就额外生成空白缩进。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2176,
+    "issue_url": "https://github.com/pallets/jinja/issues/2176",
+    "candidate_id": "pallets_jinja_issue_2176",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

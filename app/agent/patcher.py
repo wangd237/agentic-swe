@@ -983,6 +983,50 @@ def _handle_jinja_async_loop_repr(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_jinja_indent_blank_first_line(content: str) -> str | None:
+    # improved_v41 处理 indent 在 first=True 且首行为空时错误无视 blank=False 的问题。
+    target_block = (
+        'def indent_text(text: str, width: int, *, first: bool = False, blank: bool = False) -> str:\n'
+        '    """给文本增加固定缩进。"""\n'
+        '    prefix = " " * width\n'
+        '    lines = text.splitlines(keepends=True) or [text]\n\n'
+        '    result: list[str] = []\n'
+        '    for index, line in enumerate(lines):\n'
+        '        is_first_line = index == 0\n'
+        '        is_blank_line = line.strip() == ""\n\n'
+        '        # 这里故意保留真实 issue 中的缺陷：只要 first=True 就会缩进第一行，即便它是空白行且 blank=False。\n'
+        '        should_indent = (first and is_first_line) or (blank or not is_blank_line)\n'
+        '        if should_indent:\n'
+        '            result.append(f"{prefix}{line}")\n'
+        '        else:\n'
+        '            result.append(line)\n\n'
+        '    return "".join(result)'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        'def indent_text(text: str, width: int, *, first: bool = False, blank: bool = False) -> str:\n'
+        '    """给文本增加固定缩进。"""\n'
+        '    prefix = " " * width\n'
+        '    lines = text.splitlines(keepends=True) or [text]\n\n'
+        '    result: list[str] = []\n'
+        '    for index, line in enumerate(lines):\n'
+        '        is_first_line = index == 0\n'
+        '        is_blank_line = line.strip() == ""\n\n'
+        '        if is_first_line:\n'
+        '            should_indent = (not is_blank_line) or blank\n'
+        '        else:\n'
+        '            should_indent = blank or not is_blank_line\n'
+        '        if should_indent:\n'
+        '            result.append(f"{prefix}{line}")\n'
+        '        else:\n'
+        '            result.append(line)\n\n'
+        '    return "".join(result)'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2179,9 +2223,51 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v40":
+            if policy_config.patch_strategy == "improved_v41":
+                improved_v41_content = _handle_jinja_indent_blank_first_line(original_content)
+                if improved_v41_content is not None:
+                    updated_content = improved_v41_content
+                    patch_reason_parts = ["让 indent 在首行为空且 blank=False 时不再错误缩进"]
+                else:
+                    run_v34_fallback_chain = True
+                    improved_v40_content = _handle_jinja_async_loop_repr(original_content)
+                    if improved_v40_content is not None:
+                        updated_content = improved_v40_content
+                        patch_reason_parts = ["让 AsyncLoopContext 的 repr 不再暴露协程对象"]
+                        run_v34_fallback_chain = False
+                    else:
+                        improved_v39_content = _handle_tomlkit_super_table_dotted_key_prefix(original_content)
+                        if improved_v39_content is not None:
+                            updated_content = improved_v39_content
+                            patch_reason_parts = ["让 super table 下新增 dotted key 时继续保留父级前缀"]
+                            run_v34_fallback_chain = False
+                        else:
+                            improved_v38_content = _handle_tomlkit_proxy_pop_deletes_underlying_key(original_content)
+                            if improved_v38_content is not None:
+                                updated_content = improved_v38_content
+                                patch_reason_parts = ["让代理 pop 在返回原值的同时真正删除底层键"]
+                                run_v34_fallback_chain = False
+                            else:
+                                improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
+                                if improved_v37_content is not None:
+                                    updated_content = improved_v37_content
+                                    patch_reason_parts = ["让 toml 布尔值序列化在 True 场景下返回 true 字面量"]
+                                    run_v34_fallback_chain = False
+                                else:
+                                    improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                                    if improved_v36_content is not None:
+                                        updated_content = improved_v36_content
+                                        patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                                        run_v34_fallback_chain = False
+                                    else:
+                                        improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                                        if improved_v35_content is not None:
+                                            updated_content = improved_v35_content
+                                            patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                                            run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v40":
                 improved_v40_content = _handle_jinja_async_loop_repr(original_content)
                 if improved_v40_content is not None:
                     updated_content = improved_v40_content

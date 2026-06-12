@@ -1,0 +1,37 @@
+{
+  "task_id": "task_077",
+  "repo_name": "jinja_indent_repo",
+  "repo_path": "benchmarks/repos/jinja_indent_repo",
+  "issue_title": "`indent` filter ignores `blank`=`False` when `first`=`True` on first line",
+  "issue_text": "当前 `indent_text()` 在 `first=True` 且首行为空时，错误地无视 `blank=False`，直接把第一行缩进成若干空格。semi-real 任务要求：空白首行仍应遵守 `blank=False`，因此输出应保持空串；同时非空首行在 `first=True` 时仍应被正常缩进，且回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_filters.py -q",
+  "success_criteria": "当 `first=True` 且首行为空时，如果 `blank=False`，输出不应额外生成缩进空格；非空首行仍应被正常缩进；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jinja",
+    "indent",
+    "filter"
+  ],
+  "target_files_hint": [
+    "jinja_indent_repo/filters.py",
+    "tests/test_filters.py"
+  ],
+  "expected_failure_test": "IndentTests.test_empty_first_line_respects_blank_false",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2176,
+    "issue_url": "https://github.com/pallets/jinja/issues/2176",
+    "candidate_id": "pallets_jinja_issue_2176",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_076",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
