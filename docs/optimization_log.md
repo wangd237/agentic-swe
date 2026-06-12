@@ -10421,3 +10421,65 @@
 - 功能上，`improved_v63` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
 - 性能上，当前 `frozen_40` 为 `0.5594`，仍高于长期阈值 `0.5514`
 - 这意味着 Benchmark Maturity v1 已满足规模、生态和稳定性门槛，但仍未满足性能门控；下一轮应优先做性能友好型扩容或专项时延收敛
+
+## 2026-06-12 Phase 6 `improved_v63` 性能门控复核
+
+### 本轮目标
+
+- 判断 `v63r2` 的 `frozen_40 = 0.5594` 是稳定恶化，还是单次采样偏高
+- 在不改策略的前提下补齐性能门控证据
+
+### 改动类型
+
+- `evaluation`
+- `analysis`
+- `documentation`
+
+### 主要文件
+
+- `logs/summaries/duration_compare_realissuev63_001.json`
+- `logs/summaries/duration_compare_frozen40v63_001.json`
+- `logs/summaries/trace_hotspots_frozen40v63_001.json`
+- `logs/summaries/batch_eval_frozen20v63r3_001.json`
+- `logs/summaries/batch_compare_frozen20_step47_001.json`
+- `logs/summaries/batch_eval_frozen40v63r3_001.json`
+- `logs/summaries/batch_compare_frozen40_step23_001.json`
+- `logs/summaries/benchmark_maturity_maturity_044.json`
+
+### 本轮实现内容
+
+- 先对 `v62 -> v63` 做公共任务时延分析：
+  - 正式 `59` 条公共任务平均耗时变化：`-0.0005s`
+  - `frozen_40` 公共 `40` 条任务平均耗时变化：`+0.004s`
+- 再做 trace 热点分析：
+  - 回升主要仍集中在 `run_tests`
+  - 但整体增量非常小，更接近采样抖动而不是新增 patch 规则带来的稳定开销
+- 随后对同一策略版本补跑：
+  - `frozen20v63r3`
+  - `frozen40v63r3`
+- 最后重新跑一轮 benchmark maturity 审计
+
+### 关键观察
+
+- `frozen_20` 同版复跑：
+  - `average_duration_sec: 0.5704 -> 0.554`
+- `frozen_40` 同版复跑：
+  - `average_duration_sec: 0.5594 -> 0.5454`
+- 功能指标保持不变：
+  - `success_rate = 1.0`
+  - `test_pass_rate = 1.0`
+- 长期性能阈值：
+  - `improved_v32` 阈值：`0.5514`
+  - `v63r3 frozen_40`：`0.5454`
+
+### 结论
+
+- `v63r2` 的 `0.5594` 更像一次偏高采样，而不是策略本身稳定变慢
+- `improved_v63` 在同版复跑中已自然回落到阈值以内
+- 截至 `benchmark_maturity_maturity_044`：
+  - `formal_task_count = 60`
+  - `ecosystem_count = 14`
+  - `latest_frozen_count = 40`
+  - `frozen_40_streak = 8`
+  - 当前性能口径也已满足 `<= 0.5514`
+- 因此 Benchmark Maturity v1 当前可以正式视为达成

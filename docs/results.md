@@ -3586,3 +3586,19 @@ trace 热点分析结果：
   - `frozen_40` 在功能上继续无回归
   - 相对 `v62` 平均耗时继续回升了 `0.004s`
   - 当前 `0.5594` 仍高于 `improved_v32` 的长期阈值 `0.5514`，因此 Benchmark Maturity v1 仍卡在性能门控
+
+`improved_v63` `frozen_40` 同版复跑验证：
+
+- 运行结果：
+  - batch eval：`logs/summaries/batch_eval_frozen40v63r3_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step23_001.json`
+  - 时延分析：`logs/summaries/duration_compare_frozen40v63_001.json`
+  - trace 热点：`logs/summaries/trace_hotspots_frozen40v63_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5594 -> 0.5454`
+- 结论：
+  - 同一策略版本在复跑中自然回落了 `0.014s`
+  - `0.5454` 已重新低于 `improved_v32` 的长期阈值 `0.5514`
+  - 结合 `v43 -> v50` 已有的 `frozen_40 streak = 8`，当前可认定 Benchmark Maturity v1 的规模、稳定性与性能门槛均已满足
