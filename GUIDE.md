@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v46` 多轮策略迭代，正式真实任务扩充到 `43` 条，已建立 `frozen_40 v1`，`v46` 已通过正式集、`frozen_20` 与 `frozen_40` 验证，并把 `frozen_40 streak` 推进到 `4 / 5` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v47` 多轮策略迭代，正式真实任务扩充到 `44` 条，已建立 `frozen_40 v1`，`v47` 已通过正式集、`frozen_20` 与 `frozen_40` 验证，并把 `frozen_40 streak` 推进到 `5 / 5` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容

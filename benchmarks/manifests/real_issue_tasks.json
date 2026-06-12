@@ -44,6 +44,7 @@
     "benchmarks/tasks/task_081.json",
     "benchmarks/tasks/task_083.json",
     "benchmarks/tasks/task_085.json",
-    "benchmarks/tasks/task_087.json"
+    "benchmarks/tasks/task_087.json",
+    "benchmarks/tasks/task_089.json"
   ]
 }

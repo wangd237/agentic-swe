@@ -747,6 +747,22 @@
       "body_excerpt": "当解析 `a.b.c = \"d\"` 与 `a.b.e = \"f\"` 这样的 dotted key 文档后，访问代理视图再执行 `repr()` 时，会漏掉较早的子项，只显示最后一个键。期望行为是 `repr` 与真实嵌套结构保持一致，完整保留所有子项。"
     },
     {
+      "candidate_id": "pallets_jinja_issue_2165",
+      "repo_full_name": "pallets/jinja",
+      "repo_url": "https://github.com/pallets/jinja",
+      "issue_number": 2165,
+      "issue_title": "`[{}] | map(attribute = \"foo\", default = None)` still fails",
+      "issue_url": "https://github.com/pallets/jinja/issues/2165",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T17:42:00: 通过 GitHub 公共 API 手工补录为新候选来源。\n2026-06-12T17:46:00: 已生成 real_issue task 草稿 task_088，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T17:49:00: 已生成 semi_real 可运行任务 task_089，仓库目录为 benchmarks/repos/jinja_map_default_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2026-05-04T19:41:02Z",
+      "body_excerpt": "当前 `map(attribute=..., default=...)` 在属性缺失时，本应回落到提供的默认值；但当默认值是 `None` 时，却被错误当成“没有提供默认值”，仍然抛出属性缺失错误。期望行为是 `default=None` 与其他显式默认值一样生效，同时已有属性和值为其他 falsy 默认值的行为不回归。"
+    },
+    {
       "candidate_id": "pydantic_pydantic_issue_13257",
       "repo_full_name": "pydantic/pydantic",
       "repo_url": "https://github.com/pydantic/pydantic",

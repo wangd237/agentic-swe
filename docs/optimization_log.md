@@ -8121,3 +8121,138 @@
 - 当前离 `60` 条正式任务仍有 `17` 条缺口
 - `frozen_40` 连续无回归版本仍差最后 `1 / 5`
 - 下一轮应继续补新的真实 issue 来源，并让 `improved_v47` 在 `frozen_40` 上拿到第 `5` 个 streak 证据
+
+## 2026-06-12 Phase 6 jinja map 默认值语义扩容与 `improved_v47`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#439 -> task_087`
+- `improved_v46`
+- 正式任务数推进到 `43`
+- `frozen_40 streak` 推进到 `4 / 5`
+
+因此这一轮的关键目标非常聚焦：
+
+- 再补 `1` 条正式真实任务
+- 把 `frozen_40` 连续无回归证据从 `4 / 5` 推到 `5 / 5`
+
+在新来源选择上，这一轮优先落地 `pallets/jinja#2165`，因为它是一个单函数、最小复现极短、默认值语义清晰的 filter 边界 bug。
+
+### 目标
+
+- 把 `pallets/jinja#2165` 转成新的 semi_real 正式任务
+- 为 `map(attribute=..., default=None)` 未正确回落默认值的问题补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v47`
+- 把 maturity 审计结果同步到 `44 / 60` 与 `streak = 5 / 5`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_088.json`
+- `benchmarks/tasks/task_089.json`
+- `benchmarks/repos/jinja_map_default_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v47.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev47_001.json`
+- `logs/summaries/batch_eval_realissuev47_001.json`
+- `logs/summaries/batch_compare_realissue_step27_001.json`
+- `logs/summaries/batch_run_frozen20v47_001.json`
+- `logs/summaries/batch_eval_frozen20v47_001.json`
+- `logs/summaries/batch_compare_frozen20_step26_001.json`
+- `logs/summaries/batch_run_frozen40v47_001.json`
+- `logs/summaries/batch_eval_frozen40v47_001.json`
+- `logs/summaries/batch_compare_frozen40_step04_001.json`
+- `logs/summaries/benchmark_maturity_maturity_020.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `pallets/jinja#2165`
+- 新增 `real_issue` 草稿：
+  - `task_088`
+- 新增可运行的 semi_real 正式任务：
+  - `task_089`
+- 新增 repo：
+  - `benchmarks/repos/jinja_map_default_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 `default=None` 被错误当成“未提供默认值”，导致属性缺失时仍抛异常
+- 新增 `improved_v47`
+- 在 patcher 中新增 jinja `map(attribute, default=None)` 语义修复的专用规则
+- 把 `task_089` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/jinja_map_default_repo/tests/test_filters.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_089.json --policy optimization/policy_versions/improved_v47.json`
+- 旧任务回归抽检：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_087.json --policy optimization/policy_versions/improved_v47.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v47.json --run-label realissuev47 --compare-against-eval logs/summaries/batch_eval_realissuev46_001.json --compare-label realissue_step27`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v47.json --run-label frozen20v47 --compare-against-eval logs/summaries/batch_eval_frozen20v46_001.json --compare-label frozen20_step26`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v47.json --run-label frozen40v47 --compare-against-eval logs/summaries/batch_eval_frozen40v46_001.json --compare-label frozen40_step04`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `43 -> 44`
+- 候选池状态：
+  - `accepted = 43 -> 44`
+  - `to_review = 0 -> 0`
+- `improved_v47` 正式 `44` 条任务集结果：
+  - `success_count: 43 -> 44`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5243 -> 0.5234`
+- `improved_v47` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5321 -> 0.5374`
+- `improved_v47` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.525 -> 0.5269`
+- 时延分析：
+  - 正式集公共 `43` 条任务平均耗时差值：`+0.0002s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0053s`
+- maturity 审计：
+  - 正式任务数：`44 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`5 / 5`
+
+### 结论
+
+- `jinja#2165` 已成功作为全新来源补进正式 semi_real 任务集
+- `improved_v47` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮不仅把正式任务数推进到 `44`，还把 `frozen_40 streak` 从 `4` 推进到 `5`
+- `frozen_40` 连续 `5 / 5` 的稳定性门槛已经达成
+- 时延没有继续恶化，正式集反而小幅回落，长期性能约束仍保持成立
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `16` 条缺口
+- 接下来主线应从“追 5 / 5”切换到“在不打破 5 / 5 稳定性的前提下继续扩任务”
+- 下一轮应优先继续补新的真实 issue 来源，并让 `improved_v48` 在扩容后继续保住这组 frozen 证据

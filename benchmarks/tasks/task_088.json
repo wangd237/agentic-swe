@@ -1,0 +1,29 @@
+{
+  "task_id": "task_088",
+  "repo_name": "jinja",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "`[{}] | map(attribute = \"foo\", default = None)` still fails",
+  "issue_text": "当前 `map(attribute=..., default=...)` 在属性缺失时，本应回落到提供的默认值；但当默认值是 `None` 时，却被错误当成“没有提供默认值”，仍然抛出属性缺失错误。这个真实 issue 需要让 `default=None` 与其他显式 default 一样生效，同时保持已有属性和值为其他 falsy 默认值的行为不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2165,
+    "issue_url": "https://github.com/pallets/jinja/issues/2165",
+    "candidate_id": "pallets_jinja_issue_2165",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

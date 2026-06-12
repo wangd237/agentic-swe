@@ -1,0 +1,37 @@
+{
+  "task_id": "task_089",
+  "repo_name": "jinja_map_default_repo",
+  "repo_path": "benchmarks/repos/jinja_map_default_repo",
+  "issue_title": "`[{}] | map(attribute = \"foo\", default = None)` still fails",
+  "issue_text": "当前 `map_attribute_with_default()` 在属性缺失时，如果 `default=None`，会错误把它当成“未提供默认值”，仍然抛出属性缺失异常。semi-real 任务要求：`default=None` 必须像其他显式默认值一样正常回落；其他 falsy 默认值如 `0` 也继续生效；已有属性值不应被默认值覆盖。",
+  "test_command": "python -m pytest tests/test_filters.py -q",
+  "success_criteria": "属性缺失时 `default=None` 必须回落为 `None` 而不是抛异常；其他显式默认值继续生效；已有属性值保持原样；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jinja",
+    "map",
+    "default"
+  ],
+  "target_files_hint": [
+    "jinja_map_default_repo/filters.py",
+    "tests/test_filters.py"
+  ],
+  "expected_failure_test": "MapAttributeDefaultTests.test_default_none_is_used_for_missing_attribute",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2165,
+    "issue_url": "https://github.com/pallets/jinja/issues/2165",
+    "candidate_id": "pallets_jinja_issue_2165",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_088",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}
