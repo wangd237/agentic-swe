@@ -1,0 +1,37 @@
+{
+  "task_id": "task_099",
+  "repo_name": "jinja_include_repo",
+  "repo_path": "benchmarks/repos/jinja_include_repo",
+  "issue_title": "include without context inside macro renders generator repr instead of included template output",
+  "issue_text": "当前 `render_macro_with_include_without_context()` 在模拟 macro 内部的 `include without context` 时，会错误把 include 过程中的生成器对象直接拼进最终输出，导致结果出现 `<generator object ...>`，而不是被 include 模板的实际文本。semi-real 任务要求：macro 内部的 without-context include 必须输出真正的 include 内容；without-context 语义仍然不能拿到调用方上下文；普通 include 行为不回归。",
+  "test_command": "python -m pytest tests/test_runtime.py -q",
+  "success_criteria": "macro 内部的 include without context 必须输出实际模板内容而不是 generator repr；without-context 仍然不能读取调用方上下文；普通 include 行为不回归；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "jinja",
+    "include",
+    "macro"
+  ],
+  "target_files_hint": [
+    "jinja_include_repo/runtime.py",
+    "tests/test_runtime.py"
+  ],
+  "expected_failure_test": "MacroIncludeTests.test_include_without_context_inside_macro_renders_template_output",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pallets/jinja",
+    "repo_url": "https://github.com/pallets/jinja",
+    "issue_number": 2108,
+    "issue_url": "https://github.com/pallets/jinja/issues/2108",
+    "candidate_id": "pallets_jinja_issue_2108",
+    "imported_from": "manual_public_api",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_098",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

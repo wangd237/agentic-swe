@@ -8806,3 +8806,146 @@
 - 下一轮应优先并行推进两条线：
   - 继续扩新来源，把正式任务数从 `48` 推向 `60+`
   - 优先诊断环境级时延漂移，确认下一版谁能成为新的稳定版本
+
+## 2026-06-12 Phase 6 jinja macro include without context 扩容与 `improved_v52`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/click#3571 -> task_097`
+- `improved_v51`
+- 正式任务数推进到 `48`
+- 但 `v51` 的主要结论是“扩容成功，环境级时延漂移仍待恢复”
+
+因此这一轮的目标不是只堆更多题，而是：
+
+- 继续安全扩容正式任务数
+- 同时观察系统是否能从 `v51` 的异常时延状态里回拉
+
+这一轮优先选择 `pallets/jinja#2108`，因为它是一个单模块、模板渲染语义非常清晰、最小复现极短的 include 行为问题，适合继续做低风险扩容。
+
+### 目标
+
+- 把 `pallets/jinja#2108` 转成新的 semi_real 正式任务
+- 为 macro 内部 `include without context` 错误输出 generator repr 补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上验证 `improved_v52`
+- 判断 `v52` 是否只是扩容成功，还是已经开始把 `v51` 的环境级时延漂移拉回
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_098.json`
+- `benchmarks/tasks/task_099.json`
+- `benchmarks/repos/jinja_include_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v52.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev52_001.json`
+- `logs/summaries/batch_eval_realissuev52r2_001.json`
+- `logs/summaries/batch_compare_realissue_step32_001.json`
+- `logs/summaries/batch_eval_frozen20v52_001.json`
+- `logs/summaries/batch_eval_frozen20v52r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step31_001.json`
+- `logs/summaries/batch_eval_frozen40v52_001.json`
+- `logs/summaries/batch_eval_frozen40v52r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step09_001.json`
+- `logs/summaries/duration_compare_realissuev52_001.json`
+- `logs/summaries/duration_compare_frozen20v52_001.json`
+- `logs/summaries/benchmark_maturity_maturity_027.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共页面手工补录新候选：
+  - `pallets/jinja#2108`
+- 新增 `real_issue` 草稿：
+  - `task_098`
+- 新增可运行的 semi_real 正式任务：
+  - `task_099`
+- 新增 repo：
+  - `benchmarks/repos/jinja_include_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 macro 内部的 `include without context` 会把生成器对象直接格式化成字符串
+- 新增 `improved_v52`
+- 在 patcher 中新增 jinja macro include without context 的专用规则
+- 把 `task_099` 加入正式 manifest
+- 更新候选池状态、结果文档与项目记忆
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/jinja_include_repo/tests/test_runtime.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_099.json --policy optimization/policy_versions/improved_v52.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v52.json --run-label realissuev52r2 --compare-against-eval logs/summaries/batch_eval_realissuev51_002.json --compare-label realissue_step32`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v52.json --run-label frozen20v52r2 --compare-against-eval logs/summaries/batch_eval_frozen20v51_002.json --compare-label frozen20_step31`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v52.json --run-label frozen40v52r2 --compare-against-eval logs/summaries/batch_eval_frozen40v50check_001.json --compare-label frozen40_step09`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `48 -> 49`
+- 候选池状态：
+  - `accepted = 48 -> 49`
+  - `to_review = 0 -> 0`
+- `improved_v52` 正式 `49` 条任务集结果：
+  - `success_count: 48 -> 49`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6987 -> 0.6707`
+- `improved_v52` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.7361 -> 0.6912`
+- `improved_v52` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6616 -> 0.6824`
+- maturity 审计：
+  - 正式任务数：`49 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- 正式集时延对比显示：
+  - 公共 `48` 条任务平均耗时增量：`-0.0357s`
+- `frozen_20` 时延对比显示：
+  - 公共 `20` 条任务平均耗时增量：`-0.0629s`
+- 这说明 `v52` 并不是继续恶化的版本
+- 相反，它已经把 `v51` 上最明显的一部分环境级回升重新拉回来了
+- 但 `frozen_40` 相对当前环境下的 `v50check` 仍然是：
+  - `0.6616 -> 0.6824`
+- 所以当前最可信的结论仍然是：
+  - 系统正在从环境级漂移中恢复
+  - 但恢复还没完全完成
+
+### 结论
+
+- `jinja#2108` 已成功作为新的模板 include 渲染语义题补进正式 semi_real 任务集
+- `improved_v52` 已把正式任务数推进到 `49`
+- 功能上，`improved_v52` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，`v52` 已比 `v51` 明显回落，但 `frozen_40` 仍未回到长期阈值
+- 当前稳定 `frozen_40 streak` 仍保持 `8`
+- 下一轮应继续沿两条线推进：
+  - 扩新来源，把正式任务数从 `49` 推向 `60+`
+  - 继续恢复 `frozen_40` 性能，争取把后续版本重新拉回长期阈值以内

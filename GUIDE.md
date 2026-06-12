@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v51` 多轮策略迭代，正式真实任务扩充到 `48` 条，已建立 `frozen_40 v1`，`v50` 仍是当前稳定基线；`v51` 已功能全绿，但因同环境出现时延漂移，暂未计入新的 `frozen_40 streak` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v52` 多轮策略迭代，正式真实任务扩充到 `49` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v52` 已成功把 `v51` 的大部分环境级时延回升拉回，但 `frozen_40` 仍未回到长期阈值，因此稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -570,37 +570,37 @@ scripts/
 - 冻结集合：`frozen_40 v1`
 - 当前稳定 streak：`8`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v51`
+- 当前最新扩容策略：`improved_v52`
 
 其中最新一轮新增的是：
 
-- 来源 issue：`pallets/click#3571`
-- draft 任务：`task_096`
-- 正式 semi_real 任务：`task_097`
-- semi_real repo：`benchmarks/repos/click_progressbar_repo`
+- 来源 issue：`pallets/jinja#2108`
+- draft 任务：`task_098`
+- 正式 semi_real 任务：`task_099`
+- semi_real repo：`benchmarks/repos/jinja_include_repo`
 
 这轮新增能力覆盖的场景是：
 
-- `click.progressbar` 在 `show_pos=True` 且 `update_min_steps` 不整除总长度时
-- 结束态不应停留在最后一次中间刷新位置
-- 最终必须稳定显示完整的 `length/length`
+- `include ... without context` 放进 macro 后
+- 不能再把 include 过程中的生成器对象直接拼成 `<generator object ...>`
+- 最终必须输出被 include 模板的真实内容
 
 当前这一轮的关键结论要分开看：
 
 - 功能面：
-  - `improved_v51` 已在正式 `48` 条任务集、`frozen_20`、`frozen_40` 上全部保持 `100%` 成功率和 `100%` 测试通过率
+  - `improved_v52` 已在正式 `49` 条任务集、`frozen_20`、`frozen_40` 上全部保持 `100%` 成功率和 `100%` 测试通过率
 - 性能面：
-  - `v51` 的正式集复跑 `average_duration_sec = 0.6987`
-  - `v51` 的 `frozen_20` 复跑 `average_duration_sec = 0.7361`
-  - `v51` 的 `frozen_40` 复跑 `average_duration_sec = 0.7098`
-  - 同环境下重新复跑 `improved_v50` 的 `frozen_40` 也从 `0.5410` 回升到 `0.6616`
+  - `v52` 的正式集对比 `v51` 回落到 `average_duration_sec = 0.6707`
+  - `v52` 的 `frozen_20` 对比 `v51` 回落到 `average_duration_sec = 0.6912`
+  - `v52` 的 `frozen_40` 对比环境复跑基线 `v50check` 仍是 `average_duration_sec = 0.6824`
+  - 同环境 `improved_v50` 的 `frozen_40` 参考值仍为 `0.6616`
 
 因此当前更可信的判断是：
 
-- `v51` 已经成功把正式任务数从 `47` 扩到 `48`
-- 但这轮耗时回升更像运行环境或 `run_tests` 链路整体漂移
-- 不能直接把这次回升归因为 progressbar 新规则本身
-- 也不能把 `v51` 直接记成新的稳定 streak 版本
+- `v52` 已经成功把正式任务数从 `48` 扩到 `49`
+- 它还把 `v51` 上的明显环境级回升重新拉回了一部分
+- 但 `frozen_40` 仍然没有回到长期阈值以内
+- 因此这轮仍应记为“扩容成功、性能恢复中”，而不是新的稳定 streak 版本
 
 ### 5. 当前新增的 improved_v2 结论
 
@@ -655,6 +655,7 @@ scripts/
 
 - `click#3125` 已落地为 `task_095`
 - `click#3571` 已落地为 `task_097`
+- `jinja#2108` 已落地为 `task_099`
 
 ### 7. 当前新增的性能诊断链
 
@@ -2039,6 +2040,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_061.json --policy
 - 已补充 `task_093` 与 `improved_v49`
 - 已补充 `task_095` 与 `improved_v50`
 - 已补充 `task_097` 与 `improved_v51`
+- 已补充 `task_099` 与 `improved_v52`
 - 已补充冻结 15 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 18 条真实任务的同集合评测 manifest 与 compare 结果
 - 已补充冻结 20 条真实任务的同集合评测 manifest 与 compare 结果

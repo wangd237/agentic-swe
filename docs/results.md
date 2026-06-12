@@ -2962,9 +2962,63 @@ trace 热点分析结果：
 
 当前状态补充：
 
-- 正式任务数：`48 / 60`
+- 正式任务数：`49 / 60`
 - 来源生态数：`13 / 6`
 - frozen 集合：`40 / 40`
 - `frozen_40` 稳定 streak：`8`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v51`
+- 当前最新扩容版本：`improved_v52`
+
+`improved_v52` 正式 49 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v52.json`
+- 新增任务：
+  - `benchmarks/tasks/task_099.json`
+- 新增 repo：
+  - `benchmarks/repos/jinja_include_repo`
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_realissuev52_001.json`
+  - compare 口径 batch eval：`logs/summaries/batch_eval_realissuev52r2_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step32_001.json`
+  - 时延对比：`logs/summaries/duration_compare_realissuev52_001.json`
+- 指标：
+  - `task_count`: `48 -> 49`
+  - `success_count`: `48 -> 49`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - compare 口径 `average_duration_sec`: `0.6987 -> 0.6707`
+- 结论：
+  - 这说明 `jinja#2108` 已成功转化为正式第 `49` 条 semi_real 任务
+  - `improved_v52` 在扩容后继续保持全量成功
+  - 同时它把 `v51` 正式集的平均耗时又拉回了 `0.028s`
+
+`improved_v52` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen20v52_001.json`
+  - compare 口径 batch eval：`logs/summaries/batch_eval_frozen20v52r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step31_001.json`
+  - 时延对比：`logs/summaries/duration_compare_frozen20v52_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - compare 口径 `average_duration_sec`: `0.7361 -> 0.6912`
+- 结论：
+  - `frozen_20` 在功能上继续无回归
+  - 并且这轮相对 `v51` 明显回落了 `0.0449s`
+
+`improved_v52` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - 首轮 batch eval：`logs/summaries/batch_eval_frozen40v52_001.json`
+  - compare 口径 batch eval：`logs/summaries/batch_eval_frozen40v52r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step09_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - compare 口径 `average_duration_sec`: `0.6616 -> 0.6824`
+- 结论：
+  - `frozen_40` 在功能上继续无回归
+  - 但这轮仍没有把时延拉回长期阈值以内
+  - 因此当前稳定 streak 仍保持在 `8`

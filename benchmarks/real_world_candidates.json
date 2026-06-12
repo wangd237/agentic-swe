@@ -846,6 +846,22 @@
       "state": "OPEN",
       "created_at": "2026-06-08T12:10:23Z",
       "body_excerpt": "当前 progressbar 在 `show_pos=True` 且 `update_min_steps` 不是总长度约数时，会在最终完成态错误显示上一次中间刷新位置，而不是 `length/length`。期望行为是无论刷新步长如何，结束时都应显示完整位置，同时百分比模式继续保持 `100%`。"
+    },
+    {
+      "candidate_id": "pallets_jinja_issue_2108",
+      "repo_full_name": "pallets/jinja",
+      "repo_url": "https://github.com/pallets/jinja",
+      "issue_number": 2108,
+      "issue_title": "include without context inside macro renders generator repr instead of included template output",
+      "issue_url": "https://github.com/pallets/jinja/issues/2108",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T23:20:00: 通过 GitHub 公共页面手工补录为新候选来源。\n2026-06-12T23:24:00: 已生成 real_issue task 草稿 task_098，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T23:28:00: 已生成 semi_real 可运行任务 task_099，仓库目录为 benchmarks/repos/jinja_include_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": "2025-09-24T10:54:44Z",
+      "body_excerpt": "当前 `include ... without context` 放进 macro 后，会错误把 include 过程中的生成器对象直接转成字符串，最终输出 `<generator object ...>`，而不是 include 模板的实际内容。期望行为是 macro 内部的 without-context include 仍然输出模板内容，同时不泄漏调用方上下文。"
     }
   ]
 }

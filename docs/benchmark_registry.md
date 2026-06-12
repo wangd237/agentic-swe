@@ -60,6 +60,7 @@
 | `task_093` | `pallets/click#3572` | `click_confirm_repo` | `confirm(color=False)` 未去除 ANSI 提示颜色 | `improved_v49` | `-` |
 | `task_095` | `pallets/click#3125` | `click_version_repo` | `version_option(package_name=...)` 忽略显式包名 | `improved_v50` | `-` |
 | `task_097` | `pallets/click#3571` | `click_progressbar_repo` | `show_pos=True` 且 `update_min_steps` 不整除时结束态位置未显示完整进度 | `improved_v51` | `-` |
+| `task_099` | `pallets/jinja#2108` | `jinja_include_repo` | macro 内部 `include without context` 错误输出 generator repr | `improved_v52` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -103,6 +104,7 @@
 - prompt / confirm 输出链路中的 ANSI 清理一致性
 - 版本选项元数据渲染与显式参数优先级
 - progressbar 结束态位置渲染与中间刷新位置解耦
+- macro 内部 include 渲染与 without-context 语义保真
 
 ## 当前仍相对欠缺的方向
 

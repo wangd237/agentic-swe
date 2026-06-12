@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v51`
+- 当前最新扩容策略：`improved_v52`
 - 当前主分支最近重要能力：
-  - 已完成 `48` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `49` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -18,9 +18,10 @@
   - 已在 `frozen_40` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
   - 已把 `pallets/click#3125` 从新来源候选推进为正式任务 `task_095`
   - 已把 `pallets/click#3571` 从新来源候选推进为正式任务 `task_097`
-  - 已落地 `improved_v51` 的 click progressbar 结束态位置修复规则
-  - 已完成 `v51` 的正式集、`frozen_20`、`frozen_40` 三线功能验证
-  - 已完成同环境 `improved_v50` 的 `frozen_40` 复跑校验，确认近期耗时回升更像环境级漂移
+  - 已把 `pallets/jinja#2108` 从新来源候选推进为正式任务 `task_099`
+  - 已落地 `improved_v52` 的 jinja macro include without context 修复规则
+  - 已完成 `v52` 的正式集、`frozen_20`、`frozen_40` 三线功能验证
+  - 已确认 `v52` 相对 `v51` 在正式集与 `frozen_20` 上出现时延回落，但 `frozen_40` 仍未回到长期阈值
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -64,7 +65,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`48`
+- 正式 `semi_real` 真实 issue 任务数：`49`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -77,7 +78,7 @@
 
 ## 当前候选池状态
 
-- `accepted = 48`
+- `accepted = 49`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -94,39 +95,40 @@
 
 ### 1. 当前最新扩容对比
 
-- 对比：`improved_v50 -> improved_v51`
-- 任务集：`47 -> 48` 条
+- 对比：`improved_v51 -> improved_v52`
+- 任务集：`48 -> 49` 条
 - 结果：
-  - `success_count: 47 -> 48`
+  - `success_count: 48 -> 49`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - 正式集首轮 `average_duration_sec: 0.5583 -> 0.6687`
-  - 正式集复跑 `average_duration_sec: 0.5583 -> 0.6987`
+  - 正式集 compare 口径 `average_duration_sec: 0.6987 -> 0.6707`
 
 说明：
 
-- 这说明 `improved_v51` 已成功把正式真实任务集从 `47` 条推进到 `48` 条
-- 新增任务是 `task_097`，来源于 `pallets/click#3571`
+- 这说明 `improved_v52` 已成功把正式真实任务集从 `48` 条推进到 `49` 条
+- 新增任务是 `task_099`，来源于 `pallets/jinja#2108`
 - 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
-- 但耗时出现明显回升，因此当前不能把 `v51` 直接视为新的稳定 streak 版本
+- 同时它还把 `v51` 的正式集平均耗时拉回了 `0.028s`
+- 但当前还不能把 `v52` 直接视为新的稳定 streak 版本
 
 ### 2. 当前最新冻结集观察
 
-- `improved_v51` `frozen_20` 复跑：
+- `improved_v52` `frozen_20` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec = 0.7361`
-- `improved_v51` `frozen_40` 复跑：
+  - `average_duration_sec: 0.7361 -> 0.6912`
+- `improved_v52` `frozen_40` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec = 0.7098`
+  - `average_duration_sec: 0.6616 -> 0.6824`
 - 当前稳定 streak：
   - 仍为 `8`
 
 说明：
 
-- `v51` 在固定集合上没有功能回归
-- 但它没有通过当前的性能门控
+- `v52` 在固定集合上没有功能回归
+- 它在 `frozen_20` 上已经明显优于 `v51`
+- 但 `frozen_40` 仍然没有回到长期阈值
 - 因此 `frozen_40 streak` 仍然停留在 `v50` 时的 `8`
 
 ### 3. 最新环境级诊断结论
@@ -134,24 +136,21 @@
 - 同环境 `improved_v50` `frozen_40` 复跑对比：
   - `logs/summaries/batch_compare_frozen40_envcheck_v50_001.json`
   - `average_duration_sec: 0.5410 -> 0.6616`
-- 正式集时延对比：
-  - `logs/summaries/duration_compare_realissuev51_001.json`
-  - 公共 `47` 条任务平均耗时增量：`+0.1412s`
-- `frozen_20` 时延对比：
-  - `logs/summaries/duration_compare_frozen20v51_001.json`
-  - 公共 `20` 条任务平均耗时增量：`+0.1689s`
-- trace 热点分析：
-  - `logs/summaries/trace_hotspots_realissuev51_001.json`
-  - `run_tests` 仍是最主要的回升来源
-- 热点任务集合历史分析：
-  - `logs/summaries/task_history_cohort_run_tests_hotspots_v51_001.json`
-  - `task_034 / task_036 / task_038 / task_040` 全部继续呈现正向回升
+- 正式集 `v51 -> v52` 时延对比：
+  - `logs/summaries/duration_compare_realissuev52_001.json`
+  - 公共 `48` 条任务平均耗时增量：`-0.0357s`
+- `frozen_20` `v51 -> v52` 时延对比：
+  - `logs/summaries/duration_compare_frozen20v52_001.json`
+  - 公共 `20` 条任务平均耗时增量：`-0.0629s`
+- `frozen_40` 环境基线对比：
+  - `logs/summaries/batch_compare_frozen40_step09_001.json`
+  - `average_duration_sec: 0.6616 -> 0.6824`
 
 说明：
 
-- 这次不是只有 `v51` 慢，而是 `v50` 在同环境下复跑也显著变慢
-- 因此当前更可信的解释是运行环境或 `run_tests` 链路整体漂移
-- 后续文档与结论必须把“扩题成功”和“稳定性门控通过”分开记录
+- `v52` 不是继续恶化的版本，它已经把 `v51` 上的大部分回升拉回来了
+- 但当前最强证据仍然表明：系统还处在环境级漂移后的恢复阶段，而不是已经完全恢复到长期阈值内
+- 后续文档与结论仍然必须把“扩题成功”和“稳定性门控通过”分开记录
 
 ### 4. 上一轮稳定扩容对比
 
@@ -429,12 +428,6 @@
 
 ## 最近三轮优化结论
 
-### `improved_v49`
-
-- 覆盖场景：`confirm(color=False)` 输出中的 ANSI 清理一致性
-- 新增任务：`task_093`
-- 在正式集、`frozen_20` 与 `frozen_40` 上补齐一轮验证
-
 ### `improved_v50`
 
 - 覆盖场景：`version_option(package_name=...)` 显式包名优先级
@@ -447,11 +440,17 @@
 - 新增任务：`task_097`
 - 功能上完成 `48` 条正式任务扩容，但当前先记为“扩容成功、性能门控待过”的版本
 
+### `improved_v52`
+
+- 覆盖场景：macro 内部 `include without context` 不应输出 generator repr
+- 新增任务：`task_099`
+- 功能上完成 `49` 条正式任务扩容，并且相对 `v51` 在正式集与 `frozen_20` 上出现时延回落，但 `frozen_40` 仍未回到长期阈值
+
 ## 接下来最值得做的事
 
-- 围绕 `frozen_40` 继续积累后续稳定版本的同集合对比证据，但不要把 `v51` 直接算入 streak
-- 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，把正式任务数从 `48` 继续推向 `60+`
-- 当前性能定位已经收窄到 `run_tests` 链路，下一步应优先检查为什么同环境下 `v50` 复跑也会整体变慢
+- 围绕 `frozen_40` 继续积累后续稳定版本的同集合对比证据，但不要把 `v51 / v52` 直接算入 streak
+- 当前高优先级 `to_review` 已清零，下一步应通过批量导入入口扩新来源，把正式任务数从 `49` 继续推向 `60+`
+- 当前性能定位已经收窄到 `run_tests` 链路，下一步应优先把 `frozen_40` 从 `0.68s` 级别继续拉回
 - 对热点任务集合的历史聚合已经证明 `task_034 / task_036 / task_038 / task_040` 都在 `improved_v32` 上稳定回升
 - `run_tests` 模式基准已经证明 workspace copy 不是主因
 - `pytest` 分阶段基准已经证明主要开销位于启动与 collection，下一步应优先拆 import/collection 内部差异和解释器抖动
@@ -461,7 +460,7 @@
 - `improved_v33` 已把 benchmark 结论接入 runtime，并已同时通过热点集、`frozen_20` 与正式 `30` 条任务集验证
 - 当前主线应从 `v33` 验证切换到更高层目标：继续扩充真实任务到 `60+`、构建 `frozen_40`，并开始累计连续 `5` 轮无回归证据
 - 当前已经确认：来源广泛度不是瓶颈，真正缺口集中在正式任务规模和 `frozen_40` 稳定性证据
-- 当前最新状态是：规模侧已经推进到 `48 / 60`，稳定性侧 `frozen_40 streak = 8` 已满足长期目标，但需要继续守住；新的实际缺口是规模扩容与环境级性能漂移诊断
+- 当前最新状态是：规模侧已经推进到 `49 / 60`，稳定性侧 `frozen_40 streak = 8` 已满足长期目标，但需要继续守住；新的实际缺口是继续扩容并把 `frozen_40` 性能重新拉回长期阈值
 - 持续把“扩容对比”和“冻结同集合对比”成对保留
 
 ## 建议冷启动顺序
