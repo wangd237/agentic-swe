@@ -2683,6 +2683,74 @@ trace 热点分析结果：
   - `frozen_40` 连续 `5 / 5` 的稳定性门槛已经达成
   - 下一阶段的关键是继续扩任务，同时保持这组 `frozen_40` 稳定性不被破坏
 
+`improved_v48` 正式 45 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v48.json`
+- 新增任务：
+  - `benchmarks/tasks/task_091.json`
+- 新增 repo：
+  - `benchmarks/repos/packaging_direct_url_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev48_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev48_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step28_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev48_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev48_001.json`
+- 指标：
+  - `task_count`: `44 -> 45`
+  - `success_count`: `44 -> 45`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5234 -> 0.5241`
+- 结论：
+  - 这说明 `packaging#1240` 已成功转化为正式第 `45` 条 semi_real 任务
+  - `improved_v48` 在扩容后继续保持全量成功
+  - 正式集平均耗时只增加了 `0.0007s`，基本可以视为持平
+
+`improved_v48` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v48_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v48_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step27_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v48_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5374 -> 0.5287`
+- 结论：
+  - 这说明 `improved_v48` 在固定 `20` 条真实任务上继续无功能回归
+  - 固定集平均耗时回落了 `0.0087s`
+
+`improved_v48` `frozen_40` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen40v48_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen40v48_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step05_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+- 结论：
+  - 这说明 `improved_v48` 在 `frozen_40` 上继续无功能回归
+  - `frozen_40` 的稳定 streak 已继续增长到 `6`
+
+`Benchmark Maturity v1` 最新量化审计更新：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_021.json`
+  - `logs/summaries/benchmark_maturity_maturity_021.md`
+- 当前结果：
+  - 正式任务数：`45 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续无回归版本：`6`
+- 结论：
+  - 当前已经把正式任务数推进到 `45`
+  - `frozen_40` 的连续稳定性证据仍在继续增长
+  - 下一阶段的关键是继续补新任务，把规模缺口从 `15` 条继续压缩
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：

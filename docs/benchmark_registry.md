@@ -56,6 +56,7 @@
 | `task_085` | `pydantic/pydantic#13257` | `pydantic_fraction_repo` | fraction 零分母输入未被统一映射为 `ValidationError` | `improved_v45` | `-` |
 | `task_087` | `python-poetry/tomlkit#439` | `tomlkit_repr_repo` | 代理视图 `repr` 漏掉同父路径早期 dotted key 子项 | `improved_v46` | `-` |
 | `task_089` | `pallets/jinja#2165` | `jinja_map_default_repo` | `map(attribute=..., default=None)` 未回落 `None` 默认值 | `improved_v47` | `-` |
+| `task_091` | `pypa/packaging#1240` | `packaging_direct_url_repo` | file URL scheme 大小写与单斜杠形式校验错误 | `improved_v48` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -95,6 +96,7 @@
 - 验证器异常映射与用户态错误语义保真
 - 代理视图表示层与真实嵌套语义一致性
 - filter 默认值语义与显式 `None` 回落一致性
+- URL scheme 规范化与 file URL 合法形式兼容性
 
 ## 当前仍相对欠缺的方向
 

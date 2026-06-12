@@ -1,0 +1,29 @@
+{
+  "task_id": "task_090",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "parse URL scheme case-insensitively when checking for file URLs",
+  "issue_text": "当前在 Direct URL 解析链路里，当一个 URL 被标记为 file 类型时，校验逻辑会错误使用大小写敏感的 `startswith(\"file://\")`。这会把 `FILE:///tmp/demo` 这类合法 URL 拒绝掉，也会错误拒绝 RFC 8089 允许的 `file:/tmp/demo` 形式。这个真实 issue 需要让 file URL 的 scheme 按大小写不敏感方式处理，并接受最小单斜杠 file 形式，同时保持非 file URL 场景不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 1240,
+    "issue_url": "https://github.com/pypa/packaging/pull/1240",
+    "candidate_id": "pypa_packaging_issue_1240",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "manual_public_api"
+  }
+}

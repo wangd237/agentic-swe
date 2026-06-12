@@ -8256,3 +8256,137 @@
 - 当前离 `60` 条正式任务仍有 `16` 条缺口
 - 接下来主线应从“追 5 / 5”切换到“在不打破 5 / 5 稳定性的前提下继续扩任务”
 - 下一轮应优先继续补新的真实 issue 来源，并让 `improved_v48` 在扩容后继续保住这组 frozen 证据
+
+## 2026-06-12 Phase 6 packaging direct URL scheme 兼容性扩容与 `improved_v48`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `pallets/jinja#2165 -> task_089`
+- `improved_v47`
+- 正式任务数推进到 `44`
+- `frozen_40 streak` 推进到 `5`
+
+因此这一轮开始，主线目标从“先达成 5 / 5”切换成：
+
+- 在不破坏当前 frozen 稳定性的前提下继续扩正式任务
+- 把正式任务数继续从 `44` 推向 `60+`
+
+这一轮优先选择 `pypa/packaging#1240`，因为它是一个单函数、纯 URL scheme 语义、复现极短的真实 bug，适合低风险扩容。
+
+### 目标
+
+- 把 `pypa/packaging#1240` 转成新的 semi_real 正式任务
+- 为 file URL scheme 大小写与单斜杠形式校验错误补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40` 上同时验证 `improved_v48`
+- 把 maturity 审计结果同步到 `45 / 60`，并确认 frozen 稳定性继续保持
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_090.json`
+- `benchmarks/tasks/task_091.json`
+- `benchmarks/repos/packaging_direct_url_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v48.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev48_001.json`
+- `logs/summaries/batch_eval_realissuev48_001.json`
+- `logs/summaries/batch_compare_realissue_step28_002.json`
+- `logs/summaries/batch_run_frozen20v48_001.json`
+- `logs/summaries/batch_eval_frozen20v48_001.json`
+- `logs/summaries/batch_compare_frozen20_step27_001.json`
+- `logs/summaries/batch_run_frozen40v48_001.json`
+- `logs/summaries/batch_eval_frozen40v48_001.json`
+- `logs/summaries/batch_compare_frozen40_step05_001.json`
+- `logs/summaries/benchmark_maturity_maturity_021.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 通过 GitHub 公共 API 补录新候选：
+  - `pypa/packaging#1240`
+- 新增 `real_issue` 草稿：
+  - `task_090`
+- 新增可运行的 semi_real 正式任务：
+  - `task_091`
+- 新增 repo：
+  - `benchmarks/repos/packaging_direct_url_repo`
+- 在 repo 中故意保留 bug：
+  - 当前 file URL 校验大小写敏感，且错误拒绝 `file:/...` 这种合法形式
+- 新增 `improved_v48`
+- 在 patcher 中新增 packaging direct URL scheme 兼容性的专用规则
+- 把 `task_091` 加入正式 manifest
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 同集合验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/packaging_direct_url_repo/tests/test_direct_url.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_091.json --policy optimization/policy_versions/improved_v48.json`
+- 旧任务回归抽检：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_089.json --policy optimization/policy_versions/improved_v48.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v48.json --run-label realissuev48 --compare-against-eval logs/summaries/batch_eval_realissuev47_001.json --compare-label realissue_step28`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v48.json --run-label frozen20v48 --compare-against-eval logs/summaries/batch_eval_frozen20v47_001.json --compare-label frozen20_step27`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v48.json --run-label frozen40v48 --compare-against-eval logs/summaries/batch_eval_frozen40v47_001.json --compare-label frozen40_step05`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `44 -> 45`
+- 候选池状态：
+  - `accepted = 44 -> 45`
+  - `to_review = 0 -> 0`
+- `improved_v48` 正式 `45` 条任务集结果：
+  - `success_count: 44 -> 45`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5234 -> 0.5241`
+- `improved_v48` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5374 -> 0.5287`
+- `improved_v48` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+- 时延分析：
+  - 正式集公共 `44` 条任务平均耗时差值：`+0.0007s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`-0.0087s`
+- maturity 审计：
+  - 正式任务数：`45 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`6`
+
+### 结论
+
+- `packaging#1240` 已成功作为全新来源补进正式 semi_real 任务集
+- `improved_v48` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- 这轮把正式任务数推进到 `45`
+- 时延几乎持平，且 `frozen_20` 还出现了回落
+- 当前主线已经进入“继续扩容，同时维持 frozen 稳定”的稳定推进阶段
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `15` 条缺口
+- 后续应继续优先选择这种单函数、纯逻辑、轻依赖的新 issue
+- 下一轮应继续补新的真实 issue 来源，并保持当前 frozen 证据链不断裂
