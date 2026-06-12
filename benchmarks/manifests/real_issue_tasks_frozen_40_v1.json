@@ -1,6 +1,6 @@
 {
-  "manifest_id": "real_issue_tasks_v1",
-  "description": "Phase 6 用于承载从真实 issue 派生的 semi_real / real_issue 任务。",
+  "manifest_id": "real_issue_tasks_frozen_40_v1",
+  "description": "冻结 40 条真实 issue 派生 semi_real 任务，作为 benchmark maturity v1 的首版同集合基线。",
   "tasks": [
     "benchmarks/tasks/task_006.json",
     "benchmarks/tasks/task_008.json",

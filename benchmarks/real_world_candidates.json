@@ -697,6 +697,22 @@
       "state": "OPEN",
       "created_at": null,
       "body_excerpt": "当 dotted inline table 后继续追加普通键时，如果原始文本末尾没有换行，渲染结果会把后续键直接黏连到 inline table 同一行，例如把 `a.b = {}` 和 `c = 3` 输出成 `a.b = {}c = 3`。期望行为是在 inline table 后正确插入换行；而原本就带末尾换行、或非 dotted inline table 的场景不应回归。"
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_504",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 504,
+      "issue_title": "table replaced by scalar is captured by neighbour table",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/504",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T15:45:00: 通过 GitHub 公共 API 手工补录为新候选来源。\n2026-06-12T15:47:00: 已生成 real_issue task 草稿 task_080，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T15:50:00: 已生成 semi_real 可运行任务 task_081，仓库目录为 benchmarks/repos/tomlkit_scalar_capture_repo。",
+      "labels": [],
+      "state": "OPEN",
+      "created_at": null,
+      "body_excerpt": "当文档中的中间表被替换成标量后，重新渲染结果会把该标量错误吸附到相邻表的作用域里。例如原本应在顶层输出的 `b = 2` 被错误写到了前一个表后面。期望行为是替换后的标量仍保持顶层位置，同时相邻表内容不回归。"
     }
   ]
 }

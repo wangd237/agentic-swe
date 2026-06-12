@@ -23,9 +23,9 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`39 / 60`
+  - 正式任务数：`40 / 60`
   - 来源生态数：`13 / 6`
-  - frozen 集合：`20 / 40`
+  - frozen 集合：`40 / 40`
   - `frozen_40` 连续版本：`0 / 5`
 
 ### 1. 以 `frozen_20` 作为后续策略升级的固定基线
@@ -59,8 +59,8 @@
 当前状态：
 
 - 当前高优先级 shortlist 仍为空
-- 当前离构建 `frozen_40` 只差 `1` 条正式任务
-- 下一轮应优先再补 `1` 条正式任务，并立即创建 `real_issue_tasks_frozen_40_v1.json`
+- `real_issue_tasks_frozen_40_v1.json` 已正式创建
+- 下一轮重点应转为继续扩新来源，并开始累计 `frozen_40` 连续 `5` 个版本的无回归证据
 
 ### 3. 用时延分析脚本定位最近的系统性变慢
 
@@ -163,8 +163,8 @@
 12. 用 `scripts/analyze_task_history_cohort.py` 汇总热点任务集合
 13. 用 `scripts/benchmark_run_tests_modes.py` 和 `scripts/analyze_run_tests_mode_cohort.py` 排除 workspace copy 假设
 14. 继续拆 pytest import / collection 的内部差异、平台链路与解释器抖动
-15. 继续扩真实 issue 正式任务，先把总数补到 `40`
-16. 一达到 `40` 条就构建 `frozen_40`，并开始累计连续 `5` 个策略版本的固定集合无回归证据
+15. 继续扩真实 issue 正式任务，把总数从 `40` 推向 `60`
+16. 继续在 `real_issue_tasks_frozen_40_v1.json` 上累计连续 `5` 个策略版本的固定集合无回归证据
 17. 视情况继续拆 `unraisableexception + debugging` 的组合边界，但优先级低于 benchmark maturity 主线
 18. 跑一轮 `python -m scripts.analyze_benchmark_maturity --run-label maturity` 更新量化缺口
 19. 最后同步 `README.md`、`GUIDE.md`、`docs/results.md`、`docs/optimization_log.md`
@@ -174,14 +174,15 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v42` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+2. 以 `improved_v43` 为候选基线，继续扩正式任务数并累计 `frozen_40` streak
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
 - 当前 `tomlkit#440` 已经落地为 `task_079`
+- 当前 `tomlkit#504` 已经落地为 `task_081`
 - 当前新的候选库存已清空高优先级存量，`to_review = 0`
-- 因此下一轮更应该优先“再补 1 条正式任务 + 创建 frozen_40”，而不是继续停留在候选筛选阶段
+- 因此下一轮更应该优先“扩新来源 + 跑下一版 `frozen_40`”，而不是继续停留在候选筛选阶段
 
 详细理由见：
 

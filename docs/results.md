@@ -2318,6 +2318,78 @@ trace 热点分析结果：
   - 当前已经把正式任务数推进到 `39`
   - 再补 `1` 条正式任务后，就可以立即开始构建 `frozen_40`
 
+`improved_v43` 正式 40 条真实 issue 任务集验证：
+
+- 新增策略：
+  - `optimization/policy_versions/improved_v43.json`
+- 新增任务：
+  - `benchmarks/tasks/task_081.json`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_scalar_capture_repo`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_realissuev43_001.json`
+  - batch eval：`logs/summaries/batch_eval_realissuev43_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step23_002.json`
+  - duration compare：`logs/summaries/duration_compare_realissuev43_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_realissuev43_001.json`
+- 指标：
+  - `task_count`: `39 -> 40`
+  - `success_count`: `39 -> 40`
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5157 -> 0.5241`
+- 结论：
+  - 这说明 `tomlkit#504` 已成功转化为正式第 `40` 条 semi_real 任务
+  - `improved_v43` 在扩容后继续保持全量成功
+  - 但这轮正式集平均耗时回升了 `+0.0084s`，后续应继续跟踪
+
+`improved_v43` `frozen_20` 同集合验证：
+
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen20v43_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen20v43_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step22_001.json`
+  - duration compare：`logs/summaries/duration_compare_frozen20v43_001.json`
+  - trace hotspots：`logs/summaries/trace_hotspots_frozen20v43_001.json`
+- 指标：
+  - `success_rate`: `1.0 -> 1.0`
+  - `test_pass_rate`: `1.0 -> 1.0`
+  - `average_duration_sec`: `0.5186 -> 0.5291`
+- 结论：
+  - 这说明 `improved_v43` 在固定 `20` 条真实任务上继续无功能回归
+  - 但固定集平均耗时出现了 `+0.0105s` 的可感知回升
+
+`improved_v43` `frozen_40 v1` 首轮验证：
+
+- 新增冻结清单：
+  - `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
+- 运行结果：
+  - batch run：`logs/summaries/batch_run_frozen40v43_001.json`
+  - batch eval：`logs/summaries/batch_eval_frozen40v43_001.json`
+- 指标：
+  - `task_count`: `40`
+  - `success_count`: `40`
+  - `success_rate`: `1.0`
+  - `test_pass_rate`: `1.0`
+  - `average_duration_sec`: `0.523`
+- 结论：
+  - `frozen_40` 首版已经正式建立，并且首轮运行即达到 `100%` 成功率和 `100%` 测试通过率
+  - 后续可以开始围绕 `frozen_40` 累计连续 `5` 个策略版本的无回归证据
+
+`Benchmark Maturity v1` 最新量化审计更新：
+
+- 最新产物：
+  - `logs/summaries/benchmark_maturity_maturity_014.json`
+  - `logs/summaries/benchmark_maturity_maturity_014.md`
+- 当前结果：
+  - 正式任务数：`40 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续无回归版本：`0 / 5`
+- 结论：
+  - 当前已经完成 `frozen_40` 首版构建，规模与广泛度继续向目标推进
+  - 下一阶段的关键不再是“先建 frozen”，而是“继续扩正式任务并累计 frozen_40 streak”
+
 `pytest importtime` 分组分析结果：
 
 - cohort 汇总产物：

@@ -1,0 +1,37 @@
+{
+  "task_id": "task_081",
+  "repo_name": "tomlkit_scalar_capture_repo",
+  "repo_path": "benchmarks/repos/tomlkit_scalar_capture_repo",
+  "issue_title": "table replaced by scalar is captured by neighbour table",
+  "issue_text": "当前 `render_document_with_scalar_replacement()` 在把中间表替换成标量后，会把 `b = 2` 错误地吸附到前一个表 `a` 的作用域里，导致输出变成 `[a]\\naa = 1\\nb = 2`。semi-real 任务要求：替换后的标量应继续留在顶层；相邻表 `c` 以及原表 `a` 的内容不回归；回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_renderer.py -q",
+  "success_criteria": "把中间表替换成标量后，输出中的 `b = 2` 必须保持顶层位置，不得被前一个表吸附；相邻表和原表内容保持正确；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "renderer",
+    "table-replacement"
+  ],
+  "target_files_hint": [
+    "tomlkit_scalar_capture_repo/renderer.py",
+    "tests/test_renderer.py"
+  ],
+  "expected_failure_test": "ScalarReplacementRendererTests.test_scalar_replacement_stays_at_top_level",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 504,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/504",
+    "candidate_id": "python_poetry_tomlkit_issue_504",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_080",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

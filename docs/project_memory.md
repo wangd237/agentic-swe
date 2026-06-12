@@ -7,12 +7,14 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v42`
+- 当前最新策略：`improved_v43`
 - 当前主分支最近重要能力：
-  - 已完成 `39` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v41 -> improved_v42` 无回归验证
-  - 已在正式 `39` 条真实任务集上补齐 `improved_v41 -> improved_v42` 全量验证
-  - 已把 `python-poetry/tomlkit#440` 从新来源候选推进为正式任务 `task_079`
+  - 已完成 `40` 条真实 issue 派生 `semi_real` 正式任务
+  - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
+  - 已在 `frozen_20` 上补齐一轮 `improved_v42 -> improved_v43` 无回归验证
+  - 已在正式 `40` 条真实任务集上补齐 `improved_v42 -> improved_v43` 全量验证
+  - 已在 `frozen_40` 上补齐首轮 `improved_v43` 基线评测
+  - 已把 `python-poetry/tomlkit#504` 从新来源候选推进为正式任务 `task_081`
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -42,7 +44,7 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v42.json --run-label realissuev42`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v43.json --run-label realissuev43`
 - 候选批量导入：
   - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
 - 时延回归分析：
@@ -56,7 +58,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`39`
+- 正式 `semi_real` 真实 issue 任务数：`40`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -64,11 +66,12 @@
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
-- 当前最大 frozen 集合：`20`
+  - `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
+- 当前最大 frozen 集合：`40`
 
 ## 当前候选池状态
 
-- `accepted = 39`
+- `accepted = 40`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -102,53 +105,52 @@
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v41 -> improved_v42`
+- 对比：`improved_v42 -> improved_v43`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_steps: 10.25 -> 10.25`
-  - `average_duration_sec: 0.5185 -> 0.5186`
+  - `average_duration_sec: 0.5186 -> 0.5291`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增 tomlkit inline table 换行修复规则没有破坏已有 `20` 条固定任务
-- 并且这一轮固定集几乎完全保持了 `v41` 的时延水平
+- 说明新增 tomlkit scalar replacement 作用域修复规则没有破坏已有 `20` 条固定任务
+- 但这一轮固定集平均耗时回升了 `+0.0105s`，后续应继续跟踪
 
 ### 3. 当前最新正式集证据
 
-- 对比：`improved_v41 -> improved_v42`
-- 任务集：扩容到正式 `39` 条
+- 对比：`improved_v42 -> improved_v43`
+- 任务集：扩容到正式 `40` 条
 - 结果：
-  - `success_count: 38 -> 39`
+  - `success_count: 39 -> 40`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.5173 -> 0.5157`
+  - `average_duration_sec: 0.5157 -> 0.5241`
 
 说明：
 
-- 这说明 `improved_v42` 不只是保住了 `v41` 的已有能力
-- 它还把正式真实任务集从 `38` 条稳定扩到 `39` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
-- 同时这轮没有引入新的系统性时延回升
-- 因此当前主线基线已经从 `v41 / 38 条` 前进到 `v42 / 39 条`
+- 这说明 `improved_v43` 不只是保住了 `v42` 的已有能力
+- 它还把正式真实任务集从 `39` 条稳定扩到 `40` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
+- 同时它让 `frozen_40` 首版可以正式建立，但本轮平均耗时出现了小幅回升
+- 因此当前主线基线已经从 `v42 / 39 条` 前进到 `v43 / 40 条 + frozen_40 v1`
 
 ### 4. 最新时延分析结论
 
 - 扩容集分析：
-  - `logs/summaries/duration_compare_realissuev42_001.json`
-  - 公共 `38` 条任务平均耗时：`0.5173 -> 0.5165`
-  - 平均差值：`-0.0008s`
+  - `logs/summaries/duration_compare_realissuev43_001.json`
+  - 公共 `39` 条任务平均耗时差值：`+0.0095s`
 - `frozen_20` 分析：
-  - `logs/summaries/duration_compare_frozen20v42_001.json`
-  - 公共 `20` 条任务平均耗时：`0.5185 -> 0.5186`
-  - 平均差值：`+0.0001s`
+  - `logs/summaries/duration_compare_frozen20v43_001.json`
+  - 公共 `20` 条任务平均耗时差值：`+0.0105s`
 - trace 热点分析：
-  - `logs/summaries/trace_hotspots_realissuev42_001.json`
-  - `logs/summaries/trace_hotspots_frozen20v42_001.json`
-- 两组分析都说明 `v42` 扩容没有带来新的公共任务系统性变慢
-- 正式扩容集公共 `38` 条任务平均耗时差值约 `-0.0008s`
-- `frozen_20` 公共 `20` 条任务平均耗时差值约 `+0.0001s`
+  - `logs/summaries/trace_hotspots_realissuev43_001.json`
+  - `logs/summaries/trace_hotspots_frozen20v43_001.json`
+- 两组分析都说明 `v43` 的时延回升幅度仍然较小
+- 正式扩容集公共 `39` 条任务平均耗时差值约 `+0.0095s`
+- `frozen_20` 公共 `20` 条任务平均耗时差值约 `+0.0105s`
+- 相比 `improved_v32` 基线，当前 `frozen_40` 首轮 `average_duration_sec = 0.523`，仍满足“不超过 +3%”的长期约束
 - 单任务历史分析：
   - `logs/summaries/task_history_task_040_003.json`
   - `task_040` 在 `improved_v31 -> improved_v32` 的历史平均耗时：`0.6213 -> 0.8171`

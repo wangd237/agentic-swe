@@ -7590,3 +7590,128 @@
 - 当前离 `60` 条正式任务仍有明显距离
 - `frozen_40` 仍未创建
 - 下一轮应优先再落 `1` 条正式任务，并把 `real_issue_tasks_frozen_40_v1.json` 正式建起来
+
+## 2026-06-12 Phase 6 tomlkit scalar replacement 扩容与 `improved_v43`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#440 -> task_079`
+- `improved_v42`
+- 正式任务数推进到 `39`
+
+因此这一轮继续沿着 `tomlkit` 新来源补第 `40` 条正式任务，并优先选择边界清晰、单文件可修的 `python-poetry/tomlkit#504`，同时把 `frozen_40` 首版正式建立起来。
+
+### 目标
+
+- 把 `python-poetry/tomlkit#504` 转成新的 semi_real 正式任务
+- 为“中间表替换成标量后被错误吸附到相邻表作用域”补一条规则型修复能力
+- 在正式扩容集、`frozen_20` 与 `frozen_40 v1` 上同时验证 `improved_v43`
+- 把 maturity 审计结果同步到 `40 / 60`，并正式开启 `frozen_40` 主线
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_080.json`
+- `benchmarks/tasks/task_081.json`
+- `benchmarks/repos/tomlkit_scalar_capture_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
+- `optimization/policy_versions/improved_v43.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `docs/benchmark_registry.md`
+- `logs/summaries/batch_run_realissuev43_001.json`
+- `logs/summaries/batch_eval_realissuev43_001.json`
+- `logs/summaries/batch_compare_realissue_step23_002.json`
+- `logs/summaries/batch_run_frozen20v43_001.json`
+- `logs/summaries/batch_eval_frozen20v43_001.json`
+- `logs/summaries/batch_compare_frozen20_step22_001.json`
+- `logs/summaries/batch_run_frozen40v43_001.json`
+- `logs/summaries/batch_eval_frozen40v43_001.json`
+- `logs/summaries/benchmark_maturity_maturity_014.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+
+### 本轮实现内容
+
+- 新增 `tomlkit#504` 的 `real_issue` 草稿：
+  - `task_080`
+- 新增可运行的 semi_real 正式任务：
+  - `task_081`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_scalar_capture_repo`
+- 在 repo 中故意保留 bug：
+  - 当前中间表被替换成标量后，会把 `b = 2` 错误吸附到前一个表 `a` 的作用域里
+- 新增 `improved_v43`
+- 在 patcher 中新增 table replaced by scalar 作用域修复的专用规则
+- 把 `task_081` 加入正式 manifest
+- 正式创建 `real_issue_tasks_frozen_40_v1.json`
+- 更新候选池状态、注册表与项目文档
+- 跑通单任务闭环、正式集扩容验证、`frozen_20` 同集合验证、`frozen_40` 首轮验证与 maturity 审计
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_scalar_capture_repo/tests/test_renderer.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_081.json --policy optimization/policy_versions/improved_v43.json`
+- 正式集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v43.json --run-label realissuev43 --compare-against-eval logs/summaries/batch_eval_realissuev42_001.json --compare-label realissue_step23`
+- 固定集：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v43.json --run-label frozen20v43 --compare-against-eval logs/summaries/batch_eval_frozen20v42_001.json --compare-label frozen20_step22`
+- `frozen_40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v43.json --run-label frozen40v43`
+- maturity 审计：
+  - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `39 -> 40`
+- 候选池状态：
+  - `accepted = 39 -> 40`
+  - `to_review = 0 -> 0`
+- `improved_v43` 正式 `40` 条任务集结果：
+  - `success_count: 39 -> 40`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5157 -> 0.5241`
+- `improved_v43` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5186 -> 0.5291`
+- `improved_v43` `frozen_40 v1` 结果：
+  - `success_rate: 1.0`
+  - `test_pass_rate: 1.0`
+  - `average_duration_sec: 0.523`
+- 时延分析：
+  - 正式集公共 `39` 条任务平均耗时差值：`+0.0095s`
+  - `frozen_20` 公共 `20` 条任务平均耗时差值：`+0.0105s`
+- maturity 审计：
+  - 正式任务数：`40 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`0 / 5`
+
+### 结论
+
+- `tomlkit#504` 已成功从新来源候选进入正式 semi_real 任务集
+- `improved_v43` 在扩容后继续保持正式集、`frozen_20` 与 `frozen_40` 三线无功能回归
+- `frozen_40` 首版已经正式建立，benchmark maturity v1 从“先建集合”切换到了“累计 streak”
+- 但这轮平均耗时出现了小幅回升，后续版本应优先在不破坏 `frozen_40` 成功率的前提下控制时延
+
+### 剩余问题
+
+- 当前离 `60` 条正式任务仍有 `20` 条缺口
+- `frozen_40` 连续无回归版本仍为 `0 / 5`
+- 下一轮应优先扩新来源、补新正式任务，并让 `improved_v44` 在 `frozen_40` 上拿到第 `1` 个 streak 证据

@@ -1,0 +1,29 @@
+{
+  "task_id": "task_080",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "table replaced by scalar is captured by neighbour table",
+  "issue_text": "当前在文档里把中间表替换成标量后，重新渲染结果会把该标量错误吸附到相邻表的作用域里。例如原本应在顶层输出的 `b = 2` 被错误写到了前一个表后面。这个真实 issue 需要让替换后的标量继续保持顶层位置，同时相邻表内容不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 504,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/504",
+    "candidate_id": "python_poetry_tomlkit_issue_504",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}
