@@ -9558,3 +9558,170 @@
   - `improved_v56` 是扩容成功且三线验证通过的最新版本
   - 当前 `frozen_40 streak` 仍保持 `8`
   - 正式任务数已经推进到 `53`
+
+## 2026-06-12 Phase 6 packaging 名称规范化边界扩容与 `improved_v57`
+
+### 背景
+
+上一轮我们已经完成：
+
+- `python-poetry/tomlkit#430 -> task_107`
+- `improved_v56`
+- 正式任务数推进到 `53`
+
+同时，`v56` 已经把 `frozen_40` 重新拉回长期阈值以内：
+
+- `0.5293 < 0.5514`
+
+因此这一轮希望继续验证两件事：
+
+- 能否继续把正式任务数推高到 `54`
+- 能否在继续扩题时守住 `frozen_40` 的功能稳定与长期性能门槛
+
+这一轮选择 `pypa/packaging#1231`，因为它是一个非常干净的名称规范化 roundtrip 语义问题：当名称已经是 `canonicalize_name()` 的稳定输出时，`is_normalized_name()` 不应继续错误拒绝前后带连字符的 canonicalized 名称。
+
+### 目标
+
+- 把 `pypa/packaging#1231` 转成新的 semi_real 正式任务
+- 为 `canonicalize_name()` 与 `is_normalized_name()` 在边界连字符上的语义不一致补一条规则型修复能力
+- 在正式扩容集、`frozen_20`、`frozen_40` 上验证 `improved_v57`
+- 同步 maturity 审计，把正式任务数推进到 `54`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/tasks/task_108.json`
+- `benchmarks/tasks/task_109.json`
+- `benchmarks/repos/packaging_name_normalization_repo/`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `optimization/policy_versions/improved_v57.json`
+- `app/agent/patcher.py`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev57r1_001.json`
+- `logs/summaries/batch_eval_realissuev57r2_001.json`
+- `logs/summaries/batch_eval_realissuev57r3_001.json`
+- `logs/summaries/batch_compare_realissue_step37_003.json`
+- `logs/summaries/batch_eval_frozen20v57r1_001.json`
+- `logs/summaries/batch_eval_frozen20v57r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step36_002.json`
+- `logs/summaries/batch_eval_frozen40v57r1_001.json`
+- `logs/summaries/batch_eval_frozen40v57r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step12_002.json`
+- `logs/summaries/benchmark_maturity_maturity_033.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `pypa/packaging#1231`
+- 新增 `real_issue` 草稿：
+  - `task_108`
+- 新增可运行的 semi_real 正式任务：
+  - `task_109`
+- 新增 repo：
+  - `benchmarks/repos/packaging_name_normalization_repo`
+- 在 repo 中故意保留 bug：
+  - `canonicalize_name()` 会保留前后连字符的稳定输出
+  - `is_normalized_name()` 却继续用更窄的正则把这些名称误判为未规范化
+- 新增 `improved_v57`
+- 在 patcher 中新增 packaging 名称规范化边界的专用规则
+- 修复 `v57r1` 首轮暴露出的两处继承链漏接问题
+- 把 `task_109` 加入正式 manifest
+- 更新候选池状态、结果文档、项目记忆与注册表
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/packaging_name_normalization_repo/tests/test_utils.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_109.json --policy optimization/policy_versions/improved_v57.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_006.json --policy optimization/policy_versions/improved_v57.json`
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_107.json --policy optimization/policy_versions/improved_v57.json`
+- 正式集首轮：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v57.json --run-label realissuev57r1 --compare-against-eval logs/summaries/batch_eval_realissuev56r2_001.json --compare-label realissue_step37`
+- 正式集修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v57.json --run-label realissuev57r2 --compare-against-eval logs/summaries/batch_eval_realissuev56r2_001.json --compare-label realissue_step37`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v57.json --run-label realissuev57r3 --compare-against-eval logs/summaries/batch_eval_realissuev56r2_001.json --compare-label realissue_step37`
+- 固定 `20` 首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v57.json --run-label frozen20v57r1 --compare-against-eval logs/summaries/batch_eval_frozen20v56r2_001.json --compare-label frozen20_step36`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v57.json --run-label frozen20v57r2 --compare-against-eval logs/summaries/batch_eval_frozen20v56r2_001.json --compare-label frozen20_step36`
+- 固定 `40` 首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v57.json --run-label frozen40v57r1 --compare-against-eval logs/summaries/batch_eval_frozen40v56r2_001.json --compare-label frozen40_step12`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v57.json --run-label frozen40v57r2 --compare-against-eval logs/summaries/batch_eval_frozen40v56r2_001.json --compare-label frozen40_step12`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+- 核心回归测试：
+  - `python -m pytest tests/test_import_issue_batch.py tests/test_scaffold_semi_real_task.py tests/test_run_real_issue_eval.py tests/test_analyze_benchmark_maturity.py -q`
+
+### 关键观察
+
+- 正式任务数：
+  - `53 -> 54`
+- 候选池状态：
+  - `accepted = 53 -> 54`
+  - `to_review = 0 -> 0`
+- `improved_v57` 正式 `54` 条任务集最终结果：
+  - `success_count: 53 -> 54`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5237 -> 0.523`
+- `improved_v57` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5313 -> 0.5385`
+- `improved_v57` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5293 -> 0.5437`
+- maturity 审计：
+  - 正式任务数：`54 / 60`
+  - 来源生态数：`13 / 6`
+  - frozen 集合：`40 / 40`
+  - `frozen_40` 连续版本：`8`
+
+### 这轮额外记录的过程
+
+- `v57r1` 首轮正式集与冻结集出现系统性回归：
+  - 正式集只成功 `9 / 54`
+  - `frozen_20` 只成功 `0 / 20`
+  - `frozen_40` 只成功 `0 / 40`
+  - taxonomy 大量落到 `Premature Finish`
+- 第一处根因：
+  - patcher 中多段旧规则版本集合遗漏了 `improved_v57`
+  - 导致 `v47 ~ v43` 这段旧规则链没有被继续继承
+- 修复后补跑 `v57r2`：
+  - `task_006` 恢复成功
+  - `frozen_20` 恢复 `20 / 20`
+  - `frozen_40` 恢复 `40 / 40`
+- 随后正式集仍有 `task_107` 单点回归：
+  - 根因是 `v56` 的 tomlkit 单元素 key 规则仍只绑定 `improved_v56`
+  - 没有继续继承到 `improved_v57`
+- 修复后补跑 `v57r3`：
+  - 正式集恢复 `54 / 54`
+  - 正式集平均耗时继续小幅优于 `v56`
+- 这说明这轮最重要的不只是新增题：
+  - 还再次验证了 patcher 版本继承链必须显式维护到最新版本
+  - 而且继承链问题会优先以“系统性 Premature Finish”或“新近规则单点失效”两种形式暴露出来
+
+### 结论
+
+- `packaging#1231` 已成功作为新的名称规范化 roundtrip 语义题补进正式 semi_real 任务集
+- `improved_v57` 已把正式任务数推进到 `54`
+- 功能上，`improved_v57` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，这轮正式集继续小幅改善，`frozen_40` 虽然相对 `v56` 略有波动，但仍稳定低于长期阈值
+- 当前最准确口径更新为：
+  - `improved_v50` 是稳定基线
+  - `improved_v57` 是扩容成功且三线验证通过的最新版本
+  - 当前 `frozen_40 streak` 仍保持 `8`
+  - 正式任务数已经推进到 `54`

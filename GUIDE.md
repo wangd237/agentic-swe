@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v56` 多轮策略迭代，正式真实任务扩充到 `53` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v56` 已继续把正式任务数推高，并在正式集、`frozen_20`、`frozen_40` 三线保持功能全绿；同时 `frozen_40` 平均耗时已回落到 `0.5293`，重新落回 `improved_v32` 长期阈值以内，稳定 `streak` 仍保持 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v57` 多轮策略迭代，正式真实任务扩充到 `54` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v57` 已继续把正式任务数推高，并在正式集、`frozen_20`、`frozen_40` 三线保持功能全绿；同时 `frozen_40` 平均耗时为 `0.5437`，仍保持在 `improved_v32` 长期阈值以内，稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -130,24 +130,24 @@ bug 设计如下：
 
 ## Phase 6 最新补充
 
-### 1. 当前最新落地到 `improved_v56`
+### 1. 当前最新落地到 `improved_v57`
 
 这一轮新增的真实 issue 来自：
 
-- `python-poetry/tomlkit#430`
+- `pypa/packaging#1231`
 
 新增产物：
 
-- `benchmarks/tasks/task_106.json`
-- `benchmarks/tasks/task_107.json`
-- `benchmarks/repos/tomlkit_single_key_repo/`
-- `optimization/policy_versions/improved_v56.json`
+- `benchmarks/tasks/task_108.json`
+- `benchmarks/tasks/task_109.json`
+- `benchmarks/repos/packaging_name_normalization_repo/`
+- `optimization/policy_versions/improved_v57.json`
 
 当前最关键的新增能力：
 
-- agent 已能修复一种新的 tomlkit key 规范退化问题
-- 场景是“单元素列表 key 规范不应继续构造成无法按普通字符串命中的 DottedKey”
-- 这让正式真实任务总数从 `52` 提升到 `53`
+- agent 已能修复一种新的 packaging 名称规范化边界问题
+- 场景是“当名称已经是 `canonicalize_name()` 的稳定输出时，`is_normalized_name()` 不应再把前后带连字符的名称误判为未规范化”
+- 这让正式真实任务总数从 `53` 提升到 `54`
 
 ### 2. 这一轮框架结构变化
 
@@ -161,37 +161,38 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 
 最新新增的目录入口：
 
-- `benchmarks/repos/tomlkit_single_key_repo`
+- `benchmarks/repos/packaging_name_normalization_repo`
 
 ### 3. 你现在可以怎么体验
 
 如果你想直接体验这轮新题，可以按下面顺序：
 
 1. 先看任务定义：
-   - `benchmarks/tasks/task_107.json`
+   - `benchmarks/tasks/task_109.json`
 2. 再看最小 repo：
-   - `benchmarks/repos/tomlkit_single_key_repo`
+   - `benchmarks/repos/packaging_name_normalization_repo`
 3. 先手工验证原始失败：
-   - `python -m pytest benchmarks/repos/tomlkit_single_key_repo/tests/test_keys.py -q`
+   - `python -m pytest benchmarks/repos/packaging_name_normalization_repo/tests/test_utils.py -q`
 4. 再跑单任务闭环：
-   - `python scripts/run_single_task.py --task benchmarks/tasks/task_107.json --policy optimization/policy_versions/improved_v56.json`
+   - `python scripts/run_single_task.py --task benchmarks/tasks/task_109.json --policy optimization/policy_versions/improved_v57.json`
 5. 如果你想看全量扩容效果：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v56.json --run-label realissuev56r2`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v57.json --run-label realissuev57r3`
 6. 如果你想看固定 `40` 条集合验证：
-   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v56.json --run-label frozen40v56r2 --compare-against-eval logs/summaries/batch_eval_frozen40v55r1_001.json --compare-label frozen40_step11`
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v57.json --run-label frozen40v57r2 --compare-against-eval logs/summaries/batch_eval_frozen40v56r2_001.json --compare-label frozen40_step12`
 
 ### 4. 当前最准确的状态口径
 
-- 正式真实任务数：`53`
+- 正式真实任务数：`54`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v56`
+- 当前最新扩容版本：`improved_v57`
 - 当前 `frozen_40 streak`：`8`
 
 注意：
 
-- `v56` 这一轮已经完成“扩容成功 + 正式集/`frozen_20`/`frozen_40` 三线验证”
-- 它在 `frozen_40` 上相对 `v55r1` 的 `average_duration_sec` 从 `0.6527` 回落到 `0.5293`
-- 这意味着当前固定 `40` 条集合已经重新落回 `improved_v32` 基线阈值 `0.5514` 以内
+- `v57` 这一轮已经完成“扩容成功 + 正式集/`frozen_20`/`frozen_40` 三线验证”
+- 它在正式集上把任务数从 `53` 推进到 `54`，同时继续保持 `54 / 54` 成功
+- 它在 `frozen_40` 上相对 `v56r2` 的 `average_duration_sec` 从 `0.5293` 轻微波动到 `0.5437`
+- 这意味着当前固定 `40` 条集合仍然保持在 `improved_v32` 基线阈值 `0.5514` 以内
 - 当前稳定基线仍保持为 `v50`，但后续版本已经重新具备继续积累稳定证据的条件
 
 ## 当前框架结构
@@ -632,39 +633,40 @@ scripts/
 
 截至目前，Phase 6 主线已经继续推进到：
 
-- 正式 `semi_real` 真实任务数：`53`
+- 正式 `semi_real` 真实任务数：`54`
 - 冻结集合：`frozen_40 v1`
 - 当前稳定 streak：`8`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v56`
+- 当前最新扩容策略：`improved_v57`
 
 其中最新一轮新增的是：
 
-- 来源 issue：`python-poetry/tomlkit#430`
-- draft 任务：`task_106`
-- 正式 semi_real 任务：`task_107`
-- semi_real repo：`benchmarks/repos/tomlkit_single_key_repo`
+- 来源 issue：`pypa/packaging#1231`
+- draft 任务：`task_108`
+- 正式 semi_real 任务：`task_109`
+- semi_real repo：`benchmarks/repos/packaging_name_normalization_repo`
 
 这轮新增能力覆盖的场景是：
 
-- 单元素列表 key 规范输入时
-- 不应继续错误构造成 `DottedKey`
-- 必须与单字符串 key 输入保持一致的匹配与存在性语义
+- 名称已经是 `canonicalize_name()` 的稳定输出时
+- `is_normalized_name()` 不应继续错误拒绝前后带连字符的 canonicalized 名称
+- 必须继续保持普通中间连字符名称的既有行为不回归
 
 当前这一轮的关键结论要分开看：
 
 - 功能面：
-  - `improved_v56` 已在正式 `53` 条任务集、`frozen_20` 与 `frozen_40` 上保持 `100%` 成功率和 `100%` 测试通过率
+  - `improved_v57` 已在正式 `54` 条任务集、`frozen_20` 与 `frozen_40` 上保持 `100%` 成功率和 `100%` 测试通过率
 - 性能面：
-  - `v56` 的正式集复跑口径对比 `v55` 是 `average_duration_sec = 0.6551 -> 0.5237`
-  - `v56` 的 `frozen_20` 复跑口径对比 `v55` 是 `average_duration_sec = 0.6835 -> 0.5313`
-  - `v56` 的 `frozen_40` 复跑口径对比 `v55` 是 `average_duration_sec = 0.6527 -> 0.5293`
+  - `v57` 的正式集复跑口径对比 `v56` 是 `average_duration_sec = 0.5237 -> 0.523`
+  - `v57` 的 `frozen_20` 复跑口径对比 `v56` 是 `average_duration_sec = 0.5313 -> 0.5385`
+  - `v57` 的 `frozen_40` 复跑口径对比 `v56` 是 `average_duration_sec = 0.5293 -> 0.5437`
   - 当前固定 `40` 条集合已经重新落回 `improved_v32` 阈值 `0.5514` 以内
 
 因此当前更可信的判断是：
 
-- `v56` 已经成功把正式任务数从 `52` 扩到 `53`
-- 它在复跑口径下把正式集、`frozen_20`、`frozen_40` 的平均耗时都明显拉回
+- `v57` 已经成功把正式任务数从 `53` 扩到 `54`
+- 它在复跑口径下继续保持正式集、`frozen_20`、`frozen_40` 三线功能全绿
+- 它在正式集上相对 `v56` 继续小幅降低平均耗时
 - 它仍然不改变当前稳定基线是 `v50` 这一事实
 - 但这轮已经重新把后续版本带回“可以继续积累稳定证据”的轨道
 
@@ -2533,6 +2535,6 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - 持续把真实 issue 缩题成可运行 semi_real 任务，并沉淀指标对比
 - 用新增的时延分析脚本定位最近几轮 `average_duration_sec` 回升原因
 - 沿 `run_tests` 链继续定位系统性时延回升来源
-- 扩新来源，把正式真实任务从 `39` 条继续推向 `40+` 再到 `60+`
-- 再补 `1` 条正式任务后立刻创建 `frozen_40` manifest
+- 扩新来源，把正式真实任务从 `54` 条继续推向 `60+`
+- 持续在 `frozen_40` 上累计后续版本的无回归证据
 - 继续追加优化前后差异说明

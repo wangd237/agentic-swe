@@ -1,0 +1,29 @@
+{
+  "task_id": "task_108",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "is_normalized_name() rejects some names that canonicalize_name() leaves unchanged (leading/trailing hyphens)",
+  "issue_text": "Spotted by @henryiii while reviewing #1230.\n\n`is_normalized_name(name)` is documented to return `True` iff the name is already canonical (`canonicalize_name(name) == name`, i.e. it roundtrips). That holds in the interior but breaks at the edges: `canonicalize_name` can emit names with leading/trailing hyphens (it lowercases and collapses `[-_.]+` to `-` without stripping edge hyphens), yet `is_normalized_name` rejects those.\n\nReproducer (packaging 26.0):\n\n```python\nfrom packaging.utils import ca",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 1231,
+    "issue_url": "https://github.com/pypa/packaging/issues/1231",
+    "candidate_id": "pypa_packaging_issue_1231",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

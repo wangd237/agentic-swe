@@ -1,0 +1,37 @@
+{
+  "task_id": "task_109",
+  "repo_name": "packaging_name_normalization_repo",
+  "repo_path": "benchmarks/repos/packaging_name_normalization_repo",
+  "issue_title": "is_normalized_name() rejects some names that canonicalize_name() leaves unchanged (leading/trailing hyphens)",
+  "issue_text": "Spotted by @henryiii while reviewing #1230.\n\n`is_normalized_name(name)` is documented to return `True` iff the name is already canonical (`canonicalize_name(name) == name`, i.e. it roundtrips). That holds in the interior but breaks at the edges: `canonicalize_name` can emit names with leading/trailing hyphens (it lowercases and collapses `[-_.]+` to `-` without stripping edge hyphens), yet `is_normalized_name` rejects those.\n\nReproducer (packaging 26.0):\n\n```python\nfrom packaging.utils import ca",
+  "test_command": "python -m pytest tests/test_utils.py -q",
+  "success_criteria": "当名称已经是 canonicalize_name 的稳定输出时，is_normalized_name 应返回 True；前后带连字符的 canonicalized 名称不应被误判为未规范化；普通中间连字符名称行为保持不变；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "packaging",
+    "normalization",
+    "names"
+  ],
+  "target_files_hint": [
+    "packaging_name_normalization_repo/utils.py",
+    "tests/test_utils.py"
+  ],
+  "expected_failure_test": "NameNormalizationTests.test_canonicalized_edge_hyphen_name_is_treated_as_normalized",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 1231,
+    "issue_url": "https://github.com/pypa/packaging/issues/1231",
+    "candidate_id": "pypa_packaging_issue_1231",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_108",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

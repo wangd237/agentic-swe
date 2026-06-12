@@ -65,6 +65,7 @@
 | `task_103` | `python-poetry/tomlkit#295` | `tomlkit_comment_anchor_repo` | AoT 条目追加子表后原有注释锚点跑偏 | `improved_v54` | `-` |
 | `task_105` | `pytest-dev/pytest#14189` | `pytest_caplog_filter_repo` | 嵌套 caplog filtering 提前移除外层 filter | `improved_v55` | `-` |
 | `task_107` | `python-poetry/tomlkit#430` | `tomlkit_single_key_repo` | 单元素列表 key 规范被错误构造成 DottedKey | `improved_v56` | `-` |
+| `task_109` | `pypa/packaging#1231` | `packaging_name_normalization_repo` | `is_normalized_name()` 错误拒绝 `canonicalize_name()` 已稳定的前后连字符名称 | `improved_v57` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -113,6 +114,7 @@
 - array-of-tables 条目扩写后的注释锚点与原始文档相对位置保真
 - 嵌套日志过滤上下文与外层 filter 生命周期保真
 - 单元素列表 key 规范与单字符串 key 语义一致性
+- 名称规范化 roundtrip 语义与边界连字符 canonical 输出一致性
 
 ## 当前仍相对欠缺的方向
 

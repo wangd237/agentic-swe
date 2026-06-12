@@ -2962,12 +2962,12 @@ trace 热点分析结果：
 
 当前状态补充：
 
-- 正式任务数：`53 / 60`
+- 正式任务数：`54 / 60`
 - 来源生态数：`13 / 6`
 - frozen 集合：`40 / 40`
 - `frozen_40` 稳定 streak：`8`
 - 当前稳定基线：`improved_v50`
-- 当前最新扩容版本：`improved_v56`
+- 当前最新扩容版本：`improved_v57`
 
 `improved_v53` 正式 50 条真实 issue 任务集验证：
 
@@ -3197,56 +3197,70 @@ trace 热点分析结果：
   - `frozen_40 streak` 仍保持 `8`
   - `v56` 已重新把 `frozen_40` 平均耗时拉回长期阈值以内
 
-`improved_v52` 正式 49 条真实 issue 任务集验证：
+`improved_v57` 正式 54 条真实 issue 任务集验证：
 
 - 新增策略：
-  - `optimization/policy_versions/improved_v52.json`
+  - `optimization/policy_versions/improved_v57.json`
 - 新增任务：
-  - `benchmarks/tasks/task_099.json`
+  - `benchmarks/tasks/task_109.json`
 - 新增 repo：
-  - `benchmarks/repos/jinja_include_repo`
+  - `benchmarks/repos/packaging_name_normalization_repo`
 - 运行结果：
-  - 首轮 batch eval：`logs/summaries/batch_eval_realissuev52_001.json`
-  - compare 口径 batch eval：`logs/summaries/batch_eval_realissuev52r2_001.json`
-  - compare：`logs/summaries/batch_compare_realissue_step32_001.json`
-  - 时延对比：`logs/summaries/duration_compare_realissuev52_001.json`
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_realissuev57r1_001.json`
+  - 继承链修复后 batch eval：`logs/summaries/batch_eval_realissuev57r2_001.json`
+  - 单点回归修复后 batch eval：`logs/summaries/batch_eval_realissuev57r3_001.json`
+  - compare：`logs/summaries/batch_compare_realissue_step37_003.json`
 - 指标：
-  - `task_count`: `48 -> 49`
-  - `success_count`: `48 -> 49`
+  - `task_count`: `53 -> 54`
+  - `success_count`: `53 -> 54`
   - `success_rate`: `1.0 -> 1.0`
   - `test_pass_rate`: `1.0 -> 1.0`
-  - compare 口径 `average_duration_sec`: `0.6987 -> 0.6707`
+  - 复跑口径 `average_duration_sec`: `0.5237 -> 0.523`
 - 结论：
-  - 这说明 `jinja#2108` 已成功转化为正式第 `49` 条 semi_real 任务
-  - `improved_v52` 在扩容后继续保持全量成功
-  - 同时它把 `v51` 正式集的平均耗时又拉回了 `0.028s`
+  - 这说明 `packaging#1231` 已成功转化为正式第 `54` 条 semi_real 任务
+  - `improved_v57` 在正式集复跑口径下继续保持全量成功
+  - 相对 `v56` 的正式集平均耗时继续小幅改善了 `0.0007s`
 
-`improved_v52` `frozen_20` 同集合验证：
+`improved_v57` `frozen_20` 同集合验证：
 
 - 运行结果：
-  - 首轮 batch eval：`logs/summaries/batch_eval_frozen20v52_001.json`
-  - compare 口径 batch eval：`logs/summaries/batch_eval_frozen20v52r2_001.json`
-  - compare：`logs/summaries/batch_compare_frozen20_step31_001.json`
-  - 时延对比：`logs/summaries/duration_compare_frozen20v52_001.json`
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_frozen20v57r1_001.json`
+  - 修复后 batch eval：`logs/summaries/batch_eval_frozen20v57r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen20_step36_002.json`
 - 指标：
   - `success_rate`: `1.0 -> 1.0`
   - `test_pass_rate`: `1.0 -> 1.0`
-  - compare 口径 `average_duration_sec`: `0.7361 -> 0.6912`
+  - `average_duration_sec`: `0.5313 -> 0.5385`
 - 结论：
   - `frozen_20` 在功能上继续无回归
-  - 并且这轮相对 `v51` 明显回落了 `0.0449s`
+  - 相对 `v56` 只有 `0.0072s` 的轻微耗时波动
 
-`improved_v52` `frozen_40` 同集合验证：
+`improved_v57` `frozen_40` 同集合验证：
 
 - 运行结果：
-  - 首轮 batch eval：`logs/summaries/batch_eval_frozen40v52_001.json`
-  - compare 口径 batch eval：`logs/summaries/batch_eval_frozen40v52r2_001.json`
-  - compare：`logs/summaries/batch_compare_frozen40_step09_001.json`
+  - 首轮异常 batch eval：`logs/summaries/batch_eval_frozen40v57r1_001.json`
+  - 修复后 batch eval：`logs/summaries/batch_eval_frozen40v57r2_001.json`
+  - compare：`logs/summaries/batch_compare_frozen40_step12_002.json`
 - 指标：
   - `success_rate`: `1.0 -> 1.0`
   - `test_pass_rate`: `1.0 -> 1.0`
-  - compare 口径 `average_duration_sec`: `0.6616 -> 0.6824`
+  - `average_duration_sec`: `0.5293 -> 0.5437`
 - 结论：
   - `frozen_40` 在功能上继续无回归
-  - 但这轮仍没有把时延拉回长期阈值以内
-  - 因此当前稳定 streak 仍保持在 `8`
+  - 相对 `v56` 平均耗时只回升了 `0.0144s`
+  - 当前 `0.5437` 仍继续低于 `improved_v32` 的长期阈值 `0.5514`
+
+`v57` 结论补充：
+
+- 这一轮最重要的是：正式任务数已经推进到 `54`
+- 新增的是 `packaging` 生态的一条名称规范化 roundtrip 语义题，继续补强 `packaging` 边界语义覆盖
+- `v57r1` 首轮先后暴露出两处真实继承链问题：
+  - 多段旧规则版本集合遗漏 `improved_v57`
+  - `v56` 的 tomlkit 单元素 key 规则未继续继承到 `v57`
+- 修复后 `v57r2 / v57r3` 已恢复正式集、`frozen_20` 与 `frozen_40` 三线全量通过
+- 当前最准确口径更新为：
+  - `v50` 是稳定基线
+  - `v57` 是最新扩容成功版本
+  - 正式任务数已推进到 `54`
+  - `frozen_40 streak` 仍保持 `8`
+  - `v57` 继续把 `frozen_40` 保持在长期阈值以内

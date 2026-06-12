@@ -8,9 +8,9 @@
 
 - 当前阶段：`Phase 6 - 优化系统`
 - 当前稳定基线策略：`improved_v50`
-- 当前最新扩容策略：`improved_v56`
+- 当前最新扩容策略：`improved_v57`
 - 当前主分支最近重要能力：
-  - 已完成 `53` 条真实 issue 派生 `semi_real` 正式任务
+  - 已完成 `54` 条真实 issue 派生 `semi_real` 正式任务
   - 已正式建立 `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
   - 已补齐 `frozen_40` 上的 `improved_v32` 基线评测
   - 已在 `frozen_20` 上补齐一轮 `improved_v49 -> improved_v50` 无回归验证
@@ -23,9 +23,10 @@
   - 已把 `python-poetry/tomlkit#295` 从新来源候选推进为正式任务 `task_103`
   - 已把 `pytest-dev/pytest#14189` 从新来源候选推进为正式任务 `task_105`
   - 已把 `python-poetry/tomlkit#430` 从新来源候选推进为正式任务 `task_107`
-  - 已落地 `improved_v56` 的 tomlkit 单元素 key 规范修复规则
-  - 已完成 `v56` 的正式集、`frozen_20`、`frozen_40` 功能验证及复跑
-  - 已确认 `v56` 相对 `v55` 在功能上继续全绿，并把 `frozen_40` 平均耗时拉回长期阈值以内
+  - 已把 `pypa/packaging#1231` 从新来源候选推进为正式任务 `task_109`
+  - 已落地 `improved_v57` 的 packaging 名称规范化边界修复规则
+  - 已完成 `v57` 的正式集、`frozen_20`、`frozen_40` 功能验证及复跑
+  - 已确认 `v57` 相对 `v56` 在功能上继续全绿，并继续把 `frozen_40` 保持在长期阈值以内
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -69,7 +70,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`53`
+- 正式 `semi_real` 真实 issue 任务数：`54`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -82,7 +83,7 @@
 
 ## 当前候选池状态
 
-- `accepted = 53`
+- `accepted = 54`
 - `drafted = 0`
 - `to_review = 0`
 - 当前 accepted 候选已全部转成正式任务，下一阶段扩容主要依赖新增候选来源
@@ -99,41 +100,41 @@
 
 ### 1. 当前最新扩容对比
 
-- 对比：`improved_v55 -> improved_v56`
-- 任务集：`52 -> 53` 条
+- 对比：`improved_v56 -> improved_v57`
+- 任务集：`53 -> 54` 条
 - 结果：
-  - `success_count: 52 -> 53`
+  - `success_count: 53 -> 54`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - 正式集 compare 口径 `average_duration_sec: 0.6551 -> 0.5237`
+  - 正式集 compare 口径 `average_duration_sec: 0.5237 -> 0.523`
 
 说明：
 
-- 这说明 `improved_v56` 已成功把正式真实任务集从 `52` 条推进到 `53` 条
-- 新增任务是 `task_107`，来源于 `python-poetry/tomlkit#430`
+- 这说明 `improved_v57` 已成功把正式真实任务集从 `53` 条推进到 `54` 条
+- 新增任务是 `task_109`，来源于 `pypa/packaging#1231`
 - 功能上这一轮仍然保持 `100%` 成功率与 `100%` 测试通过率
-- 复跑口径下当前正式集平均耗时回落了 `0.1314s`
-- 这说明这轮不只是扩题成功，还顺带修复了 `v56r1` 中暴露出的继承链漏接问题
+- 复跑口径下当前正式集平均耗时继续小幅改善了 `0.0007s`
+- 这说明这轮不只是扩题成功，还顺带修复了 `v57r1` 中暴露出的两处 patcher 版本继承链漏接问题
 
 ### 2. 当前最新冻结集观察
 
-- `improved_v56` `frozen_20` compare：
+- `improved_v57` `frozen_20` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.6835 -> 0.5313`
-- `improved_v56` `frozen_40` compare：
+  - `average_duration_sec: 0.5313 -> 0.5385`
+- `improved_v57` `frozen_40` compare：
   - `success_rate = 1.0`
   - `test_pass_rate = 1.0`
-  - `average_duration_sec: 0.6527 -> 0.5293`
+  - `average_duration_sec: 0.5293 -> 0.5437`
 - 当前稳定 streak：
   - 仍为 `8`
 
 说明：
 
-- `v56` 在固定集合上没有功能回归
-- 它在 `frozen_20` 上相对 `v55` 回落了 `0.1522s`
-- 它在 `frozen_40` 上相对 `v55` 回落了 `0.1234s`
-- 当前 `0.5293` 已重新低于 `improved_v32` 基线阈值 `0.5514`
+- `v57` 在固定集合上没有功能回归
+- 它在 `frozen_20` 上相对 `v56` 只有 `0.0072s` 的轻微波动
+- 它在 `frozen_40` 上相对 `v56` 只有 `0.0144s` 的轻微波动
+- 当前 `0.5437` 仍低于 `improved_v32` 基线阈值 `0.5514`
 - 因此 `frozen_40 streak` 仍然停留在 `v50` 时的 `8`
 
 ### 3. 最新环境级诊断结论
@@ -150,13 +151,13 @@
 - `frozen_40` 环境基线对比：
   - `logs/summaries/batch_compare_frozen40_step09_001.json`
   - `average_duration_sec: 0.6616 -> 0.6824`
-- `v56` `frozen_40` 对比：
-  - `logs/summaries/batch_compare_frozen40_step11_002.json`
-  - `average_duration_sec: 0.6527 -> 0.5293`
+- `v57` `frozen_40` 对比：
+  - `logs/summaries/batch_compare_frozen40_step12_002.json`
+  - `average_duration_sec: 0.5293 -> 0.5437`
 
 说明：
 
-- `v56` 继续证明了扩题链路稳定可用
+- `v57` 继续证明了扩题链路稳定可用
 - 当前最强证据表明：新题扩容后功能稳定，而且 `frozen_40` 性能已经重新落回长期阈值以内
 - 后续文档与结论仍然必须把“扩题成功”和“稳定性门控通过”分开记录
 
@@ -533,6 +534,25 @@
   - 稳定基线仍是 `improved_v50`
   - 最新扩容版本是 `improved_v56`
   - 正式任务数是 `53`
+  - `frozen_40 streak` 仍是 `8`
+
+### `improved_v57`
+
+- 来源：`pypa/packaging#1231`
+- 新增任务：`task_109`
+- 结论：
+  - 扩容成功，正式任务数推进到 `54`
+  - 正式集、`frozen_20`、`frozen_40` 复跑口径继续保持全绿
+  - 正式集 `average_duration_sec: 0.5237 -> 0.523`
+  - `frozen_20` `average_duration_sec: 0.5313 -> 0.5385`
+  - `frozen_40` `average_duration_sec: 0.5293 -> 0.5437`
+  - `v57r1` 首轮先后暴露出两处继承链漏接：老规则集合遗漏 `v57`，以及 `v56` 的单元素 key 规则未继续继承到 `v57`
+  - `v57r2 / v57r3` 修复后已恢复正式集 `54 / 54`、`frozen_20` `20 / 20` 与 `frozen_40` `40 / 40`
+  - 当前 `frozen_40` 继续低于长期阈值 `0.5514`
+- 当前主线口径应更新为：
+  - 稳定基线仍是 `improved_v50`
+  - 最新扩容版本是 `improved_v57`
+  - 正式任务数是 `54`
   - `frozen_40 streak` 仍是 `8`
 
 ## 建议冷启动顺序
