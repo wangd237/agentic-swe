@@ -1,0 +1,37 @@
+{
+  "task_id": "task_069",
+  "repo_name": "tomlkit_boolean_repo",
+  "repo_path": "benchmarks/repos/tomlkit_boolean_repo",
+  "issue_title": "tomlkit.boolean returns True as \"false\"",
+  "issue_text": "当前 `boolean()` 在把 Python 布尔值转换成 TOML 布尔文本时，错误地把 `True` 也渲染成了 `false`。semi-real 任务要求：`True` 应序列化为 `true`，`False` 继续序列化为 `false`，并且回归测试全部通过。",
+  "test_command": "python -m pytest tests/test_boolean.py -q",
+  "success_criteria": "`boolean(True).as_string()` 应返回 `true`；`boolean(False).as_string()` 应继续返回 `false`；回归测试全部通过。",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "boolean",
+    "serialization"
+  ],
+  "target_files_hint": [
+    "tomlkit_boolean_repo/items.py",
+    "tests/test_boolean.py"
+  ],
+  "expected_failure_test": "BooleanRenderTests.test_true_renders_to_true_literal",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 442,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/442",
+    "candidate_id": "python_poetry_tomlkit_issue_442",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_068",
+    "scaffolded_from": "manual_curated",
+    "repo_scaffold_status": "ready"
+  }
+}

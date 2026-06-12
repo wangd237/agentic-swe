@@ -23,7 +23,7 @@
 
 - 已新增 `scripts/analyze_benchmark_maturity.py`
 - 最新审计结果：
-  - 正式任务数：`33 / 60`
+  - 正式任务数：`34 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`
@@ -60,7 +60,6 @@
 
 - `python-poetry/tomlkit#431`
 - `python-poetry/tomlkit#383`
-- `python-poetry/tomlkit#442`
 - `pallets/jinja#2151`
 - `pallets/jinja#2176`
 
@@ -115,7 +114,10 @@
 - 已新增 `improved_v36`，在 `improved_v35` 基础上补充 `packaging wheel compressed tag order` 修复规则
 - 已在 `frozen_20` 上验证 `improved_v36`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5402 -> 0.5386`
 - 已在正式 `33` 条任务集上验证 `improved_v36`：`success_count = 32 -> 33`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.535 -> 0.5312`
-- 当前可以把 `v36` 视为后续扩容与 `frozen_40` 的候选基线推进
+- 已新增 `improved_v37`，在 `improved_v36` 基础上补充 `tomlkit boolean(True)` 布尔字面量修复规则
+- 已在 `frozen_20` 上验证 `improved_v37`：`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5386 -> 0.5687`
+- 已在正式 `34` 条任务集上验证 `improved_v37`：`success_count = 33 -> 34`、`success_rate = 1.0`、`test_pass_rate = 1.0`、`average_duration_sec = 0.5312 -> 0.6038`
+- 当前可以把 `v37` 视为后续扩容基线，但需要继续跟踪这轮扩容后的时延回升
 
 ### 4. 持续清理候选池
 
@@ -158,14 +160,13 @@
 优先级建议：
 
 1. 扩新来源，补下一批 GitHub issue 候选
-2. 以 `improved_v36` 为候选基线，继续扩正式任务数并构建 `frozen_40`
+2. 以 `improved_v37` 为候选基线，继续扩正式任务数并构建 `frozen_40`
 3. 继续对 pytest import/collection、首次运行与重复运行差异做更细实验，但服务于后续版本在 `frozen_40` 上的连续无回归
 
 补充说明：
 
-- 当前新的候选库存已经重新打开，`to_review = 8`
-- 当前 `packaging#909` 已经落地为 `task_067`
-- 当前新的候选库存仍需继续消化，剩余 `to_review = 5`
+- 当前 `tomlkit#442` 已经落地为 `task_069`
+- 当前新的候选库存仍需继续消化，剩余 `to_review = 4`
 - 因此下一轮更应该优先“吃库存”，而不是继续先扩更多来源
 
 详细理由见：

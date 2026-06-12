@@ -1,0 +1,29 @@
+{
+  "task_id": "task_068",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "tomlkit.boolean returns True as \"false\"",
+  "issue_text": "当前 `tomlkit.boolean()` 在把 Python 布尔值转换成 TOML 布尔文本时，错误地把 `True` 也渲染成了 `false`。这个真实 issue 需要让 `True` 正确序列化为 `true`，同时保持 `False -> false` 不回归。",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 442,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/442",
+    "candidate_id": "python_poetry_tomlkit_issue_442",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

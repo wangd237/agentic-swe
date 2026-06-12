@@ -42,6 +42,10 @@
 | `task_058` | `python-attrs/attrs#1479` | `attrs_alias_repo` | `field_transformer` 阶段默认 alias 不可见 | `improved_v29` | `-` |
 | `task_059` | `simonw/sqlite-utils#488` | `sqlite_transform_repo` | 数值列转换时空字符串保留为 `""` | `improved_v30` | `-` |
 | `task_060` | `simonw/sqlite-utils#186` | `sqlite_extract_repo` | extract 时为 `None` 生成冗余维表记录 | `improved_v31` | `-` |
+| `task_063` | `pypa/packaging#638` | `packaging_marker_repo` | `Marker.evaluate(extra=None)` 对 `None` 调用 `.lower()` | `improved_v34` | `-` |
+| `task_065` | `pypa/packaging#788` | `packaging_prerelease_repo` | `< prerelease` 比较错误排除了更早的合法 prerelease | `improved_v35` | `-` |
+| `task_067` | `pypa/packaging#909` | `packaging_tag_order_repo` | wheel compressed tag set 未排序时仍被错误接受 | `improved_v36` | `-` |
+| `task_069` | `python-poetry/tomlkit#442` | `tomlkit_boolean_repo` | `boolean(True)` 被错误序列化为 `false` | `improved_v37` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -70,10 +74,13 @@
 - 数据库多连接下的事务提交可见性
 - 模型继承链上的 validator 追加执行
 - CLI 命令解析回落
+- TOML 布尔字面量序列化
 
 ## 当前仍相对欠缺的方向
 
 - profile 驱动的排序 / 分派语义
+- super table / dotted key 组合渲染
+- async runtime 表示层与告警边界
 
 ## 相关文件
 

@@ -878,6 +878,25 @@ def _handle_packaging_sorted_compressed_tags(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_tomlkit_boolean_true_literal(content: str) -> str | None:
+    # improved_v37 处理 True 被错误序列化为 false 的问题。
+    target_block = (
+        '    def as_string(self) -> str:\n'
+        '        """返回 TOML 字面量字符串。"""\n'
+        '        # 这里故意保留真实 issue 中的缺陷：True 也被错误序列化为 false。\n'
+        '        return "false"'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        '    def as_string(self) -> str:\n'
+        '        """返回 TOML 字面量字符串。"""\n'
+        '        return "true" if self.value else "false"'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def apply_rule_based_patch(
     task: Task,
     repo_path: str,
@@ -2074,9 +2093,27 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37"}:
             run_v34_fallback_chain = False
-            if policy_config.patch_strategy == "improved_v36":
+            if policy_config.patch_strategy == "improved_v37":
+                improved_v37_content = _handle_tomlkit_boolean_true_literal(original_content)
+                if improved_v37_content is not None:
+                    updated_content = improved_v37_content
+                    patch_reason_parts = ["让 toml 布尔值序列化在 True 场景下返回 true 字面量"]
+                else:
+                    run_v34_fallback_chain = True
+                    improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
+                    if improved_v36_content is not None:
+                        updated_content = improved_v36_content
+                        patch_reason_parts = ["让 wheel compressed tag set 必须按排序顺序出现，未排序时直接拒绝"]
+                        run_v34_fallback_chain = False
+                    else:
+                        improved_v35_content = _handle_packaging_prerelease_less_than(original_content)
+                        if improved_v35_content is not None:
+                            updated_content = improved_v35_content
+                            patch_reason_parts = ["让 `< prerelease` 在 specifier 自身为 prerelease 时允许更早版本命中"]
+                            run_v34_fallback_chain = False
+            elif policy_config.patch_strategy == "improved_v36":
                 improved_v36_content = _handle_packaging_sorted_compressed_tags(original_content)
                 if improved_v36_content is not None:
                     updated_content = improved_v36_content

@@ -7,12 +7,12 @@
 ## 当前阶段
 
 - 当前阶段：`Phase 6 - 优化系统`
-- 当前最新策略：`improved_v36`
+- 当前最新策略：`improved_v37`
 - 当前主分支最近重要能力：
-  - 已完成 `33` 条真实 issue 派生 `semi_real` 正式任务
-  - 已在 `frozen_20` 上补齐一轮 `improved_v35 -> improved_v36` 无回归验证
-  - 已在正式 `33` 条真实任务集上补齐 `improved_v35 -> improved_v36` 全量验证
-  - 已把当前高优先级 `to_review` 候选池清零
+  - 已完成 `34` 条真实 issue 派生 `semi_real` 正式任务
+  - 已在 `frozen_20` 上补齐一轮 `improved_v36 -> improved_v37` 无回归验证
+  - 已在正式 `34` 条真实任务集上补齐 `improved_v36 -> improved_v37` 全量验证
+  - 已把 `python-poetry/tomlkit#442` 从候选推进为正式任务 `task_069`
   - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
   - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
   - 已新增 trace 热点分析入口 `scripts/analyze_trace_hotspots.py`
@@ -42,7 +42,7 @@
 - 批量运行：
   - `python scripts/run_batch.py`
 - 真实 issue 任务集流水线：
-  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v36.json --run-label realissuev36`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v37.json --run-label realissuev37`
 - 候选批量导入：
   - `python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt`
 - 时延回归分析：
@@ -56,7 +56,7 @@
 
 ## 当前正式任务规模
 
-- 正式 `semi_real` 真实 issue 任务数：`33`
+- 正式 `semi_real` 真实 issue 任务数：`34`
 - 当前正式任务来源生态数：`13`
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
@@ -68,9 +68,9 @@
 
 ## 当前候选池状态
 
-- `accepted = 33`
+- `accepted = 34`
 - `drafted = 0`
-- `to_review = 5`
+- `to_review = 4`
 - 当前 accepted 候选已基本全部转成正式任务，下一阶段扩容主要依赖新增候选来源
 
 候选来源文件：
@@ -102,58 +102,53 @@
 
 ### 2. 当前最新冻结同集合证据
 
-- 对比：`improved_v32 -> improved_v33`
+- 对比：`improved_v36 -> improved_v37`
 - 任务集：固定 `20` 条
 - 结果：
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_steps: 9.25 -> 10.25`
-  - `average_duration_sec: 0.6774 -> 0.5379`
+  - `average_steps: 10.25 -> 10.25`
+  - `average_duration_sec: 0.5386 -> 0.5687`
 
 说明：
 
 - 这是当前最新的一轮 `frozen_20` 无回归验证
-- 说明新增 `pytest_additional_flags` 注入口和 `-p no:unraisableexception` 没有破坏已有 `20` 条固定任务
-- 这一轮不仅无回归，而且平均耗时出现了显著回落
+- 说明新增 `tomlkit boolean(True)` 修复规则没有破坏已有 `20` 条固定任务
+- 但这一轮固定集平均耗时有小幅回升，后续需要继续结合下一轮版本追踪
 
 ### 3. 当前最新正式集证据
 
-- 对比：`improved_v35 -> improved_v36`
-- 任务集：扩容到正式 `33` 条
+- 对比：`improved_v36 -> improved_v37`
+- 任务集：扩容到正式 `34` 条
 - 结果：
-  - `success_count: 32 -> 33`
+  - `success_count: 33 -> 34`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.535 -> 0.5312`
+  - `average_duration_sec: 0.5312 -> 0.6038`
 
 说明：
 
-- 这说明 `improved_v36` 不只是保住了 `v35` 的已有能力
-- 它还把正式真实任务集从 `32` 条稳定扩到 `33` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
-- 因此当前主线基线已经从 `v35 / 32 条` 前进到 `v36 / 33 条`
+- 这说明 `improved_v37` 不只是保住了 `v36` 的已有能力
+- 它还把正式真实任务集从 `33` 条稳定扩到 `34` 条，并继续保持 `100%` 成功率和 `100%` 测试通过率
+- 但这轮扩容伴随平均耗时回升，需要继续做相邻版本时延跟踪
+- 因此当前主线基线已经从 `v36 / 33 条` 前进到 `v37 / 34 条`
 
 ### 4. 最新时延分析结论
 
 - 扩容集分析：
-  - `logs/summaries/duration_compare_realissuev32_001.json`
-  - 公共 `29` 条任务平均耗时：`0.6115 -> 0.6767`
-  - 平均差值：`+0.0652s`
+  - `logs/summaries/duration_compare_realissuev37_001.json`
+  - 公共 `33` 条任务平均耗时：`0.5312 -> 0.6038`
+  - 平均差值：`+0.0734s`
 - `frozen_20` 分析：
-  - `logs/summaries/duration_compare_frozen20v36_001.json`
-  - 公共 `20` 条任务平均耗时：`0.5402 -> 0.5386`
-  - 平均差值：`-0.0016s`
-- 正式 `33` 条任务集分析：
-  - `logs/summaries/duration_compare_realissuev36_001.json`
-  - 公共 `32` 条任务平均耗时：`0.535 -> 0.5312`
-  - 平均差值：`-0.0027s`
+  - `logs/summaries/duration_compare_frozen20v37_001.json`
+  - 公共 `20` 条任务平均耗时：`0.5386 -> 0.5687`
+  - 平均差值：`+0.0301s`
 - trace 热点分析：
-  - `logs/summaries/trace_hotspots_realissuev32_001.json`
-  - `logs/summaries/trace_hotspots_frozen20v33_001.json`
-  - `logs/summaries/trace_hotspots_realissuev33_001.json`
-  - 三组分析都指向 `run_tests` 是最主要的时延杠杆点
-  - 扩容集上的 `run_tests` 总耗时增量约 `+1.5149s`
-  - `frozen_20` 上 `improved_v32 -> improved_v33` 的 `run_tests` 总耗时变化约 `-2.5941s`
-  - 正式 `30` 条任务集上 `improved_v32 -> improved_v33` 的 `run_tests` 总耗时变化约 `-3.6001s`
+  - `logs/summaries/trace_hotspots_realissuev37_001.json`
+  - `logs/summaries/trace_hotspots_frozen20v37_001.json`
+- 两组分析都继续指向 `run_tests` 是最主要的时延杠杆点
+- 正式扩容集公共 `33` 条任务平均耗时差值约 `+0.0734s`
+- `frozen_20` 公共 `20` 条任务平均耗时差值约 `+0.0301s`
 - 单任务历史分析：
   - `logs/summaries/task_history_task_040_003.json`
   - `task_040` 在 `improved_v31 -> improved_v32` 的历史平均耗时：`0.6213 -> 0.8171`
@@ -232,22 +227,22 @@
   - `logs/summaries/duration_compare_hotspotsv33_001.json`
   - 热点 `4` 任务公共平均耗时：`0.5589 -> 0.5569`
   - `common_average_delta_sec = -0.002`
-- `improved_v36` `frozen_20` 验证：
-  - `logs/summaries/batch_eval_frozen20v36_001.json`
-  - `logs/summaries/batch_compare_frozen20_step15_001.json`
+- `improved_v37` `frozen_20` 验证：
+  - `logs/summaries/batch_eval_frozen20v37_001.json`
+  - `logs/summaries/batch_compare_frozen20_step16_001.json`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.5402 -> 0.5386`
-- `improved_v36` 正式 `33` 条任务集验证：
-  - `logs/summaries/batch_eval_realissuev36_001.json`
-  - `logs/summaries/batch_compare_realissue_step16_002.json`
-  - `success_count: 32 -> 33`
+  - `average_duration_sec: 0.5386 -> 0.5687`
+- `improved_v37` 正式 `34` 条任务集验证：
+  - `logs/summaries/batch_eval_realissuev37_001.json`
+  - `logs/summaries/batch_compare_realissue_step17_002.json`
+  - `success_count: 33 -> 34`
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.535 -> 0.5312`
+  - `average_duration_sec: 0.5312 -> 0.6038`
 - maturity 审计结果：
-  - `logs/summaries/benchmark_maturity_maturity_007.json`
-  - 正式任务数：`33 / 60`
+  - `logs/summaries/benchmark_maturity_maturity_008.json`
+  - 正式任务数：`34 / 60`
   - 来源生态数：`13 / 6`
   - frozen 集合：`20 / 40`
   - `frozen_40` 连续版本：`0 / 5`

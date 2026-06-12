@@ -9,14 +9,7 @@
 - 容易缩成 `1` 到 `3` 个稳定回归测试
 - 能与现有 benchmark 类型形成增量，而不是重复
 
-## 当前 Top 4
-
-### `pypa/packaging#638`
-
-- 原因：
-  - `Marker.evaluate(extra=None)` 是非常干净的类型边界 bug
-  - 单函数、单断言风格，适合快速转成高质量 semi_real
-  - 能补足 marker 归一化与空值处理能力
+## 当前 Top 3
 
 ### `python-poetry/tomlkit#431`
 
@@ -39,13 +32,7 @@
   - 能给 `jinja` 来源新增 async/runtime 表示层能力面
   - 与现有 `meta` / `slice` 两条任务形成明显互补
 
-## 当前备选 2
-
-### `python-poetry/tomlkit#442`
-
-- 原因：
-  - 极易最小化，适合作为高置信度补量候选
-  - 但难度略低，优先级可稍后于更有语义增量的候选
+## 当前备选 1
 
 ### `pallets/jinja#2176`
 
@@ -102,6 +89,18 @@
 - 原因：
   - 已进入正式任务
   - 对应 `task_047 / task_048`
+
+### `pypa/packaging#638`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_062 / task_063`
+
+### `python-poetry/tomlkit#442`
+
+- 原因：
+  - 已进入正式任务
+  - 对应 `task_068 / task_069`
 
 ### `dateutil/dateutil#1191`
 

@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v36` 多轮策略迭代，正式真实任务扩充到 `33` 条，`v36` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v37` 多轮策略迭代，正式真实任务扩充到 `34` 条，`v37` 已通过正式集与 `frozen_20` 验证，并继续向 `60+ / frozen_40` 目标推进 |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -728,7 +728,7 @@ scripts/
   - `python -m scripts.analyze_benchmark_maturity --run-label maturity`
   - 它会自动汇总正式任务数、来源生态数、frozen 集合规模和 `frozen_40` 连续无回归版本数
   - 当前最新审计结果是：
-    - 正式任务数：`33 / 60`
+    - 正式任务数：`34 / 60`
     - 来源生态数：`13 / 6`
     - frozen 集合：`20 / 40`
     - `frozen_40` 连续版本：`0 / 5`
@@ -771,6 +771,19 @@ scripts/
     - `test_pass_rate: 1.0 -> 1.0`
     - `average_duration_sec: 0.5402 -> 0.5386`
 - 这说明当前主线已经成功把正式任务集推进到 `33` 条，并且这次扩容在正式集和固定集上都继续带来了小幅时延改善
+- 当前已经继续新增 `tomlkit#442` 派生的 `task_069`，并落地 `improved_v37`
+  - 新增 repo：`benchmarks/repos/tomlkit_boolean_repo`
+  - 新增策略：`optimization/policy_versions/improved_v37.json`
+  - 新规则覆盖 `boolean(True)` 被错误序列化为 `false` 的场景
+  - 正式 `34` 条任务集验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5312 -> 0.6038`
+  - `frozen_20` 同集合验证结果：
+    - `success_rate: 1.0 -> 1.0`
+    - `test_pass_rate: 1.0 -> 1.0`
+    - `average_duration_sec: 0.5386 -> 0.5687`
+- 这说明当前主线已经成功把正式任务集推进到 `34` 条，但这轮扩容伴随时延回升，后续需要继续做性能回收
 - 这说明当前真正缺的不是来源多样性，而是规模和稳定性证据
 - 下一步应该把重点切到两条主线：
   - 继续扩真实 issue 正式任务，朝 `60+` 推进
@@ -2064,6 +2077,48 @@ python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue
 - `frozen_20` 固定集合保持无功能回归
 - `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
 - 平均耗时从 `0.5402` 小幅改善到 `0.5386`
+
+### 方式 54：运行 tomlkit boolean(True) 回归任务
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_069.json --policy optimization/policy_versions/improved_v37.json
+```
+
+你会看到：
+
+- `task_069` 被成功修复
+- 修改文件是 `tomlkit_boolean_repo/items.py`
+- patch 原因是 `boolean(True)` 应返回 `true`，而不是错误地继续返回 `false`
+
+### 方式 55：运行正式 `34` 条任务集上的 `improved_v37`
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v37.json --run-label realissuev37 --compare-against-eval logs/summaries/batch_eval_realissuev36_001.json --compare-label realissue_step17
+```
+
+你会看到：
+
+- 正式任务集已经从 `33` 条扩到 `34` 条
+- `improved_v37` 在正式 `34` 条任务集上保持 `34/34` 成功
+- 平均耗时从 `0.5312` 回升到 `0.6038`
+
+### 方式 56：运行 `frozen_20` 上的 `improved_v37` 无回归验证
+
+在仓库根目录执行：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v37.json --run-label frozen20v37 --compare-against-eval logs/summaries/batch_eval_frozen20v36_001.json --compare-label frozen20_step16
+```
+
+你会看到：
+
+- `frozen_20` 固定集合继续保持无功能回归
+- `success_rate` 和 `test_pass_rate` 继续维持 `1.0`
+- 平均耗时从 `0.5386` 回升到 `0.5687`
 
 ### Phase 7
 
