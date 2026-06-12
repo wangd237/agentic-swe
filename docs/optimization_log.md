@@ -9300,6 +9300,9 @@
 - `logs/summaries/duration_compare_realissuev55_001.json`
 - `logs/summaries/duration_compare_frozen20v55_001.json`
 - `logs/summaries/benchmark_maturity_maturity_030.json`
+- `logs/summaries/batch_eval_frozen40v55r1_001.json`
+- `logs/summaries/batch_compare_frozen40_step10_001.json`
+- `logs/summaries/benchmark_maturity_maturity_031.json`
 - `GUIDE.md`
 - `docs/results.md`
 - `docs/project_memory.md`
@@ -9360,6 +9363,10 @@
   - `success_rate: 1.0 -> 1.0`
   - `test_pass_rate: 1.0 -> 1.0`
   - `average_duration_sec: 0.6697 -> 0.6835`
+- `improved_v55` `frozen_40` 首轮结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.6824 -> 0.6527`
 - maturity 审计：
   - 正式任务数：`52 / 60`
   - 来源生态数：`13 / 6`
@@ -9375,20 +9382,25 @@
 - 复跑后关键口径收敛为：
   - 正式集 `0.6544 -> 0.6551`
   - `frozen_20` `0.6697 -> 0.6835`
+- 随后补上的 `frozen_40` 首轮结果说明：
+  - 功能口径继续全绿
+  - 相对 `v52r2` 的平均耗时回落了 `0.0297s`
+  - 但绝对值 `0.6527` 仍明显高于 `improved_v32` 阈值 `0.5514`
 - 这说明 `v55` 的更准确结论不是“明显回归”
 - 而是：
   - 新题扩容成功
   - 功能口径保持全绿
   - 首轮有轻微时延波动
   - 复跑后已经明显收敛
+  - 固定 `40` 条集合上也证明功能稳定，但还没回到长期性能门槛内
 
 ### 结论
 
 - `pytest#14189` 已成功作为新的嵌套过滤上下文生命周期题补进正式 semi_real 任务集
 - `improved_v55` 已把正式任务数推进到 `52`
-- 功能上，`improved_v55` 继续保持正式集与 `frozen_20` 无回归
-- 性能上，这轮复跑口径已经把相对 `v54` 的回升压缩到很小范围
-- 但这轮还没有补 `frozen_40` 同集合验证
+- 功能上，`improved_v55` 继续保持正式集、`frozen_20` 与 `frozen_40` 首轮同集合验证无回归
+- 性能上，这轮复跑口径已经把相对 `v54` 的回升压缩到很小范围，并且 `frozen_40` 相对 `v52r2` 也有回落
+- 但当前 `frozen_40` 绝对耗时仍未回到长期阈值以内
 - 当前最准确口径仍然是：
   - `improved_v50` 是稳定基线
   - `improved_v55` 是扩容成功、性能轻微波动但已收敛的最新版本

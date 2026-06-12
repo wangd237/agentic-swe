@@ -12,7 +12,7 @@
 | Phase 3 | Patch 闭环 | 已完成 | 已实现 write_file、show_diff、patch 应用与修复前后测试对比 |
 | Phase 4 | 批量运行 | 已完成 | 已实现 batch runner、manifest 任务集与批量汇总结果 |
 | Phase 5 | 评测系统 | 已完成 | 已实现 metrics、taxonomy、batch eval 与 baseline 报告 |
-| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v55` 多轮策略迭代，正式真实任务扩充到 `52` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v55` 已继续把正式任务数推高，并在复跑口径下把相对 `v54` 的平均耗时控制在轻微波动范围内，但由于尚未补 `frozen_40` 同集合验证，因此稳定 `streak` 仍保持 `8` |
+| Phase 6 | 优化系统 | 进行中 | 已完成 `baseline_v1 -> improved_v55` 多轮策略迭代，正式真实任务扩充到 `52` 条，已建立 `frozen_40 v1`；`v50` 仍是当前稳定基线，`v55` 已继续把正式任务数推高，并已补上 `frozen_40` 首轮同集合验证，功能继续全绿且相对 `v52r2` 更快，但由于固定 `40` 条集合耗时仍高于 `improved_v32` 阈值，因此稳定 `streak` 仍保持 `8` |
 | Phase 7 | 可选训练增强 | 未开始 | 将实现轻量训练实验预留能力 |
 
 ## Phase 0 已实现内容
@@ -157,7 +157,7 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 - 再生成 `semi_real` 可运行 repo
 - 在 `app/agent/patcher.py` 中补一条专用规则
 - 为每轮扩容生成新的 `optimization/policy_versions/improved_vXX.json`
-- 最后跑正式集、`frozen_20`、maturity 审计并同步文档
+- 最后跑正式集、`frozen_20`、`frozen_40`、maturity 审计并同步文档
 
 最新新增的目录入口：
 
@@ -177,6 +177,8 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
    - `python scripts/run_single_task.py --task benchmarks/tasks/task_105.json --policy optimization/policy_versions/improved_v55.json`
 5. 如果你想看全量扩容效果：
    - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v55.json --run-label realissuev55r2`
+6. 如果你想看固定 `40` 条集合验证：
+   - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v55.json --run-label frozen40v55r1 --compare-against-eval logs/summaries/batch_eval_frozen40v52r2_001.json --compare-label frozen40_step10`
 
 ### 4. 当前最准确的状态口径
 
@@ -187,9 +189,10 @@ Phase 6 当前在真实任务扩容侧已经形成稳定模板：
 
 注意：
 
-- `v55` 这一轮是“扩容成功，并在复跑口径下把相对 `v54` 的性能波动压到很小”
+- `v55` 这一轮已经完成“扩容成功 + `frozen_40` 首轮功能验证”
+- 它在 `frozen_40` 上相对 `v52r2` 的 `average_duration_sec` 从 `0.6824` 回落到 `0.6527`
 - 但它还不是新的稳定版本
-- 因为这轮还没有补 `frozen_40` 的同集合验证，所以当前稳定 `streak` 仍然只能保持在 `8`
+- 因为相对 `improved_v32` 基线阈值 `0.5514` 仍然偏高，所以当前稳定 `streak` 仍然只能保持在 `8`
 
 ## 当前框架结构
 
