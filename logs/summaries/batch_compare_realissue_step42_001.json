@@ -1,0 +1,501 @@
+{
+  "compare_id": "batch_compare_realissue_step42_001",
+  "created_at": "2026-06-12T11:29:29.477033+00:00",
+  "baseline_eval_id": "batch_eval_realissuev60r2_001",
+  "improved_eval_id": "batch_eval_realissuev61r1_001",
+  "baseline_policy_id": "improved_v60",
+  "improved_policy_id": "improved_v61",
+  "baseline_source_batch_run_id": "batch_run_realissuev60r2_001",
+  "improved_source_batch_run_id": "batch_run_realissuev61r1_001",
+  "metric_deltas": {
+    "average_duration_sec": {
+      "baseline": 0.5262,
+      "improved": 0.5317,
+      "delta": 0.0055,
+      "outcome": "regressed"
+    },
+    "average_modified_files": {
+      "baseline": 1.0,
+      "improved": 0.2069,
+      "delta": -0.7931,
+      "outcome": "improved"
+    },
+    "average_steps": {
+      "baseline": 10.2982,
+      "improved": 10.3276,
+      "delta": 0.0294,
+      "outcome": "regressed"
+    },
+    "average_tool_calls": {
+      "baseline": 9.2982,
+      "improved": 8.5345,
+      "delta": -0.7637,
+      "outcome": "improved"
+    },
+    "key_file_read_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "partial_fix_count": {
+      "baseline": 0,
+      "improved": 0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "partial_fix_rate": {
+      "baseline": 0.0,
+      "improved": 0.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "reasonable_finish_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "repeated_search_rate": {
+      "baseline": 0.0,
+      "improved": 0.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "success_count": {
+      "baseline": 57,
+      "improved": 12,
+      "delta": -45.0,
+      "outcome": "regressed"
+    },
+    "success_rate": {
+      "baseline": 1.0,
+      "improved": 0.2069,
+      "delta": -0.7931,
+      "outcome": "regressed"
+    },
+    "task_count": {
+      "baseline": 57,
+      "improved": 58,
+      "delta": 1.0,
+      "outcome": "neutral"
+    },
+    "test_execution_rate": {
+      "baseline": 1.0,
+      "improved": 1.0,
+      "delta": 0.0,
+      "outcome": "unchanged"
+    },
+    "test_pass_count": {
+      "baseline": 57,
+      "improved": 12,
+      "delta": -45.0,
+      "outcome": "regressed"
+    },
+    "test_pass_rate": {
+      "baseline": 1.0,
+      "improved": 0.2069,
+      "delta": -0.7931,
+      "outcome": "regressed"
+    }
+  },
+  "taxonomy_deltas": {
+    "label_deltas": {
+      "Premature Finish": {
+        "baseline": 0,
+        "improved": 46,
+        "delta": 46
+      }
+    },
+    "task_label_changes": {
+      "task_006": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_008": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_010": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_013": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_016": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_017": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_019": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_022": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_024": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_026": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_028": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_030": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_032": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_034": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_036": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_038": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_040": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_042": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_044": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_046": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_048": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_050": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_052": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_054": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_056": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_057": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_058": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_059": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_060": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_061": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_063": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_065": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_067": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_069": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_071": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_073": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_075": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_077": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_079": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_081": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_083": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_085": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_087": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_089": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_091": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_093": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_095": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_097": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_099": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_101": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_103": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_105": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_107": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_109": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_111": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_113": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      },
+      "task_115": {
+        "baseline": [],
+        "improved": [
+          "Premature Finish"
+        ],
+        "changed": true
+      },
+      "task_117": {
+        "baseline": [],
+        "improved": [],
+        "changed": false
+      }
+    }
+  },
+  "headline": [
+    "- `success_rate`: `1.0` -> `0.2069` (delta: `-0.7931`, outcome: `regressed`)",
+    "- `test_pass_rate`: `1.0` -> `0.2069` (delta: `-0.7931`, outcome: `regressed`)",
+    "- `partial_fix_rate`: `0.0` -> `0.0` (delta: `0.0`, outcome: `unchanged`)",
+    "- `average_duration_sec`: `0.5262` -> `0.5317` (delta: `0.0055`, outcome: `regressed`)"
+  ]
+}

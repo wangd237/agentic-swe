@@ -69,6 +69,7 @@
 | `task_111` | `pallets/click#3362` | `click_usage_repo` | usage 换行时在连字符处分裂长选项 | `improved_v58` | `-` |
 | `task_113` | `pypa/distlib#238` | `distlib_wheel_repo` | WHEEL metadata 漏写 `Build:` 行 | `improved_v59` | `-` |
 | `task_115` | `pytest-dev/pytest#14474` | `pytest_expression_repo` | marker expression 扫描字符串字面量时错误检查整个输入里的反斜杠 | `improved_v60` | `-` |
+| `task_117` | `python-poetry/tomlkit#346` | `tomlkit_negative_int_repo` | 负整数原地翻转时文本符号循环污染 | `improved_v61` | `-` |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -121,6 +122,7 @@
 - usage 帮助文本换行与连字符长选项的原子性保真
 - wheel metadata 生成与 build tag 文本保真
 - marker expression 扫描作用域与字符串字面量边界保真
+- 数值原地更新后的文本符号规范化保真
 
 ## 当前仍相对欠缺的方向
 

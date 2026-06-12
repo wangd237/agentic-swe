@@ -1002,6 +1002,26 @@
         "pytest_expression_repo/expression.py",
         "tests/test_expression.py"
       ]
+    },
+    {
+      "candidate_id": "python_poetry_tomlkit_issue_346",
+      "repo_full_name": "python-poetry/tomlkit",
+      "repo_url": "https://github.com/python-poetry/tomlkit",
+      "issue_number": 346,
+      "issue_title": "Negative Integer values -x in tables cycle through +x, --x, x, -x, ... when multiplied by -1",
+      "issue_url": "https://github.com/python-poetry/tomlkit/issues/346",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-12T19:24:55: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-12T19:24:55: why_it_fits: 这是一个边界非常清楚的数值渲染 bug。负整数在原地乘以 -1 后，符号会循环落入 +x、--x、x、-x 这类错误输出，特别适合压成单模块、少量稳定回归测试的 semi_real 任务。\n2026-06-12T19:24:55: expected_test_shape: 可用 2 到 3 个固定测试覆盖：负整数翻转一次后应输出正数、继续翻转后应回到负数、不应出现 +3 或 --3 这类非法文本形式。\n2026-06-12T19:24:55: risk_notes: 需要把最小实现限制在负整数值对象的原地乘法与文本渲染，不把完整 TOML parser 或文档模型整体带入。\n2026-06-12T19:24:55: recommendation: high\n2026-06-12T19:24:55: 2026-06-12: 作为 v61 首选候选，用于继续把正式任务数从 57 推向 60+。\n2026-06-12T19:24:55: 已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。\n2026-06-12T19:25:19: 已生成 semi_real 可运行任务 task_117，仓库目录为 benchmarks/repos/tomlkit_negative_int_repo。",
+      "labels": [],
+      "state": "CLOSED",
+      "created_at": "2024-05-07T10:05:15Z",
+      "body_excerpt": "The bug is in Tomlkit 0.12\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> import sys\r\n>>> sys.version_info\r\nsys.version_info(major=3, minor=12, micro=1, releaselevel='final', serial=0)\r\n>>> tk.__version__\r\n'0.12.0'\r\n>>> d =  tk.parse('x=-3')\r\n>>> for __ in range(12):\r\n...   d['x'] *= -1; print(tk.dumps(d))\r\n...\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\n```\r\n\r\nTomlkit 0.11.8 shows the expected behaviour (in Python 3.11):\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> ",
+      "expected_target_files": [
+        "tomlkit_negative_int_repo/items.py",
+        "tests/test_items.py"
+      ]
     }
   ]
 }

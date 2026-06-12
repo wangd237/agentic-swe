@@ -10051,3 +10051,126 @@
 - 功能上，`improved_v60` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
 - 性能上，`frozen_40` 只有 `0.0024s` 的轻微回升，仍稳定低于长期阈值
 - 下一轮应继续把正式任务数从 `57` 推向 `60+`
+
+## 2026-06-12 Phase 6 tomlkit 负整数翻转扩容与 `improved_v61`
+
+### 本轮目标
+
+- 继续朝 Benchmark Maturity v1 的 `60+` 正式任务数推进
+- 新增一个来自 `python-poetry/tomlkit` 的真实 issue 派生任务
+- 在保持 frozen 集无回归的前提下，把 `formal_task_count` 推进到 `58`
+
+### 改动类型
+
+- `benchmark`
+- `policy`
+- `evaluation`
+- `documentation`
+
+### 主要文件
+
+- `benchmarks/issue_batch_v61_candidates.json`
+- `benchmarks/tasks/task_116.json`
+- `benchmarks/tasks/task_117.json`
+- `benchmarks/repos/tomlkit_negative_int_repo/`
+- `optimization/policy_versions/improved_v61.json`
+- `app/agent/patcher.py`
+- `benchmarks/manifests/real_issue_tasks.json`
+- `benchmarks/real_world_candidates.json`
+- `logs/summaries/batch_eval_realissuev61r1_001.json`
+- `logs/summaries/batch_eval_realissuev61r2_001.json`
+- `logs/summaries/batch_compare_realissue_step43_001.json`
+- `logs/summaries/batch_eval_frozen20v61r2_001.json`
+- `logs/summaries/batch_compare_frozen20_step42_001.json`
+- `logs/summaries/batch_eval_frozen40v61r2_001.json`
+- `logs/summaries/batch_compare_frozen40_step18_001.json`
+- `logs/summaries/benchmark_maturity_maturity_039.json`
+- `GUIDE.md`
+- `docs/results.md`
+- `docs/project_memory.md`
+- `docs/next_actions.md`
+- `docs/benchmark_registry.md`
+
+### 本轮实现内容
+
+- 直接从 GitHub 新增候选导入：
+  - `python-poetry/tomlkit#346`
+- 新增 `real_issue` 草稿：
+  - `task_116`
+- 新增可运行的 semi_real 正式任务：
+  - `task_117`
+- 新增 repo：
+  - `benchmarks/repos/tomlkit_negative_int_repo`
+- 在 repo 中故意保留 bug：
+  - 负整数原地乘以 `-1` 时，文本符号会错误进入 `+x / --x / x / -x` 之类的循环污染
+- 新增 `improved_v61`
+- 在 patcher 中新增 tomlkit 负整数翻转的专用规则
+- 把 `task_117` 加入正式 manifest
+
+### 测试与验证
+
+- 原始 repo 测试：
+  - `python -m pytest benchmarks/repos/tomlkit_negative_int_repo/tests/test_items.py -q`
+- 单任务：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_117.json --policy optimization/policy_versions/improved_v61.json`
+- 回归单任务复核：
+  - `python scripts/run_single_task.py --task benchmarks/tasks/task_115.json --policy optimization/policy_versions/improved_v61.json`
+- 正式集首轮与修复后复跑：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v61.json --run-label realissuev61r1 --compare-against-eval logs/summaries/batch_eval_realissuev60r2_001.json --compare-label realissue_step42`
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v61.json --run-label realissuev61r2 --compare-against-eval logs/summaries/batch_eval_realissuev60r2_001.json --compare-label realissue_step43`
+- 固定 `20`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v61.json --run-label frozen20v61r2 --compare-against-eval logs/summaries/batch_eval_frozen20v60r2_001.json --compare-label frozen20_step42`
+- 固定 `40`：
+  - `python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --policy optimization/policy_versions/improved_v61.json --run-label frozen40v61r2 --compare-against-eval logs/summaries/batch_eval_frozen40v60r2_001.json --compare-label frozen40_step18`
+- maturity 审计：
+  - `python scripts/analyze_benchmark_maturity.py --run-label maturity`
+
+### 关键观察
+
+- 正式任务数：
+  - `57 -> 58`
+- 来源生态数：
+  - `14 -> 14`
+- 候选池状态：
+  - `accepted = 57 -> 58`
+  - `to_review = 0 -> 0`
+- `improved_v61` 正式 `58` 条任务集最终结果：
+  - `success_count: 57 -> 58`
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5262 -> 0.5465`
+- `improved_v61` `frozen_20` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5471 -> 0.5518`
+- `improved_v61` `frozen_40` 结果：
+  - `success_rate: 1.0 -> 1.0`
+  - `test_pass_rate: 1.0 -> 1.0`
+  - `average_duration_sec: 0.5320 -> 0.5377`
+- 最新 maturity：
+  - `formal_task_count = 58`
+  - `ecosystem_count = 14`
+  - `latest_frozen_count = 40`
+  - `frozen_40_streak = 8`
+
+### 这轮额外记录的过程
+
+- `v61r1` 首轮出现了系统性回归，不是单题回归：
+  - 多段旧规则版本集合遗漏了 `improved_v61`
+  - `run_v34_fallback_chain` 的入口集合遗漏了 `improved_v61`
+  - `v60` 的 pytest expression 修复规则没有继续继承到 `v61`
+- 修复后补跑 `v61r2`：
+  - 正式集恢复 `58 / 58`
+  - `frozen_20` 恢复 `20 / 20`
+  - `frozen_40` 恢复 `40 / 40`
+- 这说明：
+  - patcher 的“版本继承链完整性”已经成为当前策略演化里最需要优先防守的工程风险
+  - 后续 `v62+` 每次新增策略后，都必须优先核对旧规则集合和 fallback 链是否已带上新版本
+
+### 结论
+
+- `tomlkit#346` 已成功作为新的数值渲染语义题补进正式 semi_real 任务集
+- `improved_v61` 已把正式任务数推进到 `58`
+- 功能上，`improved_v61` 继续保持正式集、`frozen_20` 与 `frozen_40` 三线无回归
+- 性能上，`frozen_40` 只有 `0.0057s` 的轻微回升，仍稳定低于长期阈值
+- 下一轮应继续把正式任务数从 `58` 推向 `60+`

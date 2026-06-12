@@ -1,0 +1,37 @@
+{
+  "task_id": "task_117",
+  "repo_name": "tomlkit_negative_int_repo",
+  "repo_path": "benchmarks/repos/tomlkit_negative_int_repo",
+  "issue_title": "Negative Integer values -x in tables cycle through +x, --x, x, -x, ... when multiplied by -1",
+  "issue_text": "The bug is in Tomlkit 0.12\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> import sys\r\n>>> sys.version_info\r\nsys.version_info(major=3, minor=12, micro=1, releaselevel='final', serial=0)\r\n>>> tk.__version__\r\n'0.12.0'\r\n>>> d =  tk.parse('x=-3')\r\n>>> for __ in range(12):\r\n...   d['x'] *= -1; print(tk.dumps(d))\r\n...\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\n```\r\n\r\nTomlkit 0.11.8 shows the expected behaviour (in Python 3.11):\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> ",
+  "test_command": "python -m pytest tests/test_items.py -q",
+  "success_criteria": "负整数值对象在原地乘以 -1 后，应只在正负数文本之间稳定切换；不应生成 +3、--3 或丢失符号的错误渲染；回归测试全部通过。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "tomlkit",
+    "integer",
+    "rendering"
+  ],
+  "target_files_hint": [
+    "tomlkit_negative_int_repo/items.py",
+    "tests/test_items.py"
+  ],
+  "expected_failure_test": "NegativeIntegerValueTests.test_negative_value_flips_to_positive_without_extra_plus_sign",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 346,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/346",
+    "candidate_id": "python_poetry_tomlkit_issue_346",
+    "imported_from": "scripts/import_github_issue.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_116",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

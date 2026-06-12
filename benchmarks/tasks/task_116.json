@@ -1,0 +1,29 @@
+{
+  "task_id": "task_116",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+  "issue_title": "Negative Integer values -x in tables cycle through +x, --x, x, -x, ... when multiplied by -1",
+  "issue_text": "The bug is in Tomlkit 0.12\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> import sys\r\n>>> sys.version_info\r\nsys.version_info(major=3, minor=12, micro=1, releaselevel='final', serial=0)\r\n>>> tk.__version__\r\n'0.12.0'\r\n>>> d =  tk.parse('x=-3')\r\n>>> for __ in range(12):\r\n...   d['x'] *= -1; print(tk.dumps(d))\r\n...\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\nx=+3\r\nx=--3\r\nx=3\r\nx=-3\r\n```\r\n\r\nTomlkit 0.11.8 shows the expected behaviour (in Python 3.11):\r\n```\r\n>python -ic \"import tomlkit as tk\"\r\n>>> ",
+  "test_command": "python -m pytest -q",
+  "success_criteria": "补充真实仓库后，需要人工完善成功标准。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "draft"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 346,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/346",
+    "candidate_id": "python_poetry_tomlkit_issue_346",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

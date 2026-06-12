@@ -1,0 +1,22 @@
+{
+  "issues": [
+    {
+      "repo": "python-poetry/tomlkit",
+      "issue": "#346",
+      "draft_task": true,
+      "repo_path": "benchmarks/repos/real_issue_repo_placeholder",
+      "test_command": "python -m pytest -q",
+      "status": "to_review",
+      "difficulty": "medium",
+      "why_it_fits": "这是一个边界非常清楚的数值渲染 bug。负整数在原地乘以 -1 后，符号会循环落入 +x、--x、x、-x 这类错误输出，特别适合压成单模块、少量稳定回归测试的 semi_real 任务。",
+      "expected_target_files": [
+        "tomlkit_negative_int_repo/items.py",
+        "tests/test_items.py"
+      ],
+      "expected_test_shape": "可用 2 到 3 个固定测试覆盖：负整数翻转一次后应输出正数、继续翻转后应回到负数、不应出现 +3 或 --3 这类非法文本形式。",
+      "risk_notes": "需要把最小实现限制在负整数值对象的原地乘法与文本渲染，不把完整 TOML parser 或文档模型整体带入。",
+      "recommendation": "high",
+      "note": "2026-06-12: 作为 v61 首选候选，用于继续把正式任务数从 57 推向 60+。"
+    }
+  ]
+}
