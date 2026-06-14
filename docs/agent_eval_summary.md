@@ -63,7 +63,7 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 | incomplete_reason 覆盖 | `no_patch`, `max_iterations` |
 | 所有成功是否有 patch | `yes` |
 | 所有成功是否通过测试验证 | `yes` |
-| 已人工抽检新增 patch | `22` 条 |
+| 已人工抽检成功 patch | `29` 条 |
 
 ## 4. LLM Agent vs Rule-based Baseline
 
@@ -97,6 +97,13 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 | Task | 抽检结论 |
 | --- | --- |
+| `task_010` | CRLF 先归一化为 LF，避免 `\r` 被行解码逻辑误当作覆盖控制符 |
+| `task_019` | UTC/GMT 缺省 offset 显式视为 `0`，再沿用原有符号变换逻辑 |
+| `task_024` | 移除“已赋值变量仍强制加入 undeclared”的错误分支，符合分支赋值静态分析语义 |
+| `task_016` | 未提供 flag 时返回原始 default，避免负向 flag 默认值被错误覆盖 |
+| `task_093` | `color=False` 时复用 ANSI 清理逻辑，避免 confirm 输出泄漏控制码 |
+| `task_036` | 空 hostname 返回 `False` 而不是抛底层 `ValueError`，符合格式校验失败语义 |
+| `task_099` | 正确消费 include stream 并拼接输出，避免把 generator repr 渲染给用户 |
 | `task_026` | `remainder > 0` 后才补 `fill_with`，符合 slice 整除边界语义 |
 | `task_028` | 删除重复补逗号分支，符合 tomlkit 数组下一行逗号格式 |
 | `task_032` | 拒绝前导零非 normalized 版本；实现偏最小，适合当前 semi-real 样本，泛化需谨慎 |
