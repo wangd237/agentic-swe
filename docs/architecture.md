@@ -4,6 +4,8 @@
 
 当前系统已经具备：
 
+- 默认通过 OpenAI-compatible Chat Completions 接入 LLM coding agent
+- 规则版 solver baseline
 - 基于 `semi_real` GitHub issue 任务的正式 benchmark
 - 基于 harness 的隔离执行与轨迹落盘
 - 单任务与批量评测闭环
@@ -25,8 +27,8 @@ task / manifest / benchmark data
    (workspace / logs / isolation / lifecycle)
               |
               v
-          agent loop
-   (planner / executor / patch strategy)
+          agent layer
+ (OpenAI-compatible LLM / rule baseline)
               |
               v
             tools
@@ -40,6 +42,11 @@ task / manifest / benchmark data
 ## 2. 目录职责
 
 - `app/agent`
+  - `llm_agent.py`：OpenAI-compatible tool-use agent 主循环
+  - `llm_config.py`：读取 `.env` / 环境变量中的 LLM provider 配置
+  - `tool_definitions.py`：给 LLM 暴露的工具 JSON Schema
+  - `tool_executor.py`：把 LLM 工具调用分发到现有工具实现
+  - `rule_based_agent.py`：对现有规则闭环的 baseline 封装
   - `planner.py`：生成当前步骤的最小计划
   - `executor.py`：驱动工具调用和执行闭环
   - `policy.py`：加载 policy JSON，提供策略配置
@@ -66,16 +73,16 @@ task / manifest / benchmark data
 
 1. 读取任务 JSON，构造 `Task` schema
 2. runtime 创建本次 run 目录和独立 workspace
-3. agent 读取 policy 配置，装配 planner / executor / patcher
-4. planner 生成当前步骤计划
-5. executor 根据计划调用工具：
+3. agent 读取 policy 配置，根据 `agent_type` 选择 LLM agent 或规则版 baseline
+4. LLM agent 基于 issue、成功标准和测试命令决定下一步工具调用；规则版 baseline 继续走 planner / executor / patcher
+5. agent 调用工具：
    - `list_files`
    - `search_code`
    - `read_file`
    - `run_tests`
    - `write_file`
    - `show_diff`
-6. 如果 patch strategy 命中，就在 workspace 内修改目标文件
+6. LLM agent 通过 `write_file` 写入完整文件；规则版 baseline 在 patch strategy 命中后修改目标文件
 7. 重新执行测试，判断是否满足成功条件
 8. 将 `trace.json`、`result.json`、`patch.diff`、`summary.md` 等产物落盘
 9. 批量模式下继续汇总到 batch run / batch eval
@@ -158,7 +165,7 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - 写入边界明确
 - 错误恢复时更容易定位问题
 
-这也是从 `learn-claude-code` harness 经验里明确吸收的一点：先把隔离和持久化做正确，再谈更复杂的多 agent 或并行控制。
+这也是从成熟 coding agent harness 经验里明确吸收的一点：先把隔离和持久化做正确，再谈更复杂的多 agent 或并行控制。
 
 ## 6. 策略版本化机制
 
@@ -173,8 +180,26 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 当前配置层重点承载：
 
 - `policy_id`
+- `agent_type`
 - `patch_strategy`
+- `llm_provider`
+- `llm_model`
+- `llm_api_key_env`
+- `llm_base_url_env`
+- `llm_model_env`
+- `llm_base_url`
+- `llm_max_output_tokens`
 - `pytest_additional_flags`
+
+当前 LLM 主入口策略是：
+
+- `optimization/policy_versions/llm_deepseek_minimal.json`
+
+这只是当前使用 DeepSeek 的 policy 示例。后续切换 Kimi、GLM 或其他 OpenAI-compatible 服务时，只需要新增或切换 policy 中的环境变量名、base URL 和 model，不需要改 agent 主循环。
+
+LLM agent 还会跟踪每次 `write_file` 后的 workspace generation。只有当前 generation 已通过 `run_tests` 验证，最终结果才会标记为 `success`；如果模型在写入后直接停止，系统会自动执行 `show_diff` 和 `run_tests`，并把结果回喂给模型继续修正或确认。
+
+规则版 baseline 继续使用 `improved_v*` 策略族，用于验证层和对比实验。
 
 ### 真实实现中的继承链位置
 
@@ -240,7 +265,7 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - `real_issue`
   - 更接近真实仓库和真实上下文的任务形态
 
-当前正式 benchmark 的 `64` 条任务全部是 `semi_real`。
+当前正式 benchmark 的 `66` 条任务全部是 `semi_real`，challenge manifest 另有 `6` 条系统边界题。
 
 这么做的原因很务实：
 
@@ -286,10 +311,12 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - 数据可审计：核心状态都能落盘
 - 迭代快：策略版本化和 semi-real 任务形态支持快速扩容
 - 基础设施意识明确：稳定性复跑和 maturity 审计已经成为一等能力
+- 主语正在回到 agent：OpenAI-compatible LLM agent 已经可以复用现有工具和 harness，规则版 solver 明确降级为 baseline
 
 ### 当前边界
 
-- patch strategy 仍以规则型实现为主
+- LLM agent 仍处在最小闭环阶段，需要跑通更多代表任务并沉淀 case study
+- 规则版 baseline 已成熟，但不能再替代 LLM agent 成为项目主角
 - 正式集尚未进入直接操作真实上游仓库的阶段
 - 稳定性复跑已经有了，但仍需继续提升到更强的常态化门控
 - 展示层和案例层仍在继续收口

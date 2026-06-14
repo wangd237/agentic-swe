@@ -8,6 +8,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
+.env
 
 # 本地运行日志与工作副本
 logs/trajectories/

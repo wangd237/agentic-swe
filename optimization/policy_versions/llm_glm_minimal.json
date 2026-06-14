@@ -1,0 +1,19 @@
+{
+  "policy_id": "llm_glm_minimal",
+  "description": "最小 OpenAI-compatible coding agent 策略示例，使用 GLM / Zhipu 配置。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "agent_type": "llm",
+  "patch_strategy": "baseline",
+  "llm_provider": "openai_compatible",
+  "llm_model": "glm-4.5",
+  "llm_api_key_env": "GLM_API_KEY",
+  "llm_base_url_env": "GLM_BASE_URL",
+  "llm_model_env": "GLM_MODEL",
+  "llm_max_output_tokens": 8000,
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

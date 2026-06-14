@@ -1,6 +1,6 @@
 # Agentic SWE
 
-一个面向 GitHub issue 自动修复的 mini agentic software engineering benchmark 项目。
+一个面向真实 GitHub issue 的 OpenAI-compatible coding agent 项目，当前正在从“规则版 benchmark solver”收口成“LLM agent + 验证底座”的结构。
 
 它不只是在本地跑一个“会改代码的 agent”，而是把真实 issue 任务构造、隔离执行、轨迹落盘、批量评测、策略优化、冻结集回归和稳定性复跑串成了一条完整闭环。
 
@@ -9,16 +9,17 @@
 | 指标 | 当前结果 |
 | --- | --- |
 | 正式真实任务数 | `66` |
-| challenge 任务数 | `3` |
+| challenge 任务数 | `6` |
 | 来源生态数 | `16` |
-| 当前正式集成功率 | `100%` |
-| 当前正式集测试通过率 | `100%` |
-| 当前策略版本 | `improved_v71` |
+| 规则版 baseline 正式集成功率 | `100%` |
+| 规则版 baseline 正式集测试通过率 | `100%` |
+| 当前规则版 baseline 策略 | `improved_v71` |
+| 当前 LLM agent 策略 | `llm_deepseek_minimal` |
 | `frozen_40` 连续无回归版本数 | `8` |
 | `frozen_40` 当前最小验证均值耗时 | `0.5794s` |
-| 当前结论 | `v71 已把正式任务扩到 66 条，并完成正式集、frozen_20、frozen_40 三线功能全绿；相对 v70，正式集平均耗时回落，但两条冻结集平均耗时回升，当前应继续补稳定性复跑与性能复核` |
+| 当前结论 | `验证底座已成熟；当前主线是把 LLM coding agent 跑在现有工具、harness 和真实 issue 验证集上，并以规则版 solver 作为 baseline 对比` |
 
-基于 [benchmark_maturity_maturity_087.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/benchmark_maturity_maturity_087.json)、[batch_eval_realissuev71r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_eval_realissuev71r2_001.json)、[batch_compare_frozen20_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen20_step71_r2_001.json) 和 [batch_compare_frozen40_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen40_step71_r2_001.json)，当前项目已经达到“真实 issue benchmark v1 可用”阶段，并继续向更成熟的 benchmark 基础设施推进。
+基于 [benchmark_maturity_maturity_087.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/benchmark_maturity_maturity_087.json)、[batch_eval_realissuev71r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_eval_realissuev71r2_001.json)、[batch_compare_frozen20_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen20_step71_r2_001.json) 和 [batch_compare_frozen40_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen40_step71_r2_001.json)，当前项目已经达到“验证底座可用”阶段；接下来重点是让 LLM agent 成为主角，benchmark / frozen / stability 作为证据层服务 agent。
 
 ## 系统闭环
 
@@ -52,7 +53,9 @@ GitHub issue / semi-real task
 ## 项目特点
 
 - 任务不是纯 synthetic demo，而是 `66` 条来自真实开源 issue 的 `semi_real` benchmark。
-- 优化不是“凭感觉调 prompt”，而是版本化到 `improved_v71`，并且有冻结集无回归验证与稳定性复跑。
+- LLM agent 通过 OpenAI-compatible tool calling 调用现有工具；当前策略示例使用 DeepSeek，后续可切换到 Kimi、GLM 等兼容服务。
+- 规则版 baseline 不是废弃资产，而是用于和 LLM agent 对比的稳定下限。
+- 优化不是“凭感觉调 prompt”，规则版 baseline 已版本化到 `improved_v71`，并且有冻结集无回归验证与稳定性复跑。
 - 评测不是只有成功率，还包括 taxonomy、耗时、步数、稳定性复跑和 maturity 审计。
 - 性能治理现在还支持环境基线快照，能先把“环境变慢”和“策略变慢”做一层拆分。
 - harness 是一等公民：强调工作区隔离、路径边界、产物契约和批量复现能力。
@@ -65,6 +68,22 @@ GitHub issue / semi-real task
 ```bash
 python -m pip install -r requirements.txt
 ```
+
+运行最小 LLM agent 入口：
+
+```bash
+python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/llm_deepseek_minimal.json
+```
+
+说明：
+
+- 当前 `scripts/run_issue_agent.py` 已经接入最小 LLM tool-use 闭环
+- 工具层直接复用现有 `list_files / search_code / read_file / run_tests / write_file / show_diff`
+- LLM 输出预算默认 `8000` tokens，避免 `write_file` 写完整文件时被过早截断
+- Agent 对 `write_file` 后的 workspace generation 做验证跟踪，未验证的新改动不会被标记为 success
+- 当前 DeepSeek 策略从 `.env` 或当前进程环境读取 `DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL`
+- Kimi / GLM 等兼容服务可复制 `optimization/policy_versions/llm_openai_compatible_template.json`，或直接使用 `llm_kimi_minimal.json` / `llm_glm_minimal.json` 并配置对应环境变量
+- 规则版入口仍然保留，用作 baseline 对比
 
 单任务运行：
 
@@ -120,6 +139,12 @@ python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_b
   - 当前第 `2` 条 challenge 任务，用来承载 Windows `Ctrl+C` / watcher 停止语义这类 hard case 边界题。
 - `task_130` `samuelcolvin/watchfiles#169`
   - 当前第 `3` 条 challenge 任务，用来承载 WSL / Docker / Linux-like 环境下 `metadata-write` 事件被错误过滤、从而不触发 reload 的边界题。
+- `task_131` `samuelcolvin/watchfiles#215`
+  - 当前第 `4` 条 challenge 任务，用来承载编辑器保存行为下 watch event 语义的边界题。
+- `task_132` `Textualize/rich#2411`
+  - 当前第 `5` 条 challenge 任务，用来承载 Windows-like legacy 编码流上的字符降级边界题。
+- `task_133` `Textualize/rich#2457`
+  - 当前第 `6` 条 challenge 任务，用来承载 Windows-like legacy console 下 `no_color` 被忽略的颜色禁用边界题。
 
 完整任务索引见 [docs/benchmark_registry.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/benchmark_registry.md)。
 
@@ -151,6 +176,7 @@ scripts/        # 单任务、批量评测、稳定性复跑等脚本
 - Python
 - Pydantic
 - pytest
+- OpenAI-compatible Chat Completions
 - subprocess 驱动的测试执行
 - 文件级 patch / diff
 - manifest 驱动的 benchmark 管理
@@ -173,7 +199,7 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 这已经不是一个“做出最小 demo”的阶段了。
 
-当前项目更接近一个可持续迭代的 benchmark 基础设施：
+当前项目已经有成熟验证底座，现在主线是把 LLM coding agent 跑稳、讲清，并和规则版 baseline 做可信对比：
 
 - 有正式集
 - 有冻结集
@@ -182,4 +208,4 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 - 有稳定性复跑
 - 有 maturity 审计
 
-接下来的重点不再是单纯追求任务数量，而是继续提升展示层、稳定性门控、生态均衡度和真实 issue 导入效率。
+接下来的重点不再是单纯追求任务数量，而是跑通 LLM agent 的 3 到 5 个代表任务，沉淀可读 trace / case study，再用现有验证层证明它不是一个孤立 demo。

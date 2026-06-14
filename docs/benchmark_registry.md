@@ -86,6 +86,10 @@
 | --- | --- | --- | --- | --- |
 | `task_126` | `samuelcolvin/watchfiles#266` | `watchfiles_266_repo` | `accepted + ready + in_challenge_manifest` | 当前更适合作为系统边界展示题，暂不并入正式主集 |
 | `task_127` | `samuelcolvin/watchfiles#110` | `watchfiles_110_repo` | `accepted + ready + in_challenge_manifest` | 当前更适合作为 hard case challenge 题，暂不并入正式主集 |
+| `task_130` | `samuelcolvin/watchfiles#169` | `watchfiles_169_repo` | `accepted + ready + in_challenge_manifest` | WSL / Docker / Linux-like metadata-write 事件过滤边界题 |
+| `task_131` | `samuelcolvin/watchfiles#215` | `watchfiles_215_repo` | `accepted + ready + in_challenge_manifest` | 编辑器保存行为下 Remove(File) 事件语义边界题 |
+| `task_132` | `Textualize/rich#2411` | `rich_windows_rule_repo` | `accepted + ready + in_challenge_manifest` | Windows-like legacy 编码流字符降级边界题 |
+| `task_133` | `Textualize/rich#2457` | `rich_windows_no_color_repo` | `accepted + ready + in_challenge_manifest` | Windows-like legacy console 下 no_color 语义边界题 |
 
 ## 当前覆盖的缺陷类型分布
 

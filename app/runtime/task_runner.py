@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
@@ -10,7 +9,7 @@ from time import perf_counter
 from app.agent.patcher import apply_rule_based_patch
 from app.agent.policy import load_policy_config
 from app.agent.planner import create_initial_plan, derive_search_queries
-from app.runtime.harness import build_run_paths, next_run_id
+from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json, write_text
 from app.schemas.result_schema import Result
 from app.schemas.task_schema import Task, load_task
@@ -22,12 +21,6 @@ from app.tools.search_code import search_code
 from app.tools.show_diff import show_diff
 
 
-COPY_IGNORE_DIR_NAMES = {
-    ".pytest_cache",
-    "__pycache__",
-}
-
-
 def load_and_validate_task(task_path: str | Path) -> Task:
     # 任务加载和校验是所有 phase 的共同入口。
     return load_task(task_path)
@@ -36,16 +29,6 @@ def load_and_validate_task(task_path: str | Path) -> Task:
 def _utc_timestamp() -> str:
     # 统一 trace 时间格式，便于后续批量分析。
     return datetime.now(UTC).isoformat()
-
-
-def _copy_repo_to_workspace(source_repo_path: Path, workspace_path: Path) -> None:
-    # 复制 benchmark repo 时显式忽略缓存目录，避免测试运行污染原始基准输入。
-    shutil.copytree(
-        source_repo_path,
-        workspace_path,
-        dirs_exist_ok=True,
-        ignore=shutil.ignore_patterns(*COPY_IGNORE_DIR_NAMES),
-    )
 
 
 def _append_tool_step(
@@ -191,7 +174,7 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
     run_paths.run_dir.mkdir(parents=True, exist_ok=True)
 
     workspace_copy_started_at = perf_counter()
-    _copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
+    copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
     workspace_copy_duration_sec = round(perf_counter() - workspace_copy_started_at, 4)
 
     trace = Trace(task_id=task.task_id, run_id=run_id, started_at=_utc_timestamp())

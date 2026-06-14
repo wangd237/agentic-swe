@@ -1,9 +1,16 @@
 """Harness 运行时辅助结构。"""
 
+import shutil
 from datetime import UTC, datetime
 from random import randint
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+
+COPY_IGNORE_DIR_NAMES = {
+    ".pytest_cache",
+    "__pycache__",
+}
 
 
 @dataclass(slots=True)
@@ -62,6 +69,16 @@ def build_run_paths(log_root: str | Path, task_id: str, run_id: str) -> RunPaths
         pre_test_stderr_path=base_dir / "pre_test_stderr.txt",
         post_test_stdout_path=base_dir / "post_test_stdout.txt",
         post_test_stderr_path=base_dir / "post_test_stderr.txt",
+    )
+
+
+def copy_repo_to_workspace(source_repo_path: str | Path, workspace_path: str | Path) -> None:
+    # 复制 benchmark repo 时显式忽略缓存目录，避免测试运行污染原始基准输入。
+    shutil.copytree(
+        Path(source_repo_path),
+        Path(workspace_path),
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns(*COPY_IGNORE_DIR_NAMES),
     )
 
 

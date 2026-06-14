@@ -1,0 +1,20 @@
+{
+  "policy_id": "llm_openai_compatible_template",
+  "description": "OpenAI-compatible coding agent 策略模板；可用于 Kimi、GLM、DeepSeek 等兼容 Chat Completions 的模型。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "agent_type": "llm",
+  "patch_strategy": "baseline",
+  "llm_provider": "openai_compatible",
+  "llm_model": "replace-with-model-name",
+  "llm_api_key_env": "LLM_API_KEY",
+  "llm_base_url_env": "LLM_BASE_URL",
+  "llm_model_env": "LLM_MODEL",
+  "llm_base_url": "https://replace-with-provider-base-url",
+  "llm_max_output_tokens": 8000,
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}
