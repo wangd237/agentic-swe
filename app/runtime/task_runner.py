@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 
@@ -28,7 +28,7 @@ def load_and_validate_task(task_path: str | Path) -> Task:
 
 def _utc_timestamp() -> str:
     # 统一 trace 时间格式，便于后续批量分析。
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _append_tool_step(
@@ -419,3 +419,4 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         "run_paths": run_paths.to_dict(),
         "summary_text": summary_text,
     }
+

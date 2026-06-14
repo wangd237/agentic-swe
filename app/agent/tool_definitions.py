@@ -60,17 +60,12 @@ def build_tool_definitions() -> list[dict]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "要执行的测试命令，通常直接使用任务里的 test_command。",
-                    },
                     "timeout_sec": {
                         "type": "integer",
                         "description": "超时时间，单位秒。",
                         "default": 120,
                     },
                 },
-                "required": ["command"],
             },
         },
         {
@@ -100,4 +95,3 @@ def build_tool_definitions() -> list[dict]:
             },
         },
     ]
-

@@ -52,7 +52,7 @@ def main() -> int:
     print(f"trace_path: {run_paths['trace_json_path']}")
     print(f"result_path: {run_paths['result_json_path']}")
     print(f"summary_path: {run_paths['summary_md_path']}")
-    return 0
+    return 0 if result["final_status"] == "success" else 1
 
 
 if __name__ == "__main__":

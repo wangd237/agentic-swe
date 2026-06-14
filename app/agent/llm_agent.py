@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -173,7 +173,7 @@ class LLMCodeAgent(BaseAgent):
 
     @staticmethod
     def _utc_timestamp() -> str:
-        return datetime.now(UTC).isoformat()
+        return datetime.now(timezone.utc).isoformat()
 
     @staticmethod
     def _normalize_assistant_blocks(response: dict[str, Any]) -> list[dict[str, Any]]:
@@ -284,6 +284,7 @@ class LLMCodeAgent(BaseAgent):
             repo_path=run_paths.workspace_dir,
             original_repo_path=source_repo_path,
             policy_config=policy_config,
+            test_command=task.test_command,
         )
         system_prompt = build_system_prompt()
         tools = build_tool_definitions()
@@ -405,7 +406,6 @@ class LLMCodeAgent(BaseAgent):
                 )
 
                 tool_input = {
-                    "command": task.test_command,
                     "timeout_sec": 120,
                 }
                 tool_started_at = perf_counter()
@@ -503,3 +503,4 @@ class LLMCodeAgent(BaseAgent):
             "trace": trace.to_dict(),
             "run_paths": run_paths.to_dict(),
         }
+

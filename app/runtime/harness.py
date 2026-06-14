@@ -1,7 +1,7 @@
 """Harness 运行时辅助结构。"""
 
 import shutil
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from random import randint
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -88,7 +88,8 @@ def next_run_id(task_runs_dir: str | Path) -> str:
     run_dir.mkdir(parents=True, exist_ok=True)
 
     while True:
-        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
         candidate = f"run_{timestamp}_{randint(0, 9999):04d}"
         if not (run_dir / candidate).exists():
             return candidate
+

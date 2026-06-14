@@ -24,49 +24,85 @@ class ToolExecutor:
         repo_path: str | Path,
         original_repo_path: str | Path,
         policy_config: PolicyConfig,
+        test_command: str,
     ) -> None:
         self.repo_path = str(repo_path)
         self.original_repo_path = str(original_repo_path)
         self.policy_config = policy_config
+        self.test_command = test_command
 
     def execute(self, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
         """执行单次工具调用。"""
 
-        if tool_name == "list_files":
-            return list_files(
-                self.repo_path,
-                recursive=bool(tool_input.get("recursive", True)),
+        try:
+            if tool_name == "list_files":
+                return list_files(
+                    self.repo_path,
+                    recursive=bool(tool_input.get("recursive", True)),
+                )
+            if tool_name == "search_code":
+                return search_code(
+                    self.repo_path,
+                    query=str(tool_input.get("query", "")),
+                )
+            if tool_name == "read_file":
+                return read_file(
+                    self.repo_path,
+                    relative_path=str(tool_input.get("relative_path", "")),
+                    max_chars=int(tool_input.get("max_chars", 6000)),
+                )
+            if tool_name == "run_tests":
+                return run_tests(
+                    self.repo_path,
+                    command=self.test_command,
+                    timeout_sec=int(tool_input.get("timeout_sec", 120)),
+                    additional_pytest_flags=self.policy_config.pytest_additional_flags,
+                )
+            if tool_name == "write_file":
+                return write_file(
+                    self.repo_path,
+                    relative_path=str(tool_input.get("relative_path", "")),
+                    content=str(tool_input.get("content", "")),
+                )
+            if tool_name == "show_diff":
+                return show_diff(
+                    self.repo_path,
+                    original_repo_path=self.original_repo_path,
+                )
+        except Exception as error:
+            return self._tool_error_result(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                error_type="tool_exception",
+                message=str(error),
             )
-        if tool_name == "search_code":
-            return search_code(
-                self.repo_path,
-                query=str(tool_input.get("query", "")),
-            )
-        if tool_name == "read_file":
-            return read_file(
-                self.repo_path,
-                relative_path=str(tool_input.get("relative_path", "")),
-                max_chars=int(tool_input.get("max_chars", 6000)),
-            )
-        if tool_name == "run_tests":
-            return run_tests(
-                self.repo_path,
-                command=str(tool_input.get("command", "")),
-                timeout_sec=int(tool_input.get("timeout_sec", 120)),
-                additional_pytest_flags=self.policy_config.pytest_additional_flags,
-            )
-        if tool_name == "write_file":
-            return write_file(
-                self.repo_path,
-                relative_path=str(tool_input.get("relative_path", "")),
-                content=str(tool_input.get("content", "")),
-            )
-        if tool_name == "show_diff":
-            return show_diff(
-                self.repo_path,
-                original_repo_path=self.original_repo_path,
-            )
-        raise RuntimeError(f"未知工具：{tool_name}")
+        return self._tool_error_result(
+            tool_name=tool_name,
+            tool_input=tool_input,
+            error_type="unknown_tool",
+            message=f"未知工具：{tool_name}",
+        )
+
+    @staticmethod
+    def _tool_error_result(
+        *,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        error_type: str,
+        message: str,
+    ) -> dict[str, Any]:
+        return {
+            "ok": False,
+            "tool_name": tool_name,
+            "summary": f"工具调用失败：{message}",
+            "data": {
+                "tool_input": tool_input,
+            },
+            "error": {
+                "type": error_type,
+                "message": message,
+            },
+        }
 
     @staticmethod
     def summarize_for_model(result: dict[str, Any], *, max_chars: int) -> str:
@@ -76,4 +112,3 @@ class ToolExecutor:
         if len(payload) <= max_chars:
             return payload
         return f"{payload[:max_chars]}\n...<truncated>"
-

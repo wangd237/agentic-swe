@@ -61,6 +61,8 @@ class LLMConfig(BaseModel):
             or cls().default_base_url,
             max_output_tokens=getattr(policy_config, "llm_max_output_tokens", None)
             or cls().max_output_tokens,
+            max_iterations=getattr(policy_config, "max_steps", None)
+            or cls().max_iterations,
         )
 
     def require_api_key(self) -> str:
