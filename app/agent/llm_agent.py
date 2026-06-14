@@ -230,6 +230,36 @@ class LLMCodeAgent(BaseAgent):
         )
         trace.total_tool_calls += 1
 
+    @staticmethod
+    def _classify_final_state(
+        *,
+        patch_applied: bool,
+        last_test_exit_code: int | None,
+        verified_generation: int | None,
+        workspace_generation: int,
+        ever_used_tool: bool,
+        max_iterations_reached: bool,
+    ) -> tuple[str, str]:
+        if (
+            patch_applied
+            and last_test_exit_code == 0
+            and verified_generation == workspace_generation
+        ):
+            return "success", ""
+        if not ever_used_tool:
+            return "stopped_without_verification", "no_tool_calls"
+        if not patch_applied:
+            return "incomplete", "no_patch"
+        if last_test_exit_code is not None and last_test_exit_code != 0:
+            return "incomplete", "failed_tests"
+        if max_iterations_reached:
+            return "incomplete", "max_iterations"
+        if last_test_exit_code is None:
+            return "incomplete", "no_tests_run"
+        if verified_generation != workspace_generation:
+            return "incomplete", "unverified_patch"
+        return "incomplete", "unknown"
+
     def run(
         self,
         *,
@@ -303,6 +333,7 @@ class LLMCodeAgent(BaseAgent):
         verified_generation: int | None = None
         ever_used_tool = False
         pending_auto_verification = False
+        max_iterations_reached = True
 
         for iteration_index in range(self.llm_config.max_iterations):
             response_started_at = perf_counter()
@@ -440,15 +471,21 @@ class LLMCodeAgent(BaseAgent):
                 continue
 
             final_summary = assistant_text or "模型结束了当前任务。"
-            if last_test_exit_code == 0 and verified_generation == workspace_generation:
-                final_status = "success"
-            else:
-                final_status = "incomplete" if ever_used_tool else "stopped_without_verification"
+            max_iterations_reached = False
             break
 
         diff_result = tool_executor.execute("show_diff", {})
         patch_text = diff_result.get("data", {}).get("diff_text", "")
         write_text(run_paths.patch_diff_path, patch_text)
+        patch_applied = bool(diff_result.get("data", {}).get("changed_files"))
+        final_status, incomplete_reason = self._classify_final_state(
+            patch_applied=patch_applied,
+            last_test_exit_code=last_test_exit_code,
+            verified_generation=verified_generation,
+            workspace_generation=workspace_generation,
+            ever_used_tool=ever_used_tool,
+            max_iterations_reached=max_iterations_reached,
+        )
 
         duration_sec = round(perf_counter() - started_at, 4)
         trace.final_status = final_status
@@ -458,13 +495,14 @@ class LLMCodeAgent(BaseAgent):
             task_id=task.task_id,
             run_id=run_id,
             final_status=final_status,
+            incomplete_reason=incomplete_reason,
             summary=final_summary or "LLM agent 运行结束。",
             test_command=task.test_command,
             test_exit_code=last_test_exit_code,
             post_test_exit_code=last_test_exit_code,
             post_test_summary=last_test_summary,
             test_summary=last_test_summary or final_summary or "",
-            patch_applied=bool(diff_result.get("data", {}).get("changed_files")),
+            patch_applied=patch_applied,
             patch_summary=diff_result.get("summary", ""),
             modified_files=diff_result.get("data", {}).get("changed_files", []),
             duration_sec=duration_sec,
@@ -475,6 +513,10 @@ class LLMCodeAgent(BaseAgent):
                 "llm_model": self.llm_config.model,
                 "total_tool_calls": trace.total_tool_calls,
                 "max_iterations": self.llm_config.max_iterations,
+                "max_iterations_reached": max_iterations_reached,
+                "workspace_generation": workspace_generation,
+                "verified_generation": verified_generation,
+                "incomplete_reason": incomplete_reason,
             },
             recommended_files=trace.read_files[:],
         )
@@ -493,6 +535,7 @@ class LLMCodeAgent(BaseAgent):
                 f"- llm_provider: `{self.llm_config.provider}`\n"
                 f"- llm_model: `{self.llm_config.model}`\n"
                 f"- total_tool_calls: `{trace.total_tool_calls}`\n"
+                f"- incomplete_reason: `{incomplete_reason or 'none'}`\n"
                 f"- summary: {final_summary or '无'}\n"
             ),
         )

@@ -12,6 +12,7 @@ class Result(BaseModel):
     task_id: str
     run_id: str
     final_status: str
+    incomplete_reason: str = ""
     summary: str
     test_command: str = ""
     test_exit_code: int | None = None

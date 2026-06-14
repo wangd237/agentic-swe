@@ -6,22 +6,35 @@
 
 ## 核心结果
 
+### Agent 能力
+
 | 指标 | 当前结果 |
 | --- | --- |
-| 正式真实任务数 | `66` |
-| challenge 任务数 | `6` |
-| 来源生态数 | `16` |
-| 规则版 baseline 正式集成功率 | `100%` |
-| 规则版 baseline 正式集测试通过率 | `100%` |
-| 当前规则版 baseline 策略 | `improved_v71` |
+| 小样本任务数 | `5` |
+| 成功任务完成数 | `5 / 5` |
+| 可审计成功案例数 | `5` 条 trace / result / patch |
+| 扩展样本 | `2` 条复杂成功 + `1` 条边界 incomplete |
+| 已覆盖库数 | `4` 个（`rich`, `dateutil`, `jinja`, `click`） |
+| 平均工具调用数 | `6.0` |
 | 当前 LLM agent 策略 | `llm_deepseek_minimal` |
-| `frozen_40` 连续无回归版本数 | `8` |
-| `frozen_40` 当前最小验证均值耗时 | `0.5794s` |
-| 当前结论 | `验证底座已成熟；当前主线是把 LLM coding agent 跑在现有工具、harness 和真实 issue 验证集上，并以规则版 solver 作为 baseline 对比` |
+| 当前结论 | `Agent 已在 5 条真实 issue 派生任务上完成读代码、写 patch、跑测试、落盘 trace 的闭环` |
 
-基于 [benchmark_maturity_maturity_087.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/benchmark_maturity_maturity_087.json)、[batch_eval_realissuev71r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_eval_realissuev71r2_001.json)、[batch_compare_frozen20_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen20_step71_r2_001.json) 和 [batch_compare_frozen40_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen40_step71_r2_001.json)，当前项目已经达到“验证底座可用”阶段；接下来重点是让 LLM agent 成为主角，benchmark / frozen / stability 作为证据层服务 agent。
+### 验证底座
 
-## 系统闭环
+> | 指标 | 当前结果 |
+> | --- | --- |
+> | 正式真实任务数 | `66` |
+> | challenge 任务数 | `6` |
+> | 来源生态数 | `16` |
+> | 规则版 baseline 正式集成功率 | `100%` |
+> | 规则版 baseline 正式集测试通过率 | `100%` |
+> | 当前规则版 baseline 策略 | `improved_v71` |
+> | `frozen_40` 连续无回归版本数 | `8` |
+> | `frozen_40` 当前最小验证均值耗时 | `0.5794s` |
+
+基于 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md) 和 [docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)，当前 agent 已完成从真实任务定义、代码定位、补丁生成、测试验证到结果落盘的完整闭环；验证底座继续作为 baseline、回归保护和规模化评测证据。
+
+## Agent Run Loop
 
 ```text
 GitHub issue / semi-real task
@@ -39,26 +52,19 @@ GitHub issue / semi-real task
           v
    轨迹与结果落盘
    (task.json / trace.json / result.json / patch.diff)
-          |
-          v
-   batch run / batch eval / taxonomy
-          |
-          v
-   compare / frozen 回归 / maturity audit / stability recheck
-          |
-          v
-   policy 迭代与下一轮 benchmark 扩容
 ```
 
 ## 项目特点
 
-- 任务不是纯 synthetic demo，而是 `66` 条来自真实开源 issue 的 `semi_real` benchmark。
 - LLM agent 通过 OpenAI-compatible tool calling 调用现有工具；当前策略示例使用 DeepSeek，后续可切换到 Kimi、GLM 等兼容服务。
+- Agent 修复过程不是只看最终 diff，而是落盘 `trace.json` / `result.json` / `patch.diff`，可复盘每次读文件、搜索、测试、写入和 diff 检查。
+- Agent 的成功判定依赖 `run_tests` 和最终 `final_status`，不是让模型自称完成。
+- harness 是一等公民：强调工作区隔离、路径边界、产物契约和批量复现能力。
+- 任务不是纯 synthetic demo，而是 `66` 条来自真实开源 issue 的 `semi_real` benchmark。
 - 规则版 baseline 不是废弃资产，而是用于和 LLM agent 对比的稳定下限。
 - 优化不是“凭感觉调 prompt”，规则版 baseline 已版本化到 `improved_v71`，并且有冻结集无回归验证与稳定性复跑。
 - 评测不是只有成功率，还包括 taxonomy、耗时、步数、稳定性复跑和 maturity 审计。
 - 性能治理现在还支持环境基线快照，能先把“环境变慢”和“策略变慢”做一层拆分。
-- harness 是一等公民：强调工作区隔离、路径边界、产物契约和批量复现能力。
 - challenge 集独立管理：系统边界题可以单独运行和展示，而不污染正式 benchmark 口径。
 
 ## 快速开始
@@ -85,7 +91,7 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy
 - Kimi / GLM 等兼容服务可复制 `optimization/policy_versions/llm_openai_compatible_template.json`，或直接使用 `llm_kimi_minimal.json` / `llm_glm_minimal.json` 并配置对应环境变量
 - 规则版入口仍然保留，用作 baseline 对比
 
-单任务运行：
+规则版 baseline 单任务运行：
 
 ```bash
 python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy optimization/policy_versions/improved_v71.json
@@ -115,7 +121,21 @@ python scripts/stability_recheck.py --policy optimization/policy_versions/improv
 python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_baselines
 ```
 
-## 代表性案例
+## LLM Agent 小样本结果
+
+| Task | Repo / Issue | 缺陷类型 | Status | Tool calls |
+| --- | --- | --- | --- | ---: |
+| `task_010` | `Textualize/rich#4090` | CRLF ANSI 行解析 | `success` | 6 |
+| `task_019` | `dateutil/dateutil#1432` | UTC/GMT 零偏移回落 | `success` | 5 |
+| `task_024` | `pallets/jinja#2069` | 分支赋值静态分析 | `success` | 6 |
+| `task_016` | `pallets/click#3111` | 负向 boolean flag 默认值 | `success` | 7 |
+| `task_093` | `pallets/click#3572` | confirm 输出 ANSI 清理 | `success` | 6 |
+
+完整小样本结果见 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)。
+
+扩展样本里，`task_036` 和 `task_099` 继续成功；`task_132` 是一个有价值的边界案例：测试初始即通过、agent 没有生成 patch，最终保持 `incomplete`，避免把“无实际修复”误报为成功。
+
+## 验证底座代表性案例
 
 - `task_024` `pallets/jinja#2069`
   - 不是简单 if 修补，而是模板变量在分支赋值场景下的控制流语义分析。
@@ -186,6 +206,7 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 ## 文档导航
 
 - Agent 概览：[docs/agent_overview.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_overview.md)
+- Agent 小样本评测：[docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)
 - Agent 案例：[docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
 - 架构说明：[docs/architecture.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/architecture.md)
 - 实验摘要：[docs/experiment_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/experiment_summary.md)
@@ -199,10 +220,12 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 ## 当前阶段判断
 
-这已经不是一个“做出最小 demo”的阶段了。
+这已经不是一个“先让 agent 存在”的阶段了。
 
-当前项目已经有成熟验证底座，现在主线是把 LLM coding agent 跑稳、讲清，并和规则版 baseline 做可信对比：
+当前项目的主角已经切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace，并已有 5 条可审计成功案例。现有 benchmark / frozen / stability 体系的角色，是给 agent 提供可信验证层和 baseline 参照：
 
+- 有 LLM tool-use agent
+- 有 case study trace / result / patch 证据
 - 有正式集
 - 有冻结集
 - 有策略版本化
@@ -210,4 +233,4 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 - 有稳定性复跑
 - 有 maturity 审计
 
-接下来的重点不再是单纯追求任务数量，而是跑通 LLM agent 的 3 到 5 个代表任务，沉淀可读 trace / case study，再用现有验证层证明它不是一个孤立 demo。
+接下来的重点不是继续堆规则版任务数量，而是继续补齐 agent 求职展示最需要的证据：更复杂的跨文件任务、失败类型分类，以及更精简的 README 首屏叙事。
