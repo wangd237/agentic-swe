@@ -10,14 +10,14 @@
 
 | 指标 | 当前结果 |
 | --- | --- |
-| 小样本任务数 | `5` |
-| 成功任务完成数 | `5 / 5` |
-| 可审计成功案例数 | `5` 条 trace / result / patch |
-| 扩展样本 | `2` 条复杂成功 + `1` 条边界 incomplete |
-| 已覆盖库数 | `4` 个（`rich`, `dateutil`, `jinja`, `click`） |
-| 平均工具调用数 | `6.0` |
+| 已记录 LLM agent run | `33` |
+| 成功任务完成数 | `29 / 33` |
+| 可审计成功案例数 | `29` 条 trace / result / patch |
+| Challenge / 边界样本 | `7` 条，另有受限策略 failure-taxonomy run |
+| 已覆盖生态 | `9` 个（`rich`, `dateutil`, `jinja`, `click`, `jsonschema`, `packaging`, `tomlkit`, `watchfiles`, `anyio`） |
+| 平均工具调用数 | `6.7` |
 | 当前 LLM agent 策略 | `llm_deepseek_minimal` |
-| 当前结论 | `Agent 已在 5 条真实 issue 派生任务上完成读代码、写 patch、跑测试、落盘 trace 的闭环` |
+| 当前结论 | `Agent 已在 33 条真实 issue 派生任务上完成可审计运行，其中 29 条成功，并覆盖 no_patch / max_iterations 两类 incomplete reason` |
 
 ### 验证底座
 
@@ -75,6 +75,14 @@ GitHub issue / semi-real task
 python -m pip install -r requirements.txt
 ```
 
+配置 LLM provider：
+
+```bash
+cp .env.example .env
+```
+
+然后在 `.env` 中填入一个 OpenAI-compatible provider 的 API key / base URL / model。当前仓库提供 DeepSeek、Kimi、GLM 和通用 OpenAI-compatible policy 示例；真实 key 不应提交。
+
 运行最小 LLM agent 入口：
 
 ```bash
@@ -87,7 +95,7 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy
 - 工具层直接复用现有 `list_files / search_code / read_file / run_tests / write_file / show_diff`
 - LLM 输出预算默认 `8000` tokens，避免 `write_file` 写完整文件时被过早截断
 - Agent 对 `write_file` 后的 workspace generation 做验证跟踪，未验证的新改动不会被标记为 success
-- 当前 DeepSeek 策略从 `.env` 或当前进程环境读取 `DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL`
+- 当前 DeepSeek 策略从 `.env` 或当前进程环境读取 `DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL`，变量示例见 `.env.example`
 - Kimi / GLM 等兼容服务可复制 `optimization/policy_versions/llm_openai_compatible_template.json`，或直接使用 `llm_kimi_minimal.json` / `llm_glm_minimal.json` 并配置对应环境变量
 - 规则版入口仍然保留，用作 baseline 对比
 
@@ -123,17 +131,19 @@ python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_b
 
 ## LLM Agent 小样本结果
 
-| Task | Repo / Issue | 缺陷类型 | Status | Tool calls |
-| --- | --- | --- | --- | ---: |
-| `task_010` | `Textualize/rich#4090` | CRLF ANSI 行解析 | `success` | 6 |
-| `task_019` | `dateutil/dateutil#1432` | UTC/GMT 零偏移回落 | `success` | 5 |
-| `task_024` | `pallets/jinja#2069` | 分支赋值静态分析 | `success` | 6 |
-| `task_016` | `pallets/click#3111` | 负向 boolean flag 默认值 | `success` | 7 |
-| `task_093` | `pallets/click#3572` | confirm 输出 ANSI 清理 | `success` | 6 |
+| 指标 | 当前结果 |
+| --- | --- |
+| 已记录 LLM run | `33` |
+| success | `29` |
+| incomplete | `4` |
+| 当前成功率 | `87.9%` |
+| challenge / boundary run | `7` |
+| incomplete reason | `no_patch`, `max_iterations` |
+| 平均工具调用数 | `6.7` |
 
 完整小样本结果见 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)。
 
-扩展样本里，`task_036` 和 `task_099` 继续成功；`task_132` 是一个有价值的边界案例：测试初始即通过、agent 没有生成 patch，最终保持 `incomplete`，避免把“无实际修复”误报为成功。
+当前样本里，`task_132` 是一个有价值的边界案例：测试初始即通过、agent 没有生成 patch，最终保持 `incomplete/no_patch`，避免把“无实际修复”误报为成功。新增受限策略 run `task_054` 产生 `incomplete/max_iterations`，用于验证失败分类不是只有一种。
 
 ## 验证底座代表性案例
 
@@ -222,7 +232,7 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 这已经不是一个“先让 agent 存在”的阶段了。
 
-当前项目的主角已经切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace，并已有 5 条可审计成功案例。现有 benchmark / frozen / stability 体系的角色，是给 agent 提供可信验证层和 baseline 参照：
+当前项目的主角已经切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace，并已有 `29 / 33` 条可审计成功 run。现有 benchmark / frozen / stability 体系的角色，是给 agent 提供可信验证层和 baseline 参照：
 
 - 有 LLM tool-use agent
 - 有 case study trace / result / patch 证据

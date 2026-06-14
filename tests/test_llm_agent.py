@@ -431,6 +431,63 @@ def test_llm_agent_classifies_max_iterations_with_unverified_patch(tmp_path: Pat
     assert output["result"]["post_test_exit_code"] is None
 
 
+def test_llm_agent_prioritizes_max_iterations_without_patch(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["tests/test_app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=1),
+        client=FakeLLMClient(),
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    assert output["result"]["final_status"] == "incomplete"
+    assert output["result"]["incomplete_reason"] == "max_iterations"
+    assert output["result"]["patch_applied"] is False
+    assert output["result"]["post_test_exit_code"] == 0
+
+
 def test_llm_agent_ignores_model_supplied_test_command(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"

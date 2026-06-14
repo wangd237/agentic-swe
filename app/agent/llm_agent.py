@@ -248,12 +248,12 @@ class LLMCodeAgent(BaseAgent):
             return "success", ""
         if not ever_used_tool:
             return "stopped_without_verification", "no_tool_calls"
+        if max_iterations_reached:
+            return "incomplete", "max_iterations"
         if not patch_applied:
             return "incomplete", "no_patch"
         if last_test_exit_code is not None and last_test_exit_code != 0:
             return "incomplete", "failed_tests"
-        if max_iterations_reached:
-            return "incomplete", "max_iterations"
         if last_test_exit_code is None:
             return "incomplete", "no_tests_run"
         if verified_generation != workspace_generation:

@@ -9,46 +9,56 @@
 - 底座：benchmark、harness、规则版 baseline、frozen set、stability recheck。
 - 暂缓：继续堆规则版任务、继续扩 benchmark 数量、继续深挖 maturity / 性能追踪。
 
-## 2. 当前最高优先级
+## 2. Week Target 交付物
 
-### P0：跑 1 条更复杂的 LLM Agent 任务
+当前短期目标以 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 为准：把项目推到“可以放进简历 + 面试中打开给人看”的状态。
 
-目标：补齐作品集中“不是只会简单单文件修复”的证据。
+### 交付物 1：LLM Agent 样本扩到 ≥25 条
 
-候选方向：
+目标：从当前 `5` 条主样本 + `2` 条扩展成功 + `1` 条边界 incomplete，扩到至少 `25` 条真实 LLM agent run。
 
-- 跨文件修复；
-- 更长上下文；
-- 需要先读测试再定位实现；
-- 允许失败，但必须能形成清晰 `incomplete_reason`。
+要求：
 
-完成标准：
+- 必须包含至少 `3` 条 challenge 边界题；
+- 每跑完约 `5` 条就停下来抽检 diff；
+- 成功不能只看 `final_status`，还要确认 patch 合理；
+- failure / boundary 要记录 `incomplete_reason`，并尽量覆盖至少 `2` 种不同 reason。
 
-- 使用 `scripts/run_issue_agent.py` 真实运行；
-- 产物写入 `logs/trajectories/<task_id>/<run_id>/`；
-- `result.json` 有明确 `final_status`；
-- 成功时有 `patch.diff`；
-- 失败或边界时有明确 `incomplete_reason`。
+### 交付物 2：Case Study 扩到 ≥4 条
 
-### P1：更新 Agent 案例文档
+当前要优先把已有成功 run 写清楚，不必等新增 25 条全部跑完。建议详写：
 
-跑完下一条代表任务后，同步：
+- `task_010`
+- `task_024`
+- `task_016`
+- `task_093`
 
-- [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)
-- [docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
-- 必要时同步 README 的小样本结果表。
+每条必须包含关键步骤序列、agent 决策关键点、patch 核心改动、验证结果。
 
-写 case study 时优先讲：
+### 交付物 3：README 指标表真实化
 
-- agent 读了什么；
-- 为什么选择改这个文件；
-- patch 的关键判断；
-- 测试如何验证；
-- 如果失败，失败原因是什么。
+README 的 Agent 能力表必须只写真实跑出来的数字，并和 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md) 保持一致。
 
-### P2：把失败分类变成展示资产
+### 交付物 4：项目一键可跑 + `.env.example`
 
-当前 `result.json` 已支持：
+面试官 clone 后应能快速理解：
+
+- 如何安装依赖；
+- 如何配置 OpenAI-compatible provider；
+- 如何运行一条 LLM agent 任务。
+
+## 3. 当前已完成 / 待完成
+
+| 交付物 | 当前状态 | 下一步 |
+| --- | --- | --- |
+| 样本 ≥25 | 已完成，当前 `33` 条已记录 run | 继续保持抽检，不再盲目刷成功 |
+| ≥3 条 challenge | 已完成，当前 `7` 条 challenge / boundary run | 后续重点转为失败 reason 多样性 |
+| `incomplete_reason` | 已完成，当前已有 `no_patch` 和 `max_iterations` | 后续可继续补 `failed_tests`，但 week target 已达标 |
+| case study ≥4 | 已完成首版 | 可再挑 `task_126/128/133` 补复杂案例 |
+| README 指标 | 已完成首版 | 后续随新增失败样本刷新 |
+| `.env.example` | 已完成首版 | 与 README 快速开始保持一致 |
+
+## 4. 失败分类
 
 - `no_patch`
 - `failed_tests`
@@ -56,9 +66,7 @@
 - `no_tests_run`
 - `unverified_patch`
 
-下一步要把这些分类汇总成一小段说明，放到 agent eval 或 case study 中。重点不是羞于失败，而是证明这个 agent 项目有真实边界和可审计性。
-
-## 3. 可执行命令
+## 5. 可执行命令
 
 选定更复杂任务后，运行一条 LLM agent 任务：
 
@@ -78,7 +86,7 @@ python -m pytest tests/test_llm_agent.py tests/test_write_file.py -q --basetemp 
 Get-Content logs/trajectories/<task_id>/<run_id>/result.json
 ```
 
-## 4. 暂时不要优先做
+## 6. 暂时不要优先做
 
 - 不要把“新增正式 benchmark 数量”作为主目标。
 - 不要继续围绕 `improved_v*` 规则版 patcher 做大迭代。
@@ -86,7 +94,7 @@ Get-Content logs/trajectories/<task_id>/<run_id>/result.json
 - 不要先做 UI、多 agent、训练增强。
 - 不要把 DeepSeek 写死进 agent 代码；LLM provider 要保持 OpenAI-compatible 抽象。
 
-## 5. 每轮完成后同步清单
+## 7. 每轮完成后同步清单
 
 每次完成一条重要 agent run 后，至少检查：
 
@@ -95,7 +103,3 @@ Get-Content logs/trajectories/<task_id>/<run_id>/result.json
 - `docs/agent_case_studies.md` 是否需要新增案例；
 - `docs/v2_roadmap.md` 的下一步是否仍准确；
 - 是否需要提交并推送。
-
-## 6. 当前推荐下一步
-
-选择一条比现有 5 条主样本更复杂的任务，用 LLM agent 真实跑一遍。不要为了成功率挑太简单的题；现在最缺的是可讲述的 agent 决策过程。
