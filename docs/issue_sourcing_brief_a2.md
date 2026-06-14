@@ -1,5 +1,7 @@
 # A2 Issue Sourcing Brief
 
+> 这是前一阶段用于正式验证集扩容的找题 brief。当前不再以扩 benchmark 数量为主线；只有当候选能补强 LLM agent 的复杂 case study 或失败边界时，才应优先使用本 brief。
+
 本文件是 `docs/issue_sourcing_spec.md` 的补充版。
 
 如果 `issue_sourcing_spec.md` 负责定义“什么样的 issue 适合做 benchmark”，那么本文件负责定义：

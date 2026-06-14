@@ -1,5 +1,7 @@
 # A3 Challenge Sourcing Brief
 
+> 这是前一阶段用于 challenge 题 sourcing 的 brief。当前 challenge 线应服务 agent 边界展示和 `incomplete_reason` 分类，而不是为了继续堆题。
+
 本文件用于指导“下一条 challenge 题应该怎么找”。
 
 如果：

@@ -1,5 +1,7 @@
 # Benchmark 说明
 
+> 本文件描述的是 agent 验证底座，不是当前项目主线。当前主线是 LLM coding agent；benchmark 的作用是提供任务来源、baseline 对比和回归保护。
+
 ## 当前 benchmark 分层
 
 当前项目已经把 benchmark 拆成三层，分别服务不同阶段：

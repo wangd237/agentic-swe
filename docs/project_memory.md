@@ -6,7 +6,23 @@
 
 ## 当前阶段
 
-- 当前阶段：`Phase 6 - 优化系统`
+- 当前阶段：`LLM coding agent 展示收口`
+- 当前求职目标：把项目讲成“面向真实 GitHub issue 的 coding agent”，用于 AI Agent 实习投递
+- 当前主角：OpenAI-compatible LLM coding agent
+- 当前 agent 证据：
+  - 主样本 `5 / 5` success
+  - 扩展样本 `2` success + `1` incomplete boundary
+  - 每条代表 run 都有 `trace.json / result.json / patch.diff`
+- 当前下一步：跑 1 条更复杂的 LLM agent 任务，并写成 case study
+- 当前验证底座：
+  - 正式任务 `66`
+  - challenge 任务 `6`
+  - frozen_40 streak `8`
+  - 规则版 baseline 继续作为稳定参照
+
+以下内容是前一阶段 benchmark / performance / roadmap tracking 的历史记忆，保留用于追溯，但不再作为当前主线。
+
+- 历史阶段：`Phase 6 - 优化系统`
 - 当前主版本策略：`improved_v71`
 - 当前长期对比锚点：`improved_v50`
 - 当前性能主线校准：

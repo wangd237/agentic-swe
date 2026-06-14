@@ -1,6 +1,14 @@
 # 项目实施指南
 
-本文件用于同步记录每个 phase 已实现的功能、当前框架结构，以及你可以如何体验项目。
+本文件是历史实施日志和上手索引，保留大量 phase 过程记录。当前对外主线已经切到 LLM coding agent；如果是为了求职展示或恢复最新方向，请优先阅读：
+
+- [README.md](/E:/My_Projects/agentic-software-engineering-roadmap/README.md)
+- [docs/agent_overview.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_overview.md)
+- [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)
+- [docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
+- [docs/next_actions.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/next_actions.md)
+
+下面的 phase 记录仍有工程追溯价值，但不要把它理解成当前主线；benchmark、maturity、stability 等内容现在是 agent 的验证底座。
 
 ## 当前进度
 

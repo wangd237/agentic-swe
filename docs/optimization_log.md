@@ -1,5 +1,7 @@
 # 优化迭代记录
 
+> 这是历史优化流水账，主要保留规则版 baseline、benchmark 验证底座和策略版本演进证据。当前项目目标已经切到 LLM coding agent 求职展示；下一步行动以 [docs/next_actions.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/next_actions.md) 为准。
+
 本文件专门记录：
 
 - 每一轮优化改了什么

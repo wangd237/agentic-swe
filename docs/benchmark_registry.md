@@ -1,6 +1,6 @@
 # Benchmark 注册表
 
-本文件用于把当前正式 benchmark 任务压缩成可快速检索的目录。
+本文件用于把当前 agent 验证集任务压缩成可快速检索的目录。这里保留 benchmark 这个历史命名，但当前定位是服务 LLM coding agent 的任务池和 baseline 参照。
 
 建议用途：
 

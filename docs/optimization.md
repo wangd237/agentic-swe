@@ -1,5 +1,7 @@
 # 优化说明
 
+> 这是规则版 baseline 和早期 policy 对比的历史说明。当前优化主线已经切到 LLM coding agent 的真实运行、失败分类和 case study 展示。
+
 当前处于 `Phase 6`，优化系统已经开始首轮对比实验。
 
 ## 当前状态
