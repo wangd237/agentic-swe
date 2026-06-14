@@ -185,6 +185,8 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 ## 文档导航
 
+- Agent 概览：[docs/agent_overview.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_overview.md)
+- Agent 案例：[docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
 - 架构说明：[docs/architecture.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/architecture.md)
 - 实验摘要：[docs/experiment_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/experiment_summary.md)
 - 完整结果日志：[docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md)
