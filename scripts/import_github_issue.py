@@ -85,13 +85,43 @@ def build_candidate(repo_full_name: str, issue_payload: dict) -> dict:
             issue_payload["title"],
             issue_payload.get("body", "") or "",
         ),
-        "status": "to_review",
+        "status": "imported",
         "notes": timestamp_note("由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。"),
         "labels": [label["name"] for label in issue_payload.get("labels", [])],
         "state": issue_payload.get("state", "open"),
         "created_at": issue_payload.get("createdAt"),
         "body_excerpt": (issue_payload.get("body", "") or "")[:500],
     }
+
+
+def build_candidate_from_search_summary(search_candidate: dict) -> dict:
+    repo_full_name = str(search_candidate["repo"]).strip()
+    issue_number = int(search_candidate["issue_number"])
+    labels = [str(label).strip() for label in search_candidate.get("labels", []) if str(label).strip()]
+    candidate = {
+        "candidate_id": build_candidate_id(repo_full_name, issue_number),
+        "repo_full_name": repo_full_name,
+        "repo_url": f"https://github.com/{repo_full_name}",
+        "issue_number": issue_number,
+        "issue_title": str(search_candidate["title"]).strip(),
+        "issue_url": search_candidate["url"],
+        "language": "python",
+        "difficulty": search_candidate.get("estimated_difficulty", "medium"),
+        "status": "imported",
+        "notes": timestamp_note("由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。"),
+        "labels": labels,
+        "state": search_candidate.get("state", "closed"),
+        "created_at": search_candidate.get("created_at"),
+        "body_excerpt": str(search_candidate.get("body_excerpt", "") or "")[:500],
+    }
+    overrides = {
+        "why_it_fits": search_candidate.get("why_it_fits"),
+        "expected_target_files": search_candidate.get("expected_target_files"),
+        "expected_test_shape": search_candidate.get("expected_test_shape"),
+        "risk_notes": search_candidate.get("risk_notes"),
+        "recommendation": search_candidate.get("recommendation"),
+    }
+    return apply_candidate_overrides(candidate, overrides)
 
 
 def apply_candidate_overrides(candidate: dict, overrides: dict | None) -> dict:
@@ -163,11 +193,10 @@ def upsert_candidate(dataset_path: Path, candidate: dict) -> tuple[dict, str]:
     return candidate, "created"
 
 
-def mark_candidate_as_drafted(dataset_path: Path, candidate_id: str) -> None:
+def append_draft_note(dataset_path: Path, candidate_id: str) -> None:
     payload = load_candidate_dataset(dataset_path)
     for candidate in payload["candidates"]:
         if candidate["candidate_id"] == candidate_id:
-            candidate["status"] = "drafted"
             candidate["notes"] = append_note(
                 candidate.get("notes", ""),
                 "已生成 real_issue task 草稿，仍需人工补齐 repo_path、测试命令和目标文件。",
@@ -285,7 +314,7 @@ def draft_task_for_candidate(
 ) -> dict:
     task_payload = build_task_payload(candidate, repo_path, test_command)
     task_path = write_task_payload(task_payload)
-    mark_candidate_as_drafted(candidate_path, candidate["candidate_id"])
+    append_draft_note(candidate_path, candidate["candidate_id"])
     return {
         "task_payload": task_payload,
         "task_path": task_path,

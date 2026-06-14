@@ -101,3 +101,48 @@ def test_analyze_duration_regressions_builds_overlap_and_task_deltas(tmp_path: P
     assert summary["top_improvements"][0]["delta_duration_sec"] == -0.1
     assert Path(output["summary_json_path"]).exists()
     assert Path(output["summary_md_path"]).exists()
+
+
+def test_analyze_duration_regressions_applies_environment_baseline_adjustment(tmp_path: Path) -> None:
+    baseline_summary = make_batch_summary(
+        tmp_path,
+        "batch_run_realissuev40_001",
+        [
+            {"task_id": "task_001", "duration_sec": 0.4},
+        ],
+    )
+    improved_summary = make_batch_summary(
+        tmp_path,
+        "batch_run_realissuev41_001",
+        [
+            {"task_id": "task_001", "duration_sec": 0.46},
+        ],
+    )
+    env_baseline_path = tmp_path / "logs" / "env_baselines" / "env_baseline_demo.json"
+    write_json(
+        env_baseline_path,
+        {
+            "snapshot_id": "env_baseline_demo",
+            "comparison": {
+                "reference_snapshot_id": "env_baseline_old",
+                "reference_snapshot_path": "logs/env_baselines/env_baseline_old.json",
+                "comparable_command_count": 2,
+                "mean_delta_sec": 0.02,
+                "max_delta_sec": 0.03,
+                "mean_ratio": 1.1,
+            },
+        },
+    )
+
+    output = analyze_duration_regressions.analyze_duration_regressions(
+        baseline_batch_summary_path=baseline_summary,
+        improved_batch_summary_path=improved_summary,
+        env_baseline_path=env_baseline_path,
+        output_dir=tmp_path / "logs" / "summaries",
+        run_label="realissuev41",
+    )
+
+    summary = output["summary"]
+    assert summary["aggregate"]["common_average_delta_sec"] == 0.06
+    assert summary["aggregate"]["env_adjusted_common_average_delta_sec"] == 0.04
+    assert summary["environment_baseline"]["adjustment_available"] is True

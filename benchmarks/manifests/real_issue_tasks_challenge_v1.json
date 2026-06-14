@@ -1,0 +1,12 @@
+{
+  "manifest_id": "real_issue_tasks_challenge_v1",
+  "description": "Phase 6 用于承载已完成 ready 化、适合展示系统边界、但暂不并入正式 benchmark 主集的 challenge 任务。",
+  "tasks": [
+    "benchmarks/tasks/task_126.json",
+    "benchmarks/tasks/task_127.json",
+    "benchmarks/tasks/task_130.json",
+    "benchmarks/tasks/task_131.json",
+    "benchmarks/tasks/task_132.json",
+    "benchmarks/tasks/task_133.json"
+  ]
+}

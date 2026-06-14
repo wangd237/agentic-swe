@@ -116,6 +116,7 @@ def test_evaluate_frozen_streak_finds_longest_consecutive_run() -> None:
 def test_analyze_benchmark_maturity_builds_goal_gap_snapshot(tmp_path: Path) -> None:
     repo_root = tmp_path
     manifest_path = repo_root / "benchmarks" / "manifests" / "real_issue_tasks.json"
+    challenge_manifest_path = repo_root / "benchmarks" / "manifests" / "real_issue_tasks_challenge_v1.json"
     task_dir = repo_root / "benchmarks" / "tasks"
     summary_dir = repo_root / "logs" / "summaries"
     candidate_file = repo_root / "benchmarks" / "real_world_candidates.json"
@@ -131,6 +132,14 @@ def test_analyze_benchmark_maturity_builds_goal_gap_snapshot(tmp_path: Path) -> 
             "manifest_id": "real_issue_tasks_v1",
             "description": "demo",
             "tasks": [str(path.relative_to(repo_root)).replace("\\", "/") for path in task_paths],
+        },
+    )
+    write_json(
+        challenge_manifest_path,
+        {
+            "manifest_id": "real_issue_tasks_challenge_v1",
+            "description": "challenge",
+            "tasks": [str(task_paths[0].relative_to(repo_root)).replace("\\", "/")],
         },
     )
     frozen_manifest_tasks = [str(task_paths[index % len(task_paths)].relative_to(repo_root)).replace("\\", "/") for index in range(20)]
@@ -183,6 +192,7 @@ def test_analyze_benchmark_maturity_builds_goal_gap_snapshot(tmp_path: Path) -> 
     output = analyze_benchmark_maturity.analyze_benchmark_maturity(
         repo_root=repo_root,
         formal_manifest=manifest_path,
+        challenge_manifest=challenge_manifest_path,
         candidate_file=candidate_file,
         output_dir=summary_dir,
         run_label="demo",
@@ -190,6 +200,7 @@ def test_analyze_benchmark_maturity_builds_goal_gap_snapshot(tmp_path: Path) -> 
 
     summary = output["summary"]
     assert summary["formal_manifest"]["task_count"] == 3
+    assert summary["challenge_manifest"]["task_count"] == 1
     assert summary["formal_manifest"]["ecosystem_count"] == 3
     assert summary["goal_gaps"]["formal_task_goal"]["gap"] == 57
     assert summary["goal_gaps"]["ecosystem_goal"]["gap"] == 3

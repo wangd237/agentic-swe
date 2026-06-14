@@ -11,6 +11,11 @@ venv/
 
 # 本地运行日志与工作副本
 logs/trajectories/
+logs/summaries/
+logs/env_baselines/
+
+# 本地协作配置
+.claude/
 
 # 系统文件
 .DS_Store

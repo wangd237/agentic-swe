@@ -84,11 +84,49 @@ def _average_duration(records: list[dict]) -> float:
     return _round_float(sum(item["duration_sec"] for item in records) / len(records))
 
 
+def load_environment_baseline(path: str | Path) -> dict:
+    payload = _load_json(path)
+    comparison = payload.get("comparison")
+    if not isinstance(comparison, dict):
+        return {
+            "path": str(Path(path).resolve()),
+            "snapshot_id": payload.get("snapshot_id"),
+            "adjustment_available": False,
+            "reason": "给定环境快照没有 comparison 段，暂时只能附带展示，不能做漂移扣除。",
+        }
+
+    mean_delta = comparison.get("mean_delta_sec")
+    if not isinstance(mean_delta, (int, float)):
+        return {
+            "path": str(Path(path).resolve()),
+            "snapshot_id": payload.get("snapshot_id"),
+            "adjustment_available": False,
+            "reason": "comparison 段缺少 mean_delta_sec，暂时不能做漂移扣除。",
+        }
+
+    return {
+        "path": str(Path(path).resolve()),
+        "snapshot_id": payload.get("snapshot_id"),
+        "adjustment_available": True,
+        "reference_snapshot_id": comparison.get("reference_snapshot_id"),
+        "reference_snapshot_path": comparison.get("reference_snapshot_path"),
+        "mean_delta_sec": _round_float(float(mean_delta)),
+        "max_delta_sec": _round_float(float(comparison.get("max_delta_sec", 0.0))),
+        "mean_ratio": (
+            _round_float(float(comparison["mean_ratio"]))
+            if isinstance(comparison.get("mean_ratio"), (int, float))
+            else None
+        ),
+        "comparable_command_count": int(comparison.get("comparable_command_count", 0)),
+    }
+
+
 def build_duration_compare_summary(
     *,
     baseline_batch_summary_path: Path,
     improved_batch_summary_path: Path,
     top_n: int = 10,
+    env_baseline_path: str | Path | None = None,
 ) -> dict:
     baseline_records = load_duration_records(baseline_batch_summary_path)
     improved_records = load_duration_records(improved_batch_summary_path)
@@ -135,7 +173,7 @@ def build_duration_compare_summary(
     baseline_common_avg = _average_duration(baseline_common_records)
     improved_common_avg = _average_duration(improved_common_records)
 
-    return {
+    summary = {
         "created_at": _utc_timestamp(),
         "baseline_batch_run_id": baseline_batch_summary_path.stem,
         "improved_batch_run_id": improved_batch_summary_path.stem,
@@ -165,6 +203,14 @@ def build_duration_compare_summary(
         "top_improvements": improvements,
         "per_task_deltas": per_task_deltas,
     }
+    if env_baseline_path is not None:
+        environment_baseline = load_environment_baseline(env_baseline_path)
+        summary["environment_baseline"] = environment_baseline
+        if environment_baseline.get("adjustment_available"):
+            summary["aggregate"]["env_adjusted_common_average_delta_sec"] = _round_float(
+                summary["aggregate"]["common_average_delta_sec"] - environment_baseline["mean_delta_sec"]
+            )
+    return summary
 
 
 def build_duration_compare_markdown(summary: dict) -> str:
@@ -182,6 +228,31 @@ def build_duration_compare_markdown(summary: dict) -> str:
         f"(delta: `{item['delta_duration_sec']}`, tool_calls: `{item['baseline_tool_calls']}` -> `{item['improved_tool_calls']}`)"
         for item in summary["top_improvements"]
     ) or "- 当前没有检测到公共任务上的时延改善"
+
+    environment_baseline = summary.get("environment_baseline")
+    if environment_baseline:
+        if environment_baseline.get("adjustment_available"):
+            environment_baseline_block = f"""
+## Environment Baseline
+
+- snapshot_id: `{environment_baseline["snapshot_id"]}`
+- reference_snapshot_id: `{environment_baseline["reference_snapshot_id"]}`
+- comparable_command_count: `{environment_baseline["comparable_command_count"]}`
+- mean_delta_sec: `{environment_baseline["mean_delta_sec"]}`
+- max_delta_sec: `{environment_baseline["max_delta_sec"]}`
+- mean_ratio: `{environment_baseline["mean_ratio"]}`
+- env_adjusted_common_average_delta_sec: `{aggregate["env_adjusted_common_average_delta_sec"]}`
+"""
+        else:
+            environment_baseline_block = f"""
+## Environment Baseline
+
+- snapshot_id: `{environment_baseline["snapshot_id"]}`
+- adjustment_available: `False`
+- reason: `{environment_baseline["reason"]}`
+"""
+    else:
+        environment_baseline_block = ""
 
     return f"""# Duration Regression Analysis
 
@@ -216,6 +287,7 @@ def build_duration_compare_markdown(summary: dict) -> str:
 ## Top Improvements
 
 {improvement_lines}
+{environment_baseline_block}
 """
 
 
@@ -228,6 +300,7 @@ def analyze_duration_regressions(
     output_dir: str | Path = "logs/summaries",
     run_label: str | None = None,
     top_n: int = 10,
+    env_baseline_path: str | Path | None = None,
 ) -> dict:
     baseline_summary_path = resolve_batch_summary_path(
         batch_summary_path=baseline_batch_summary_path,
@@ -241,6 +314,7 @@ def analyze_duration_regressions(
         baseline_batch_summary_path=baseline_summary_path,
         improved_batch_summary_path=improved_summary_path,
         top_n=top_n,
+        env_baseline_path=env_baseline_path,
     )
 
     output_directory = Path(output_dir).resolve()
@@ -270,6 +344,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="logs/summaries", help="分析结果输出目录")
     parser.add_argument("--run-label", default=None, help="可选标签，例如 realissuev32")
     parser.add_argument("--top-n", type=int, default=10, help="输出时延回升/改善前 N 条任务")
+    parser.add_argument(
+        "--env-baseline",
+        default=None,
+        help="可选：环境基线快照路径；若快照包含 comparison 段，会自动给出环境漂移扣除后的 delta。",
+    )
     return parser
 
 
@@ -283,6 +362,7 @@ def main() -> int:
         output_dir=args.output_dir,
         run_label=args.run_label,
         top_n=args.top_n,
+        env_baseline_path=args.env_baseline,
     )
     summary = output["summary"]
     print("=== Duration Regression Analysis Summary ===")
@@ -291,6 +371,11 @@ def main() -> int:
     print(f"improved_batch_run_id: {summary['improved_batch_run_id']}")
     print(f"common_task_count: {summary['task_set']['common_task_count']}")
     print(f"common_average_delta_sec: {summary['aggregate']['common_average_delta_sec']}")
+    if "env_adjusted_common_average_delta_sec" in summary["aggregate"]:
+        print(
+            "env_adjusted_common_average_delta_sec: "
+            f"{summary['aggregate']['env_adjusted_common_average_delta_sec']}"
+        )
     print(f"summary_json_path: {output['summary_json_path']}")
     print(f"summary_md_path: {output['summary_md_path']}")
     return 0

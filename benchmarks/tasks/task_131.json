@@ -1,0 +1,40 @@
+{
+  "task_id": "task_131",
+  "repo_name": "watchfiles_215_repo",
+  "repo_path": "benchmarks/repos/watchfiles_215_repo",
+  "issue_title": "Problems when using vim - `Remove(File)` event when saving the file",
+  "issue_text": "### Description\r\n\r\nHello, \r\nand thanks for providing `watchfiles` ! I seem to have an issue occuring with `vim` specifically, so I'm not sure this is the best place for a bug report, but this could always serve as future reference:\r\n\r\nWhen editing then saving a file in `vim` (version 9.0.813), for some reason a `Remove(File)` event is sent; no sub-sequent events are received when modifying the file:\r\n\r\n```\r\nraw-event: Event { kind: Modify(Name(From)), paths: [\"/home/sapristi/dev/mmuxer/config.ya",
+  "test_command": "python -m pytest tests/test_main.py -q",
+  "success_criteria": "应修复 issue《Problems when using vim - `Remove(File)` event when saving the file》中描述的错误行为；核心逻辑预计位于 `watchfiles/main.py`；并补齐 1 到 3 个稳定回归测试，确保当前错误行为消失且相邻边界不回归。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "auto-scaffolded",
+    "watchfiles",
+    "bug",
+    "draft"
+  ],
+  "target_files_hint": [
+    "watchfiles/main.py",
+    "tests/test_main.py"
+  ],
+  "expected_failure_test": "WatchfilesVimSaveRegressionTests.test_vim_style_save_should_still_reload_and_keep_watching_target",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "samuelcolvin/watchfiles",
+    "repo_url": "https://github.com/samuelcolvin/watchfiles",
+    "issue_number": 215,
+    "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/215",
+    "candidate_id": "samuelcolvin_watchfiles_issue_215",
+    "draft_status": "needs_manual_completion",
+    "imported_from": "scripts/scaffold_semi_real_task.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_000",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready",
+    "ready_note": "已压成可运行的 challenge semi-real 回归任务；当前目标 vim-style remove 路径失败、相邻保护路径通过，可继续用于 challenge manifest 评估。"
+  }
+}

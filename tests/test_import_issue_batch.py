@@ -88,7 +88,7 @@ def test_load_batch_entries_supports_json_file(tmp_path: Path) -> None:
     ]
 
 
-def test_import_issue_batch_aggregates_created_updated_and_drafted(monkeypatch, tmp_path: Path) -> None:
+def test_import_issue_batch_aggregates_created_updated_and_draft_task_count(monkeypatch, tmp_path: Path) -> None:
     input_path = tmp_path / "issues.txt"
     input_path.write_text("psf/requests 6432\nTextualize/rich 4090\n", encoding="utf-8")
     candidate_file = tmp_path / "benchmarks" / "real_world_candidates.json"
@@ -109,7 +109,10 @@ def test_import_issue_batch_aggregates_created_updated_and_drafted(monkeypatch, 
         imported_calls.append((repo_full_name, issue_number))
         imported_overrides.append(candidate_overrides)
         return {
-            "candidate": {"candidate_id": f"{repo_full_name.replace('/', '_')}_{issue_number}"},
+            "candidate": {
+                "candidate_id": f"{repo_full_name.replace('/', '_')}_{issue_number}",
+                "status": "imported",
+            },
             "operation": "created" if issue_number == 6432 else "updated",
         }
 
@@ -151,7 +154,8 @@ def test_import_issue_batch_aggregates_created_updated_and_drafted(monkeypatch, 
     assert output["total_count"] == 2
     assert output["created_count"] == 1
     assert output["updated_count"] == 1
-    assert output["drafted_count"] == 2
+    assert output["draft_task_count"] == 2
+    assert output["results"][0]["candidate_status"] == "imported"
 
 
 def test_import_issue_to_dataset_applies_structured_overrides(tmp_path: Path) -> None:
@@ -183,7 +187,7 @@ def test_import_issue_to_dataset_applies_structured_overrides(tmp_path: Path) ->
             "repository_url": "https://github.com/pypa/packaging",
         },
         candidate_overrides={
-            "status": "to_review",
+            "status": "imported",
             "difficulty": "medium",
             "why_it_fits": "比较语义明确，适合缩成单模块任务。",
             "expected_target_files": ["packaging/markers.py", "tests/test_markers.py"],
@@ -195,7 +199,7 @@ def test_import_issue_to_dataset_applies_structured_overrides(tmp_path: Path) ->
     )
 
     candidate = output["candidate"]
-    assert candidate["status"] == "to_review"
+    assert candidate["status"] == "imported"
     assert candidate["difficulty"] == "medium"
     assert candidate["expected_target_files"] == ["packaging/markers.py", "tests/test_markers.py"]
     assert "why_it_fits: 比较语义明确，适合缩成单模块任务。" in candidate["notes"]

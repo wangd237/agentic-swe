@@ -61,6 +61,12 @@
     "benchmarks/tasks/task_115.json",
     "benchmarks/tasks/task_117.json",
     "benchmarks/tasks/task_119.json",
-    "benchmarks/tasks/task_121.json"
+    "benchmarks/tasks/task_121.json",
+    "benchmarks/tasks/task_122.json",
+    "benchmarks/tasks/task_123.json",
+    "benchmarks/tasks/task_124.json",
+    "benchmarks/tasks/task_125.json",
+    "benchmarks/tasks/task_128.json",
+    "benchmarks/tasks/task_129.json"
   ]
 }

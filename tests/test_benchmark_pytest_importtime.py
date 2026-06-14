@@ -73,6 +73,42 @@ def test_build_pytest_importtime_benchmark_returns_expected_phases() -> None:
     assert isinstance(summary["derived_metrics"]["average_collect_unique_module_delta"], int)
 
 
+def test_build_pytest_importtime_benchmark_passes_policy_flags(tmp_path: Path, monkeypatch) -> None:
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(
+        '{"policy_id":"import_policy","description":"demo","pytest_additional_flags":["-p no:threadexception"]}',
+        encoding="utf-8",
+    )
+    observed_flags: list[list[str]] = []
+
+    def fake_run_tests(repo_path: str, command: str, timeout_sec: int = 30, additional_pytest_flags: list[str] | None = None) -> dict:
+        _ = repo_path, command, timeout_sec
+        observed_flags.append(additional_pytest_flags or [])
+        return {
+            "ok": True,
+            "summary": "ok",
+            "data": {
+                "exit_code": 0,
+                "stderr": "",
+                "command_execution_duration_sec": 0.01,
+                "summary_extraction_duration_sec": 0.0,
+            },
+        }
+
+    monkeypatch.setattr(benchmark_pytest_importtime, "run_tests", fake_run_tests)
+
+    summary = benchmark_pytest_importtime.build_pytest_importtime_benchmark(
+        task_path=REPO_ROOT / "benchmarks" / "tasks" / "task_001.json",
+        repo_root=REPO_ROOT,
+        repetitions=1,
+        policy_path=policy_path,
+    )
+
+    assert summary["policy_id"] == "import_policy"
+    assert summary["pytest_additional_flags"] == ["-p no:threadexception"]
+    assert observed_flags == [["-p no:threadexception"]] * 2
+
+
 def test_benchmark_pytest_importtime_writes_output_files(tmp_path: Path) -> None:
     output = benchmark_pytest_importtime.benchmark_pytest_importtime(
         task_path=REPO_ROOT / "benchmarks" / "tasks" / "task_001.json",

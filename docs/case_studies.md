@@ -1,748 +1,130 @@
-# 案例分析
-
-## 成功案例 1：`task_003`
-
-- repo：`multi_bug_repo`
-- 代表版本：`improved_v1`
-- 现象：
-  - baseline_v1 只能修掉空输入问题
-  - 修复后仍会在 `None.strip()` 处失败
-- 改进点：
-  - `improved_v1` 在 patch 中补充了中间 `None` 元素过滤
-- 结果：
-  - `task_003` 从 `Patch Incorrect` 变成完全通过
-
-## 成功案例 2：`task_004`
-
-- repo：`leading_none_repo`
-- 代表版本：`improved_v2`
-- 现象：
-  - `improved_v1` 能处理空输入和中间 `None`
-  - 但首元素为 `None` 时仍会在 `first_item.strip()` 处失败
-- 改进点：
-  - `improved_v2` 把策略升级为“归一化前先过滤所有 `None`”
-- 结果：
-  - `task_004` 从失败变为完全通过
-
-## 成功案例 3：`task_006`
-
-- repo：`requests_compat_repo`
-- 来源：`psf/requests#6432`
-- 代表版本：`improved_v3`
-- 现象：
-  - `improved_v2` 无法对依赖约束类问题生成 patch
-  - `task_006` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v3` 新增 urllib3 上界放宽策略
-- 结果：
-  - `task_006` 从失败变为完全通过
-
-## 成功案例 4：`task_008`
-
-- repo：`requests_encoding_repo`
-- 来源：`psf/requests#7234`
-- 代表版本：`improved_v4`
-- 现象：
-  - `improved_v3` 还不具备 quoted charset 的解析修复能力
-  - `task_008` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v4` 新增 quoted charset 去引号策略
-- 结果：
-  - `task_008` 从失败变为完全通过
-
-## 成功案例 5：`task_010`
-
-- repo：`rich_ansi_repo`
-- 来源：`Textualize/rich#4090`
-- 代表版本：`improved_v5`
-- 现象：
-  - `improved_v4` 还不具备 ANSI 文本 CRLF 行尾拆分修复能力
-  - `task_010` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v5` 新增 CRLF 兼容的 `splitlines(keepends=True)` 修复策略
-- 结果：
-  - `task_010` 从失败变为完全通过
-
-## 成功案例 6：`task_013`
-
-- repo：`rich_handler_repo`
-- 来源：`Textualize/rich#3877`
-- 代表版本：`improved_v6`
-- 现象：
-  - `improved_v5` 还不具备 RichHandler 时区偏移保留能力
-  - `task_013` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v6` 让时间格式化显式使用时区信息
-- 结果：
-  - `task_013` 从失败变为完全通过
-
-## 成功案例 7：`task_016`
-
-- repo：`click_flag_repo`
-- 来源：`pallets/click#3111`
-- 代表版本：`improved_v7`
-- 现象：
-  - `improved_v6` 还不具备负向 boolean flag 默认值修复能力
-  - `task_016` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v7` 修正了 `default=True` 在负向 flag 场景下被错误覆盖的问题
-- 结果：
-  - `task_016` 从失败变为完全通过
-
-## 成功案例 8：`task_017`
-
-- repo：`pytest_marker_repo`
-- 来源：`pytest-dev/pytest#14329`
-- 代表版本：`improved_v8`
-- 现象：
-  - `improved_v7` 还不具备最近 marker 覆盖优先修复能力
-  - `task_017` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v8` 把 marker 查找顺序改成从继承链尾部反向查找
-- 结果：
-  - `task_017` 从失败变为完全通过
-
-## 成功案例 9：`task_019`
-
-- repo：`dateutil_tz_repo`
-- 来源：`dateutil/dateutil#1432`
-- 代表版本：`improved_v9`
-- 现象：
-  - `improved_v8` 还不具备 UTC/GMT 无 offset 时的零偏移回落修复能力
-  - `task_019` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v9` 让 `tzstr` 在未显式提供 offset 时回落为 `0`
-- 结果：
-  - `task_019` 从失败变为完全通过
-
-## 成功案例 10：`task_022`
-
-- repo：`dateutil_parser_repo_v2`
-- 来源：`dateutil/dateutil#1442`
-- 代表版本：`improved_v10`
-- 现象：
-  - `improved_v9` 还不具备 9 位时间串按 HHMMSSmmm 解析的修复能力
-  - `task_022` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v10` 让 9 位时间串直接走时间解析路径，而不是继续抛出格式错误
-- 结果：
-  - `task_022` 从失败变为完全通过
-
-## 成功案例 11：`task_024`
-
-- repo：`jinja_meta_repo`
-- 来源：`pallets/jinja#2069`
-- 代表版本：`improved_v11`
-- 现象：
-  - `improved_v10` 还不具备模板变量控制流分析修复能力
-  - `task_024` 会以 `Premature Finish` 失败
-- 改进点：
-  - `improved_v11` 让所有分支都已赋值的变量不再被判定为 undeclared
-- 结果：
-  - `task_024` 从失败变为完全通过
-
-## 成功案例 12：`task_026`
-
-- repo：`jinja_slice_repo`
-- 来源：`pallets/jinja#2118`
-- 代表版本：`improved_v12`
-- 现象：
-  - 当切片数能整除输入长度时
-  - 旧策略还不具备 `fill_with` 边界补位修复能力
-- 改进点：
-  - `improved_v12` 让 `fill_with` 只在存在余数时才补入尾部分片
-- 结果：
-  - `task_026` 在扩容后的真实任务集上完全通过
-
-## 成功案例 13：`task_028`
-
-- repo：`tomlkit_array_repo`
-- 来源：`python-poetry/tomlkit#494`
-- 代表版本：`improved_v13`
-- 现象：
-  - 当数组原始风格把逗号放在下一行时
-  - 旧策略还不具备序列化追加时的重复逗号修复能力
-- 改进点：
-  - `improved_v13` 保留原始下一行逗号风格，但避免 append 后生成双逗号
-- 结果：
-  - `task_028` 在扩容后的真实任务集上完全通过
-
-## 成功案例 14：`task_030`
-
-- repo：`tomlkit_inline_table_repo`
-- 来源：`python-poetry/tomlkit#495`
-- 代表版本：`improved_v14`
-- 现象：
-  - dotted inline table 追加新键时
-  - 旧策略还不具备 inline table 分隔修复能力
-- 改进点：
-  - `improved_v14` 为新增键值对补上逗号和空格分隔，避免结构被黏连破坏
-- 结果：
-  - `task_030` 在扩容后的真实任务集上完全通过
-
-## 成功案例 15：`task_032`
-
-- repo：`packaging_wheel_repo`
-- 来源：`pypa/packaging#873`
-- 代表版本：`improved_v15`
-- 现象：
-  - wheel 文件名中的未 normalized 版本号
-  - 旧策略还不具备拒绝逻辑
-- 改进点：
-  - `improved_v15` 为非 normalized 版本号增加显式拒绝分支
-- 结果：
-  - `task_032` 在扩容后的真实任务集上完全通过
-
-## 成功案例 16：`task_034`
-
-- repo：`jsonschema_extras_repo`
-- 来源：`python-jsonschema/jsonschema#1157`
-- 代表版本：`improved_v16`
-- 现象：
-  - `extras_msg` 在 mixed-type extras 场景下
-  - 会因为 `sorted(extras)` 无法比较 `bool` 和 `str` 而直接抛出 `TypeError`
-- 改进点：
-  - `improved_v16` 在保持同类型 extras 排序输出的前提下
-  - 为 mixed-type extras 增加排序失败回落逻辑
-- 结果：
-  - `task_034` 在扩容后的真实任务集上完全通过
-
-## 成功案例 17：`task_036`
-
-- repo：`jsonschema_hostname_repo`
-- 来源：`python-jsonschema/jsonschema#1121`
-- 代表版本：`improved_v17`
-- 现象：
-  - hostname 格式检查在空字符串场景下
-  - 会把底层 `ValueError` 直接抛给调用方
-- 改进点：
-  - `improved_v17` 为空字符串场景增加异常回落
-  - 让格式检查返回普通失败而不是中断执行
-- 结果：
-  - `task_036` 在扩容任务集和冻结同集合评测里都完全通过
-
-## 成功案例 18：`task_038`
-
-- repo：`jsonschema_multipleof_repo`
-- 来源：`python-jsonschema/jsonschema#1159`
-- 代表版本：`improved_v18`
-- 现象：
-  - `multipleOf=11` 时超大整数能通过
-  - 但 `multipleOf=11.0` 时旧逻辑会错误走浮点路径并失败
-- 改进点：
-  - `improved_v18` 先识别“整数值浮点数”
-  - 再按数学整数语义执行可整除判断
-- 结果：
-  - `task_038` 在扩容到 16 条任务后的正式任务集上完全通过
-
-## 成功案例 19：`task_040`
-
-- repo：`packaging_requirement_repo`
-- 来源：`pypa/packaging#845`
-- 代表版本：`improved_v19`
-- 现象：
-  - 单独的 `extra == "mariadb_connector"` 会被规范化
-  - 但复合 marker 表达式里的 `extra` 仍保留下划线
-- 改进点：
-  - `improved_v19` 统一走 marker 表达式级别的 extra 规范化
-  - 不再只处理单独 extra marker 的特例
-- 结果：
-  - `task_040` 在扩容到 17 条任务后的正式任务集上完全通过
-
-## 成功案例 20：`task_042`
-
-- repo：`click_alias_repo`
-- 来源：`pallets/click#2402`
-- 代表版本：`improved_v20`
-- 现象：
-  - 缺失命令场景下，底层返回 `cmd=None`
-  - 旧逻辑仍直接访问 `cmd.name`，导致 `AttributeError`
-- 改进点：
-  - `improved_v20` 为 `cmd is None` 增加普通返回分支
-  - 保留已有命令场景的解析行为
-- 结果：
-  - `task_042` 在扩容到 18 条任务后的正式任务集和冻结 18 条同集合评测里都完全通过
-
-## 成功案例 21：`task_044`
-
-- repo：`dateutil_month_year_repo`
-- 来源：`dateutil/dateutil#384`
-- 代表版本：`improved_v21`
-- 现象：
-  - 旧逻辑只支持 `MM/YYYY`
-  - `05.2016` 这类点号分隔输入会落到错误分支
-- 改进点：
-  - `improved_v21` 为点号分隔的月年格式增加专门解析分支
-- 结果：
-  - `task_044` 在扩容到 19 条任务后的正式任务集上完全通过
-
-## 成功案例 22：`task_046`
-
-- repo：`jsonschema_single_label_hostname_repo`
-- 来源：`python-jsonschema/jsonschema#1162`
-- 代表版本：`improved_v22`
-- 现象：
-  - 旧逻辑把 `localhost` 这类 single-label hostname 错误判为非法
-  - 普通多标签域名仍然能通过
-- 改进点：
-  - `improved_v22` 允许 single-label hostname 作为合法主机名通过
-- 结果：
-  - `task_046` 在扩容到 20 条任务后的正式任务集和冻结 20 条同集合评测里都完全通过
-
-## 成功案例 23：`task_048`
-
-- repo：`packaging_specifier_repo`
-- 来源：`pypa/packaging#810`
-- 代表版本：`improved_v23`
-- 现象：
-  - 普通 `dev` 版本比较是正确的
-  - 但一旦带 `local` 段，旧逻辑就错误地只比较 `base_version`
-  - 导致 `4.1.0a2.dev1235+local` 也被错误判为不满足 `>4.1.0a2.dev1234`
-- 改进点：
-  - `improved_v23` 把比较基准从 `base_version` 收紧为 `public version`
-- 结果：
-  - `task_048` 在扩容到 21 条任务后的正式任务集上完全通过
-
-## 成功案例 24：`task_050`
-
-- repo：`dateutil_attached_comma_repo`
-- 来源：`dateutil/dateutil#1191`
-- 代表版本：`improved_v24`
-- 现象：
-  - `may15 , 2021` 这类带空格的写法是正确的
-  - 但 `may15,2021` 会把 `,2021` 留在 trailing token 中
-  - 旧逻辑不清理前缀逗号，最终回落到默认年份
-- 改进点：
-  - `improved_v24` 先对 year token 做 `lstrip(\",\")`
-- 结果：
-  - `task_050` 在扩容到 22 条任务后的正式任务集上完全通过
-
-## 成功案例 25：`task_052`
-
-- repo：`jsonschema_error_tree_repo`
-- 来源：`python-jsonschema/jsonschema#1328`
-- 代表版本：`improved_v25`
-- 现象：
-  - `ErrorTree` 初始只包含真实有错误的索引
-  - 但旧逻辑在访问缺失索引时会通过 `setdefault()` 把空节点写回树中
-  - 后续 `list(tree)` 和 `index in tree` 因此被污染
-- 改进点：
-  - `improved_v25` 把缺失索引访问改成 `get(..., ErrorTree())`
-- 结果：
-  - `task_052` 在扩容到 23 条任务后的正式任务集上完全通过
-
-## 成功案例 26：`task_054`
-
-- repo：`jsonschema_extend_repo`
-- 来源：`python-jsonschema/jsonschema#1125`
-- 代表版本：`improved_v26`
-- 现象：
-  - legacy validator 在 `$ref` 场景下本应只应用 `$ref`
-  - 旧逻辑在 `extend()` 时只复制了 `VALIDATORS`
-  - 扩展后的 validator 因此重新把 `maximum`、`type` 等同级关键字视为可应用规则
-- 改进点：
-  - `improved_v26` 在 `extend()` 里把原始 `applicable_validators` 一并透传给 `create()`
-- 结果：
-  - `task_054` 在扩容到 24 条任务后的正式任务集上完全通过
-
-## 成功案例 27：`task_056`
-
-- repo：`sqlite_delete_repo`
-- 来源：`simonw/sqlite-utils#159`
-- 代表版本：`improved_v27`
-- 现象：
-  - `insert()` 与 `upsert()` 都会自动提交事务
-  - 旧逻辑里 `delete_where()` 删除后没有提交
-  - 其他数据库连接因此看不到最新删除结果
-- 改进点：
-  - `improved_v27` 在 `delete_where()` 执行后补上 `self._connection.commit()`
-- 结果：
-  - `task_056` 在扩容到 25 条任务后的正式任务集上完全通过
-
-## 成功案例 28：`task_057`
-
-- repo：`pydantic_inheritance_repo`
-- 来源：`pydantic/pydantic#9582`
-- 代表版本：`improved_v28`
-- 现象：
-  - 父类和子类都定义了 `model_validator`
-  - 旧逻辑里子类一旦声明自己的 validator，就会把父类整条校验链覆盖掉
-  - 结果是子类实例既丢失父类事件记录，也丢失父类拒绝条件
-- 改进点：
-  - `improved_v28` 把子类 `after` validator 改成追加到父类链路之后
-- 结果：
-  - `task_057` 在扩容到 26 条任务后的正式任务集上完全通过
-
-## 成功案例 29：`task_058`
-
-- repo：`attrs_alias_repo`
-- 来源：`python-attrs/attrs#1479`
-- 代表版本：`improved_v29`
-- 现象：
-  - `field_transformer` 运行时会读取字段对象上的 `alias`
-  - 旧逻辑只会提前暴露显式 alias
-  - 默认 alias 要等类构建结束后才回填，导致变换阶段拿到 `None`
-- 改进点：
-  - `improved_v29` 在构建字段对象时就把默认 alias 回填为字段名
-- 结果：
-  - `task_058` 在扩容到 27 条任务后的正式任务集上完全通过
-
-## 成功案例 30：`task_059`
-
-- repo：`sqlite_transform_repo`
-- 来源：`simonw/sqlite-utils#488`
-- 代表版本：`improved_v30`
-- 现象：
-  - 数值列转换时，非空数字字符串本来就会被正常转成 `int` / `float`
-  - 旧逻辑却把空字符串继续保留成 `""`
-  - 结果里“缺失值”与“文本空串”语义混杂
-- 改进点：
-  - `improved_v30` 在 `integer` / `float` 转换分支里把空字符串统一回落为 `None`
-- 结果：
-  - `task_059` 在扩容到 28 条任务后的正式任务集上完全通过
-
-## 成功案例 31：`task_060`
-
-- repo：`sqlite_extract_repo`
-- 来源：`simonw/sqlite-utils#186`
-- 代表版本：`improved_v31`
-- 现象：
-  - `extract` 会把列值提取到维表，再把主表替换成外键
-  - 旧逻辑把 `None` 也当成一个需要建维表的值
-  - 结果会生成值为 `None` 的冗余记录，并让主表空值指向它
-- 改进点：
-  - `improved_v31` 在抽取前先识别 `None`，让空值继续保留在主表里，不进入维表
-- 结果：
-  - `task_060` 在扩容到 29 条任务后的正式任务集上完全通过
-
-## 成功案例 32：`task_061`
-
-- repo：`isort_profile_repo`
-- 来源：`PyCQA/isort#1815`
-- 代表版本：`improved_v32`
-- 现象：
-  - tuple 格式化分支会根据布局策略决定是紧凑输出还是多行输出
-  - 旧逻辑没有把传入的 `profile` 带入容器分支
-  - 结果是 `profile="black"` 仍然走默认 compact 布局
-- 改进点：
-  - `improved_v32` 让 tuple 格式化直接继承 `profile` 对应的布局策略
-- 结果：
-  - `task_061` 在扩容到 30 条任务后的正式任务集上完全通过
-
-## 失败案例 1：`task_003` 在 `baseline_v1`
-
-- 失败版本：`baseline_v1`
-- 失败标签：`Patch Incorrect`
-- 原因：
-  - patch 只插入空输入保护
-  - 没有覆盖 `None` 元素处理
-- 后续改进：
-  - 升级为 `improved_v1`
-
-## 失败案例 2：`task_004` 在 `improved_v1`
-
-- 失败版本：`improved_v1`
-- 失败标签：`Patch Incorrect`
-- 原因：
-  - 只处理了中间 `None`
-  - 没有在归一化前统一过滤首元素 `None`
-- 后续改进：
-  - 升级为 `improved_v2`
-
-## 失败案例 3：`task_006` 在 `improved_v2`
-
-- 失败版本：`improved_v2`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器完全不理解依赖约束类改动
-  - 虽然读到了 `setup.py`，但没有形成任何修改
-- 后续改进：
-  - 升级为 `improved_v3`
-
-## 失败案例 4：`task_008` 在 `improved_v3`
-
-- 失败版本：`improved_v3`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器不理解 quoted charset 场景
-  - 读到了目标函数，但没有形成补丁
-- 后续改进：
-  - 升级为 `improved_v4`
-
-## 失败案例 5：`task_010` 在 `improved_v4`
-
-- 失败版本：`improved_v4`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器虽然定位到了 `rich_ansi_repo/ansi.py`
-  - 但并不理解 CRLF 行尾在 ANSI 拆分后会退化成空白行这一模式
-- 后续改进：
-  - 升级为 `improved_v5`
-
-## 失败案例 6：`task_013` 在 `improved_v5`
-
-- 失败版本：`improved_v5`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器能看懂 ANSI 行尾问题，但不懂 RichHandler 的时区格式化问题
-- 后续改进：
-  - 升级为 `improved_v6`
-
-## 失败案例 7：`task_016` 在 `improved_v6`
-
-- 失败版本：`improved_v6`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器能覆盖时区与行尾问题，但还不理解负向 boolean flag 的 default 语义
-- 后续改进：
-  - 升级为 `improved_v7`
-
-## 失败案例 8：`task_017` 在 `improved_v7`
-
-- 失败版本：`improved_v7`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 marker 继承覆盖的查找顺序问题
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v8`
-
-## 失败案例 9：`task_019` 在 `improved_v8`
-
-- 失败版本：`improved_v8`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 UTC/GMT 无 offset 时应回落到零偏移的模式
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v9`
-
-## 失败案例 10：`task_022` 在 `improved_v9`
-
-- 失败版本：`improved_v9`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 9 位时间串应被识别为 `HHMMSSmmm`
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v10`
-
-## 失败案例 11：`task_024` 在 `improved_v10`
-
-- 失败版本：`improved_v10`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解模板分析里“所有分支都赋值”这一控制流模式
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v11`
-
-## 失败案例 12：`task_026` 在 `improved_v11`
-
-- 失败版本：`improved_v11`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 `slice` 在整除场景下不应补入 `fill_with`
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v12`
-
-## 失败案例 13：`task_028` 在 `improved_v12`
-
-- 失败版本：`improved_v12`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解“下一行逗号风格”的数组追加场景
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v13`
-
-## 失败案例 14：`task_030` 在 `improved_v13`
-
-- 失败版本：`improved_v13`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 dotted inline table 追加键值对时的分隔修复模式
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v14`
-
-## 失败案例 15：`task_032` 在 `improved_v14`
-
-- 失败版本：`improved_v14`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 wheel 版本号 normalization 校验模式
-  - 虽然读到了目标函数，但没有形成任何补丁
-- 后续改进：
-  - 升级为 `improved_v15`
-
-## 失败案例 16：`task_034` 在 `improved_v15`
-
-- 失败版本：`improved_v15`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 mixed-type extras 的排序失败模式
-  - 虽然读到了目标函数，但没有形成能够规避 `TypeError` 的补丁
-- 后续改进：
-  - 升级为 `improved_v16`
-
-## 失败案例 17：`task_036` 在 `improved_v16`
-
-- 失败版本：`improved_v16`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 hostname 格式检查在空字符串场景下的异常回落模式
-  - 虽然读到了目标函数，但没有形成能够吞掉 `ValueError` 的补丁
-- 后续改进：
-  - 升级为 `improved_v17`
-
-## 失败案例 18：`task_038` 在 `improved_v17`
-
-- 失败版本：`improved_v17`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 `multipleOf=11.0` 这种整数值浮点数的语义
-  - 虽然读到了目标函数，但没有形成数值语义修复补丁
-- 后续改进：
-  - 升级为 `improved_v18`
-
-## 失败案例 19：`task_040` 在 `improved_v18`
-
-- 失败版本：`improved_v18`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解复合 marker 表达式里的 extra 规范化问题
-  - 虽然读到了目标函数，但没有形成字符串规范化修复补丁
-- 后续改进：
-  - 升级为 `improved_v19`
-
-## 失败案例 20：`task_042` 在 `improved_v19`
-
-- 失败版本：`improved_v19`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 `cmd is None` 时应保留普通返回语义
-  - 虽然读到了目标函数，但没有形成异常回落修复补丁
-- 后续改进：
-  - 升级为 `improved_v20`
-
-## 失败案例 21：`task_044` 在 `improved_v20`
-
-- 失败版本：`improved_v20`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 `MM.YYYY` 点号分隔的月年格式
-  - 虽然读到了 parser 逻辑，但没有形成对应补丁
-- 后续改进：
-  - 升级为 `improved_v21`
-
-## 失败案例 22：`task_046` 在 `improved_v21`
-
-- 失败版本：`improved_v21`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 single-label hostname 的合法性边界
-  - 读到了 hostname 校验函数，但没有形成修复
-- 后续改进：
-  - 升级为 `improved_v22`
-
-## 失败案例 23：`task_048` 在 `improved_v22`
-
-- 失败版本：`improved_v22`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 `Specifier >` 在 `dev+local` 场景下的比较边界
-  - 读到了比较逻辑，但没有形成把 `base_version` 收紧为 `public version` 的修复
-- 后续改进：
-  - 升级为 `improved_v23`
-
-## 失败案例 24：`task_050` 在 `improved_v23`
-
-- 失败版本：`improved_v23`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解年份前紧贴逗号时的 year token 识别问题
-  - 读到了 parser 逻辑，但没有形成“先清理前缀逗号再判定数字”的修复
-- 后续改进：
-  - 升级为 `improved_v24`
-
-## 失败案例 25：`task_052` 在 `improved_v24`
-
-- 失败版本：`improved_v24`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解缺失索引访问导致的 ErrorTree 状态污染
-  - 读到了 `__getitem__()`，但没有形成把 `setdefault()` 改成只读获取的修复
-- 后续改进：
-  - 升级为 `improved_v25`
-
-## 失败案例 26：`task_054` 在 `improved_v25`
-
-- 失败版本：`improved_v25`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解 validator extend 时 `applicable_validators` 的语义继承
-  - 读到了 `extend()`，但没有形成把原始 `applicable_validators` 继续透传给 `create()` 的修复
-- 后续改进：
-  - 升级为 `improved_v26`
-
-## 失败案例 27：`task_056` 在 `improved_v26`
-
-- 失败版本：`improved_v26`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解删除操作与其他写操作应共享自动提交语义
-  - 读到了 `delete_where()`，但没有形成删除后补 `commit()` 的修复
-- 后续改进：
-  - 升级为 `improved_v27`
-
-## 失败案例 28：`task_057` 在 `improved_v27`
-
-- 失败版本：`improved_v27`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解子类 `model_validator` 需要在父类链路之后继续追加执行
-  - 读到了继承与 validator 定义，但没有形成父类 validator 名单与子类名单合并的修复
-- 后续改进：
-  - 升级为 `improved_v28`
-
-## 失败案例 29：`task_058` 在 `improved_v28`
-
-- 失败版本：`improved_v28`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解对象定义阶段的默认 alias 可见性问题
-  - 读到了字段构建和 `field_transformer` 链路，但没有形成“在变换前回填默认 alias”的修复
-- 后续改进：
-  - 升级为 `improved_v29`
-
-## 失败案例 30：`task_059` 在 `improved_v29`
-
-- 失败版本：`improved_v29`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解数值列空字符串应视为缺失值这一类清洗语义
-  - 读到了 `integer` / `float` 转换分支，但没有形成把 `\"\"` 回落为 `None` 的修复
-- 后续改进：
-  - 升级为 `improved_v30`
-
-## 失败案例 31：`task_060` 在 `improved_v30`
-
-- 失败版本：`improved_v30`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解维表提取时 `None` 应保留在主表而不是进入维表
-  - 读到了提取与映射逻辑，但没有形成“跳过 null 提取”的修复
-- 后续改进：
-  - 升级为 `improved_v31`
-
-## 失败案例 32：`task_061` 在 `improved_v31`
-
-- 失败版本：`improved_v31`
-- 失败标签：`Premature Finish`
-- 原因：
-  - 当前 patch 生成器还不理解容器格式化分支也要继承 `profile` 布局策略
-  - 读到了 tuple 格式化逻辑，但没有形成“把 profile 传入布局分派”的修复
-- 后续改进：
-  - 升级为 `improved_v32`
+# 精选案例
+
+这份文档不再按“每个版本过了哪一题”平铺罗列，而是只保留最能说明系统能力、优化方法和当前边界的 5 个案例。
+
+如果你需要查看早期完整流水账，请看归档版本：
+
+- [docs/case_studies_archive_v1.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/case_studies_archive_v1.md)
+
+## 案例 1：模板控制流分析不是简单字符串替换
+
+**来源**：`pallets/jinja#2069`  
+**任务**：`task_024`  
+**缺陷类型**：模板变量控制流分析  
+**难度**：`medium`
+
+### 背景
+
+这个问题的关键不在于“某个 if 条件写错了”，而在于模板分析器对控制流的理解退化了。对于一个变量，如果它在 `if / elif / else` 的所有分支里都已经被 `set`，那么后续再读取它时，不应该再被判成 undeclared。这个场景很适合检验 agent 是否具备最小但真实的语义理解能力，因为它需要看到“每个分支都赋值”这一事实，而不是只做局部文本替换。
+
+### Agent 的执行过程
+
+任务定义里已经把目标文件收敛到 `jinja_meta_repo/meta.py`。旧实现先把所有分支里出现过的变量做并集，再错误地把所有被使用过且在并集中出现的变量重新加入 `undeclared` 集合，导致 `output` 即使在所有分支都已赋值，也会被误报。对应的 `improved_v11` 在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中引入了 `_handle_branch_assigned_undeclared` 规则，把逻辑改成先求所有分支赋值集合的交集 `all_branch_assigned`，再跳过这些变量。
+
+### 结果
+
+修复后，`MetaTests.test_branch_assigned_variable_is_not_undeclared` 不再失败，`task_024` 成为 `improved_v11` 的代表性通过案例之一。它说明当前系统已经不仅能处理“边界值 if 判断”，也能覆盖一部分轻量控制流语义问题。
+
+### 启示
+
+这个案例说明，semi-real benchmark 的价值不只是让 agent 改一行代码，而是能在可控范围内逼近真实框架语义。对后续扩容来说，这类“需要一点程序语义理解、但不至于变成完整编译器问题”的任务非常有代表性。
+
+## 案例 2：继承链上的 validator 合并体现了框架机制理解
+
+**来源**：`pydantic/pydantic#9582`  
+**任务**：`task_057`  
+**缺陷类型**：继承链上的 model validator 合并  
+**难度**：`medium`
+
+### 背景
+
+这个问题比普通的函数 bug 更接近框架内部行为：父类和子类都定义了 `model_validator(mode="after")`，但旧实现里子类一旦声明自己的 validator，就会把父类整个校验链覆盖掉。这样的缺陷不是简单的空值判断，也不是局部渲染错误，而是框架元编程和继承行为上的语义回归。
+
+### Agent 的执行过程
+
+最小复现代码位于 `pydantic_inheritance_repo/models.py`。`BaseModel.__init_subclass__` 会收集本类 `after` validator 名称，同时读取继承来的 `__model_validator_names__`。旧逻辑使用 `merged_after = own_after or inherited_after`，这意味着只要子类有自己的 validator，就完全忽略父类链路。`improved_v28` 在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中引入 `_handle_pydantic_inherited_model_validators`，把合并逻辑改成“父类在前，子类追加在后”，保证 `ParentModel` 和 `ChildModel` 的 after-validator 都继续执行。
+
+### 结果
+
+修复后，`ModelValidatorInheritanceTests.test_child_model_runs_parent_and_child_validators` 通过，父类独立校验路径也没有回归。它是当前任务集里比较能体现“理解框架机制”的案例，因为修复点并不是业务函数，而是类构建阶段的 validator 注册逻辑。
+
+### 启示
+
+这个案例说明系统已经开始触及“类定义期行为”而不只是“运行时边界值”。如果后续要继续增强 benchmark 的代表性，继承、注册表、descriptor、hook 链这类轻量框架机制问题是很值得继续补的方向。
+
+## 案例 3：一行 patch 也能体现恰到好处的理解
+
+**来源**：`psf/requests#6432`  
+**任务**：`task_006`  
+**缺陷类型**：依赖约束上界放宽  
+**难度**：`medium`
+
+### 背景
+
+这道题表面上非常“小”：只是把 `urllib3` 的上界从 `<1.27` 放宽到 `<3`。但它之所以适合作为 benchmark，不在于改动行数，而在于 agent 是否能理解这是依赖管理语义问题，而不是去误改测试、误删约束或顺手把其它依赖也一并改掉。
+
+### Agent 的执行过程
+
+任务目标集中在 `setup.py`。旧实现保留了 `\"urllib3>=1.21.1,<1.27\"`，因此 `urllib3 2.x` 在 Python 3.7+ 环境下无法被接受。`improved_v3` 在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中通过 `_relax_urllib3_upper_bound` 精准替换这一行，避免把问题扩大成“重写整个依赖列表”的粗暴修复。这个案例也很能说明当前 patch strategy 的工程取向：优先做最小、可证伪、可回归验证的改动。
+
+### 结果
+
+修复后，`DependencyConstraintTests.test_urllib3_v2_is_allowed_for_python37_plus` 通过，`task_006` 成为项目正式接入真实 issue 方向后的第一个代表性成功案例之一。
+
+### 启示
+
+好的 benchmark 不一定需要“大改代码”。像这种一行 patch 的任务，恰好可以验证 agent 有没有“只改必要部分”的克制能力。对于求职或展示来说，这类案例也很有说服力，因为它体现的是判断力，而不是堆 patch。
+
+## 案例 4：失败到成功的优化故事比单次通过更能说明方法论
+
+**来源**：`python-jsonschema/jsonschema#1121`  
+**任务**：`task_036`  
+**缺陷类型**：异常回落与普通校验失败语义分离  
+**难度**：`medium`
+
+### 背景
+
+这个问题是早期优化路径里很典型的一类。对于空字符串 hostname，旧实现会在 `_split_hostname_labels` 阶段直接抛出 `ValueError`，导致格式检查函数中断执行；但真实期望不是抛异常，而是像普通非法 hostname 一样返回 `False`。这类问题非常适合做“失败到成功”的优化案例，因为它往往不是 patch 写错，而是系统还没有覆盖某一类错误语义。
+
+### Agent 的执行过程
+
+最小代码在 `jsonschema_hostname_repo/hostname.py`。旧实现先调用 `_split_hostname_labels(value)`，而这个辅助函数在 `value == ""` 时直接抛出异常。`improved_v17` 在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中引入 `_handle_jsonschema_hostname_value_error`，把格式检查改成在这类输入上回落到普通失败，避免异常穿透到调用方。这个优化不是只解决一条任务，而是形成了“把底层异常映射回用户态失败语义”的一类方法。
+
+### 结果
+
+`task_036` 在 `improved_v17` 后进入稳定通过状态，并且后续在冻结集验证里一直保住了成功。它也因此成为项目里最适合讲述“我们不是乱加规则，而是在形成缺陷类型方法论”的案例之一。
+
+### 启示
+
+这个案例说明，优化系统真正有价值的地方不在于“又多过了一题”，而在于它把失败原因抽象成了一个更稳定的修复模式。后续如果继续做 challenge 集或更难生态，这种“异常回落语义”的能力仍然会复用。
+
+## 案例 5：当前系统边界不只是失败题，也包括成熟度治理
+
+**来源**：`python-poetry/tomlkit#412`  
+**任务**：`task_121`  
+**缺陷类型**：容器接口 key 规范化与解析路径语义一致性  
+**难度**：`easy`
+
+### 背景
+
+这条任务本身不算最难，但它很适合放在“系统边界”位置，因为它刚好是第 `60` 条正式任务，代表项目从“继续扩容”进入了“规模目标已达成，开始强调成熟度”的阶段。问题本身是：解析路径已经接受整数 key，例如 `4 = 5`，但 `add(4, 5)` 和 `setdefault(4, 5)` 仍把 `int` 当成可迭代对象处理，导致 `TypeError`。
+
+### Agent 的执行过程
+
+最小实现位于 `tomlkit_int_key_repo/container.py`。问题集中在 `SingleKey.__init__`：旧逻辑默认 `key` 可逐字符遍历，因此在遇到 `int` 时会直接在 `for character in key` 处崩溃。对应的 `improved_v63` 在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中补上了这一类 key 规范化规则，让 `add`、`setdefault` 与解析路径保持一致。更重要的是，这一轮还暴露了另一个系统级风险：patcher 版本继承链遗漏会导致旧规则段回归，因此后续又补了 `v63r2 / v63r3` 验证。
+
+### 结果
+
+从任务角度看，`task_121` 通过后，正式集来到 `60 / 60`；从 benchmark 成熟度角度看，后续同版复跑把 `frozen_40 average_duration_sec` 从 `0.5594` 拉回 `0.5454`，补齐了性能门控证据。这说明项目当前的边界已经不只是“能不能修这条题”，而是“能不能在扩容后继续稳住功能、性能和回归体系”。
+
+### 启示
+
+这个案例提醒我们：系统边界不一定表现为一条明确失败题，也可能表现为规模扩大后基础设施是否还稳。下一阶段如果继续推进 roadmap，重点会更多落在稳定性门控、生态均衡扩容和 challenge manifest，而不是单纯继续追通过数。
+
+## 补充说明
+
+如果你想看更完整的时序实验记录，请继续阅读：
+
+- [docs/experiment_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/experiment_summary.md)
+- [docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md)
+- [docs/optimization_log.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/optimization_log.md)

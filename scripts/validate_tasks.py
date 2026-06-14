@@ -13,6 +13,16 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.schemas.task_schema import load_task
+from scripts.validate_challenge_shortlist import validate_challenge_shortlist
+
+
+VALID_CANDIDATE_STATUSES = {
+    "imported",
+    "screened",
+    "accepted",
+    "completed",
+    "blocked",
+}
 
 
 def validate_task_files(tasks_dir: Path) -> list[str]:
@@ -64,17 +74,34 @@ def validate_candidate_file(candidate_path: Path) -> list[str]:
             if key not in candidate:
                 errors.append(f"candidate #{index}: 缺少字段 `{key}`。")
 
-        if candidate.get("status") not in {
-            "to_review",
-            "accepted",
-            "rejected",
-            "drafted",
-            "scaffolded",
-        }:
+        if candidate.get("status") not in VALID_CANDIDATE_STATUSES:
             errors.append(
                 "candidate "
-                f"#{index}: status 必须是 to_review / accepted / rejected / drafted / scaffolded 之一。"
+                f"#{index}: status 必须是 {', '.join(sorted(VALID_CANDIDATE_STATUSES))} 之一。"
             )
+    return errors
+
+
+def validate_repository(
+    *,
+    repo_root: Path,
+    tasks_dir: Path,
+    candidate_file: Path,
+    challenge_shortlist_path: Path,
+    formal_manifest_path: Path,
+) -> list[str]:
+    # 总校验入口：把任务、候选池和 challenge shortlist 一起收口。
+    errors = validate_task_files(tasks_dir)
+    if candidate_file.exists():
+        errors.extend(validate_candidate_file(candidate_file))
+    if challenge_shortlist_path.exists() and formal_manifest_path.exists():
+        errors.extend(
+            validate_challenge_shortlist(
+                repo_root=repo_root,
+                shortlist_path=challenge_shortlist_path,
+                formal_manifest_path=formal_manifest_path,
+            )
+        )
     return errors
 
 
@@ -90,6 +117,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="benchmarks/real_world_candidates.json",
         help="真实 issue 候选清单路径",
     )
+    parser.add_argument(
+        "--challenge-shortlist",
+        default="docs/challenge_shortlist.md",
+        help="challenge shortlist 文档路径，默认 docs/challenge_shortlist.md",
+    )
+    parser.add_argument(
+        "--formal-manifest",
+        default="benchmarks/manifests/real_issue_tasks.json",
+        help="正式主集 manifest 路径，默认 benchmarks/manifests/real_issue_tasks.json",
+    )
     return parser
 
 
@@ -97,10 +134,16 @@ def main() -> int:
     args = build_parser().parse_args()
     tasks_dir = (REPO_ROOT / args.tasks_dir).resolve()
     candidate_file = (REPO_ROOT / args.candidate_file).resolve()
+    challenge_shortlist_path = (REPO_ROOT / args.challenge_shortlist).resolve()
+    formal_manifest_path = (REPO_ROOT / args.formal_manifest).resolve()
 
-    errors = validate_task_files(tasks_dir)
-    if candidate_file.exists():
-        errors.extend(validate_candidate_file(candidate_file))
+    errors = validate_repository(
+        repo_root=REPO_ROOT,
+        tasks_dir=tasks_dir,
+        candidate_file=candidate_file,
+        challenge_shortlist_path=challenge_shortlist_path,
+        formal_manifest_path=formal_manifest_path,
+    )
 
     if errors:
         print("=== Validation Failed ===")
@@ -111,6 +154,8 @@ def main() -> int:
     print("=== Validation Passed ===")
     print(f"validated_tasks_dir: {tasks_dir}")
     print(f"validated_candidate_file: {candidate_file}")
+    print(f"validated_challenge_shortlist: {challenge_shortlist_path}")
+    print(f"validated_formal_manifest: {formal_manifest_path}")
     return 0
 
 

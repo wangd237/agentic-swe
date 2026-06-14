@@ -1,0 +1,12 @@
+{
+  "policy_id": "improved_v68",
+  "description": "在 improved_v66 的修复能力基础上，仅额外关闭 pytest 的 threadexception 插件，验证更保守的 runtime 裁剪是否能回收部分 run_tests 开销且不破坏当前测试执行语义。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v66",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

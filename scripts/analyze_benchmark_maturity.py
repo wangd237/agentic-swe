@@ -71,11 +71,13 @@ def load_manifest_task_paths(
     repo_root: Path,
     manifest_path: Path,
 ) -> list[Path]:
+    if not manifest_path.exists():
+        return []
     manifest_payload = _load_json(manifest_path)
     return [(repo_root / task_path).resolve() for task_path in manifest_payload.get("tasks", [])]
 
 
-def summarize_formal_manifest(task_paths: list[Path]) -> dict:
+def summarize_task_manifest(task_paths: list[Path]) -> dict:
     source_type_counts: dict[str, int] = {}
     ecosystem_counts: dict[str, int] = {}
     task_details: list[dict] = []
@@ -299,12 +301,19 @@ def build_benchmark_maturity_summary(
     *,
     repo_root: Path,
     formal_manifest_path: Path,
+    challenge_manifest_path: Path | None,
     candidate_file: Path,
     frozen_manifest_glob: str,
     summary_dir: Path,
 ) -> dict:
     formal_task_paths = load_manifest_task_paths(repo_root=repo_root, manifest_path=formal_manifest_path)
-    formal_summary = summarize_formal_manifest(formal_task_paths)
+    formal_summary = summarize_task_manifest(formal_task_paths)
+    challenge_task_paths = (
+        []
+        if challenge_manifest_path is None
+        else load_manifest_task_paths(repo_root=repo_root, manifest_path=challenge_manifest_path)
+    )
+    challenge_summary = summarize_task_manifest(challenge_task_paths)
     candidate_summary = summarize_candidate_dataset(candidate_file)
     frozen_manifest_paths = sorted((repo_root / "benchmarks" / "manifests").glob(frozen_manifest_glob))
     frozen_summary = summarize_frozen_manifests(frozen_manifest_paths)
@@ -326,6 +335,10 @@ def build_benchmark_maturity_summary(
         "formal_manifest": {
             "path": str(formal_manifest_path),
             **formal_summary,
+        },
+        "challenge_manifest": {
+            "path": None if challenge_manifest_path is None else str(challenge_manifest_path),
+            **challenge_summary,
         },
         "candidate_dataset": {
             "path": str(candidate_file),
@@ -350,6 +363,7 @@ def build_benchmark_maturity_summary(
 
 def build_benchmark_maturity_markdown(summary: dict) -> str:
     formal_manifest = summary["formal_manifest"]
+    challenge_manifest = summary["challenge_manifest"]
     frozen_manifests = summary["frozen_manifests"]
     frozen_40_streak = summary["frozen_40_streak"]
     goal_gaps = summary["goal_gaps"]
@@ -363,6 +377,10 @@ def build_benchmark_maturity_markdown(summary: dict) -> str:
         f"- `{item['manifest_id']}`: `{item['task_count']}` 条"
         for item in frozen_manifests["frozen_sets"]
     ) or "- 当前没有 frozen manifest"
+    challenge_tasks = "\n".join(
+        f"- `{item['task_id']}`: `{item['repo_full_name']}` / `{item['issue_title']}`"
+        for item in challenge_manifest["tasks"]
+    ) or "- 当前没有 challenge 任务"
 
     return f"""# Benchmark Maturity Audit
 
@@ -389,6 +407,17 @@ def build_benchmark_maturity_markdown(summary: dict) -> str:
 
 {ecosystems}
 
+## Challenge Task Set
+
+- challenge_manifest: `{challenge_manifest["path"]}`
+- task_count: `{challenge_manifest["task_count"]}`
+- source_type_counts: `{challenge_manifest["source_type_counts"]}`
+- ecosystem_count: `{challenge_manifest["ecosystem_count"]}`
+
+### Challenge Tasks
+
+{challenge_tasks}
+
 ## Frozen Manifests
 
 - latest_frozen_task_count: `{frozen_manifests["latest_frozen_task_count"]}`
@@ -412,6 +441,7 @@ def analyze_benchmark_maturity(
     *,
     repo_root: Path = REPO_ROOT,
     formal_manifest: str | Path = "benchmarks/manifests/real_issue_tasks.json",
+    challenge_manifest: str | Path = "benchmarks/manifests/real_issue_tasks_challenge_v1.json",
     candidate_file: str | Path = "benchmarks/real_world_candidates.json",
     frozen_manifest_glob: str = "real_issue_tasks_frozen_*_v1.json",
     output_dir: str | Path = "logs/summaries",
@@ -425,6 +455,9 @@ def analyze_benchmark_maturity(
         formal_manifest_path=(repo_root / formal_manifest).resolve()
         if not Path(formal_manifest).is_absolute()
         else Path(formal_manifest).resolve(),
+        challenge_manifest_path=(repo_root / challenge_manifest).resolve()
+        if not Path(challenge_manifest).is_absolute()
+        else Path(challenge_manifest).resolve(),
         candidate_file=(repo_root / candidate_file).resolve()
         if not Path(candidate_file).is_absolute()
         else Path(candidate_file).resolve(),
@@ -460,6 +493,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="候选数据集路径",
     )
     parser.add_argument(
+        "--challenge-manifest",
+        default="benchmarks/manifests/real_issue_tasks_challenge_v1.json",
+        help="challenge 任务 manifest 路径",
+    )
+    parser.add_argument(
         "--frozen-manifest-glob",
         default="real_issue_tasks_frozen_*_v1.json",
         help="冻结 manifest 的 glob 模式",
@@ -474,6 +512,7 @@ def main() -> int:
     output = analyze_benchmark_maturity(
         repo_root=REPO_ROOT,
         formal_manifest=args.formal_manifest,
+        challenge_manifest=args.challenge_manifest,
         candidate_file=args.candidate_file,
         frozen_manifest_glob=args.frozen_manifest_glob,
         output_dir=args.output_dir,
@@ -484,6 +523,7 @@ def main() -> int:
     print("=== Benchmark Maturity Audit Summary ===")
     print(f"audit_id: {output['audit_id']}")
     print(f"formal_task_count: {goal_gaps['formal_task_goal']['actual']}")
+    print(f"challenge_task_count: {summary['challenge_manifest']['task_count']}")
     print(f"ecosystem_count: {goal_gaps['ecosystem_goal']['actual']}")
     print(f"latest_frozen_count: {goal_gaps['frozen_goal']['actual']}")
     print(f"frozen_40_streak: {goal_gaps['frozen_40_streak_goal']['actual']}")

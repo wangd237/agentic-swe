@@ -108,27 +108,36 @@
 - 生成可展示的 batch run / batch eval / compare 报告
 - 验证优化动作是否真的带来指标提升
 
-### 3. Future GitHub Real-Issue Set
+### 3. Real-Issue Benchmark Set
 
 当前状态：
 
 - 已接入 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
+  - `benchmarks/manifests/real_issue_tasks_challenge_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
+  - `benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`
 - 已新增候选清单文件：
   - `benchmarks/real_world_candidates.json`
 - 已新增导入脚本：
   - `scripts/import_github_issue.py`
+  - `scripts/import_search_results.py`
 - 已新增脚手架脚本：
   - `scripts/scaffold_semi_real_task.py`
+ - 已新增候选筛选脚本：
+  - `scripts/screen_candidate.py`
+ - 已新增候选搜索脚本：
+  - `scripts/search_candidate_issues.py`
 
-后续规划：
+当前这一层已经不是“future only”的占位设计，而是项目当前正式 benchmark 的主体来源：
 
-- 选择 GitHub 上体量较小、测试可运行、issue 边界清晰的真实仓库
-- 将真实 issue 转成结构化任务定义
-- 作为项目后期更正式、更有说服力的外部评测集
+- 正式 `semi_real` 任务已经达到 `64` 条
+- challenge 任务当前为 `1` 条
+- 来源生态已经覆盖 `16` 个仓库生态
+- `frozen_40` 已建立并进入稳定性门控口径
+- 候选池正在按 `imported -> screened -> accepted -> completed` 的最小状态机持续扩容
 
 当前建议的任务来源类型：
 
@@ -156,22 +165,30 @@
 
 当前候选状态建议按下面流转：
 
-- `to_review`
-- `drafted`
-- `scaffolded`
+- `imported`
+- `screened`
 - `accepted`
-- `rejected`
+- `completed`
+- `blocked`
 
 当前阶段补充说明：
 
-- 正式真实任务已经扩充到 `26` 条
+- 正式真实任务已经扩充到 `64` 条
+- challenge manifest 已建立，用于单独承载：
+  - 已 ready
+  - 值得展示系统边界
+  - 但暂不并入正式主集
+  的保守题目
 - `frozen_20` 已经成为后续策略迭代的固定同集合基线
+- `frozen_40` 已经成为成熟度审计与稳定性复核的核心固定集合
 - 候选池状态已收敛到：
-  - `accepted = 26`
-  - `drafted = 0`
-  - `to_review = 4`
-
-这部分会在项目主链路更稳定后逐步接入。
+  - `accepted = 65`
+  - `imported = 0`
+  - `screened = 0`
+  - `blocked = 0`
+  - `completed` 会在评测汇总中按本轮成功任务动态派生
+- 当前 challenge 集首条任务是：
+  - `samuelcolvin/watchfiles#266 -> task_126`
 
 ## 当前任务设计
 

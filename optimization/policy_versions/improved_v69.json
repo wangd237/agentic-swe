@@ -1,0 +1,12 @@
+{
+  "policy_id": "improved_v69",
+  "description": "在 improved_v68 的 runtime 配置基础上，新增对 anyio from_thread.check_cancelled 在 asyncio backend 下泄漏 CancelledError 的规则型修复能力。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v69",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

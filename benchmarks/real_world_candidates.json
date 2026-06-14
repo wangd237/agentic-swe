@@ -1062,6 +1062,254 @@
         "tomlkit_int_key_repo/container.py",
         "tests/test_container.py"
       ]
+    },
+    {
+      "candidate_id": "agronholm_anyio_issue_1109",
+      "repo_full_name": "agronholm/anyio",
+      "repo_url": "https://github.com/agronholm/anyio",
+      "issue_number": 1109,
+      "issue_title": "AttributeError: 'TaskGroup' object has no attribute '_exceptions'",
+      "issue_url": "https://github.com/agronholm/anyio/issues/1109",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T14:05:07: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T14:05:07: why_it_fits: 初步命中 `并发与协程` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T14:05:07: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T14:05:07: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T14:05:07: recommendation: high\n2026-06-13T14:48:03: 人工筛选通过，已标记为 screened。\n2026-06-13T15:07:10: 已生成 semi_real 脚手架 task_123，仓库目录为 benchmarks/repos/anyio_taskgroup_reentry_repo。\n2026-06-13T15:18:38: task_123 已满足正式 benchmark 口径：带 bug repo 保留、improved_v64 单任务失败、improved_v65 单任务成功，现已纳入 real_issue_tasks.json。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2026-04-08T05:47:05Z",
+      "body_excerpt": "### Things to check first\n\n- [x] I have searched the existing issues and didn't find my bug already reported there\n\n- [x] I have checked that my bug is still present in the latest release\n\n\n### AnyIO version\n\n`4.13.0`\n\n### Python version\n\n`3.13.3`\n\n### What happened?\n\nEntering the context of a task group multiple times raises an `AttributeError`\n```\nTraceback (most recent call last):\n  File \"...\\.venv\\Lib\\site-packages\\anyio\\_backends\\_asyncio.py\", line 794, in __aexit__\n    if self._exceptions:",
+      "expected_target_files": [
+        "anyio/_backends/_asyncio.py",
+        "tests/test_taskgroups.py"
+      ]
+    },
+    {
+      "candidate_id": "agronholm_anyio_issue_1111",
+      "repo_full_name": "agronholm/anyio",
+      "repo_url": "https://github.com/agronholm/anyio",
+      "issue_number": 1111,
+      "issue_title": "100% CPU spin in asyncio _deliver_cancellation due to missing task.done() check",
+      "issue_url": "https://github.com/agronholm/anyio/issues/1111",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T14:05:07: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T14:05:07: why_it_fits: 初步命中 `并发与协程` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T14:05:07: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T14:05:07: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T14:05:07: recommendation: high\n2026-06-13T15:49:56: 人工筛选通过，已标记为 screened。\n2026-06-13T15:50:23: 已生成 semi_real 脚手架 task_124，仓库目录为 benchmarks/repos/anyio_cancellation_spin_repo。\n2026-06-13T16:11:44: 已确认带 bug repo 保留、`improved_v65` 单任务失败、`improved_v66` 单任务成功，推进为 accepted，并纳入正式 manifest。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2026-04-09T09:23:42Z",
+      "body_excerpt": "### Things to check first\n\n- [x] I have searched the existing issues and didn't find my bug already reported there\n\n- [x] I have checked that my bug is still present in the latest release\n\n\n### AnyIO version\n\nmaster\n\n### Python version\n\npython 3.13\n\n### What happened?\n\nThere is a bug in the asyncio backend where `_deliver_cancellation` can enter an infinite loop, causing 100% CPU usage. \n\nThe root cause is that `_deliver_cancellation` lacks a `task.done()` check. If a completed task remains in `",
+      "expected_target_files": [
+        "anyio/_backends/_asyncio.py"
+      ]
+    },
+    {
+      "candidate_id": "agronholm_anyio_issue_1113",
+      "repo_full_name": "agronholm/anyio",
+      "repo_url": "https://github.com/agronholm/anyio",
+      "issue_number": 1113,
+      "issue_title": "CancelledError leaks from from_thread.check_cancelled on Asyncio backend",
+      "issue_url": "https://github.com/agronholm/anyio/issues/1113",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T14:05:07: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T14:05:07: why_it_fits: 初步命中 `并发与协程` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T14:05:07: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T14:05:07: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T14:05:07: recommendation: high\n2026-06-13T17:08:01: 人工筛选通过，已标记为 screened。\n2026-06-13T17:09:47: 已生成 semi_real 脚手架 task_125，仓库目录为 benchmarks/repos/anyio_check_cancelled_repo。\n2026-06-13T17:31:20: 已把 task_125 补成 ready bug repo，并验证旧策略 improved_v68 单任务失败、新策略 improved_v69 单任务成功。\n2026-06-13T17:31:20: 已纳入正式 manifest，候选状态推进到 accepted。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2026-04-12T16:55:47Z",
+      "body_excerpt": "### Things to check first\n\n- [x] I have searched the existing issues and didn't find my bug already reported there\n\n- [x] I have checked that my bug is still present in the latest release\n\n\n### AnyIO version\n\nmaster (after #1092)\n\n### Python version\n\n3.10\n\n### What happened?\n\nIn a slightly contrived setting, the `CancelledError` from `from_thread.check_cancelled` escapes the relevant cancel scope on asyncio backend.\n\n### How can we reproduce the bug?\n\nThis test passes on trio but not asyncio:\n\n`"
+    },
+    {
+      "candidate_id": "samuelcolvin_watchfiles_issue_266",
+      "repo_full_name": "samuelcolvin/watchfiles",
+      "repo_url": "https://github.com/samuelcolvin/watchfiles",
+      "issue_number": 266,
+      "issue_title": "Ignore error_handler errors under ignore_permission_denied = True?",
+      "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/266",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T14:05:07: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T14:05:07: why_it_fits: 初步命中 `文件路径与 IO` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T14:05:07: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T14:05:07: risk_notes: 可能带平台相关性，需要确认是否能做成跨平台稳定测试。\n2026-06-13T14:05:07: recommendation: high\n2026-06-13T19:41:30: 人工筛选通过，已标记为 screened。\n2026-06-13T19:45:27: 已生成 semi_real 脚手架 task_126，仓库目录为 benchmarks/repos/watchfiles_266_repo。\n2026-06-13T19:57:26: 已把 task_126 补成 ready 口径的 semi_real 回归任务，但暂未纳入正式 manifest。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2024-03-28T09:31:13Z",
+      "body_excerpt": "### Description\r\n\r\nHey!\r\n\r\nFor local development, we are running our Django app inside a Linux Docker container, launched from Windows host with help of WSL2, with sources typically mounted from the Windows file system. We are using `watchfiles` instead of Django's built-in reloader with help of [django_watchfiles](https://github.com/adamchainz/django-watchfiles). Thanks to [this code](https://github.com/samuelcolvin/watchfiles/blob/9f19a18da5323d0e63a2ee16c47ed6c819f89be5/watchfiles/main.py#L33"
+    },
+    {
+      "candidate_id": "fsspec_filesystem_spec_issue_979",
+      "repo_full_name": "fsspec/filesystem_spec",
+      "repo_url": "https://github.com/fsspec/filesystem_spec",
+      "issue_number": 979,
+      "issue_title": "bug: unstrip_protocol incorrectly returns original path",
+      "issue_url": "https://github.com/fsspec/filesystem_spec/issues/979",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T14:05:07: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T14:05:07: why_it_fits: 初步命中 `文件路径与 IO` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T14:05:07: expected_test_shape: 优先压成 1 到 3 个稳定回归测试，覆盖当前错误行为、期望行为和一个相邻不回归场景。\n2026-06-13T14:05:07: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T14:05:07: recommendation: high\n2026-06-13T14:08:23: 人工筛选通过，已标记为 screened。\n2026-06-13T15:32:00: 手工补充 expected_target_files，优先指向 `fsspec/spec.py`，方便后续直接进入非 dry-run 脚手架。\n2026-06-13T14:16:34: 已生成 semi_real 脚手架 task_122，仓库目录为 benchmarks/repos/fsspec_unstrip_protocol_repo。\n2026-06-13T15:58:00: 已把 task_122 补成 ready 口径的 semi_real 回归任务，并将候选状态推进为 accepted。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2022-06-10T15:37:36Z",
+      "expected_target_files": [
+        "fsspec/spec.py",
+        "fsspec/tests/test_spec.py"
+      ],
+      "body_excerpt": "In version 2022.5.0, `AbstractFileSystem.unstrip_protocol` fails to preprend `protocol://` to the path if the path happens to start with the characters of one of the class's protocols. For example:\r\n```python\r\nfrom fsspec.spec import AbstractFileSystem\r\n\r\nAbstractFileSystem().unstrip_protocol('abstract-file')\r\n# 'abstract-file'\r\n\r\nfrom s3fs import S3FileSystem\r\n\r\nS3FileSystem().unstrip_protocol('s3-file')\r\n# 's3-file'\r\n\r\nS3FileSystem().unstrip_protocol('s3a-file')\r\n# 's3a-file'\r\n```\r\n\r\nIt works "
+    },
+    {
+      "candidate_id": "samuelcolvin_watchfiles_issue_110",
+      "repo_full_name": "samuelcolvin/watchfiles",
+      "repo_url": "https://github.com/samuelcolvin/watchfiles",
+      "issue_number": 110,
+      "issue_title": "`awatch` on windows can't be killed with Ctrl+C",
+      "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/110",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T22:16:31: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T22:16:31: why_it_fits: 初步命中 `文件路径与 IO` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T22:16:31: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T22:16:31: risk_notes: 可能带平台相关性，需要确认是否能做成跨平台稳定测试。\n2026-06-13T22:16:31: recommendation: medium\n2026-06-13T22:40:14: 人工筛选通过，已标记为 screened。\n2026-06-13T22:49:09: 已生成 semi_real 脚手架 task_127，仓库目录为 benchmarks/repos/watchfiles_110_repo。\n2026-06-13T23:11:55: 已把 task_127 补成 ready 口径的 semi_real 回归任务；当前基准 repo 失败、improved_v69 单任务也失败，适合作为 challenge hard case。\n2026-06-13T23:11:55: 已纳入 challenge manifest，候选状态推进为 accepted。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2022-03-24T19:31:57Z",
+      "body_excerpt": "The \"KeyboardInterrupt\" gets logged but the process doesn't terminate until the next file system event happens and `RustNotify.watch()` returns.\r\n\r\nThis is because windows doesn't have signals, so `open_signal_receiver`\r\n\r\nhttps://github.com/samuelcolvin/watchfiles/blob/7a74df9d1a403fcf57e9b27ac65cfb30c2dbf8c9/watchfiles/main.py#L181\r\n\r\nDoesn't work and there's no way to tell the rust code to terminate.\r\n\r\nPotential solution is to return from `RustNotify.watch()` regularly, and thereby check if "
+    },
+    {
+      "candidate_id": "agronholm_anyio_issue_82",
+      "repo_full_name": "agronholm/anyio",
+      "repo_url": "https://github.com/agronholm/anyio",
+      "issue_number": 82,
+      "issue_title": "CancelledError leak with asyncio and curio",
+      "issue_url": "https://github.com/agronholm/anyio/issues/82",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T22:16:31: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T22:16:31: why_it_fits: 初步命中 `并发与协程` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T22:16:31: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T22:16:31: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T22:16:31: recommendation: high\n2026-06-13T22:16:44: 人工筛选通过，已标记为 screened。\n2026-06-14T00:07:26: 已生成 semi_real 脚手架 task_128，仓库目录为 benchmarks/repos/anyio_82_repo。\n2026-06-14T17:14:22: 已把 task_128 补成 ready 口径最小并发回归任务；在禁用 pytest 插件自动加载后，当前 trio 对照路径通过，asyncio 与 curio 目标路径失败，可继续用于单任务修复验证。\n2026-06-14T17:18:45: 已验证旧策略 improved_v70 单任务失败、新策略 improved_v71 单任务成功。\n2026-06-14T17:18:45: 已纳入正式 manifest，作为下一条 anyio 并发回归正式任务。",
+      "labels": [
+        "bug",
+        "asyncio",
+        "curio"
+      ],
+      "state": "closed",
+      "created_at": "2019-11-21T17:31:10Z",
+      "body_excerpt": "I recently ran into the following problem:\r\n\r\n```python\r\nimport anyio\r\nimport pytest\r\n\r\n@pytest.mark.anyio\r\nasync def test_bug():\r\n\r\n    async def fail():\r\n        try:\r\n            await anyio.sleep(.1)\r\n        finally:\r\n            1/0\r\n\r\n    async def fn():\r\n        async with anyio.create_task_group() as task_group:\r\n            await task_group.spawn(fail)\r\n            async with anyio.create_task_group() as task_group2:\r\n                await task_group2.spawn(fail)\r\n                await",
+      "expected_target_files": [
+        "test_anyio.py"
+      ]
+    },
+    {
+      "candidate_id": "agronholm_anyio_issue_88",
+      "repo_full_name": "agronholm/anyio",
+      "repo_url": "https://github.com/agronholm/anyio",
+      "issue_number": 88,
+      "issue_title": "Parent task spuriously cancelled with asyncio",
+      "issue_url": "https://github.com/agronholm/anyio/issues/88",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-13T22:16:31: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-13T22:16:31: why_it_fits: 初步命中 `并发与协程` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-13T22:16:31: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-13T22:16:31: risk_notes: 当前看起来边界较清晰，但仍需人工确认是否能压成单模块、少量稳定回归测试。\n2026-06-13T22:16:31: recommendation: high\n2026-06-14T00:12:02: 人工筛选通过，已标记为 screened。\n2026-06-14T00:17:42: 已生成 semi_real 脚手架 task_129，仓库目录为 benchmarks/repos/anyio_88_repo。\n2026-06-14T00:24:07: 已把 task_129 补成 ready 口径的最小并发回归任务；当前正常路径 1 条通过、目标 asyncio 路径 1 条失败，可继续用于单任务修复验证。\n2026-06-14T00:32:07: 已基于 task_129 完成 ready 口径最小并发回归任务，当前作为 accepted 候选继续等待单任务修复验证与是否进入正式 manifest 的决策。\n2026-06-14T16:47:22: 已验证旧策略 improved_v69 单任务失败、新策略 improved_v70 单任务成功。\n2026-06-14T16:47:22: 已纳入正式 manifest，作为下一条 anyio 并发回归正式任务。",
+      "labels": [
+        "bug",
+        "asyncio"
+      ],
+      "state": "closed",
+      "created_at": "2019-12-01T03:43:46Z",
+      "body_excerpt": "The following test case passes under trio and curio, but fails under asyncio:\r\n\r\n```python\r\nimport sys\r\nimport pytest\r\nimport anyio\r\n\r\nasync def read_lines_to_queue(client, queue):\r\n    async for line in client.receive_delimited_chunks(b'\\n', 1024):\r\n        await queue.put(line)\r\n\r\nasync def handle_client(client, result):\r\n    try:\r\n        async with client:\r\n            async with anyio.create_task_group() as tasks:\r\n                queue = anyio.create_queue(1)\r\n                await tasks.s",
+      "expected_target_files": [
+        "fail_case.py",
+        "venv/src/python-mpd-server/examples/fail_case.py"
+      ]
+    },
+    {
+      "candidate_id": "samuelcolvin_watchfiles_issue_169",
+      "repo_full_name": "samuelcolvin/watchfiles",
+      "repo_url": "https://github.com/samuelcolvin/watchfiles",
+      "issue_number": 169,
+      "issue_title": "Errors on `WSL` and docker with windows",
+      "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/169",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-14T01:51:58: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-14T01:51:58: why_it_fits: 初步命中 `文件路径与 IO` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-14T01:51:58: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-14T01:51:58: risk_notes: 可能带平台相关性，需要确认是否能做成跨平台稳定测试。 需要确认是否能去掉外部依赖，避免变成重环境问题。\n2026-06-14T01:51:58: recommendation: high\n2026-06-14T01:52:10: 人工筛选通过，已标记为 screened。\n2026-06-14T01:58:42: 已生成 semi_real 脚手架 task_130，仓库目录为 benchmarks/repos/watchfiles_169_repo。\n2026-06-14T02:11:36: 已把 task_130 补成 ready 口径的 challenge semi-real 回归草稿；当前普通路径 2 条通过、目标 WSL-like metadata-write 路径 1 条失败，可继续用于 challenge manifest 评估。\n2026-06-14T11:40:00: 已纳入 challenge manifest，成为第 3 条 challenge 任务。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2022-07-19T00:15:05Z",
+      "body_excerpt": "### Description\r\n\r\n`watchfiles` appears to be fully pip installable for windows, but I can't seem to get a minimal example working on Linux. The below MRE is straight from the docs and works great on windows. That is, when I change the foobar.py file the simple server is relaunched. \r\n\r\nHowever if I try the same MRE on via wsl (ubuntu) or docker (debian) I don't see any change events firing. This was discovered while updating `uvicorn` 0.17x->0.18x in which they transitioned to this package for ",
+      "expected_target_files": [
+        "watchfiles/main.py",
+        "tests/test_main.py"
+      ]
+    },
+    {
+      "candidate_id": "samuelcolvin_watchfiles_issue_215",
+      "repo_full_name": "samuelcolvin/watchfiles",
+      "repo_url": "https://github.com/samuelcolvin/watchfiles",
+      "issue_number": 215,
+      "issue_title": "Problems when using vim - `Remove(File)` event when saving the file",
+      "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/215",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-14T03:35:00: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-14T03:35:00: why_it_fits: 初步命中 `文件路径与 IO` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-14T03:35:00: expected_test_shape: 优先用 2 到 3 个固定输入输出断言覆盖当前错误行为、期望行为和一个相邻边界场景。\n2026-06-14T03:35:00: risk_notes: 可能带平台相关性，需要确认是否能做成跨平台稳定测试。\n2026-06-14T03:35:00: recommendation: high\n2026-06-14T03:35:00: 人工筛选通过，已标记为 screened。\n2026-06-14T03:40:11: 已生成 semi_real 脚手架 task_131，仓库目录为 benchmarks/repos/watchfiles_215_repo。\n2026-06-14T03:55:00: 已把 task_131 补成 ready 口径的 challenge semi-real 回归任务；当前目标 vim-style remove 路径失败、相邻保护路径通过，可继续用于 challenge manifest 评估。\n2026-06-14T20:35:00: 已纳入 challenge manifest，成为第 4 条 challenge 任务。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2022-11-27T23:28:21Z",
+      "body_excerpt": "### Description\r\n\r\nHello, \r\nand thanks for providing `watchfiles` ! I seem to have an issue occuring with `vim` specifically, so I'm not sure this is the best place for a bug report, but this could always serve as future reference:\r\n\r\nWhen editing then saving a file in `vim` (version 9.0.813), for some reason a `Remove(File)` event is sent; no sub-sequent events are received when modifying the file:\r\n\r\n```\r\nraw-event: Event { kind: Modify(Name(From)), paths: [\"/home/sapristi/dev/mmuxer/config.ya",
+      "expected_target_files": [
+        "config.yaml"
+      ]
+    },
+    {
+      "candidate_id": "Textualize_rich_issue_2411",
+      "repo_full_name": "Textualize/rich",
+      "repo_url": "https://github.com/Textualize/rich",
+      "issue_number": 2411,
+      "issue_title": "[BUG] UnicodeEncodeError on Windows with ruler.",
+      "issue_url": "https://github.com/Textualize/rich/issues/2411",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-14T04:12:31: 由 search_candidate_issues.py 搜索结果导入，尚未完成人工筛选。\n2026-06-14T04:12:31: why_it_fits: 初步命中 `解析与字符串语义` 方向；标题和正文看起来具备明确错误行为，适合继续人工判题确认。\n2026-06-14T04:12:31: expected_test_shape: 优先用 2 到 3 个固定输入覆盖：当前报错路径、期望不再报错路径，以及一个相邻回归场景。\n2026-06-14T04:12:31: risk_notes: 可能带平台相关性，需要确认是否能做成跨平台稳定测试。\n2026-06-14T04:12:31: recommendation: medium\n2026-06-14T04:12:31: 人工筛选通过，已标记为 screened。\n2026-06-14T04:20:23: 已生成 semi_real 脚手架 task_132，仓库目录为 benchmarks/repos/rich_windows_rule_repo。\n2026-06-14T04:28:00: 已把 task_132 补成可运行的 challenge semi-real 回归任务；当前用 Windows-like legacy 编码流稳定覆盖 Console.rule() 与 Console.print(\"─\") 的安全降级语义，候选状态推进到 accepted，可继续评估是否纳入 challenge manifest。\n2026-06-14T04:33:00: 已纳入 challenge manifest，成为第 5 条 challenge 任务；当前补上了 Windows-like legacy 编码输出这一条平台边界题型。",
+      "labels": [
+        "bug"
+      ],
+      "state": "closed",
+      "created_at": "2022-07-20T21:45:49Z",
+      "body_excerpt": "**Describe the bug**\r\n\r\nThe issue started appearing in my test suite, and I could boil it down to this reproducible example. I am using rich 12.5.1.\r\n\r\n```python\r\n# Content of script.py.\r\n\r\nfrom rich.console import Console\r\n\r\n\r\nif __name__ == '__main__':\r\n    console = Console()\r\n    console.rule()  # or console.print(\"─\")\r\n```\r\n\r\n```python\r\n# Content of run.py.\r\n\r\nimport subprocess\r\n\r\nresult = subprocess.run((\"python\", \"rich_script.py\"), check=True)\r\n```\r\n\r\nand then I am executing `pytest run.p",
+      "expected_target_files": [
+        "rich_script.py",
+        "run.py"
+      ]
+    },
+    {
+      "candidate_id": "Textualize_rich_issue_2457",
+      "repo_full_name": "Textualize/rich",
+      "repo_url": "https://github.com/Textualize/rich",
+      "issue_number": 2457,
+      "issue_title": "[BUG] Console(no_color=True) does not work on Windows 10",
+      "issue_url": "https://github.com/Textualize/rich/issues/2457",
+      "language": "python",
+      "difficulty": "medium",
+      "status": "accepted",
+      "notes": "2026-06-14T09:40:00: 由 import_github_issue.py 自动导入，尚未补齐测试命令和目标文件。\n2026-06-14T09:40:19: 人工筛选通过，已标记为 screened。\n2026-06-14T09:47:53: 已生成 semi_real 可运行任务 task_133，仓库目录为 benchmarks/repos/rich_windows_no_color_repo。",
+      "labels": [
+        "bug"
+      ],
+      "state": "CLOSED",
+      "created_at": "2022-08-09T04:47:04Z",
+      "body_excerpt": "You may find a solution to your problem in the [docs](https://rich.readthedocs.io/en/latest/introduction.html) or [issues](https://github.com/willmcgugan/rich/issues).\r\n\r\n**Describe the bug**\r\n\r\nThe \"no_color=True\" Console parameter does not seem to do anything on Windows 10. I tested on both Cmder and native cmd.exe terminals and got the same results. See screenshots below.\r\n\r\nCmder:\r\n![richbug01](https://user-images.githubusercontent.com/7690118/183566141-724f7390-f9f9-4063-bf31-b0144e391975.P"
     }
   ]
 }

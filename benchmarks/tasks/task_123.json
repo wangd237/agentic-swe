@@ -1,0 +1,39 @@
+{
+  "task_id": "task_123",
+  "repo_name": "anyio_taskgroup_reentry_repo",
+  "repo_path": "benchmarks/repos/anyio_taskgroup_reentry_repo",
+  "issue_title": "AttributeError: 'TaskGroup' object has no attribute '_exceptions'",
+  "issue_text": "### Things to check first\n\n- [x] I have searched the existing issues and didn't find my bug already reported there\n\n- [x] I have checked that my bug is still present in the latest release\n\n\n### AnyIO version\n\n`4.13.0`\n\n### Python version\n\n`3.13.3`\n\n### What happened?\n\nEntering the context of a task group multiple times raises an `AttributeError`\n```\nTraceback (most recent call last):\n  File \"...\\.venv\\Lib\\site-packages\\anyio\\_backends\\_asyncio.py\", line 794, in __aexit__\n    if self._exceptions:",
+  "test_command": "python -m pytest tests/test_taskgroups.py -q",
+  "success_criteria": "应修复 issue《AttributeError: 'TaskGroup' object has no attribute '_exceptions'》中描述的错误行为；核心逻辑预计位于 `anyio/_backends/_asyncio.py`；并补齐 1 到 3 个稳定回归测试，确保当前错误行为消失且相邻边界不回归。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "auto-scaffolded",
+    "anyio",
+    "bug",
+    "asyncio",
+    "task-group"
+  ],
+  "target_files_hint": [
+    "anyio/_backends/_asyncio.py",
+    "tests/test_taskgroups.py"
+  ],
+  "expected_failure_test": "test_reentering_same_task_group_raises_runtime_error",
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "agronholm/anyio",
+    "repo_url": "https://github.com/agronholm/anyio",
+    "issue_number": 1109,
+    "issue_url": "https://github.com/agronholm/anyio/issues/1109",
+    "candidate_id": "agronholm_anyio_issue_1109",
+    "imported_from": "scripts/scaffold_semi_real_task.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_000",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready"
+  }
+}

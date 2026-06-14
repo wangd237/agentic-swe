@@ -1,0 +1,38 @@
+{
+  "task_id": "task_126",
+  "repo_name": "watchfiles_266_repo",
+  "repo_path": "benchmarks/repos/watchfiles_266_repo",
+  "issue_title": "Ignore error_handler errors under ignore_permission_denied = True?",
+  "issue_text": "### Description\r\n\r\nHey!\r\n\r\nFor local development, we are running our Django app inside a Linux Docker container, launched from Windows host with help of WSL2, with sources typically mounted from the Windows file system. We are using `watchfiles` instead of Django's built-in reloader with help of [django_watchfiles](https://github.com/adamchainz/django-watchfiles). Thanks to [this code](https://github.com/samuelcolvin/watchfiles/blob/9f19a18da5323d0e63a2ee16c47ed6c819f89be5/watchfiles/main.py#L33",
+  "test_command": "python -m pytest tests/test_main.py -q",
+  "success_criteria": "应修复 issue《Ignore error_handler errors under ignore_permission_denied = True?》中描述的错误行为；核心逻辑预计位于 `watchfiles/main.py`；并补齐 1 到 3 个稳定回归测试，确保当前错误行为消失且相邻边界不回归。",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "semi-real",
+    "auto-scaffolded",
+    "watchfiles",
+    "bug"
+  ],
+  "target_files_hint": [
+    "watchfiles/main.py",
+    "tests/test_main.py"
+  ],
+  "expected_failure_test": null,
+  "max_retries": 2,
+  "source_type": "semi_real",
+  "metadata": {
+    "repo_full_name": "samuelcolvin/watchfiles",
+    "repo_url": "https://github.com/samuelcolvin/watchfiles",
+    "issue_number": 266,
+    "issue_url": "https://github.com/samuelcolvin/watchfiles/issues/266",
+    "candidate_id": "samuelcolvin_watchfiles_issue_266",
+    "imported_from": "scripts/scaffold_semi_real_task.py",
+    "phase_introduced": "phase_6",
+    "derived_from_task": "task_000",
+    "scaffolded_from": "scripts/scaffold_semi_real_task.py",
+    "repo_scaffold_status": "ready",
+    "ready_note": "已压成可运行 semi-real 回归任务；当前纳入 challenge manifest，暂未纳入正式 manifest。"
+  }
+}

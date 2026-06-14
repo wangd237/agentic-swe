@@ -1,0 +1,12 @@
+{
+  "policy_id": "improved_v72",
+  "description": "在 improved_v71 的基础上，新增对 rich Windows-like legacy 控制台分支忽略 no_color 的规则型修复能力。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v72",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

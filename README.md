@@ -1,737 +1,185 @@
-# Agentic Software Engineering for GitHub Issue Resolution
+# Agentic SWE
 
-这是一个面向 `小型 Python 仓库 issue 修复` 的 Agent 工程项目。
+一个面向 GitHub issue 自动修复的 mini agentic software engineering benchmark 项目。
 
-当前仓库按照实施规格书推进，目标不是只做一个能演示的助手，而是逐步完成下面这条主线闭环：
+它不只是在本地跑一个“会改代码的 agent”，而是把真实 issue 任务构造、隔离执行、轨迹落盘、批量评测、策略优化、冻结集回归和稳定性复跑串成了一条完整闭环。
 
-`Task -> Agent Run -> Logging -> Evaluation -> Optimization -> Re-run`
+## 核心结果
 
-## 当前状态
+| 指标 | 当前结果 |
+| --- | --- |
+| 正式真实任务数 | `66` |
+| challenge 任务数 | `3` |
+| 来源生态数 | `16` |
+| 当前正式集成功率 | `100%` |
+| 当前正式集测试通过率 | `100%` |
+| 当前策略版本 | `improved_v71` |
+| `frozen_40` 连续无回归版本数 | `8` |
+| `frozen_40` 当前最小验证均值耗时 | `0.5794s` |
+| 当前结论 | `v71 已把正式任务扩到 66 条，并完成正式集、frozen_20、frozen_40 三线功能全绿；相对 v70，正式集平均耗时回落，但两条冻结集平均耗时回升，当前应继续补稳定性复跑与性能复核` |
 
-- 当前阶段：`Phase 6 - 优化系统`
-- 当前成果：
-  - 已创建主项目骨架
-  - 已创建首个最小 benchmark 仓库 `sample_repo`
-  - 已创建开发任务集 `task_001` / `task_002`
-  - 已提供 patch 闭环入口脚本 `scripts/run_single_task.py`
-  - 已提供批量运行入口脚本 `scripts/run_batch.py`
-  - 已提供评测入口 `python -m evals.batch_eval`
-  - 已接入首版 harness 运行时骨架
-  - 已实现 `list_files` / `search_code` / `read_file`
-  - 已实现 `run_tests`
-  - 已实现 `write_file` / `show_diff`
-  - 已实现最小规则型 patch 生成器
-  - 已实现基于 `pydantic` 的 schema 校验
-  - 已支持单任务自动修复 `task_001` 并生成真实 `patch.diff`
-  - 已支持通过 manifest 批量运行任务并输出汇总结果
-  - 已支持对 batch run 输出 baseline 评测报告
-  - 已完成首轮 baseline vs improved policy 对比
-  - 已支持自动生成 baseline vs improved 对比报告
-  - 已完成 `improved_v2` 策略迭代，补充首元素 `None` 场景修复
-  - 已将 `psf/requests#6432` 推进为 `task_005` 草稿与 `task_006` 可运行 semi_real 任务
-  - 已将 `psf/requests#7234` 推进为 `task_007` 草稿与 `task_008` 可运行 semi_real 任务
-  - 已将 `Textualize/rich#4090` 推进为 `task_009` 草稿与 `task_010` 可运行 semi_real 任务
-  - 已将 `Textualize/rich#3877` 推进为 `task_012` 草稿与 `task_013` 可运行 semi_real 任务
-  - 已将 `pydantic/pydantic#9582` 推进为 `task_014` 草稿与 `task_057` 可运行 semi_real 任务
-  - 已将 `pallets/click#3111` 推进为 `task_015` 草稿与 `task_016` 可运行 semi_real 任务
-  - 已将 `pytest-dev/pytest#14329` 推进为 `task_011` 草稿与 `task_017` 可运行 semi_real 任务
-  - 已将 `dateutil/dateutil#1432` 推进为 `task_018` 草稿与 `task_019` 可运行 semi_real 任务
-  - 已将 `dateutil/dateutil#1442` 推进为 `task_021` 草稿与 `task_022` 可运行 semi_real 任务
-  - 已将 `pallets/jinja#2069` 推进为 `task_023` 草稿与 `task_024` 可运行 semi_real 任务
-  - 已将 `pallets/jinja#2118` 推进为 `task_025` 草稿与 `task_026` 可运行 semi_real 任务
-  - 已将 `python-poetry/tomlkit#494` 推进为 `task_027` 草稿与 `task_028` 可运行 semi_real 任务
-  - 已将 `python-poetry/tomlkit#495` 推进为 `task_029` 草稿与 `task_030` 可运行 semi_real 任务
-  - 已将 `pypa/packaging#873` 推进为 `task_031` 草稿与 `task_032` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1157` 推进为 `task_033` 草稿与 `task_034` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1121` 推进为 `task_035` 草稿与 `task_036` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1159` 推进为 `task_037` 草稿与 `task_038` 可运行 semi_real 任务
-  - 已将 `pypa/packaging#845` 推进为 `task_039` 草稿与 `task_040` 可运行 semi_real 任务
-  - 已将 `pallets/click#2402` 推进为 `task_041` 草稿与 `task_042` 可运行 semi_real 任务
-  - 已将 `dateutil/dateutil#384` 推进为 `task_043` 草稿与 `task_044` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1162` 推进为 `task_045` 草稿与 `task_046` 可运行 semi_real 任务
-  - 已将 `pypa/packaging#810` 推进为 `task_047` 草稿与 `task_048` 可运行 semi_real 任务
-  - 已将 `dateutil/dateutil#1191` 推进为 `task_049` 草稿与 `task_050` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1328` 推进为 `task_051` 草稿与 `task_052` 可运行 semi_real 任务
-  - 已将 `python-jsonschema/jsonschema#1125` 推进为 `task_053` 草稿与 `task_054` 可运行 semi_real 任务
-  - 已将 `simonw/sqlite-utils#159` 推进为 `task_055` 草稿与 `task_056` 可运行 semi_real 任务
-  - 已完成 `improved_v5` 策略迭代，补充 ANSI 文本 CRLF 行尾拆分修复
-  - 已完成 `improved_v6` 策略迭代，补充 RichHandler 时区偏移保留修复
-  - 已完成 `improved_v7` 策略迭代，补充负向 boolean flag 默认值修复
-  - 已完成 `improved_v8` 策略迭代，补充最近 marker 覆盖优先修复
-  - 已完成 `improved_v9` 策略迭代，补充 tzstr 在 UTC/GMT 无 offset 场景下的零偏移回落修复
-  - 已完成 `improved_v10` 策略迭代，补充 9 位时间串按 HHMMSSmmm 解析修复
-  - 已完成 `improved_v11` 策略迭代，补充模板分析中所有分支已赋值变量不再被判定为 undeclared
-  - 已完成 `improved_v12` 策略迭代，补充 Jinja slice filter 在整除场景下不应错误补入 `fill_with`
-  - 已完成 `improved_v13` 策略迭代，补充 tomlkit 数组下一行逗号风格下 append 后不应生成双逗号
-  - 已完成 `improved_v14` 策略迭代，补充 tomlkit dotted inline table 追加新键时不应破坏分隔结构
-  - 已完成 `improved_v15` 策略迭代，补充 packaging wheel 文件名中的未 normalized 版本号应被拒绝
-  - 已完成 `improved_v16` 策略迭代，补充 jsonschema mixed-type extras 排序时的 TypeError 兜底修复
-  - 已完成 `improved_v17` 策略迭代，补充 jsonschema hostname 格式检查在空字符串场景下回落为普通校验失败
-  - 已完成 `improved_v18` 策略迭代，补充 integer-valued `multipleOf` 浮点数应按数学整数处理
-  - 已完成 `improved_v19` 策略迭代，补充 packaging `Requirement.__str__` 在复合 marker 中统一规范化 extra 名称
-  - 已完成 `improved_v20` 策略迭代，补充 click alias group 在 `cmd is None` 场景下保持普通返回语义
-  - 已完成 `improved_v21` 策略迭代，补充 `MM.YYYY` 月年格式在点号分隔场景下的解析修复
-  - 已完成 `improved_v22` 策略迭代，补充 single-label hostname 应视为合法主机名的修复
-  - 已完成 `improved_v23` 策略迭代，补充 `Specifier >` 在 `dev+local` 场景下应按 public version 比较
-  - 已完成 `improved_v24` 策略迭代，补充年份前紧贴逗号时的 date parser year token 识别
-  - 已完成 `improved_v25` 策略迭代，补充 ErrorTree 缺失索引访问应保持只读
-  - 已完成 `improved_v26` 策略迭代，补充 `extend()` 保留 legacy validator 的 `applicable_validators`
-  - 已完成 `improved_v27` 策略迭代，补充 `delete_where()` 删除后自动提交事务
-  - 已完成 `improved_v28` 策略迭代，补充父子 `model_validator` 继承链的追加执行
-  - 已将 `python-attrs/attrs#1479` 推进为 `task_058` 可运行 semi_real 任务
-  - 已完成 `improved_v29` 策略迭代，补充 `field_transformer` 阶段默认 alias 的提前可见性
-  - 已将 `simonw/sqlite-utils#488` 推进为 `task_059` 可运行 semi_real 任务
-  - 已完成 `improved_v30` 策略迭代，补充数值列转换时空字符串回落为 `None`
-  - 已将 `simonw/sqlite-utils#186` 推进为 `task_060` 可运行 semi_real 任务
-  - 已完成 `improved_v31` 策略迭代，补充 extract 时跳过 `None` 维表提取
-  - 已将 `PyCQA/isort#1815` 推进为 `task_061` 可运行 semi_real 任务
-  - 已完成 `improved_v32` 策略迭代，补充 tuple 格式化分支继承 profile 布局策略
-  - 已新增 `real_issue -> semi_real` 脚手架入口 `scripts/scaffold_semi_real_task.py`
-  - 已新增批量 issue 导入入口 `scripts/import_issue_batch.py`
-  - 已新增时延回归分析入口 `scripts/analyze_duration_regressions.py`
-  - 已补充项目说明文档与阶段指南
+基于 [benchmark_maturity_maturity_087.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/benchmark_maturity_maturity_087.json)、[batch_eval_realissuev71r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_eval_realissuev71r2_001.json)、[batch_compare_frozen20_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen20_step71_r2_001.json) 和 [batch_compare_frozen40_step71_r2_001.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/batch_compare_frozen40_step71_r2_001.json)，当前项目已经达到“真实 issue benchmark v1 可用”阶段，并继续向更成熟的 benchmark 基础设施推进。
 
-## 项目目标
+## 系统闭环
 
-- 面向小型 Python 仓库实现一个最小可运行的 SWE-Agent
-- 让 Agent 能逐步完成 issue 理解、代码检索、patch 生成、测试验证与结果记录
-- 在主线跑通后，补齐 batch eval、错误分类与优化闭环
-- 最终产出可复现、可比较、可展示的项目结果
+```text
+GitHub issue / semi-real task
+          |
+          v
+   manifest 选题与任务定义
+          |
+          v
+   repo workspace 隔离复制
+          |
+          v
+   agent loop
+   (读文件 / 搜索 / 测试 / patch / diff)
+          |
+          v
+   轨迹与结果落盘
+   (task.json / trace.json / result.json / patch.diff)
+          |
+          v
+   batch run / batch eval / taxonomy
+          |
+          v
+   compare / frozen 回归 / maturity audit / stability recheck
+          |
+          v
+   policy 迭代与下一轮 benchmark 扩容
+```
 
-## 目录概览
+## 项目特点
+
+- 任务不是纯 synthetic demo，而是 `66` 条来自真实开源 issue 的 `semi_real` benchmark。
+- 优化不是“凭感觉调 prompt”，而是版本化到 `improved_v71`，并且有冻结集无回归验证与稳定性复跑。
+- 评测不是只有成功率，还包括 taxonomy、耗时、步数、稳定性复跑和 maturity 审计。
+- 性能治理现在还支持环境基线快照，能先把“环境变慢”和“策略变慢”做一层拆分。
+- harness 是一等公民：强调工作区隔离、路径边界、产物契约和批量复现能力。
+- challenge 集独立管理：系统边界题可以单独运行和展示，而不污染正式 benchmark 口径。
+
+## 快速开始
+
+安装依赖：
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+单任务运行：
+
+```bash
+python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy optimization/policy_versions/improved_v71.json
+```
+
+批量评测并自动附带稳定性检查与 maturity 审计：
+
+```bash
+python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v71.json --run-label frozen20_v71_pipeline --stability-check --stability-repetitions 3 --stability-manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json
+```
+
+运行 challenge 任务集：
+
+```bash
+python scripts/run_challenge_eval.py --policy optimization/policy_versions/improved_v71.json --run-label challengev71
+```
+
+单独做同策略稳定性复跑：
+
+```bash
+python scripts/stability_recheck.py --policy optimization/policy_versions/improved_v71.json --manifest benchmarks/manifests/real_issue_tasks_frozen_40_v1.json --repetitions 3 --run-label frozen40_v71_stability
+```
+
+采集当前机器的环境基线快照：
+
+```bash
+python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_baselines
+```
+
+## 代表性案例
+
+- `task_024` `pallets/jinja#2069`
+  - 不是简单 if 修补，而是模板变量在分支赋值场景下的控制流语义分析。
+- `task_036` `python-jsonschema/jsonschema#1121`
+  - 体现了从“测试失败”到“异常回落语义修复”的典型优化路径，首个通过版本是 `improved_v17`。
+- `task_122` `fsspec/filesystem_spec#979`
+  - 当前第 `61` 条正式任务，补齐了 `unstrip_protocol()` 在前缀保护场景下错误返回原路径的问题。
+- `task_123` `agronholm/anyio#1109`
+  - 当前第 `62` 条正式任务，把重复进入同一个 `TaskGroup` 时泄漏内部 `AttributeError` 的问题收口为受控 `RuntimeError`。
+- `task_124` `agronholm/anyio#1111`
+  - 当前第 `63` 条正式任务，补齐了 `_deliver_cancellation` 对已完成 task 的清理逻辑，避免 cancellation spin。
+- `task_125` `agronholm/anyio#1113`
+  - 当前第 `64` 条正式任务，补齐了 `from_thread.check_cancelled()` 在已取消上下文中的取消语义。
+- `task_128` `agronholm/anyio#82`
+  - 当前第 `65` 条正式任务，补齐了 asyncio / curio backend 在嵌套 task group 场景下泄漏取消异常的问题。
+- `task_129` `agronholm/anyio#88`
+  - 当前第 `66` 条正式任务，补齐了 asyncio backend 下父任务在子任务失败后被额外取消的问题。
+- `task_126` `samuelcolvin/watchfiles#266`
+  - 当前首条 challenge 任务，用来展示 `ignore_permission_denied` 相关边界题的独立承载方式。
+- `task_127` `samuelcolvin/watchfiles#110`
+  - 当前第 `2` 条 challenge 任务，用来承载 Windows `Ctrl+C` / watcher 停止语义这类 hard case 边界题。
+- `task_130` `samuelcolvin/watchfiles#169`
+  - 当前第 `3` 条 challenge 任务，用来承载 WSL / Docker / Linux-like 环境下 `metadata-write` 事件被错误过滤、从而不触发 reload 的边界题。
+
+完整任务索引见 [docs/benchmark_registry.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/benchmark_registry.md)。
+
+challenge 集说明见 [docs/challenge_set.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/challenge_set.md)。
+
+challenge 候选短名单见 [docs/challenge_shortlist.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/challenge_shortlist.md)。
+
+## 项目结构
 
 ```text
 app/
-  agent/        # Agent 提示词、规划、执行、策略
-  tools/        # Agent 可调用工具
-  runtime/      # 运行时会话、任务执行、日志写入
-  schemas/      # Task / Trace / Result 数据结构
+  agent/        # agent loop、policy、patch strategy
+  runtime/      # harness、workspace 隔离、批量运行
+  schemas/      # Task / Trace / Result 的 pydantic schema
+  tools/        # 文件、搜索、测试、写入、diff 工具
 benchmarks/
-  tasks/        # 结构化任务定义
-  repos/        # 基准仓库
-docs/           # 架构、benchmark、评测、优化文档
-evals/          # 指标、错误分类、批量评测
-logs/           # 运行日志与结果产物
-optimization/   # prompt / policy / 训练增强预留目录
-scripts/        # 入口脚本
+  manifests/    # 正式集、challenge 集、冻结集
+  repos/        # semi-real benchmark 仓库
+  tasks/        # 任务定义
+docs/           # 架构、实验摘要、指南、案例
+evals/          # metrics、taxonomy、compare
+logs/           # 运行轨迹与评测产物
+optimization/   # policy 版本与优化记录
+scripts/        # 单任务、批量评测、稳定性复跑等脚本
 ```
 
-其中任务定义当前已经支持 `source_type`：
-
-- `synthetic`
-- `semi_real`
-- `real_issue`
-
-这让后续从本地联调集逐步过渡到 GitHub 真实 issue 集时，不需要重做任务结构。
-
-## 快速体验
-
-### 1. 运行 Patch 闭环
-
-```bash
-python scripts/run_single_task.py --task benchmarks/tasks/task_001.json
-```
-
-这个命令当前会完成：
-
-- 读取并校验任务 JSON
-- 创建独立 run 目录与工作副本
-- 执行 `list_files`、`search_code`、`read_file`
-- 执行修复前测试
-- 生成并写入最小 patch
-- 执行修复后测试
-- 生成 `patch.diff`
-- 输出推荐阅读文件
-- 保存 `task.json`、`result.json`、`trace.json`、`patch.diff`、`summary.md`
-- 保存 pre/post test stdout 与 stderr
-
-### 2. 运行 benchmark 仓库测试
-
-```bash
-cd benchmarks/repos/sample_repo
-python -m pytest tests/test_parser.py -q
-```
-
-说明：
-
-- 当前环境已安装 `pytest`
-- 测试文件仍保持 `unittest.TestCase` 风格，因此也兼容后续不同执行器
-
-### 3. 运行批量任务
-
-```bash
-python scripts/run_batch.py
-```
-
-这个命令当前会完成：
-
-- 读取 `benchmarks/manifests/dev_tasks.json`
-- 顺序运行其中的任务
-- 为每条任务生成独立 run 目录
-- 在 `logs/summaries/` 下生成批量汇总 JSON 与 Markdown
-
-### 4. 运行 baseline 评测
-
-```bash
-python -m evals.batch_eval --batch-summary logs/summaries/batch_run_001.json --output-dir logs/summaries
-```
-
-这个命令当前会完成：
-
-- 读取 batch run 汇总和对应的 `task/result/trace/patch`
-- 计算 baseline 指标
-- 生成错误 taxonomy
-- 在 `logs/summaries/` 下输出评测 JSON 与 Markdown
-
-### 5. 生成 baseline vs improved 对比报告
-
-```bash
-python -m evals.compare_evals --baseline-eval logs/summaries/batch_eval_baseline_001.json --improved-eval logs/summaries/batch_eval_improved_001.json --output-dir logs/summaries --run-label phase6
-```
-
-这个命令当前会完成：
-
-- 读取两份 batch eval JSON
-- 自动计算各项指标 delta
-- 自动对比 taxonomy 变化
-- 生成追加式 compare JSON 与 Markdown
-- 为后续优化迭代保留可回溯的对比产物
-
-### 6. 校验任务定义与真实 issue 候选清单
-
-```bash
-python scripts/validate_tasks.py
-```
-
-这个命令当前会完成：
-
-- 校验 `benchmarks/tasks/` 下的任务 JSON 是否符合 schema
-- 校验 `source_type` 是否合法
-- 校验未来真实 issue 候选清单的最小结构
-
-### 7. 导入 GitHub 真实 issue 候选
-
-```bash
-python scripts/import_github_issue.py --repo psf/requests --issue 10000
-```
-
-这个命令当前会完成：
-
-- 通过 `gh issue view` 拉取 issue 元数据
-- 追加或更新 `benchmarks/real_world_candidates.json`
-- 自动生成候选的 `candidate_id`
-- 保留已有候选状态，并按时间追加导入备注
-- 先把候选沉淀下来，后续再决定是否升级成正式任务
-
-如果你想同时生成 task 草稿：
-
-```bash
-python scripts/import_github_issue.py --repo psf/requests --issue 10000 --draft-task
-```
-
-这样会额外生成一个 `real_issue` 类型的 task 草稿，但仍需要人工补齐：
-
-- 本地 repo_path
-- test_command
-- target_files_hint
-- success_criteria
-
-### 8. 批量导入 GitHub 真实 issue 候选
-
-```bash
-python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt
-```
-
-这个命令当前会完成：
-
-- 从文本或 JSON 批量读取 `owner/repo issue_number`
-- 逐条复用 `import_github_issue.py` 的导入逻辑
-- 继续保留候选状态和历史备注，不会覆盖旧记录
-- 汇总输出 `created / updated / drafted` 数量
-
-如果你希望批量导入时直接生成 `real_issue` 草稿：
-
-```bash
-python scripts/import_issue_batch.py --input benchmarks/example_issue_batch.txt --draft-task
-```
-
-### 9. 从 real_issue 草稿生成 semi_real 脚手架
-
-```bash
-python scripts/scaffold_semi_real_task.py --draft-task benchmarks/tasks/task_007.json --semi-repo-name requests_encoding_repo --module-path requests_encoding_repo/utils.py --test-path tests/test_utils.py --ready --success-criteria "Quoted 和 unquoted charset 都能正确解析，且测试全部通过。" --expected-failure-test "HeaderEncodingTests.test_double_quoted_charset_is_detected" --tag header-parsing --tag charset
-```
-
-这个命令当前会完成：
-
-- 基于 `real_issue` 草稿生成新的 `semi_real` 任务
-- 自动创建最小 repo 骨架：
-  - 包目录
-  - 模块文件
-  - 测试文件
-  - repo README
-- 自动维护候选状态：
-  - `drafted -> scaffolded`
-  - 如果带 `--ready`，则更新为 `accepted`
-- 在 `--ready` 模式下把任务追加到 `benchmarks/manifests/real_issue_tasks.json`
-
-如果不加 `--ready`，脚本会生成一个待人工补齐的 semi_real 草稿，更适合先做 issue 缩减和最小复现。
-
-### 10. 一键运行真实 issue 评测流水线
-
-```bash
-python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks.json --policy optimization/policy_versions/improved_v8.json --run-label realissuev8 --compare-against-eval logs/summaries/batch_eval_realissuev7r2_001.json --compare-label realissue_step6
-```
-
-这个命令当前会完成：
-
-- 读取 `real_issue_tasks` manifest
-- 批量运行真实 issue 派生任务集
-- 自动生成对应的 batch eval 报告
-- 如提供 baseline eval，则自动生成 compare 报告
-- 同时输出当前候选状态统计，方便回看 `accepted / drafted / scaffolded`
-
-### 11. 分析两轮 batch run 的时延回归
-
-```bash
-python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_realissuev31_001.json --improved-batch-summary logs/summaries/batch_run_realissuev32_001.json --run-label realissuev32
-```
-
-这个命令当前会完成：
-
-- 读取两轮 batch run 指向的每个 `result.json`
-- 对齐公共任务，计算逐任务 `duration_sec` 差值
-- 汇总 top regressions / top improvements
-- 区分“扩容导致的任务集变化”和“公共任务本身变慢”
-- 生成追加式 JSON / Markdown 报告，便于后续长期跟踪
-
-## 当前 benchmark 任务
-
-当前 benchmark 已分成三层：
-
-- `Dev Set`
-  - manifest: `benchmarks/manifests/dev_tasks.json`
-  - tasks: `task_001`、`task_002`
-  - 用途：联调单任务闭环、batch runner 与基础评测链路
-- `Report Set`
-  - manifest: `benchmarks/manifests/report_tasks.json`
-  - tasks: `task_001`、`task_003`、`task_004`
-  - 用途：执行 `baseline vs improved` 的正式对比
-- `Future GitHub Real-Issue Set`
-  - 当前已接入 manifest：`benchmarks/manifests/real_issue_tasks.json`
-  - 当前候选清单文件：`benchmarks/real_world_candidates.json`
-  - 当前已导入 30 条候选：
-    - `psf/requests#6432`
-    - `psf/requests#7234`
-    - `Textualize/rich#4090`
-    - `pytest-dev/pytest#14329`
-    - `Textualize/rich#3877`
-    - `pydantic/pydantic#9582`
-    - `pallets/click#3111`
-    - `dateutil/dateutil#1442`
-    - `dateutil/dateutil#1432`
-    - `python-attrs/attrs#1479`
-    - `pallets/jinja#2069`
-    - `pallets/jinja#2118`
-    - `python-poetry/tomlkit#494`
-    - `python-poetry/tomlkit#495`
-    - `pypa/packaging#873`
-    - `python-jsonschema/jsonschema#1157`
-    - `python-jsonschema/jsonschema#1159`
-    - `pypa/packaging#810`
-    - `pypa/packaging#845`
-    - `python-jsonschema/jsonschema#1328`
-    - `python-jsonschema/jsonschema#1125`
-    - `simonw/sqlite-utils#159`
-    - `pallets/click#2402`
-    - `dateutil/dateutil#1191`
-    - `simonw/sqlite-utils#488`
-    - `python-jsonschema/jsonschema#1162`
-    - `dateutil/dateutil#384`
-    - `simonw/sqlite-utils#186`
-    - `python-jsonschema/jsonschema#1121`
-    - `PyCQA/isort#1815`
-  - 当前已生成：
-    - `task_005`：真实 issue 草稿
-    - `task_006`：可运行的 semi_real 派生任务
-    - `task_007`：真实 issue 草稿
-    - `task_008`：可运行的 semi_real 派生任务
-    - `task_009`：真实 issue 草稿
-    - `task_010`：可运行的 semi_real 派生任务
-    - `task_011`：真实 issue 草稿
-    - `task_012`：真实 issue 草稿
-    - `task_013`：可运行的 semi_real 派生任务
-    - `task_014`：真实 issue 草稿
-    - `task_015`：真实 issue 草稿
-    - `task_016`：可运行的 semi_real 派生任务
-    - `task_017`：可运行的 semi_real 派生任务
-    - `task_018`：真实 issue 草稿
-    - `task_019`：可运行的 semi_real 派生任务
-    - `task_021`：真实 issue 草稿
-    - `task_022`：可运行的 semi_real 派生任务
-    - `task_023`：真实 issue 草稿
-    - `task_024`：可运行的 semi_real 派生任务
-    - `task_025`：真实 issue 草稿
-    - `task_026`：可运行的 semi_real 派生任务
-    - `task_027`：真实 issue 草稿
-    - `task_028`：可运行的 semi_real 派生任务
-    - `task_029`：真实 issue 草稿
-    - `task_030`：可运行的 semi_real 派生任务
-    - `task_031`：真实 issue 草稿
-    - `task_032`：可运行的 semi_real 派生任务
-    - `task_033`：真实 issue 草稿
-    - `task_034`：可运行的 semi_real 派生任务
-    - `task_035`：真实 issue 草稿
-    - `task_036`：可运行的 semi_real 派生任务
-    - `task_037`：真实 issue 草稿
-    - `task_038`：可运行的 semi_real 派生任务
-    - `task_039`：真实 issue 草稿
-    - `task_040`：可运行的 semi_real 派生任务
-    - `task_041`：真实 issue 草稿
-    - `task_042`：可运行的 semi_real 派生任务
-    - `task_043`：真实 issue 草稿
-    - `task_044`：可运行的 semi_real 派生任务
-    - `task_045`：真实 issue 草稿
-    - `task_046`：可运行的 semi_real 派生任务
-    - `task_047`：真实 issue 草稿
-    - `task_048`：可运行的 semi_real 派生任务
-    - `task_049`：真实 issue 草稿
-    - `task_050`：可运行的 semi_real 派生任务
-    - `task_051`：真实 issue 草稿
-    - `task_052`：可运行的 semi_real 派生任务
-  - 未来会引入 GitHub 上的小型真实仓库 issue 作为更正式的外部评测集
-
-## 当前 baseline 结果
-
-- batch run：`logs/summaries/batch_run_001.json`
-- batch eval：`logs/summaries/batch_eval_001.json`
-- 当前指标：
-  - success_rate: `1.0`
-  - test_pass_rate: `1.0`
-  - average_steps: `9.0`
-  - average_tool_calls: `9.0`
-
-## 当前 improved 对比结果
-
-当前 Phase 6 已经形成两段式优化：
-
-- `baseline_v1 -> improved_v1`
-  - report set: `task_001`、`task_003`
-  - success_rate: `0.5 -> 1.0`
-  - test_pass_rate: `0.5 -> 1.0`
-  - partial_fix_rate: `0.5 -> 0.0`
-- `improved_v1 -> improved_v2`
-  - report set: `task_001`、`task_003`、`task_004`
-  - success_rate: `0.6667 -> 1.0`
-  - test_pass_rate: `0.6667 -> 1.0`
-  - partial_fix_rate: `0.3333 -> 0.0`
-
-当前最新对比产物：
-
-- baselinev2：
-  - `logs/summaries/batch_eval_baselinev2_001.json`
-- improved_v1：
-  - `logs/summaries/batch_eval_improvedv1r2_001.json`
-- improved_v2：
-  - `logs/summaries/batch_eval_improvedv2_001.json`
-- compare：
-  - `logs/summaries/batch_compare_phase6v2_step2_001.json`
-
-真实 issue 派生链路的最新对比产物：
-
-- manifest：
-  - `benchmarks/manifests/real_issue_tasks.json`
-- improved_v4：
-  - `logs/summaries/batch_eval_realissuev4r2_001.json`
-- improved_v5：
-  - `logs/summaries/batch_eval_realissuev5r2_001.json`
-- improved_v6：
-  - `logs/summaries/batch_eval_realissuev6r2_001.json`
-- improved_v7：
-  - `logs/summaries/batch_eval_realissuev7r2_001.json`
-- improved_v8：
-  - `logs/summaries/batch_eval_realissuev8_001.json`
-- improved_v9：
-  - `logs/summaries/batch_eval_realissuev9_001.json`
-- improved_v10：
-  - `logs/summaries/batch_eval_realissuev10_001.json`
-- improved_v11：
-  - `logs/summaries/batch_eval_realissuev11_001.json`
-- improved_v12：
-  - `logs/summaries/batch_eval_realissuev12_001.json`
-- improved_v13：
-  - `logs/summaries/batch_eval_realissuev13_001.json`
-- improved_v14：
-  - `logs/summaries/batch_eval_realissuev14_001.json`
-- improved_v15：
-  - `logs/summaries/batch_eval_realissuev15_001.json`
-- improved_v16：
-  - `logs/summaries/batch_eval_realissuev16_001.json`
-- improved_v17：
-  - `logs/summaries/batch_eval_realissuev17_001.json`
-- improved_v18：
-  - `logs/summaries/batch_eval_realissuev18_001.json`
-- improved_v19：
-  - `logs/summaries/batch_eval_realissuev19_001.json`
-- improved_v20：
-  - `logs/summaries/batch_eval_realissuev20_001.json`
-- improved_v21：
-  - `logs/summaries/batch_eval_realissuev21_001.json`
-- improved_v22：
-  - `logs/summaries/batch_eval_realissuev22_001.json`
-- improved_v23：
-  - `logs/summaries/batch_eval_realissuev23_001.json`
-- improved_v24：
-  - `logs/summaries/batch_eval_realissuev24_001.json`
-- improved_v25：
-  - `logs/summaries/batch_eval_realissuev25_001.json`
-- improved_v26：
-  - `logs/summaries/batch_eval_realissuev26_001.json`
-- improved_v27：
-  - `logs/summaries/batch_eval_realissuev27_001.json`
-- improved_v28：
-  - `logs/summaries/batch_eval_realissuev28_001.json`
-- improved_v29：
-  - `logs/summaries/batch_eval_realissuev29_001.json`
-- improved_v30：
-  - `logs/summaries/batch_eval_realissuev30_001.json`
-- improved_v31：
-  - `logs/summaries/batch_eval_realissuev31_001.json`
-- improved_v32：
-  - `logs/summaries/batch_eval_realissuev32_001.json`
-- compare：
-  - `logs/summaries/batch_compare_realissue_step9_001.json`
-  - `logs/summaries/batch_compare_realissue_step10_001.json`
-  - `logs/summaries/batch_compare_realissue_step11_001.json`
-  - `logs/summaries/batch_compare_realissue_step12_001.json`
-  - `logs/summaries/batch_compare_realissue_step13_001.json`
-  - `logs/summaries/batch_compare_realissue_step14_001.json`
-  - `logs/summaries/batch_compare_realissue_step15_001.json`
-  - `logs/summaries/batch_compare_realissue_step16_001.json`
-  - `logs/summaries/batch_compare_realissue_step17_001.json`
-  - `logs/summaries/batch_compare_realissue_step18_001.json`
-  - `logs/summaries/batch_compare_realissue_step19_001.json`
-  - `logs/summaries/batch_compare_realissue_step20_001.json`
-  - `logs/summaries/batch_compare_realissue_step21_001.json`
-  - `logs/summaries/batch_compare_realissue_step22_001.json`
-  - `logs/summaries/batch_compare_realissue_step23_001.json`
-  - `logs/summaries/batch_compare_realissue_step24_001.json`
-  - `logs/summaries/batch_compare_realissue_step25_001.json`
-  - `logs/summaries/batch_compare_realissue_step26_001.json`
-  - `logs/summaries/batch_compare_realissue_step28_001.json`
-  - `logs/summaries/batch_compare_realissue_step29_001.json`
-  - `logs/summaries/batch_compare_realissue_step30_001.json`
-  - `logs/summaries/batch_compare_realissue_step31_001.json`
-  - `logs/summaries/duration_compare_realissuev32_001.json`
-  - 在原 9 条任务集上：`success_rate: 0.8889 -> 1.0`
-  - 扩充到 10 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 10 条任务后：`average_duration_sec: 0.5872 -> 0.5526`
-  - 扩充到 11 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 11 条任务后：`average_duration_sec: 0.5526 -> 0.5512`
-  - 扩充到 12 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 12 条任务后：`average_steps: 9.3636 -> 9.25`
-  - 扩充到 12 条任务后：`average_duration_sec: 0.5512 -> 0.5811`
-  - 扩充到 13 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 13 条任务后：`average_steps: 9.25 -> 9.2308`
-  - 扩充到 13 条任务后：`average_duration_sec: 0.5811 -> 0.552`
-  - 扩充到 14 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 14 条任务后：`average_steps: 9.2308 -> 9.3571`
-  - 扩充到 14 条任务后：`average_duration_sec: 0.552 -> 0.5792`
-  - 扩充到 15 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 15 条任务后：`average_steps: 9.3571 -> 9.2667`
-  - 扩充到 15 条任务后：`average_duration_sec: 0.5792 -> 0.5887`
-  - 扩充到 16 条任务后：`success_count: 15 -> 16`
-  - 扩充到 16 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 16 条任务后：`average_steps: 9.2667 -> 9.1875`
-  - 扩充到 16 条任务后：`average_duration_sec: 0.5887 -> 0.5649`
-  - 扩充到 17 条任务后：`success_count: 16 -> 17`
-  - 扩充到 17 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 17 条任务后：`average_steps: 9.1875 -> 9.3529`
-  - 扩充到 17 条任务后：`average_duration_sec: 0.5649 -> 0.6026`
-  - 扩充到 18 条任务后：`success_count: 17 -> 18`
-  - 扩充到 18 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 18 条任务后：`average_steps: 9.3529 -> 9.3889`
-  - 扩充到 18 条任务后：`average_duration_sec: 0.6026 -> 0.5823`
-  - 扩充到 19 条任务后：`success_count: 18 -> 19`
-  - 扩充到 19 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 19 条任务后：`average_steps: 9.3889 -> 9.3158`
-  - 扩充到 19 条任务后：`average_duration_sec: 0.5823 -> 0.5743`
-  - 扩充到 20 条任务后：`success_count: 19 -> 20`
-  - 扩充到 20 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 20 条任务后：`average_steps: 9.3158 -> 9.25`
-  - 扩充到 20 条任务后：`average_duration_sec: 0.5743 -> 0.5552`
-  - 扩充到 21 条任务后：`success_count: 20 -> 21`
-  - 扩充到 21 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 21 条任务后：`average_steps: 9.25 -> 9.2857`
-  - 扩充到 21 条任务后：`average_duration_sec: 0.5552 -> 0.557`
-  - 扩充到 22 条任务后：`success_count: 21 -> 22`
-  - 扩充到 22 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 22 条任务后：`average_steps: 9.2857 -> 9.2273`
-  - 扩充到 22 条任务后：`average_duration_sec: 0.557 -> 0.5511`
-  - 扩充到 23 条任务后：`success_count: 22 -> 23`
-  - 扩充到 23 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 23 条任务后：`average_steps: 9.2273 -> 9.3478`
-  - 扩充到 23 条任务后：`average_duration_sec: 0.5511 -> 0.5548`
-  - 扩充到 24 条任务后：`success_count: 23 -> 24`
-  - 扩充到 24 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 24 条任务后：`average_steps: 9.3478 -> 9.375`
-  - 扩充到 24 条任务后：`average_duration_sec: 0.5548 -> 0.5699`
-  - 扩充到 25 条任务后：`success_count: 24 -> 25`
-  - 扩充到 25 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 25 条任务后：`average_steps: 9.375 -> 9.4`
-  - 扩充到 25 条任务后：`average_duration_sec: 0.5699 -> 0.591`
-  - 扩充到 26 条任务后：`success_count: 25 -> 26`
-  - 扩充到 26 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 26 条任务后：`average_steps: 9.4 -> 9.4231`
-  - 扩充到 26 条任务后：`average_duration_sec: 0.591 -> 0.5898`
-  - 扩充到 27 条任务后：`success_count: 26 -> 27`
-  - 扩充到 27 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 27 条任务后：`average_steps: 9.4231 -> 9.4444`
-  - 扩充到 27 条任务后：`average_duration_sec: 0.5898 -> 0.5675`
-  - 扩充到 28 条任务后：`success_count: 27 -> 28`
-  - 扩充到 28 条任务后：`success_rate: 1.0 -> 1.0`
-  - 扩充到 28 条任务后：`average_steps: 9.4444 -> 9.3929`
-  - 扩充到 28 条任务后：`average_duration_sec: 0.5675 -> 0.5633`
-  - `task_024` 从 `Premature Finish` 变为完全通过
-  - `task_026` 在扩容后的任务集上保持完全通过
-  - `task_028` 在扩容后的任务集上保持完全通过
-  - `task_030` 在扩容后的任务集上保持完全通过
-  - `task_032` 在扩容后的任务集上保持完全通过
-  - `task_034` 在扩容后的任务集上保持完全通过
-  - `task_036` 在扩容后的任务集上完全通过
-  - `task_038` 在扩容后的任务集上完全通过
-  - `task_040` 在扩容后的任务集上完全通过
-  - `task_042` 在扩容后的任务集上完全通过
-  - `task_044` 在扩容后的任务集上完全通过
-  - `task_046` 在扩容后的任务集上完全通过
-  - `task_048` 在扩容后的任务集上完全通过
-  - `task_050` 在扩容后的任务集上完全通过
-  - `task_052` 在扩容后的任务集上完全通过
-  - `task_054` 在扩容后的任务集上完全通过
-  - `task_056` 在扩容后的任务集上完全通过
-  - `task_057` 在扩容后的任务集上完全通过
-  - `task_058` 在扩容后的任务集上完全通过
-  - `task_059` 在扩容后的任务集上完全通过
-  - 公共 `29` 条任务平均耗时从 `0.6115` 上升到 `0.6767`
-  - 说明这轮耗时回升不只是因为新增了 `task_061`
-
-冻结 15 条真实任务后的同集合对比产物：
-
-- frozen manifest：
-  - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
-- baseline：
-  - `logs/summaries/batch_eval_frozen15v16_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen15v17_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen15_step1_001.json`
-  - `success_rate: 0.9333 -> 1.0`
-  - `test_pass_rate: 0.9333 -> 1.0`
-  - `Premature Finish: 1 -> 0`
-  - `task_036` 从 `Premature Finish` 变为完全通过
-
-冻结 18 条真实任务后的同集合对比产物：
-
-- frozen manifest：
-  - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`
-- baseline：
-  - `logs/summaries/batch_eval_frozen18v19_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen18v20_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen18_step1_001.json`
-  - `success_rate: 0.9444 -> 1.0`
-  - `test_pass_rate: 0.9444 -> 1.0`
-  - `Premature Finish: 1 -> 0`
-  - `task_042` 从 `Premature Finish` 变为完全通过
-
-冻结 20 条真实任务后的同集合对比产物：
-
-- frozen manifest：
-  - `benchmarks/manifests/real_issue_tasks_frozen_20_v1.json`
-- baseline：
-  - `logs/summaries/batch_eval_frozen20v21_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen20v22_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen20_step1_001.json`
-  - `success_rate: 0.95 -> 1.0`
-  - `test_pass_rate: 0.95 -> 1.0`
-  - `Premature Finish: 1 -> 0`
-  - `task_046` 从 `Premature Finish` 变为完全通过
-
-冻结 20 条真实任务上的后续无回归对比产物：
-
-- baseline：
-  - `logs/summaries/batch_eval_frozen20v22_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen20v23_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen20_step2_001.json`
-  - `success_rate: 1.0 -> 1.0`
-  - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.5569 -> 0.554`
-  - 说明新增 `packaging` 规则没有破坏已有固定任务集
-
-冻结 20 条真实任务上的最新无回归对比产物：
-
-- baseline：
-  - `logs/summaries/batch_eval_frozen20v23_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen20v24_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen20_step3_001.json`
-  - `success_rate: 1.0 -> 1.0`
-  - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.554 -> 0.548`
-  - 说明新增日期 parser 规则也没有破坏已有固定任务集
-
-冻结 20 条真实任务上的最新一轮无回归对比产物：
-
-- baseline：
-  - `logs/summaries/batch_eval_frozen20v24_001.json`
-- improved：
-  - `logs/summaries/batch_eval_frozen20v25_001.json`
-- compare：
-  - `logs/summaries/batch_compare_frozen20_step4_001.json`
-  - `success_rate: 1.0 -> 1.0`
-  - `test_pass_rate: 1.0 -> 1.0`
-  - `average_duration_sec: 0.548 -> 0.5584`
-  - 说明新增 ErrorTree 只读访问规则没有破坏已有固定任务集
-  - `logs/summaries/duration_compare_frozen20v32_001.json`
-  - 公共 `20` 条任务平均耗时差值：`+0.0652s`
-  - 回升最明显的任务包括：`task_040`、`task_038`、`task_036`、`task_034`
-
-## Harness 设计方向
-
-这个项目会借鉴 `learn-claude-code` 的核心思路，但不会照搬整套复杂机制。当前已确定的方向是：
-
-- 保持 Agent loop 尽量简单，把工程重点放在 harness
-- 工具层使用显式接口和统一返回结构
-- 路径访问始终受工作区边界约束
-- 每次 run 的目录和产物文件作为真实状态源
-- 工作副本隔离优先于“直接改 benchmark 原仓库”
-
-更细的设计见 [docs/harness.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/harness.md)。
-
-真实 issue 的筛选标准见 [docs/issue_sourcing_spec.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/issue_sourcing_spec.md)。
-
-如果你想快速冷启动后续工作，也建议优先看：
-
-- [docs/project_memory.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/project_memory.md)
-- [docs/next_actions.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/next_actions.md)
-- [docs/candidate_shortlist.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/candidate_shortlist.md)
-- [docs/benchmark_registry.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/benchmark_registry.md)
-
-## 下一步
-
-下一阶段将继续深化 `Phase 6 - 优化系统`，重点实现：
-
-- 扩充 report set
-- 增加更自动化的实验报告、候选导入与性能分析沉淀
-- 逐步接入 GitHub 真实仓库 issue 作为更正式的评测来源
-- 把真实 GitHub issue 入口跑成更稳定的批量评测流水线
-- 继续定位最近几轮 `average_duration_sec` 回升的具体原因
-- 继续做 prompt / policy / grader 组合优化
-- 形成更有说服力的 improved 对比
-
-更详细的阶段说明、体验方式和文件职责见 [GUIDE.md](/E:/My_Projects/agentic-software-engineering-roadmap/GUIDE.md)。
+## 技术栈
+
+- Python
+- Pydantic
+- pytest
+- subprocess 驱动的测试执行
+- 文件级 patch / diff
+- manifest 驱动的 benchmark 管理
+
+OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON trace、评测报告和稳定性复跑做扎实，再考虑更重的观测栈。
+
+## 文档导航
+
+- 架构说明：[docs/architecture.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/architecture.md)
+- 实验摘要：[docs/experiment_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/experiment_summary.md)
+- 完整结果日志：[docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md)
+- Harness 设计：[docs/harness.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/harness.md)
+- 基准任务注册表：[docs/benchmark_registry.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/benchmark_registry.md)
+- Challenge 说明：[docs/challenge_set.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/challenge_set.md)
+- Challenge 候选短名单：[docs/challenge_shortlist.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/challenge_shortlist.md)
+- 项目实施指南：[GUIDE.md](/E:/My_Projects/agentic-software-engineering-roadmap/GUIDE.md)
+- V2 路线图：[docs/v2_roadmap.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/v2_roadmap.md)
+
+## 当前阶段判断
+
+这已经不是一个“做出最小 demo”的阶段了。
+
+当前项目更接近一个可持续迭代的 benchmark 基础设施：
+
+- 有正式集
+- 有冻结集
+- 有策略版本化
+- 有批量评测
+- 有稳定性复跑
+- 有 maturity 审计
+
+接下来的重点不再是单纯追求任务数量，而是继续提升展示层、稳定性门控、生态均衡度和真实 issue 导入效率。

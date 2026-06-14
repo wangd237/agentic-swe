@@ -148,3 +148,126 @@ def test_update_candidate_status_appends_notes(tmp_path: Path) -> None:
     assert candidate["status"] == "scaffolded"
     assert "已有记录" in candidate["notes"]
     assert "已生成 semi_real 脚手架 task_010。" in candidate["notes"]
+
+
+def test_infer_target_paths_supports_python_symbol_heuristic() -> None:
+    candidate = {
+        "candidate_id": "agronholm_anyio_issue_1113",
+        "repo_full_name": "agronholm/anyio",
+        "issue_number": 1113,
+        "body_excerpt": "CancelledError leaks from from_thread.check_cancelled on Asyncio backend",
+        "expected_target_files": [],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "anyio_check_cancelled_repo",
+        "This test passes on trio but not asyncio: from_thread.check_cancelled()",
+    )
+
+    assert module_path == "anyio/from_thread.py"
+    assert test_path == "tests/test_from_thread.py"
+
+
+def test_infer_target_paths_ignores_github_url_noise_and_prefers_repo_blob_path() -> None:
+    candidate = {
+        "candidate_id": "samuelcolvin_watchfiles_issue_266",
+        "repo_full_name": "samuelcolvin/watchfiles",
+        "issue_number": 266,
+        "body_excerpt": (
+            "Thanks to https://github.com/samuelcolvin/watchfiles/blob/main/watchfiles/main.py#L33 "
+            "and another note about github.com noise."
+        ),
+        "expected_target_files": [],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "watchfiles_266_repo",
+        (
+            "See https://github.com/samuelcolvin/watchfiles/blob/main/watchfiles/main.py#L33 "
+            "for the current error_handler behavior."
+        ),
+    )
+
+    assert module_path == "watchfiles/main.py"
+    assert test_path == "tests/test_main.py"
+
+
+def test_infer_target_paths_falls_back_to_package_module_when_only_test_hint_exists() -> None:
+    candidate = {
+        "candidate_id": "agronholm_anyio_issue_82",
+        "repo_full_name": "agronholm/anyio",
+        "issue_number": 82,
+        "body_excerpt": "CancelledError leak with asyncio and curio",
+        "expected_target_files": ["test_anyio.py"],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "anyio_82_repo",
+        "The regression currently only mentions test_anyio.py in the report.",
+    )
+
+    assert module_path == "anyio/module.py"
+    assert test_path == "test_anyio.py"
+
+
+def test_infer_target_paths_treats_fail_case_as_repro_script_not_target_module() -> None:
+    candidate = {
+        "candidate_id": "agronholm_anyio_issue_88",
+        "repo_full_name": "agronholm/anyio",
+        "issue_number": 88,
+        "body_excerpt": "Parent task spuriously cancelled with asyncio",
+        "expected_target_files": ["fail_case.py"],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "anyio_88_repo",
+        "The report only links to fail_case.py as a standalone reproducer.",
+    )
+
+    assert module_path == "anyio/module.py"
+    assert test_path == "tests/test_fail_case.py"
+
+
+def test_infer_target_paths_treats_foobar_as_repro_script_not_target_module() -> None:
+    candidate = {
+        "candidate_id": "samuelcolvin_watchfiles_issue_169",
+        "repo_full_name": "samuelcolvin/watchfiles",
+        "issue_number": 169,
+        "body_excerpt": (
+            "The docs example uses foobar.py on Windows, "
+            "but no change events fire on WSL or Docker."
+        ),
+        "expected_target_files": ["foobar.py"],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "watchfiles_169_repo",
+        "The MRE is straight from the docs and edits foobar.py, but the real behavior belongs in watchfiles internals.",
+    )
+
+    assert module_path == "watchfiles/module.py"
+    assert test_path == "tests/test_foobar.py"
+
+
+def test_infer_target_paths_treats_root_level_scripts_as_repro_only() -> None:
+    candidate = {
+        "candidate_id": "Textualize_rich_issue_2411",
+        "repo_full_name": "Textualize/rich",
+        "issue_number": 2411,
+        "body_excerpt": "Console.rule() crashes through run.py and rich_script.py on Windows.",
+        "expected_target_files": ["rich_script.py", "run.py"],
+    }
+
+    module_path, test_path = scaffold.infer_target_paths(
+        candidate,
+        "rich_2411_repo",
+        "The reproducer uses run.py to launch rich_script.py, but the real fix belongs in Rich internals.",
+    )
+
+    assert module_path == "rich/module.py"
+    assert test_path == "tests/test_rich_script.py"

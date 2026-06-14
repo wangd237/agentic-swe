@@ -1,0 +1,13 @@
+{
+  "policy_id": "improved_v67",
+  "description": "在 improved_v66 的修复能力基础上，继续沿用 anyio 两条规则型修复，并额外关闭 pytest 的 debugging、unraisableexception、threadexception 插件，验证更保守的 runtime 裁剪能否回收冻结集耗时。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v66",
+  "pytest_additional_flags": [
+    "-p no:debugging",
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

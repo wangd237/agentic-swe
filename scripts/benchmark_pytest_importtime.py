@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.runtime.logger import write_json, write_text
+from app.agent.policy import load_policy_config
 from app.schemas.task_schema import load_task
 from app.tools.run_tests import run_tests
 
@@ -261,9 +262,11 @@ def build_pytest_importtime_benchmark(
     task_path: str | Path,
     repo_root: str | Path,
     repetitions: int = 3,
+    policy_path: str | Path | None = None,
 ) -> dict:
     repository_root = Path(repo_root).resolve()
     task = load_task(task_path)
+    policy_config = load_policy_config(policy_path)
     source_repo_path = (repository_root / task.repo_path).resolve()
     if not source_repo_path.exists():
         raise FileNotFoundError(f"任务 repo 不存在: {source_repo_path}")
@@ -273,7 +276,12 @@ def build_pytest_importtime_benchmark(
     for phase_name, command in phase_commands.items():
         records: list[dict] = []
         for run_index in range(1, repetitions + 1):
-            result = run_tests(str(source_repo_path), command, timeout_sec=30)
+            result = run_tests(
+                str(source_repo_path),
+                command,
+                timeout_sec=30,
+                additional_pytest_flags=policy_config.pytest_additional_flags,
+            )
             records.append(_build_run_record(phase_name, run_index, command, result))
         phase_summaries[phase_name] = _build_phase_summary(phase_name, command, records)
 
@@ -284,6 +292,9 @@ def build_pytest_importtime_benchmark(
         "source_repo_path": str(source_repo_path),
         "test_command": task.test_command,
         "repetitions": repetitions,
+        "policy_id": policy_config.policy_id,
+        "policy_path": str(Path(policy_path).resolve()) if policy_path is not None else None,
+        "pytest_additional_flags": policy_config.pytest_additional_flags,
         "phase_summaries": phase_summaries,
         "derived_metrics": _build_derived_metrics(phase_summaries),
     }
@@ -310,6 +321,8 @@ def build_pytest_importtime_markdown(summary: dict) -> str:
 - task_id: `{summary["task_id"]}`
 - test_command: `{summary["test_command"]}`
 - repetitions: `{summary["repetitions"]}`
+- policy_id: `{summary["policy_id"]}`
+- pytest_additional_flags: `{' '.join(summary["pytest_additional_flags"]) or '(none)'}`
 
 ## Phases
 
@@ -334,6 +347,7 @@ def benchmark_pytest_importtime(
     task_path: str | Path,
     repo_root: str | Path,
     repetitions: int = 3,
+    policy_path: str | Path | None = None,
     output_dir: str | Path = "logs/summaries",
     benchmark_label: str | None = None,
 ) -> dict:
@@ -341,6 +355,7 @@ def benchmark_pytest_importtime(
         task_path=task_path,
         repo_root=repo_root,
         repetitions=repetitions,
+        policy_path=policy_path,
     )
     label = benchmark_label or summary["task_id"]
     output_directory = Path(output_dir).resolve()
@@ -366,6 +381,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--task", required=True, help="任务 JSON 路径")
     parser.add_argument("--repo-root", default=".", help="仓库根目录")
     parser.add_argument("--repetitions", type=int, default=3, help="每个阶段重复次数")
+    parser.add_argument("--policy", default=None, help="可选策略 JSON 路径")
     parser.add_argument("--output-dir", default="logs/summaries", help="输出目录")
     parser.add_argument("--benchmark-label", default=None, help="可选输出标签")
     return parser
@@ -377,6 +393,7 @@ def main() -> int:
         task_path=args.task,
         repo_root=args.repo_root,
         repetitions=args.repetitions,
+        policy_path=args.policy,
         output_dir=args.output_dir,
         benchmark_label=args.benchmark_label,
     )
@@ -386,6 +403,7 @@ def main() -> int:
     print(f"benchmark_id: {output['benchmark_id']}")
     print(f"task_id: {summary['task_id']}")
     print(f"repetitions: {summary['repetitions']}")
+    print(f"policy_id: {summary['policy_id']}")
     print(f"average_collect_wall_delta_sec: {derived['average_collect_wall_delta_sec']}")
     print(f"average_collect_import_self_delta_us: {derived['average_collect_import_self_delta_us']}")
     print(f"average_collect_unique_module_delta: {derived['average_collect_unique_module_delta']}")

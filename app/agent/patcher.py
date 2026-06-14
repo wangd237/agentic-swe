@@ -137,6 +137,29 @@ def _handle_richhandler_timezone(content: str) -> str | None:
     return content.replace(target_block, replacement, 1)
 
 
+def _handle_rich_windows_no_color_legacy_branch(content: str) -> str | None:
+    # improved_v72 处理 legacy Windows + vt=False 分支忽略 no_color 的问题。
+    target_block = (
+        "        if self.legacy_windows and not self.features.vt:\n"
+        "            # 这里故意保留 rich#2457 的缺陷：Windows 旧控制台分支忽略 no_color。\n"
+        '            return f"<WIN:{style}>{text}</WIN:{style}>"\n\n'
+        "        if self.no_color:\n"
+        "            return text"
+    )
+    if target_block not in content:
+        return None
+    if "if self.no_color:\n            return text\n\n        if self.legacy_windows and not self.features.vt:" in content:
+        return None
+
+    replacement = (
+        "        if self.no_color:\n"
+        "            return text\n\n"
+        "        if self.legacy_windows and not self.features.vt:\n"
+        '            return f"<WIN:{style}>{text}</WIN:{style}>"'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
 def _handle_negative_boolean_default(content: str) -> str | None:
     # improved_v7 处理负向布尔 flag 在 default=True 时被错误覆盖的问题。
     target_block = (
@@ -1479,6 +1502,153 @@ def _handle_tomlkit_integer_key_normalization(content: str) -> str | None:
         '    def __init__(self, key: str | int) -> None:\n'
         '        normalized = str(key)\n'
         '        self.name = normalized'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_fsspec_unstrip_protocol_prefix_guard(content: str) -> str | None:
+    # improved_v64 处理 unstrip_protocol 只按协议前缀字符串判断，导致误把普通路径当成已有协议的问题。
+    target_block = (
+        '        if path.startswith(self.protocol):\n'
+        '            return path\n'
+        '        return f"{self.protocol}://{path}"'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        '        if path.startswith(f"{self.protocol}://"):\n'
+        '            return path\n'
+        '        return f"{self.protocol}://{path}"'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_anyio_taskgroup_reentry_guard(content: str) -> str | None:
+    # improved_v65 处理重复进入同一个 TaskGroup 时泄漏内部 AttributeError 的问题。
+    target_block = (
+        '    async def __aenter__(self) -> "TaskGroup":\n'
+        '        """第一次进入时初始化状态，重复进入时故意保留 bug。"""\n\n'
+        "        if not self._entered_once:\n"
+        "            self._exceptions: list[BaseException] = []\n"
+        "            self._entered_once = True\n"
+        "        return self"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        '    async def __aenter__(self) -> "TaskGroup":\n'
+        '        """重复进入同一个 task group 时，抛出受控错误。"""\n\n'
+        "        if self._entered_once:\n"
+        '            raise RuntimeError("TaskGroup cannot be re-entered")\n'
+        "        self._exceptions: list[BaseException] = []\n"
+        "        self._entered_once = True\n"
+        "        return self"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_anyio_completed_task_cancellation_guard(content: str) -> str | None:
+    # improved_v66 处理 _deliver_cancellation 遇到已完成 task 时持续自我重排的问题。
+    target_block = (
+        "        should_retry = False\n"
+        "        for task in list(self._tasks):\n"
+        "            if task.done():\n"
+        "                # bug: 已完成 task 仍然会触发下一轮 call_soon，导致持续自我重排。\n"
+        "                should_retry = True\n"
+        "                continue\n\n"
+        "            task.request_cancel()\n"
+        "            self._tasks.discard(task)\n\n"
+        "        if should_retry:\n"
+        "            loop.call_soon(lambda: self._deliver_cancellation(loop))"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "        for task in list(self._tasks):\n"
+        "            if task.done():\n"
+        "                # 已完成 task 不再参与后续重排，并立即从追踪集合移除。\n"
+        "                self._tasks.discard(task)\n"
+        "                continue\n\n"
+        "            task.request_cancel()\n"
+        "            self._tasks.discard(task)"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_anyio_from_thread_cancel_scope_guard(content: str) -> str | None:
+    # improved_v69 处理 asyncio backend 下 CancelledError 泄漏出传入 cancel scope 的问题。
+    target_block = (
+        "class AsyncioBackend:\n"
+        '    """故意保留 bug：绕过传入的取消作用域，导致取消异常泄漏。"""\n\n'
+        '    name = "asyncio"\n\n'
+        "    def deliver_cancellation(self, scope: CancelScope) -> None:\n"
+        '        raise CancelledError("escaped cancel scope on asyncio backend")'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        "class AsyncioBackend:\n"
+        '    """asyncio backend 也应在对应 cancel scope 内部消费取消异常。"""\n\n'
+        '    name = "asyncio"\n\n'
+        "    def deliver_cancellation(self, scope: CancelScope) -> None:\n"
+        "        with scope:\n"
+        '            raise CancelledError("escaped cancel scope on asyncio backend")'
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_anyio_parent_task_cancel_guard(content: str) -> str | None:
+    # improved_v70 处理 asyncio backend 下父任务被额外取消的问题。
+    target_block = (
+        'def _run_inner_flow(backend_name: str, state: ParentTaskState) -> None:\n'
+        '    """故意保留 asyncio backend 会把父任务一并取消的 bug。"""\n\n'
+        "    _child_task_fails()\n"
+        '    if backend_name == "asyncio":\n'
+        '        raise ParentTaskCancelledError("parent task spuriously cancelled")\n\n'
+        "    # trio / curio 对照路径：子任务失败不会让父任务清理流程被额外取消。\n"
+        "    state.completed = True"
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        'def _run_inner_flow(backend_name: str, state: ParentTaskState) -> None:\n'
+        '    """子任务失败后，各 backend 都应允许父任务完成清理。"""\n\n'
+        "    _child_task_fails()\n"
+        "    if backend_name not in {\"asyncio\", \"trio\", \"curio\"}:\n"
+        '        raise ValueError(f"unsupported backend: {backend_name}")\n\n'
+        "    # asyncio 不应把父任务额外取消；父任务应像其它 backend 一样完成清理。\n"
+        "    state.completed = True"
+    )
+    return content.replace(target_block, replacement, 1)
+
+
+def _handle_anyio_nested_cancelled_error_leak_guard(content: str) -> str | None:
+    # improved_v71 处理 asyncio / curio backend 在嵌套 task group 中泄漏取消异常的问题。
+    target_block = (
+        'def _run_nested_failure_flow(backend_name: str, state: RunState) -> None:\n'
+        '    """故意保留 asyncio / curio backend 会泄漏取消异常的 bug。"""\n\n'
+        "    _child_task_fails()\n"
+        '    if backend_name in {"asyncio", "curio"}:\n'
+        '        raise CancelledErrorLeak("cancelled error leaked from nested task groups")\n\n'
+        "    # trio 对照路径：父流程应看到原始业务错误，而不是额外取消。\n"
+        '    raise NestedTaskGroupError("nested task group surfaced the child failure")'
+    )
+    if target_block not in content:
+        return None
+
+    replacement = (
+        'def _run_nested_failure_flow(backend_name: str, state: RunState) -> None:\n'
+        '    """所有 backend 都应把原始嵌套失败语义交还给父流程。"""\n\n'
+        "    _child_task_fails()\n"
+        "    if backend_name not in {\"asyncio\", \"curio\", \"trio\"}:\n"
+        '        raise ValueError(f"unsupported backend: {backend_name}")\n\n'
+        "    # asyncio / curio 不应额外泄漏取消异常；父流程应统一看到原始业务错误。\n"
+        '    raise NestedTaskGroupError("nested task group surfaced the child failure")'
     )
     return content.replace(target_block, replacement, 1)
 
@@ -2837,109 +3007,144 @@ def apply_rule_based_patch(
                                                                                                 updated_content = improved_content
                                                                                                 patch_reason_parts.append("加入 None 元素过滤逻辑")
 
-        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41", "improved_v61", "improved_v62", "improved_v63"}:
+        if policy_config.patch_strategy in {"improved_v25", "improved_v26", "improved_v27", "improved_v28", "improved_v29", "improved_v30", "improved_v31", "improved_v32", "improved_v34", "improved_v35", "improved_v36", "improved_v37", "improved_v38", "improved_v39", "improved_v40", "improved_v41", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"}:
             run_v34_fallback_chain = False
-        if policy_config.patch_strategy == "improved_v63":
+        if policy_config.patch_strategy == "improved_v72":
+            improved_v72_content = _handle_rich_windows_no_color_legacy_branch(original_content)
+            if improved_v72_content is not None:
+                updated_content = improved_v72_content
+                patch_reason_parts = ["让 legacy Windows + vt=False 分支先遵守 no_color，再决定是否输出 Windows 样式"]
+        if policy_config.patch_strategy in {"improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v71_content = _handle_anyio_nested_cancelled_error_leak_guard(original_content)
+            if improved_v71_content is not None:
+                updated_content = improved_v71_content
+                patch_reason_parts = ["让 anyio 在 asyncio 与 curio backend 下都把嵌套 task group 的原始失败语义交还给父流程，避免额外泄漏 CancelledError"]
+        if policy_config.patch_strategy in {"improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v70_content = _handle_anyio_parent_task_cancel_guard(original_content)
+            if improved_v70_content is not None:
+                updated_content = improved_v70_content
+                patch_reason_parts = ["让 anyio 在 asyncio backend 下也允许父任务完成清理，避免额外抛出 ParentTaskCancelledError"]
+        if policy_config.patch_strategy in {"improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v69_content = _handle_anyio_from_thread_cancel_scope_guard(original_content)
+            if improved_v69_content is not None:
+                updated_content = improved_v69_content
+                patch_reason_parts = ["让 anyio from_thread.check_cancelled 在 asyncio backend 下也通过传入 cancel scope 吃掉 CancelledError"]
+        if policy_config.patch_strategy in {"improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v66_content = _handle_anyio_completed_task_cancellation_guard(original_content)
+            if improved_v66_content is not None:
+                updated_content = improved_v66_content
+                patch_reason_parts = ["让 anyio _deliver_cancellation 遇到已完成 task 时直接清理集合，避免继续 call_soon 触发 cancellation spin"]
+        if policy_config.patch_strategy in {"improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v65_content = _handle_anyio_taskgroup_reentry_guard(original_content)
+            if improved_v65_content is not None:
+                updated_content = improved_v65_content
+                patch_reason_parts = ["让重复进入同一个 TaskGroup 时抛出受控 RuntimeError，而不是泄漏内部 _exceptions 属性错误"]
+        if policy_config.patch_strategy in {"improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
+            improved_v64_content = _handle_fsspec_unstrip_protocol_prefix_guard(original_content)
+            if improved_v64_content is not None:
+                updated_content = improved_v64_content
+                patch_reason_parts = ["让 unstrip_protocol 只在路径已带 `protocol://` 时保留原串，避免把普通前缀相似路径误判为已有协议"]
+        if policy_config.patch_strategy in {"improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
             improved_v63_content = _handle_tomlkit_integer_key_normalization(original_content)
             if improved_v63_content is not None:
                 updated_content = improved_v63_content
                 patch_reason_parts = ["让 tomlkit 容器在 int key 场景下先转成字符串，再做最小 key 归一化，避免把原始 int 当成可迭代对象"]
-        if policy_config.patch_strategy in {"improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
             improved_v62_content = _handle_tomlkit_bool_comment_item_wrapper(original_content)
             if improved_v62_content is not None:
                 updated_content = improved_v62_content
                 patch_reason_parts = ["让 tomlkit table 中的 bool 项也像其它 item 一样被包装，从而支持后续追加 comment"]
-        if policy_config.patch_strategy in {"improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
             improved_v61_content = _handle_tomlkit_negative_integer_flip(original_content)
             if improved_v61_content is not None:
                 updated_content = improved_v61_content
                 patch_reason_parts = ["让 tomlkit 负整数值对象在原地乘以 -1 后直接回写规范数字文本，避免进入 +x 或 --x 符号循环"]
-        if policy_config.patch_strategy in {"improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71", "improved_v72"} and updated_content == original_content:
             improved_v60_content = _handle_pytest_expression_backslash_scope(original_content)
             if improved_v60_content is not None:
                 updated_content = improved_v60_content
                 patch_reason_parts = ["让 pytest expression scanner 只在当前字符串字面量范围内检查反斜杠"]
-        if policy_config.patch_strategy in {"improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v59_content = _handle_distlib_wheel_build_tag(original_content)
             if improved_v59_content is not None:
                 updated_content = improved_v59_content
                 patch_reason_parts = ["让 distlib WHEEL metadata 在存在 buildver 时正确写入 Build 行"]
-        if policy_config.patch_strategy in {"improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"}:
+        if policy_config.patch_strategy in {"improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"}:
             improved_v58_content = _handle_click_usage_break_on_hyphens(original_content)
             if improved_v58_content is not None:
                 updated_content = improved_v58_content
                 patch_reason_parts = ["让 click usage 文本在宽度换行时不再从连字符处拆断长选项"]
-        if policy_config.patch_strategy in {"improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"}:
+        if policy_config.patch_strategy in {"improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"}:
             improved_v57_content = _handle_packaging_roundtrip_normalized_name(original_content)
             if improved_v57_content is not None:
                 updated_content = improved_v57_content
                 patch_reason_parts = ["让 is_normalized_name 与 canonicalize_name 的稳定输出语义保持一致"]
-        if policy_config.patch_strategy in {"improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"}:
+        if policy_config.patch_strategy in {"improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"}:
             improved_v56_content = _handle_tomlkit_single_element_key_spec(original_content)
             if improved_v56_content is not None:
                 updated_content = improved_v56_content
                 patch_reason_parts = ["让单元素列表 key 规范退化成 SingleKey，并与单字符串输入保持一致"]
-        if policy_config.patch_strategy in {"improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"}:
+        if policy_config.patch_strategy in {"improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"}:
             improved_v55_content = _handle_pytest_nested_caplog_filtering(original_content)
             if improved_v55_content is not None:
                 updated_content = improved_v55_content
                 patch_reason_parts = ["让嵌套 caplog filtering 在内层退出后继续保留外层仍在使用的 filter"]
-        if policy_config.patch_strategy in {"improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v54_content = _handle_tomlkit_comment_anchor_after_subtable_insert(original_content)
             if improved_v54_content is not None:
                 updated_content = improved_v54_content
                 patch_reason_parts = ["让 AoT 条目追加子表后继续保留后续 routes 注释的原始锚点位置"]
-        if policy_config.patch_strategy in {"improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v53_content = _handle_tomlkit_out_of_order_repeated_array_tables(original_content)
             if improved_v53_content is not None:
                 updated_content = improved_v53_content
                 patch_reason_parts = ["让 repeated array table 与同级子表共存时按整组列表写入代理，避免重复键异常"]
-        if policy_config.patch_strategy in {"improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v52_content = _handle_jinja_macro_include_without_context(original_content)
             if improved_v52_content is not None:
                 updated_content = improved_v52_content
                 patch_reason_parts = ["让 jinja macro 内部的 include without context 输出真实模板内容，而不是 generator repr"]
-        if policy_config.patch_strategy in {"improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v51_content = _handle_click_progressbar_final_position(original_content)
             if improved_v51_content is not None:
                 updated_content = improved_v51_content
                 patch_reason_parts = ["让 click progressbar 在 show_pos=True 时结束态始终显示完整位置"]
-        if policy_config.patch_strategy in {"improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v50_content = _handle_click_version_option_package_name(original_content)
             if improved_v50_content is not None:
                 updated_content = improved_v50_content
                 patch_reason_parts = ["让 click version_option 在显式传入 package_name 时优先使用该包名"]
-        if policy_config.patch_strategy in {"improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v49_content = _handle_click_confirm_color_false_ansi(original_content)
             if improved_v49_content is not None:
                 updated_content = improved_v49_content
                 patch_reason_parts = ["让 click confirm 在 color=False 时像 echo 一样去除 ANSI 控制序列"]
-        if policy_config.patch_strategy in {"improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v48_content = _handle_packaging_direct_url_file_scheme(original_content)
             if improved_v48_content is not None:
                 updated_content = improved_v48_content
                 patch_reason_parts = ["让 file URL 的 scheme 按大小写不敏感方式处理，并接受单斜杠 file 形式"]
-        if policy_config.patch_strategy in {"improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v47_content = _handle_jinja_map_default_none(original_content)
             if improved_v47_content is not None:
                 updated_content = improved_v47_content
                 patch_reason_parts = ["让 map(attribute=..., default=None) 也像其他显式默认值一样正常回落"]
-        if policy_config.patch_strategy in {"improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v46_content = _handle_tomlkit_proxy_repr_missing_children(original_content)
             if improved_v46_content is not None:
                 updated_content = improved_v46_content
                 patch_reason_parts = ["让代理视图 repr 保留同一父路径下的全部 dotted key 子项"]
-        if policy_config.patch_strategy in {"improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v45_content = _handle_pydantic_fraction_zero_division(original_content)
             if improved_v45_content is not None:
                 updated_content = improved_v45_content
                 patch_reason_parts = ["让零分母 fraction 输入也统一映射为 ValidationError，而不是冒泡 ZeroDivisionError"]
-        if policy_config.patch_strategy in {"improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v44_content = _handle_packaging_requirement_pickle_prereleases(original_content)
             if improved_v44_content is not None:
                 updated_content = improved_v44_content
                 patch_reason_parts = ["让 Requirement 在 pickle 后保留 specifier.prereleases 的显式设置值"]
-        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63"} and updated_content == original_content:
+        if policy_config.patch_strategy in {"improved_v43", "improved_v44", "improved_v45", "improved_v46", "improved_v47", "improved_v48", "improved_v49", "improved_v50", "improved_v51", "improved_v52", "improved_v53", "improved_v54", "improved_v55", "improved_v56", "improved_v57", "improved_v58", "improved_v59", "improved_v60", "improved_v61", "improved_v62", "improved_v63", "improved_v64", "improved_v65", "improved_v66", "improved_v69", "improved_v70", "improved_v71"} and updated_content == original_content:
             improved_v43_content = _handle_tomlkit_scalar_replacement_scope(original_content)
             if improved_v43_content is not None:
                 updated_content = improved_v43_content

@@ -40,13 +40,13 @@ def test_summarize_candidate_statuses_groups_counts() -> None:
         "candidates": [
             {"status": "accepted"},
             {"status": "accepted"},
-            {"status": "drafted"},
+            {"status": "imported"},
         ]
     }
 
     summary = real_issue_eval.summarize_candidate_statuses(dataset)
 
-    assert summary == {"accepted": 2, "drafted": 1}
+    assert summary == {"accepted": 2, "imported": 1}
 
 
 def test_summarize_manifest_tasks_counts_source_types(tmp_path: Path) -> None:
@@ -88,20 +88,34 @@ def test_run_real_issue_eval_pipeline_orchestrates_batch_eval_and_compare(
             "tasks": ["benchmarks/tasks/task_101.json", "benchmarks/tasks/task_102.json"],
         },
     )
-    write_json(tasks_dir / "task_101.json", {"task_id": "task_101", "source_type": "semi_real"})
-    write_json(tasks_dir / "task_102.json", {"task_id": "task_102", "source_type": "semi_real"})
+    write_json(
+        tasks_dir / "task_101.json",
+        {
+            "task_id": "task_101",
+            "source_type": "semi_real",
+            "metadata": {"candidate_id": "c1"},
+        },
+    )
+    write_json(
+        tasks_dir / "task_102.json",
+        {
+            "task_id": "task_102",
+            "source_type": "semi_real",
+            "metadata": {"candidate_id": "c2"},
+        },
+    )
     write_json(
         candidate_file,
         {
             "dataset_id": "demo",
             "description": "demo",
-            "selection_criteria": [],
-            "candidates": [
-                {"candidate_id": "c1", "status": "accepted"},
-                {"candidate_id": "c2", "status": "drafted"},
-            ],
-        },
-    )
+                "selection_criteria": [],
+                "candidates": [
+                    {"candidate_id": "c1", "status": "accepted"},
+                    {"candidate_id": "c2", "status": "imported"},
+                ],
+            },
+        )
     write_json(baseline_eval, {"metrics": {}, "taxonomy": {}})
 
     batch_calls: dict[str, object] = {}
@@ -116,7 +130,13 @@ def test_run_real_issue_eval_pipeline_orchestrates_batch_eval_and_compare(
         return {
             "summary_json_path": str(repo_root / "logs" / "summaries" / "batch_run_realissuev9_001.json"),
             "summary_md_path": str(repo_root / "logs" / "summaries" / "batch_run_realissuev9_001.md"),
-            "batch_summary": {"batch_run_id": "batch_run_realissuev9_001"},
+            "batch_summary": {
+                "batch_run_id": "batch_run_realissuev9_001",
+                "tasks": [
+                    {"task_id": "task_101", "final_status": "success"},
+                    {"task_id": "task_102", "final_status": "failed"},
+                ],
+            },
         }
 
     def fake_run_batch_eval(*, batch_summary_path: Path, output_dir: Path, run_label: str) -> dict:
@@ -169,5 +189,5 @@ def test_run_real_issue_eval_pipeline_orchestrates_batch_eval_and_compare(
     assert eval_calls["run_label"] == "realissuev9"
     assert compare_calls["run_label"] == "realissue_step7"
     assert output["task_summary"]["semi_real_count"] == 2
-    assert output["candidate_status_summary"] == {"accepted": 1, "drafted": 1}
+    assert output["candidate_status_summary"] == {"completed": 1, "imported": 1}
     assert output["compare_output"]["compare_id"] == "batch_compare_realissue_step7_001"

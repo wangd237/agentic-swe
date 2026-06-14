@@ -8,6 +8,7 @@
 - 找到某条任务首次通过的 policy 版本
 - 规划下一条 issue 时避免语义重复
 - 判断某条任务是否应该进入后续冻结集合
+- 区分哪些任务属于正式主集，哪些属于 challenge 集
 
 ## 正式真实任务
 
@@ -72,6 +73,19 @@
 | `task_117` | `python-poetry/tomlkit#346` | `tomlkit_negative_int_repo` | 负整数原地翻转时文本符号循环污染 | `improved_v61` | `-` |
 | `task_119` | `python-poetry/tomlkit#450` | `tomlkit_bool_comment_repo` | table 中 bool 项退化成原生值导致 comment API 丢失 | `improved_v62` | `-` |
 | `task_121` | `python-poetry/tomlkit#412` | `tomlkit_int_key_repo` | 容器接口对整数 key 的规范化与解析路径语义不一致 | `improved_v63` | `-` |
+| `task_122` | `fsspec/filesystem_spec#979` | `fsspec_unstrip_protocol_repo` | `unstrip_protocol()` 在前缀相似路径上错误返回原串 | `improved_v64` | `-` |
+| `task_123` | `agronholm/anyio#1109` | `anyio_taskgroup_reentry_repo` | 重复进入 `TaskGroup` 时泄漏内部 `_exceptions` 属性错误 | `improved_v65` | `-` |
+| `task_124` | `agronholm/anyio#1111` | `anyio_cancellation_spin_repo` | `_deliver_cancellation()` 遇到已完成 task 时持续自我重排 | `improved_v66` | `-` |
+| `task_125` | `agronholm/anyio#1113` | `anyio_check_cancelled_repo` | `from_thread.check_cancelled()` 在 asyncio backend 下泄漏取消异常 | `improved_v69` | `-` |
+| `task_128` | `agronholm/anyio#82` | `anyio_82_repo` | asyncio / curio backend 在嵌套 task group 中泄漏取消异常 | `improved_v71` | `-` |
+| `task_129` | `agronholm/anyio#88` | `anyio_88_repo` | asyncio backend 下父任务在子任务失败后被额外取消 | `improved_v70` | `-` |
+
+## Challenge 任务
+
+| task_id | 来源 issue | semi_real repo | 当前状态 | 备注 |
+| --- | --- | --- | --- | --- |
+| `task_126` | `samuelcolvin/watchfiles#266` | `watchfiles_266_repo` | `accepted + ready + in_challenge_manifest` | 当前更适合作为系统边界展示题，暂不并入正式主集 |
+| `task_127` | `samuelcolvin/watchfiles#110` | `watchfiles_110_repo` | `accepted + ready + in_challenge_manifest` | 当前更适合作为 hard case challenge 题，暂不并入正式主集 |
 
 ## 当前覆盖的缺陷类型分布
 
@@ -136,6 +150,10 @@
 
 - 当前正式 manifest：
   - `benchmarks/manifests/real_issue_tasks.json`
+- 当前 challenge manifest：
+  - `benchmarks/manifests/real_issue_tasks_challenge_v1.json`
+- challenge 说明文档：
+  - `docs/challenge_set.md`
 - 当前冻结 manifest：
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`

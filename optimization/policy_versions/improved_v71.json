@@ -1,0 +1,12 @@
+{
+  "policy_id": "improved_v71",
+  "description": "在 improved_v70 的基础上，新增对 anyio 嵌套 task group 在 asyncio / curio backend 下泄漏取消异常场景的规则型修复能力。",
+  "max_steps": 12,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "patch_strategy": "improved_v71",
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

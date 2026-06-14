@@ -105,7 +105,8 @@ def import_issue_batch(
             "issue": entry["issue"],
             "candidate_id": issue_output["candidate"]["candidate_id"],
             "operation": issue_output["operation"],
-            "drafted": False,
+            "candidate_status": issue_output["candidate"]["status"],
+            "draft_task_generated": False,
         }
 
         should_draft = draft_task or entry.get("draft_task", False)
@@ -116,7 +117,7 @@ def import_issue_batch(
                 repo_path=entry.get("repo_path") or repo_path,
                 test_command=entry.get("test_command") or test_command,
             )
-            result_item["drafted"] = True
+            result_item["draft_task_generated"] = True
             result_item["task_id"] = draft_output["task_payload"]["task_id"]
             result_item["task_path"] = str(draft_output["task_path"])
 
@@ -124,14 +125,14 @@ def import_issue_batch(
 
     created_count = sum(1 for item in results if item["operation"] == "created")
     updated_count = sum(1 for item in results if item["operation"] == "updated")
-    drafted_count = sum(1 for item in results if item["drafted"])
+    draft_task_count = sum(1 for item in results if item["draft_task_generated"])
     return {
         "input_path": str(input_path),
         "candidate_file": str(candidate_file),
         "total_count": len(results),
         "created_count": created_count,
         "updated_count": updated_count,
-        "drafted_count": drafted_count,
+        "draft_task_count": draft_task_count,
         "results": results,
     }
 
@@ -178,12 +179,13 @@ def main() -> int:
     print(f"total_count: {output['total_count']}")
     print(f"created_count: {output['created_count']}")
     print(f"updated_count: {output['updated_count']}")
-    print(f"drafted_count: {output['drafted_count']}")
+    print(f"draft_task_count: {output['draft_task_count']}")
     for item in output["results"]:
         task_id = item.get("task_id", "None")
         print(
             f"- {item['repo']}#{item['issue']} -> {item['candidate_id']} "
-            f"(operation: {item['operation']}, drafted: {item['drafted']}, task_id: {task_id})"
+            f"(operation: {item['operation']}, status: {item['candidate_status']}, "
+            f"draft_task_generated: {item['draft_task_generated']}, task_id: {task_id})"
         )
     return 0
 
