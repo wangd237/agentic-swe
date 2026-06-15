@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -18,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.agent.executor import run_agent
+from app.agent.llm_config import LLMConfig
 from app.agent.policy import load_policy_config
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
@@ -64,9 +66,36 @@ def load_policy_specs(policy_paths: list[str | Path]) -> list[dict[str, Any]]:
                 "llm_api_key_env": policy.llm_api_key_env,
                 "llm_base_url_env": policy.llm_base_url_env,
                 "llm_model_env": policy.llm_model_env,
+                "llm_base_url": policy.llm_base_url,
             }
         )
     return specs
+
+
+def preflight_policy_env(policy_specs: list[dict[str, Any]]) -> dict[str, Any]:
+    missing_by_policy: dict[str, list[str]] = {}
+    ready_policies: list[str] = []
+    for policy_spec in policy_specs:
+        missing: list[str] = []
+        api_key_env = policy_spec.get("llm_api_key_env")
+        if api_key_env and not os.environ.get(str(api_key_env), "").strip():
+            missing.append(str(api_key_env))
+
+        base_url_env = policy_spec.get("llm_base_url_env")
+        has_base_url_env = bool(base_url_env and os.environ.get(str(base_url_env), "").strip())
+        has_default_base_url = bool(policy_spec.get("llm_base_url"))
+        if base_url_env and not has_base_url_env and not has_default_base_url:
+            missing.append(str(base_url_env))
+
+        if missing:
+            missing_by_policy[policy_spec["policy_id"]] = missing
+        else:
+            ready_policies.append(policy_spec["policy_id"])
+    return {
+        "ready": not missing_by_policy,
+        "ready_policies": ready_policies,
+        "missing_by_policy": missing_by_policy,
+    }
 
 
 def _record_key(record: dict[str, Any]) -> tuple[str, str]:
@@ -275,9 +304,11 @@ def run_multi_model_eval(
     resume_from: str | Path | None = None,
     limit: int | None = None,
     dry_run: bool = False,
+    preflight: bool = True,
     agent_runner: AgentRunner = run_agent,
 ) -> dict[str, Any]:
     repository_root = Path(repo_root).resolve()
+    LLMConfig.load_env_file(repository_root)
     resolved_manifest_path = Path(manifest_path).resolve()
     output_directory = Path(output_dir).resolve()
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -286,6 +317,16 @@ def run_multi_model_eval(
     manifest_id = manifest.get("manifest_id", resolved_manifest_path.stem)
     task_paths = load_manifest_task_paths(repository_root, resolved_manifest_path)
     policy_specs = load_policy_specs(policy_paths)
+    preflight_result = preflight_policy_env(policy_specs)
+    if preflight and not dry_run and not preflight_result["ready"]:
+        missing_text = "; ".join(
+            f"{policy_id}: {', '.join(names)}"
+            for policy_id, names in preflight_result["missing_by_policy"].items()
+        )
+        raise RuntimeError(
+            "LLM policy preflight failed, missing environment variables: "
+            f"{missing_text}"
+        )
 
     if resume_from is not None:
         resume_payload = _load_json(resume_from)
@@ -349,6 +390,7 @@ def run_multi_model_eval(
                     policy_specs=policy_specs,
                     task_paths=task_paths,
                     records=records,
+                    preflight_result=preflight_result,
                 )
                 _write_summary(summary_path, markdown_path, partial_summary)
 
@@ -360,6 +402,7 @@ def run_multi_model_eval(
         policy_specs=policy_specs,
         task_paths=task_paths,
         records=records,
+        preflight_result=preflight_result,
     )
     _write_summary(summary_path, markdown_path, summary)
     return {
@@ -379,6 +422,7 @@ def _build_summary(
     policy_specs: list[dict[str, Any]],
     task_paths: list[Path],
     records: list[dict[str, Any]],
+    preflight_result: dict[str, Any],
 ) -> dict[str, Any]:
     completed_records = [
         record
@@ -407,6 +451,7 @@ def _build_summary(
         "error_count": len(error_records),
         "success_rate": round(success_count / len(completed_records), 4) if completed_records else 0.0,
         "policies": policy_specs,
+        "preflight": preflight_result,
         "policy_summaries": _build_policy_summaries(records, policy_specs),
         "records": sorted(records, key=lambda item: (str(item.get("policy_id")), str(item.get("task_id")))),
     }
@@ -430,6 +475,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--resume-from", default=None, help="Existing summary JSON to resume.")
     parser.add_argument("--limit", type=int, default=None, help="Limit pending pairs for smoke runs.")
     parser.add_argument("--dry-run", action="store_true", help="Write skipped records without calling APIs.")
+    parser.add_argument(
+        "--no-preflight",
+        action="store_true",
+        help="Skip API key/base URL environment checks before real runs.",
+    )
     return parser
 
 
@@ -447,6 +497,7 @@ def main() -> int:
         resume_from=args.resume_from,
         limit=args.limit,
         dry_run=args.dry_run,
+        preflight=not args.no_preflight,
     )
     summary = output["summary"]
     print("=== Multi-Model Eval Summary ===")

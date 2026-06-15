@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -160,6 +161,7 @@ def test_run_multi_model_eval_resumes_completed_pairs(tmp_path: Path) -> None:
         policy_paths=[policy_dir / "llm_a.json"],
         output_dir=repo_root / "logs" / "summaries",
         resume_from=resume_path,
+        preflight=False,
         agent_runner=fake_runner,
     )
 
@@ -169,3 +171,64 @@ def test_run_multi_model_eval_resumes_completed_pairs(tmp_path: Path) -> None:
     assert summary["completed_count"] == 2
     assert summary["success_count"] == 2
     assert summary["policy_summaries"][0]["success_rate"] == 1.0
+
+
+def test_run_multi_model_eval_loads_env_file_for_preflight(monkeypatch, tmp_path: Path) -> None:
+    repo_root = tmp_path
+    manifest_path = repo_root / "benchmarks" / "manifests" / "frozen.json"
+    task_dir = repo_root / "benchmarks" / "tasks"
+    policy_dir = repo_root / "optimization" / "policy_versions"
+    make_task(task_dir / "task_001.json", "task_001")
+    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
+    write_json(
+        manifest_path,
+        {
+            "manifest_id": "frozen_test",
+            "tasks": ["benchmarks/tasks/task_001.json"],
+        },
+    )
+    (repo_root / ".env").write_text(
+        "LLM_A_API_KEY=secret\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("LLM_A_API_KEY", raising=False)
+
+    output = run_multi_model_eval.run_multi_model_eval(
+        repo_root=repo_root,
+        manifest_path=manifest_path,
+        policy_paths=[policy_dir / "llm_a.json"],
+        output_dir=repo_root / "logs" / "summaries",
+        dry_run=True,
+    )
+
+    assert os.environ["LLM_A_API_KEY"] == "secret"
+    assert output["summary"]["preflight"]["ready"] is True
+
+
+def test_run_multi_model_eval_preflight_reports_missing_env(monkeypatch, tmp_path: Path) -> None:
+    repo_root = tmp_path
+    manifest_path = repo_root / "benchmarks" / "manifests" / "frozen.json"
+    task_dir = repo_root / "benchmarks" / "tasks"
+    policy_dir = repo_root / "optimization" / "policy_versions"
+    make_task(task_dir / "task_001.json", "task_001")
+    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
+    monkeypatch.delenv("LLM_A_API_KEY", raising=False)
+    write_json(
+        manifest_path,
+        {
+            "manifest_id": "frozen_test",
+            "tasks": ["benchmarks/tasks/task_001.json"],
+        },
+    )
+
+    try:
+        run_multi_model_eval.run_multi_model_eval(
+            repo_root=repo_root,
+            manifest_path=manifest_path,
+            policy_paths=[policy_dir / "llm_a.json"],
+            output_dir=repo_root / "logs" / "summaries",
+        )
+    except RuntimeError as error:
+        assert "LLM_A_API_KEY" in str(error)
+    else:
+        raise AssertionError("expected missing API key preflight failure")
