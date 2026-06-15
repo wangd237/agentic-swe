@@ -19,7 +19,7 @@
 - Kimi frozen_40。
 - GLM frozen_40。
 - 三模型正式交集分析。
-- 至少 5 条失败 case 的 trace 级根因分析。
+- 至少 5 条失败 case 的 trace 级根因分析；当前 [docs/failure_deep_dive.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/failure_deep_dive.md) 已完成 `3/5`，剩余 `2` 条等待 Kimi/GLM 真实结果。
 - Target 2 最终版 `docs/model_comparison.md` 和本地 `docs/agent_evolution.md` 收口。
 
 ## 2. 当前事实

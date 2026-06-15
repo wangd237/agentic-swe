@@ -8,6 +8,7 @@
 - Compared with the earlier DeepSeek frozen_40 run (`37/40`, `0.925`), `task_030` and `task_032` are now successful.
 - Remaining DeepSeek failure: `task_048`, incomplete reason `max_iterations`; this is still a packaging `Version.base_version` semantic boundary rather than a scratch-file pollution problem.
 - Current completed Target 2 pairs: `40/120`. Final Target 2 acceptance still requires at least `100` completed `(task, model)` pairs and Kimi/GLM rows.
+- Current failure deep dives: [docs/failure_deep_dive.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/failure_deep_dive.md) has `3/5`; remaining cases should come from Kimi/GLM cross-model failures or inconsistencies.
 
 ## Pending Models
 
