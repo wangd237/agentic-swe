@@ -272,6 +272,31 @@ def test_tool_executor_summarize_for_model_strips_write_content() -> None:
     assert "secret content" not in summary
 
 
+def test_tool_executor_summarize_for_model_warns_for_scratch_write() -> None:
+    result = {
+        "ok": True,
+        "tool_name": "write_file",
+        "summary": "已写入文件 debug.py。",
+        "data": {
+            "relative_path": "debug.py",
+            "content_length": 100,
+        },
+        "commit": {
+            "hash": "abc1234",
+            "message": "write_file: debug.py",
+            "relative_path": "debug.py",
+        },
+        "error": None,
+    }
+
+    summary = ToolExecutor.summarize_for_model(result, max_chars=1000)
+    payload = json.loads(summary)
+
+    assert "scratch_file_warning" in payload
+    assert "undo" in payload["scratch_file_warning"]
+    assert "target source file" in payload["scratch_file_warning"]
+
+
 def test_tool_executor_summarize_for_model_limits_grep_matches() -> None:
     matches = [
         {

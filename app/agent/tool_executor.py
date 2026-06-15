@@ -17,6 +17,9 @@ from app.tools.show_diff import show_diff
 from app.tools.write_file import write_file
 
 
+SCRATCH_FILE_NAMES = {"debug.py", "tmp.py", "scratch.py", "probe.py"}
+
+
 class ToolExecutor:
     """把字符串工具名分发到现有工具实现。"""
 
@@ -258,6 +261,12 @@ class ToolExecutor:
             payload["data"] = compact_data
             if "commit" in result:
                 payload["commit"] = result["commit"]
+            relative_path = str(compact_data.get("relative_path", "")).replace("\\", "/")
+            if tool_name == "write_file" and relative_path.split("/")[-1] in SCRATCH_FILE_NAMES:
+                payload["scratch_file_warning"] = (
+                    "This looks like a temporary debug/probe file. Do not leave it in the final patch; "
+                    "use undo after extracting the needed insight, then edit the target source file."
+                )
             return ToolExecutor._json_for_model(payload, max_chars=max_chars)
 
         return ToolExecutor._json_for_model(result, max_chars=max_chars)

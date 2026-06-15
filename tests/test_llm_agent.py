@@ -1050,3 +1050,5 @@ def test_system_prompt_discourages_leaking_scratch_files() -> None:
     assert "debug.py" in prompt
     assert "undo" in prompt
     assert "最终 patch" in prompt
+    assert "不要反复写调试脚本" in prompt
+    assert "edit_file 修复" in prompt
