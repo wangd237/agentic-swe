@@ -1,260 +1,149 @@
 # Agent Case Studies
 
-本文档只记录 LLM agent 的真实运行案例。规则版 baseline 的历史案例仍保留在 [docs/case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/case_studies.md)。
+本文档只保留 4 条最适合面试讲述的 LLM agent 案例。每条都对应真实运行产物：`trace.json`、`result.json`、`patch.diff`。
 
-## Case 1：DeepSeek Agent 修复 CRLF ANSI 行解析
+## Case 1: `task_010` Rich ANSI CRLF Parsing
 
-**任务**：`task_010`  
 **来源**：`Textualize/rich#4090`  
-**模型**：`deepseek-chat`  
-**policy**：`llm_deepseek_minimal`  
-**run_id**：`run_20260614T080459321811Z_6319`  
-**结果**：`success`
+**run**：`logs/trajectories/task_010/run_20260614T080459321811Z_6319`  
+**结果**：`success`，`6` tool calls，修改 `rich_ansi_repo/ansi.py`
 
 ### 问题
 
-任务要求修复 CRLF 行尾解析问题。旧实现会把 `\r\n` 中的 `\r` 当作终端回车覆盖符处理，导致 CRLF 文本被解析成空白行。
+旧实现把 CRLF 中的 `\r` 当作终端回车覆盖符处理，导致普通 Windows 换行文本被误解析。目标是保留 ANSI parser 对回车覆盖的支持，同时不要破坏普通 `\r\n` 行尾。
 
-### Agent 行为
+### 决策链
 
-这次 run 的关键步骤是：
-
-1. `list_files` 查看仓库结构。
-2. `read_file` 读取 `rich_ansi_repo/ansi.py`。
-3. `read_file` 读取 `tests/test_ansi.py`。
-4. `write_file` 修改 `rich_ansi_repo/ansi.py`。
-5. `run_tests` 执行 `python -m pytest tests/test_ansi.py -q`。
-6. `show_diff` 查看最终 patch。
-
-完整 trace 见：
-
-- [trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/trace.json)
+- 第 1 轮：agent 先列出文件并读取 `rich_ansi_repo/ansi.py`，确认问题在 ANSI 解码路径，而不是测试夹具。
+- 第 2 轮：读取 `tests/test_ansi.py` 后，agent 发现失败输入是普通 CRLF 文本，不是动态终端覆盖场景。
+- 第 3 轮：agent 选择在 `AnsiDecoder.decode_text()` 入口归一化 `\r\n`，而不是删除 `decode_line()` 对裸 `\r` 的处理，因为后者仍是终端语义需要的行为。
+- 第 4 轮：修改后运行目标测试，再用 diff 留下可审计 patch。
 
 ### Patch
-
-核心改动是在 `AnsiDecoder.decode_text()` 里先把 CRLF 归一化：
 
 ```python
 terminal_text = terminal_text.replace("\r\n", "\n")
 ```
 
-对应 diff：
+证据：
 
-- [patch.diff](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/patch.diff)
+- `logs/trajectories/task_010/run_20260614T080459321811Z_6319/trace.json`
+- `logs/trajectories/task_010/run_20260614T080459321811Z_6319/result.json`
+- `logs/trajectories/task_010/run_20260614T080459321811Z_6319/patch.diff`
 
-### 验证结果
+### 为什么值得讲
 
-`run_tests` 返回：
+这是项目从 rule-based solver 转向 LLM tool-use agent 后的第一类核心能力：agent 不是直接猜 patch，而是读实现、读测试、保留原有终端语义，再做最小入口修复。
 
-```text
-测试命令执行成功，目标测试已通过。
-```
+## Case 2: `task_024` Jinja Static Analysis
 
-运行摘要：
-
-- final_status：`success`
-- total_tool_calls：`6`
-- modified_files：`rich_ansi_repo/ansi.py`
-- duration_sec：`19.2406`
-
-### 价值
-
-这个案例是项目方向矫正后的第一条真实 LLM agent 成功 run。它说明当前项目已经不只是 rule-based benchmark solver，而是具备了可复盘的 LLM tool-use 修复闭环。
-
-同时，这个案例也展示了验证层的价值：agent 不靠自然语言自称完成，而是通过 `run_tests` 和 `show_diff` 给出可审计证据。
-
-## Case 2：Jinja 静态分析控制流修复
-
-**任务**：`task_024`  
 **来源**：`pallets/jinja#2069`  
-**模型**：`deepseek-chat`  
-**policy**：`llm_deepseek_minimal`  
-**run_id**：`run_20260614T113402398598Z_5993`  
-**结果**：`success`
+**run**：`logs/trajectories/task_024/run_20260614T113402398598Z_5993`  
+**结果**：`success`，`6` tool calls，修改 `jinja_meta_repo/meta.py`
 
 ### 问题
 
-任务要求修复模板变量静态分析误报。旧实现先收集所有分支中被赋值的变量，却又把已经赋值的变量重新加入 `undeclared`，导致变量在所有分支都被 `set` 后仍被误判为未声明。
+模板变量在所有分支里都被 `set` 后，静态分析仍错误地把它报告为 undeclared。旧实现先把分支赋值变量加入 `assigned_variables`，随后又用一个反向循环把这些变量重新塞回 `undeclared`。
 
-### Agent 行为
+### 决策链
 
-这次 run 的关键步骤是：
-
-1. `list_files` 查看仓库结构。
-2. `read_file` 读取 `jinja_meta_repo/meta.py`。
-3. `read_file` 读取 `tests/test_meta.py`。
-4. `run_tests` 先观察失败测试。
-5. `write_file` 修改 `jinja_meta_repo/meta.py`。
-6. `run_tests` 验证修复后的测试结果。
-
-完整 trace 见：
-
-- [trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_024/run_20260614T113402398598Z_5993/trace.json)
-
-### Agent 决策关键点
-
-Agent 没有尝试改测试，也没有加特殊 case，而是先读实现再读测试，把问题定位到 `find_undeclared_variables()` 中的反向循环。这个循环和前面 `assigned_variables.update()` 的语义冲突：前者已经把分支赋值变量视为声明，后者又把这些变量塞回 `undeclared`。
+- 第 1 轮：agent 读取 `meta.py`，先建立 `used_variables`、`assigned_variables`、`undeclared` 三者关系。
+- 第 2 轮：读取测试后，agent 识别到这是控制流语义问题，不是某个变量名的 special case。
+- 第 3 轮：agent 没有新增复杂条件，而是删除和前面集合语义冲突的循环，让 `undeclared = used - assigned` 成为唯一规则。
+- 第 4 轮：运行测试确认回归通过。
 
 ### Patch
-
-核心改动是删除把已赋值变量重新加入 `undeclared` 的循环：
 
 ```python
 undeclared = {name for name in used_variables if name not in assigned_variables}
 return undeclared
 ```
 
-对应 diff：
+证据：
 
-- [patch.diff](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_024/run_20260614T113402398598Z_5993/patch.diff)
+- `logs/trajectories/task_024/run_20260614T113402398598Z_5993/trace.json`
+- `logs/trajectories/task_024/run_20260614T113402398598Z_5993/result.json`
+- `logs/trajectories/task_024/run_20260614T113402398598Z_5993/patch.diff`
 
-### 验证结果
+### 为什么值得讲
 
-- final_status：`success`
-- total_tool_calls：`6`
-- modified_files：`jinja_meta_repo/meta.py`
-- post_test_summary：`测试命令执行成功，目标测试已通过。`
+这个案例不是边界值 if 修补，而是需要理解静态分析数据流。它证明 agent 能把测试失败映射到算法不变量：声明变量集合不能又被重新标记成未声明。
 
-### 价值
+## Case 3: `task_132` Rich Windows Encoding
 
-这个案例比简单边界值修复更像真实 coding agent 能力展示：agent 需要理解“被所有分支赋值”与“未声明变量”之间的静态分析关系，而不是只做字符串替换。
-
-## Case 3：Click 负向 Boolean Flag 默认值修复
-
-**任务**：`task_016`  
-**来源**：`pallets/click#3111`  
-**模型**：`deepseek-chat`  
-**policy**：`llm_deepseek_minimal`  
-**run_id**：`run_20260614T113438108363Z_4434`  
-**结果**：`success`
-
-### 问题
-
-任务要求修复负向 boolean flag 在未显式提供时错误覆盖默认值的问题。旧实现里存在一个特殊分支：当 `default=True` 且 `flag_value=False` 时，即使用户没有提供 flag，也会返回 `False`，导致默认值失效。
-
-### Agent 行为
-
-这次 run 的关键步骤是：
-
-1. `list_files` 查看仓库结构。
-2. `read_file` 读取 `click_flag_repo/core.py`。
-3. `read_file` 读取 `tests/test_flags.py`。
-4. `read_file` 读取 `click_flag_repo/__init__.py`，确认导出路径。
-5. `write_file` 修改 `click_flag_repo/core.py`。
-6. `run_tests` 执行 `python -m pytest tests/test_flags.py -q`。
-7. `show_diff` 查看最终 patch。
-
-完整 trace 见：
-
-- [trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_016/run_20260614T113438108363Z_4434/trace.json)
-
-### Agent 决策关键点
-
-Agent 的关键判断是区分“用户显式提供 flag”和“flag 的默认值”。负向 flag 的 `flag_value=False` 只有在 `provided=True` 时才应该生效；未提供时必须返回 `default`。因此修复不是新增复杂条件，而是删除错误的特殊分支，让函数回到清晰的两段逻辑。
-
-### Patch
-
-核心改动如下：
-
-```python
-if provided:
-    return flag_value
-return default
-```
-
-对应 diff：
-
-- [patch.diff](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_016/run_20260614T113438108363Z_4434/patch.diff)
-
-### 验证结果
-
-- final_status：`success`
-- total_tool_calls：`7`
-- modified_files：`click_flag_repo/core.py`
-- post_test_summary：`测试命令执行成功，目标测试已通过。`
-
-### 价值
-
-这个案例体现的是 API 行为语义修复，而不是崩溃修复。它适合展示 agent 能否读懂 CLI flag 的默认值、显式输入和负向选项之间的关系。
-
-## Case 4：Click Confirm 输出 ANSI 清理
-
-**任务**：`task_093`  
-**来源**：`pallets/click#3572`  
-**模型**：`deepseek-chat`  
-**policy**：`llm_deepseek_minimal`  
-**run_id**：`run_20260614T113509337696Z_0010`  
-**结果**：`success`
-
-### 问题
-
-任务要求修复 `confirm(color=False)` 时仍然输出 ANSI 控制序列的问题。旧实现中 `render_echo_output()` 已经在 `color=False` 时调用 `strip_ansi()`，但 `render_confirm_output()` 直接使用原始 message，导致两个输出路径行为不一致。
-
-### Agent 行为
-
-这次 run 的关键步骤是：
-
-1. `list_files` 查看仓库结构。
-2. `read_file` 读取 `click_confirm_repo/prompts.py`。
-3. `read_file` 读取 `tests/test_prompts.py`。
-4. `run_tests` 先确认目标测试失败。
-5. `write_file` 修改 `click_confirm_repo/prompts.py`。
-6. `run_tests` 验证 3 个回归测试全部通过。
-
-完整 trace 见：
-
-- [trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_093/run_20260614T113509337696Z_0010/trace.json)
-
-### Agent 决策关键点
-
-Agent 没有重新实现 ANSI parser，而是复用同文件里已有的 `strip_ansi()` 和 `render_echo_output()` 语义。这是一个很重要的工程判断：同类输出路径应该共享同一条颜色禁用规则，避免 confirm 和 echo 行为分叉。
-
-### Patch
-
-核心改动是让 confirm 在 `color=False` 时和 echo 一样清理 ANSI：
-
-```python
-rendered = message if color else strip_ansi(message)
-return f"{rendered} [y/N]: {user_input}\n"
-```
-
-对应 diff：
-
-- [patch.diff](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_093/run_20260614T113509337696Z_0010/patch.diff)
-
-### 验证结果
-
-- final_status：`success`
-- total_tool_calls：`6`
-- modified_files：`click_confirm_repo/prompts.py`
-- post_test_summary：`测试命令执行成功，目标测试已通过。`
-
-### 价值
-
-这个案例展示了 agent 对“相邻已有实现”的利用能力：不是硬编码测试期望，而是把 confirm 路径对齐到 echo 路径已经存在的颜色处理语义。
-
-## 其他成功记录
-
-除上述 4 条详细案例外，当前还记录了 1 条真实 LLM agent 成功 run：
-
-| Task | 来源 | 核心修复 | Run |
-| --- | --- | --- | --- |
-| `task_019` | `dateutil/dateutil#1432` | `UTC/GMT` 无 offset 时回落为零偏移，避免对 `None` 做符号变换 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_019/run_20260614T113332817562Z_3323/result.json) |
-
-完整汇总见 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)。
-
-## 边界案例：测试已绿但无 patch，不误报成功
-
-**任务**：`task_132`  
 **来源**：`Textualize/rich#2411`  
-**结果**：`incomplete`  
-**run_id**：`run_20260614T115513496398Z_8231`
+**突破 run**：`logs/trajectories/task_132/run_20260615T053443547474Z_9294`  
+**结果**：`success`，`13` tool calls，修改 `rich_windows_rule_repo/console.py`
 
-这条 challenge 任务的测试在 agent 修改前已经通过。Agent 读取了代码、测试和 README，多次运行测试并确认当前实现已经满足回归测试，但没有生成任何 patch。
+### 问题
 
-关键产物：
+Windows-like legacy encoding stream 无法输出 box drawing rule 字符 `─`。目标行为是：UTF-8 流保留 Unicode，旧编码流稳定降级为 ASCII `-`，而不是泄漏不可编码字符或使用 replacement char。
 
-- [trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260614T115513496398Z_8231/trace.json)
-- [result.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260614T115513496398Z_8231/result.json)
+### 决策链
 
-这个案例的价值不在于修复成功，而在于暴露了一个重要边界：如果任务 repo 已经处于测试通过状态，agent 不应仅凭测试绿就宣称修复成功。当前运行结果保持 `incomplete`，`patch_applied = false`，说明验证逻辑避免了“无实际 patch 的成功误报”。
+- 早期 run 多次停在 `incomplete/no_patch`：测试已经绿但没有 patch，系统没有误报 success。这暴露了“测试绿但无实际修复”的边界。
+- 压力测试阶段重新运行后，agent 读取 `console.py` 和 `tests/test_console.py`，定位到 `_safe_text_for_encoding()` 的 fallback 分支。
+- agent 选择保留“先替换 box drawing 字符为 `-`”的策略，只修正最后一步：如果 fallback 仍需要 `errors="replace"`，也应该 encode/decode fallback text，而不是退回原始 Unicode text。
+- 最终 patch 只改一行，并通过目标测试。
+
+### Patch
+
+```python
+return fallback_text.encode(encoding, errors="replace").decode(encoding)
+```
+
+证据：
+
+- 早期 no-patch run: `logs/trajectories/task_132/run_20260615T053313434663Z_7142/result.json`
+- 突破 run: `logs/trajectories/task_132/run_20260615T053443547474Z_9294/result.json`
+- patch: `logs/trajectories/task_132/run_20260615T053443547474Z_9294/patch.diff`
+
+### 为什么值得讲
+
+这个案例同时展示了两件面试官会关心的事：agent 能突破历史 hard case；系统也足够保守，不会把“没有 patch 的测试通过”包装成成功。
+
+## Case 4: `task_048` Packaging Version Semantics
+
+**来源**：`pypa/packaging#810`  
+**Target 2 run**：`logs/trajectories/task_048/run_20260615T074619354360Z_6882`  
+**结果**：`success`，`11` tool calls，修改 `packaging_specifier_repo/specifiers.py`
+
+### 问题
+
+`Specifier.contains()` 处理 `dev+local` 版本时使用 `Version.base_version`。模型之前一直在脑内模拟 `packaging.Version` 行为，误以为 `base_version` 会保留 dev 段，最终 hit `max_iterations`。
+
+### 决策链
+
+- 第 1 轮：agent 读取实现和测试，先给出错误假设：以为 `base_version` 会保留 `a2.dev1235`。
+- 第 2 轮：`run_tests` 失败后，agent 没有继续猜，而是调用新工具 `python_repl` 查询真实行为。
+- 第 3 轮：`python_repl("str(Version(\"4.1.0a2.dev1235+local\").base_version)")` 返回 `'4.1.0'`，推翻原假设。
+- 第 4 轮：agent 继续查询 `.public`，得到 `'4.1.0a2.dev1235'`，确认应该比较去掉 local 但保留 prerelease/dev 的 public version。
+- 第 5 轮：agent 用 `Version(prospective_version.public) > self.spec_version` 做最小修复，并通过 4 个测试。
+
+### Patch
+
+```python
+if prospective_version.local is not None:
+    return Version(prospective_version.public) > self.spec_version
+```
+
+证据：
+
+- 失败基线: `logs/trajectories/task_048/run_20260615T064450000602Z_7854/result.json`
+- 成功 run: `logs/trajectories/task_048/run_20260615T074619354360Z_6882/result.json`
+- trace: `logs/trajectories/task_048/run_20260615T074619354360Z_6882/trace.json`
+- patch: `logs/trajectories/task_048/run_20260615T074619354360Z_6882/patch.diff`
+
+### 为什么值得讲
+
+这是 Target 2 最强证据：agent 不再把第三方库语义放在脑内猜，而是通过受控 `python_repl` 查询事实，再把事实转化成 patch。这个能力比单纯提高成功率更接近真实 SWE agent。
+
+## Target 2 Validation Snapshot
+
+| Task | 验证点 | Before | After |
+| --- | --- | --- | --- |
+| `task_048` | `python_repl` 打破领域库盲区 | `incomplete/max_iterations`, no patch | `success`, 11 calls |
+| `task_030` | `context_diff` 帮助修格式精度 | 曾 13 calls hit `max_iterations` | `success`, 12 calls，失败摘要含 `context_diff` |
+| `task_089` | 回归基线不退化 | `success`, 7 calls | `success`, 6 calls |
+
+结论：Target 2 的 5 项改进不是“功能清单”，而是在三条代表任务上转化成了真实行为提升。

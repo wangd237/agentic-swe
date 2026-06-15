@@ -11,6 +11,18 @@
 - 当前已记录 LLM run：`33`
 - 当前阶段样本选择原则：文件少、测试明确、覆盖不同库和缺陷类型；每批约 `5` 条后停下来抽检 diff
 
+### Target 2 focused validation
+
+2026-06-15 的 Target 2 不再扩大多模型矩阵，而是验证刚落地的 agent 能力改进是否有效。三条任务全部通过：
+
+| Task | 验证点 | Before | After |
+| --- | --- | --- | --- |
+| `task_048` | `python_repl` 打破 packaging 领域语义盲区 | `incomplete/max_iterations`, no patch | `success`, 11 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_048/run_20260615T074619354360Z_6882/result.json) |
+| `task_030` | `context_diff` 帮助格式精度修复 | 曾 13 calls hit `max_iterations` | `success`, 12 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T081448691235Z_0502/result.json) |
+| `task_089` | 回归基线不退化 | `success`, 7 calls | `success`, 6 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_089/run_20260615T081624552533Z_0056/result.json) |
+
+关键证据：`task_048` trace 中模型先误解 `Version.base_version`，随后用 `python_repl` 查询真实行为并改用 `Version(... .public)`；`task_030` 第一次测试失败的 `failure_summary` 自动包含 `context_diff`，模型据此修正了换行位置。
+
 运行命令形态：
 
 ```bash

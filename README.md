@@ -10,14 +10,13 @@
 
 | 指标 | 当前结果 |
 | --- | --- |
-| 已记录 LLM agent run | `33` |
-| 成功任务完成数 | `29 / 33` |
-| 可审计成功案例数 | `29` 条 trace / result / patch |
-| Challenge / 边界样本 | `7` 条，另有受限策略 failure-taxonomy run |
-| 已覆盖生态 | `9` 个（`rich`, `dateutil`, `jinja`, `click`, `jsonschema`, `packaging`, `tomlkit`, `watchfiles`, `anyio`） |
-| 平均工具调用数 | `6.7` |
-| 当前 LLM agent 策略 | `llm_deepseek_minimal` |
-| 当前结论 | `Agent 已在 33 条真实 issue 派生任务上完成可审计运行，其中 29 条成功，并覆盖 no_patch / max_iterations 两类 incomplete reason` |
+| 工具面 | `11` 个工具，含受控 `python_repl` |
+| Target 1 压力测试 | `14` 条 hard tasks，`12` success，成功率 `85.7%` |
+| Target 2 验证 | `task_048 / task_030 / task_089` 三条全部 success |
+| 关键突破 | `task_048` 从 `max_iterations` 领域语义盲区转为 success |
+| 展示案例 | `4` 条 case study，均有 trace / result / patch |
+| 当前 LLM agent 策略 | `llm_deepseek_minimal`，OpenAI-compatible |
+| 当前结论 | `Agent 已具备可审计的 issue 修复闭环，并通过 Target 2 验证了受控诊断、失败 diff 和反循环机制的实际价值` |
 
 ### 验证底座
 
@@ -59,6 +58,8 @@ GitHub issue / semi-real task
 - LLM agent 通过 OpenAI-compatible tool calling 调用现有工具；当前策略示例使用 DeepSeek，后续可切换到 Kimi、GLM 等兼容服务。
 - Agent 修复过程不是只看最终 diff，而是落盘 `trace.json` / `result.json` / `patch.diff`，可复盘每次读文件、搜索、测试、写入和 diff 检查。
 - Agent 的成功判定依赖 `run_tests` 和最终 `final_status`，不是让模型自称完成。
+- Agent 可以用受控 `python_repl` 查询第三方库行为；该工具只允许单表达式，拒绝 import、分号、多行和 dunder。
+- 测试失败后，agent 会看到当前 patch 的 `context_diff`，避免只凭 pytest 断言盲改。
 - harness 是一等公民：强调工作区隔离、路径边界、产物契约和批量复现能力。
 - 任务不是纯 synthetic demo，而是 `66` 条来自真实开源 issue 的 `semi_real` benchmark。
 - 规则版 baseline 不是废弃资产，而是用于和 LLM agent 对比的稳定下限。
@@ -133,17 +134,16 @@ python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_b
 
 | 指标 | 当前结果 |
 | --- | --- |
-| 已记录 LLM run | `33` |
-| success | `29` |
-| incomplete | `4` |
-| 当前成功率 | `87.9%` |
-| challenge / boundary run | `7` |
-| incomplete reason | `no_patch`, `max_iterations` |
-| 平均工具调用数 | `6.7` |
+| Target 1 pressure test | `14` hard tasks / `12` success |
+| Target 2 focused validation | `3 / 3` success |
+| `task_048` validation | `incomplete/max_iterations` -> `success` |
+| `task_030` validation | `success` after failure摘要含 `context_diff` |
+| `task_089` regression | `success`，tool calls `7 -> 6` |
+| 真实 run incomplete reason | `no_patch`, `max_iterations` |
 
 完整小样本结果见 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)。
 
-当前样本里，`task_132` 是一个有价值的边界案例：测试初始即通过、agent 没有生成 patch，最终保持 `incomplete/no_patch`，避免把“无实际修复”误报为成功。新增受限策略 run `task_054` 产生 `incomplete/max_iterations`，用于验证失败分类不是只有一种。
+Target 2 最关键的变化是 `task_048`：模型原先误解 `packaging.Version.base_version` 并 hit `max_iterations`；加入受控 `python_repl` 后，agent 查询真实行为，再用 `Version(... .public)` 做最小 patch，目标测试通过。
 
 ## 验证底座代表性案例
 
@@ -215,6 +215,7 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 ## 文档导航
 
+- 2 分钟项目说明：[docs/one_pager.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/one_pager.md)
 - Agent 概览：[docs/agent_overview.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_overview.md)
 - Agent 小样本评测：[docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)
 - Agent 案例：[docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
@@ -232,7 +233,7 @@ OpenTelemetry 当前没有默认接入。项目现阶段优先把本地 JSON tra
 
 这已经不是一个“先让 agent 存在”的阶段了。
 
-当前项目的主角已经切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace，并已有 `29 / 33` 条可审计成功 run。现有 benchmark / frozen / stability 体系的角色，是给 agent 提供可信验证层和 baseline 参照：
+当前项目的主角已经切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace。现有 benchmark / frozen / stability 体系的角色，是给 agent 提供可信验证层和 baseline 参照：
 
 - 有 LLM tool-use agent
 - 有 case study trace / result / patch 证据
