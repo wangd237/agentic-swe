@@ -1,181 +1,206 @@
-# Week Target：Harness 深水区 — 对齐 Claude Code 执行架构
+# 三周 Goal：Agent 项目达到面试就绪
 
-**主题：把我们 agent 的 harness 从「能工作」升级到 Claude Code 级别的工程化执行架构。6 个交付物，按对修复能力的影响从大到小排列。**
+**总目标：三周后，这个项目可以直接放进简历，面试中打开给人看。面试官 5 分钟内能回答三个问题——这个 agent 做了什么、怎么做的、做得好不好。**
 
-预期时间：2026-06-15 → 2026-06-22
+当前基线：harness 架构对齐 Claude Code（4 个 Phase 完成），39 LLM runs / 38 success，10 工具，git 原生工作区，规划先行，上下文压缩。
 
-## 背景
-
-过去两周，agent 从 0 到 1（ReAct 循环），再从 1 到 2（edit_file / checkpoint / 并行 / 结构化失败）。当前 harness 状态：
-
-| 能力 | 我们 | Claude Code | 差距 |
-|------|------|-------------|------|
-| 工作区隔离 | ✅ copy to workspace | ✅ git worktree | 路径安全够了 |
-| 写入回退 | ⚠️ 手动文件复制 checkpoint | ✅ git commit + reset | 脆弱，多文件回退不可靠 |
-| 行动前规划 | ❌ 直接调工具 | ✅ thinking block 先行 | 复杂 bug 容易盲改 |
-| 上下文管理 | ❌ 无感知 | ✅ 接近上限时压缩旧消息 | 长任务可能丢上下文 |
-| 子任务分解 | ❌ 无 | ✅ TodoWrite 拆任务 | 多文件修复一步到底 |
-| 搜索能力 | ⚠️ 字面搜索 | ✅ Grep 正则 + 文件:行号:内容 | 复杂模式搜不到 |
-| 工具反馈 | ⚠️ 统一截断 max_chars | ✅ 按工具类型智能截断 | 关键信息被噪音挤掉 |
-| Prompt 缓存 | ❌ | ✅ 系统提示词缓存 | 纯成本优化 |
-
-本周补齐全部 7 项差距。
-
-## 6 个交付物（按影响从大到小）
-
-### 交付物 1：Git 原生工作区 — 原子 checkpoint + 多文件回退
-
-当前 checkpoint 实现：写入前 shutil.copy2 到 `.agent_checkpoints/step_N/`，undo 时 copy 回来。问题：
-- 大文件每次完整复制，浪费磁盘和 IO
-- 一次写入多个文件时 checkpoint 是逐个的，回退不一致
-- `.agent_checkpoints/` 目录需要处处过滤（list_files / show_diff）
-
-Claude Code 的做法：workspace 初始化时 `git init && git add -A && git commit -m "initial"`。每次写入 = `git add <file> && git commit -m "<tool_name>: <relative_path>"`。Undo = `git reset --hard HEAD~1`。Show diff = `git diff initial..HEAD`。
-
-改造内容：
-- `copy_repo_to_workspace` 后自动 `git init && git add -A && git commit --no-gpg-sign -m "initial"`
-- `write_file` / `edit_file` 成功后自动 `git add <relative_path> && git commit --no-gpg-sign -m "<tool_name>: <relative_path>"`
-- `undo` → `git reset --hard HEAD~1`，可连续 undo 多次
-- `show_diff` → `git diff initial..HEAD`（天然排除 `.agent_checkpoints/` 因为它不在 git track 里）
-- 删除现有 `.agent_checkpoints/` 目录逻辑（`_checkpoint_before_write` / `_finalize_checkpoint` / `_undo_last_write` / `_checkpoint_stack`）
-- 删除 `common.py` 中 `.agent_checkpoints` 的 ignore 条目
-
-收益：
-- Checkpoint 存储从完整文件复制变成 git object delta，几乎零空间开销
-- 多文件回退自然原子（git 的 commit 粒度包含当次写入的所有文件）
-- show_diff 天然干净，不需要过滤忽略目录
-- 免费获得完整版本历史（`git log` 可审计 agent 的所有写入）
-
-涉及文件：
-- `app/runtime/harness.py` — `copy_repo_to_workspace` 后 git init
-- `app/agent/tool_executor.py` — 删除 checkpoint 逻辑，改为 git 操作（或抽到 harness）
-- `app/tools/show_diff.py` — 改为 `git diff initial..HEAD`
-- `app/agent/tool_definitions.py` — `undo` schema 不变（接口兼容）
-- `app/tools/common.py` — 删除 `.agent_checkpoints` ignore
-
-### 交付物 2：规划先行 — 模型行动前输出推理
-
-当前：模型在收到任务后直接输出 `tool_use`。对于简单任务（task_019 加一个 None guard）够了。但对于复杂任务（task_024 jinja2 静态分析），模型经常先读了一堆无关文件才开始理解问题——因为它没有先停下来想。
-
-Claude Code：模型在调用工具前先输出 thinking block（`type: "text"`），描述当前理解、计划做什么、为什么。这是模型自己生成的，不是系统注入的。
-
-实现方案（最小改造）：
-- 改 `build_system_prompt()`：明确要求模型「在调用任何工具之前，先简短分析当前情况和下一步计划。不要跳过这个步骤。」
-- Agent 循环中：当 assistant response 包含 text block 时，优先把 text 作为「思考」记录到 trace，然后再处理 tool_use
-- Trace 中新增 `action_type: "planning"` 的 step 类型
-- **不引入额外 LLM 调用** — 规划和行动在同一轮 response 中，token 开销只增加几十个字的推理文本
-
-验证方式：对比加 planning 前后的 agent 行为——平均 tool calls 是否降低（规划更精确）、复杂任务成功率是否提升。
-
-涉及文件：
-- `app/agent/llm_prompts.py` — system prompt 加 planning 指令
-- `app/agent/llm_agent.py` — trace 记录 text block 为 planning step
-
-### 交付物 3：上下文窗口感知 + 压缩
-
-当前：agent 无感知上下文上限。OpenAI-compatible API 的 context window 通常 128K tokens，12 iterations × 每轮 4000 字符 tool result = ~50K 字符，一般够用。但复杂任务（读大文件 + 多次搜索 + 长 traceback）可能逼近。一旦超出，API 返回 error，agent 崩溃。
-
-Claude Code：追踪每条消息的 token 估算，接近上限时将旧消息压缩为摘要。
-
-实现方案（实用主义，不引入 tokenizer 依赖）：
-- 在 agent 循环中维护 `context_char_estimate`：每次 append message 时累加字符数
-- 设定安全阈值 `max_context_chars`（默认 80000，保守估计约 20K tokens）
-- 当 `context_char_estimate > max_context_chars` 时触发压缩：
-  - 保留：system prompt + 最近 3 轮对话 + 当前 user message
-  - 压缩中间轮次：仅保留每轮 tool call 的 name + summary（丢弃完整 tool result）
-  - 插入一条 system 注入消息：「Earlier context has been summarized. Key findings so far: ...」
-- `max_context_chars` 放入 `LLMConfig`，可配置
-
-涉及文件：
-- `app/agent/llm_agent.py` — 上下文追踪 + 压缩逻辑
-- `app/agent/llm_config.py` — 新增 `max_context_chars` 字段
-
-### 交付物 4：子任务分解 — 复杂任务先拆再修
-
-当前：agent 对多文件 bug 的典型失败模式——先修了文件 A，跑测试仍失败，再修文件 B，又失败，步步摸黑直到 iteration 耗尽。
-
-Claude Code：用 TodoWrite 把复杂任务拆成子任务，每完成一个勾掉一个，agent 始终知道自己在哪一步、还剩什么。
-
-实现方案（轻量版）：
-- 在 system prompt 中指导模型：「遇到多步骤或跨文件修复时，先列出步骤清单，然后逐项完成。」
-- 模型通过 text response 自行输出清单（如 "1. 定位根因 → 2. 修复文件A → 3. 修复文件B → 4. 验证"），后续每轮更新进度
-- **不引入 TodoWrite 工具** — 避免工具膨胀。用 prompt 引导模型自主管理步骤
-- 在 `_classify_final_state` 中新增 incomplete_reason：`"task_incomplete"` — 当模型明确表示任务未全部完成但主动停止时使用（区别于 `no_patch` / `max_iterations`）
-
-涉及文件：
-- `app/agent/llm_prompts.py` — system prompt 加子任务分解指导
-- `app/agent/llm_agent.py` — `_classify_final_state` 新增 reason
-
-### 交付物 5：Grep 工具 — 正则代码搜索
-
-当前 `search_code`：传入字面字符串，`grep -F`（固定字符串匹配）。这意味着搜 `def test_\w+` 不行，搜 `import\s+os` 不行，搜 `return\s+False` 不行。
-
-Claude Code 最常用的工具是 Grep（正则搜索），返回 `file:line:content` 格式。这对模型定位代码是质变——一次正则搜出所有匹配，模型可以批量读取相关文件，而不是逐个猜测函数名然后字面搜索。
-
-新增 `grep` 工具：
-- 参数：`pattern`（正则表达式）、`glob`（可选文件过滤，如 `*.py`）、`max_results`（默认 20）
-- 实现：`grep -rnP`（或 Python `re` 遍历文件，跨平台更可靠）
-- 返回：`matches: [{file, line, content}]`，带截断控制
-- `search_code` 保留不删（字面搜索对新手模型更友好，两个工具互补）
-
-涉及文件：
-- `app/tools/grep.py` — 新文件
-- `app/agent/tool_definitions.py` — 注册 grep 工具 schema
-- `app/agent/tool_executor.py` — 分发 grep
-- `app/agent/llm_prompts.py` — system prompt 提示 grep 可用于正则搜索
-
-### 交付物 6：上下文感知的 tool result 截断
-
-当前 `summarize_for_model`：所有工具统一截断到 `max_chars` 字符。问题：
-- `read_file` 的文件内容被截断 → 模型看不到完整代码
-- `run_tests` 成功的 stdout（几百行 `test_xxx PASSED`）占满空间，关键的 diff 或错误被挤掉
-- `list_files` 的文件列表被截断 → 模型不知道有哪些文件
-
-Claude Code：按工具类型智能保留/丢弃字段。
-
-改造 `summarize_for_model`：
-- `run_tests`：成功 → 仅保留 summary（"N tests passed"）；失败 → 优先保留 `failure_summary`（已在交付物 3 中实现）
-- `read_file`：**不截断** — 模型需要看到完整源码才能正确编辑。如果文件超过某个上限（20000 字符），返回摘要 + 提示模型用 offset/limit 分段读取
-- `list_files`：保留完整文件列表（一般不超 2000 字符），仅在不匹配的 huge repo 时截断
-- `search_code` / `grep`：保留匹配行 + 文件路径，截断到 `max_matches`
-- `show_diff`：不截断（diff 本身紧凑）
-- `write_file` / `edit_file`：保留 summary + changed_files + checkpoint 信息，丢弃完整 old/new content 回显
-
-涉及文件：
-- `app/agent/tool_executor.py` — `summarize_for_model` 改造为按工具类型分发
+**每周完成后必须做：将本轮的改进发现（新增了什么、改了什么、为什么改、效果如何）追加写入 `docs/agent_evolution.md`。** 该文件是面试专用的设计演进记录，不上传 GitHub（已在 `.gitignore` 中排除）。
 
 ---
 
-## 不做
+## Target 1：压力测试 — 找到当前 agent 的真实上限
 
-- 不做 Prompt caching（OpenAI-compatible 服务端自己处理，客户端不做）
-- 不做 Streaming 响应
-- 不做 Sub-agent 生成（多 agent 不在当前架构范围内）
-- 不做 Permission system（自动化 agent 不需要）
-- 不加新 benchmark 任务
-- 不做文档/展示层工作
-- 不做多模型对比（上周计划，本周先搁置）
+**主题：把 agent 推到能力边界，收集失败证据和成功亮点，修复阻挡性问题。**
 
-## 验收标准
+### 1.1 修阻塞 bug
+
+- 修 `test_run_tests_returns_failure_summary` 的 Windows GBK 编码问题（当前唯一的自动化测试失败）
+- 确认 `pytest -q` 全部通过
+
+### 1.2 压力测试跑 14 条硬任务
+
+选任务原则：覆盖不同库、不同 bug 类型、优先未跑过的 + 之前失败过的。
+
+**酸测试（rerun）：**
+- `task_132` — rich Windows 编码边界，3 次 incomplete/no_patch。升级 harness（grep + planning + 智能截断）后重跑，看能否突破
+- `task_133` — rich Windows no_color，challenge 集未跑过的一条
+
+**首次挑战（新任务，代表不同 bug 类型）：**
+- `task_075` — jinja2 async repr，coroutine warning，需要理解异步语义
+- `task_089` — jinja2 map default，模板 filter 链，逻辑密集
+- `task_115` — pytest expression scanner，反斜杠解析，parser 级 bug
+- `task_101` — tomlkit out-of-order table，TOML 规范语义复杂
+- `task_030` — tomlkit inline table 损坏
+- `task_056` — sqlite-utils delete_where 自动提交
+- `task_057` — pydantic model validator 继承
+- `task_058` — attrs alias 字段转换
+- `task_097` — click progressbar 边缘行为
+- `task_105` — pytest caplog filter 嵌套
+- `task_109` — packaging name normalization
+
+**回归验证（确认升级后不变差）：**
+- `task_048` — packaging specifier，之前 11 tool calls success，看升级后工具调用数是否下降
+
+### 1.3 压力测试分析
+
+每条失败任务必须回答：
+- 失败在哪个阶段？（定位阶段 / 修复阶段 / 验证阶段）
+- 是模型能力问题还是 harness 问题？
+- 如果改进 harness 能解决，标记优先级
+- 如果模型能力不足，记录为已知边界
+
+产出：`docs/stress_test_report.md`，包含 14 条任务的完整结果 + 失败根因分析 + 能力边界总结。
+
+### 1.4 根据压力测试结果做一轮改进
+
+如果发现了 harness 层面的共性问题（比如某个工具返回信息仍然不够好、context 压缩阈值不合理、prompt 在某种场景下有误导），立即改。如果是模型能力边界（比如 tomlkit 规范理解不够），记录下来但不在此轮解决。
+
+### 1.5 落盘 agent_evolution.md
+
+Target 1 完成后，将本轮所有改进发现追加写入 `docs/agent_evolution.md`（该文件不上传 GitHub）。
+
+### Target 1 验收
 
 | 检查项 | 达标线 |
 |--------|--------|
-| Git 原生工作区 | `write_file`/`edit_file` 后 git log 有对应 commit，`undo` = git reset，`show_diff` = git diff，删除旧 checkpoint 代码 |
-| 规划先行 | agent 在调工具前输出推理文本，trace 有 planning step 记录 |
-| 上下文压缩 | 超过阈值时自动压缩旧消息，不丢失关键信息 |
-| 子任务分解 | 复杂任务模型自动列出步骤并按步骤推进 |
-| Grep 工具 | 正则搜索返回 file:line:content，与 search_code 共存 |
-| 智能截断 | 按工具类型差异化截断，read_file 不截断，成功测试只保留摘要 |
-| 已有测试 | `python -m pytest tests/test_llm_agent.py tests/test_edit_file.py tests/test_tool_executor.py -q` 全部通过 |
-| 升级验证 | 在 10 条任务（含 2 条之前失败的）上跑升级版 agent，对比升级前后 |
-| `git status` | 干净 |
+| 测试 | `pytest -q` 全部通过 |
+| 压力测试 runs | ≥ 12 条完成（允许部分因额度不足 skip） |
+| 失败分析 | ≥ 3 条失败有根因分析 |
+| 能力边界文档 | `docs/stress_test_report.md` 存在 |
+| 改进 | ≥ 1 项 harness/prompt 改进源于压力测试发现 |
+| `agent_evolution.md` | 已追加 Target 1 的改进记录 |
+| git status | 干净（`agent_evolution.md` 不在 git 追踪中） |
 
-## 推荐执行顺序
+---
 
-1. **Git 原生工作区** — 先做，因为会删旧 checkpoint 代码，影响面最大
-2. **智能截断** — 在 git 改动后的工具层上改，依赖最少
-3. **Grep 工具** — 独立新文件，不碰现有逻辑
-4. **规划先行** — prompt 改动 + trace 改动，代码量小但需配合前面的工具变更
-5. **子任务分解** — 依赖规划先行，也是 prompt 改动为主
-6. **上下文压缩** — 最后做，依赖全部工具就位后才知道哪些消息需要优先保留
-7. **升级验证** — 最后跑 10 条，记录对比
+## Target 2：多模型规模化验证
+
+**主题：证明 agent 框架是模型无关的。换模型不掉链子。**
+
+### 2.1 批量运行基础设施
+
+- `scripts/run_multi_model_eval.py`：批量运行、限速、重试、断点续跑、不同模型并发
+- 输入 manifest + 模型列表，自动产出 per-model 的 trajectory 目录
+
+### 2.2 三模型跑 frozen_40
+
+- 任务集：`benchmarks/manifests/real_issue_tasks_frozen_40_v1.json`（40 条）
+- 模型：DeepSeek / Kimi / GLM
+- 预计 120 次 API 调用
+
+### 2.3 跨模型对比
+
+- `scripts/aggregate_model_comparison.py` 产出聚合报告
+- `docs/model_comparison.md`：三模型成功率、tool calls、duration、incomplete_reason 分布、交集分析（全成功 / 全失败 / 不一致）
+- 不一致任务高亮 + trace 链接
+
+### 2.4 失败深挖 + prompt 针对性优化
+
+- ≥ 5 条失败 case 的 trace 级根因分析
+- 基于分析做一轮 prompt 优化 + 验证
+
+### 2.5 落盘 agent_evolution.md
+
+Target 2 完成后，将多模型发现（跨模型差异、不一致分析、prompt 优化决策）追加写入 `docs/agent_evolution.md`。
+
+### Target 2 验收
+
+| 检查项 | 达标线 |
+|--------|--------|
+| 多模型批量脚本 | 可运行，支持断点续跑 |
+| 完成 run 数 | ≥ 100 条 (task, model) pair |
+| 跨模型报告 | `docs/model_comparison.md` 存在，含交集分析 |
+| 失败深挖 | ≥ 5 条有根因分析 |
+| `agent_evolution.md` | 已追加 Target 2 的多模型发现 |
+| `git status` | 干净（`agent_evolution.md` 不在 git 追踪中） |
+
+---
+
+## Target 3：展示包打磨
+
+**主题：把三周的成果打包成面试官可以在 5 分钟内理解的东西。**
+
+### 3.1 Case Study 补齐
+
+从压力测试 + 多模型对比中选 4 条最有代表性的成功案例，补充到 `docs/agent_case_studies.md`。每条含：问题、agent 决策链（为什么在那个时刻做了那个选择）、patch、验证。
+
+选案例原则：覆盖不同库、不同 bug 类型、不同难度。优先选跨模型表现一致的（证明稳定性）和压力测试中突破的（证明升级有意义）。
+
+### 3.2 失败案例 "Known Boundaries"
+
+从压力测试和跨模型验证中，整理 3-5 条「已知边界」——agent 目前修不了的任务类型和原因。格式：场景描述 + agent 尝试了什么 + 为什么失败 + 可能的改进方向。
+
+这份文档的价值不是在面试中「暴露弱点」，而是展示「我知道 agent 的边界在哪里」——这是工程能力的信号。
+
+### 3.3 项目 One-Pager
+
+`docs/one_pager.md`：面试官说「给我 2 分钟讲你的项目」时打开的文件。
+- 一句话定位
+- Agent 工作流（3 步 ASCII 图）
+- 核心数字（39+ runs / X% success / 10 tools / 3 models / X ecosystems）
+- 多模型对比结论（一句）
+- 一个最能打的 case study 缩略版
+- 架构简图
+- 快速开始 3 行命令
+
+### 3.4 README + 文档链接全面审计
+
+- README Agent 能力表更新到最新数据（跨模型、总 runs、成功率）
+- `docs/` 下所有交叉引用链接走一遍，确保无 404
+- 旧文档（GUIDE.md、optimization_log.md）加「历史参考」声明
+
+### 3.5 最终测试 + 清理
+
+- `pytest -q` 全部通过
+- `git status` 干净（`agent_evolution.md` 不在 git 追踪中，不上传 GitHub）
+- `.env.example` 内容与实际配置一致
+- `pip install -r requirements.txt` 后 `run_issue_agent.py` 一键跑通
+
+### 3.6 agent_evolution.md 收口
+
+将 Target 1 压力测试发现 + Target 2 跨模型洞察 + Target 3 展示层决策补进 `docs/agent_evolution.md`。最终版涵盖 Phase 0 → Phase 7 完整演进（含压力测试反馈循环和多模型验证发现），作为面试专用参考，**不上传 GitHub**。
+
+### Target 3 验收
+
+| 检查项 | 达标线 |
+|--------|--------|
+| Case Study | ≥ 6 条详细案例（含决策链） |
+| Known Boundaries | ≥ 3 条有场景+尝试+原因+方向 |
+| One-Pager | `docs/one_pager.md` 存在，2 分钟可读完 |
+| README | Agent 能力表为最新真实数据 |
+| 文档链接 | 全 docs/ 无 404 |
+| 测试 | 全部通过 |
+| 一键跑通 | clone → pip install → 配 .env → run 通过 |
+| `agent_evolution.md` | 覆盖 Phase 0→7 完整演进（本地文件，不上传 GitHub） |
+| `git status` | 干净（`agent_evolution.md` 始终不被 git 追踪） |
+
+---
+
+## 任务完成后项目状态总览
+
+```
+README.md              ← 面试官 30 秒扫完 Agent 能力
+docs/
+  one_pager.md          ← 2 分钟深度理解
+  agent_overview.md     ← 架构、双轨、工具、验证策略
+  agent_case_studies.md ← 6 条案例，不同库不同 bug 类型
+  agent_eval_summary.md ← 跨模型数据
+  model_comparison.md   ← 三模型交集分析
+  stress_test_report.md ← 压力测试结果 + 能力边界
+  known_boundaries.md   ← 已知失败模式
+  weekTarget.md         ← 本文件
+  agent_evolution.md    ← 面试专用：完整设计演进（不上传 GitHub，已 gitignore）
+
+app/agent/              ← 10 工具 + git commit/reset + 规划先行 + 上下文压缩 + 智能截断
+benchmarks/             ← 验证集（降级为配角）
+scripts/                ← run_issue_agent + run_multi_model_eval + aggregate
+```
+
+## 不做
+
+- 不加新 benchmark 任务
+- 不做 Anthropic / Claude API 适配
+- 不做 Reflection / multi-agent
+- 不做 Web UI
+- 不做 LangGraph
+- 不做 Prompt caching（服务端自己处理）

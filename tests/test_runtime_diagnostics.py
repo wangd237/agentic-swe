@@ -130,6 +130,30 @@ FAILED tests/test_app.py::test_value - assert 1 == 2
     assert "tests/test_app.py::test_value" in summary["short_summary"]
     assert "tests/test_app.py:4" in summary["short_summary"]
     assert "assert 1 == 2" in summary["short_summary"]
+    assert "E       assert 1 == 2" in summary["output_excerpt"]
+
+
+def test_build_failure_summary_includes_output_excerpt_for_unittest_failures() -> None:
+    pytest_output = """
+=================================== FAILURES ===================================
+___________ SpecifierContainsTests.test_larger_dev_with_local_is_greater ___________
+
+self = <tests.test_specifiers.SpecifierContainsTests testMethod=test_larger_dev_with_local_is_greater>
+
+    def test_larger_dev_with_local_is_greater(self) -> None:
+        spec = Specifier(">4.1.0a2.dev1234")
+
+>       self.assertTrue(spec.contains("4.1.0a2.dev1235+local", prereleases=True))
+E       AssertionError: False is not true
+
+tests/test_specifiers.py:36: AssertionError
+"""
+
+    summary = _build_failure_summary(pytest_output, "", 1)
+
+    assert "self.assertTrue" in summary["output_excerpt"]
+    assert "False is not true" in summary["output_excerpt"]
+    assert summary["locations"][0]["path"] == "tests/test_specifiers.py"
 
 
 def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:
@@ -154,6 +178,7 @@ def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:
     assert failure_summary["locations"][0]["path"] == "test_fail.py"
     assert failure_summary["assertion_lines"]
     assert "assert value() == 2" in failure_summary["short_summary"]
+    assert "assert value() == 2" in failure_summary["output_excerpt"]
 
 
 def test_run_tests_preserves_non_ascii_pytest_output(tmp_path: Path) -> None:

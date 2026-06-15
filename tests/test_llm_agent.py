@@ -1042,3 +1042,11 @@ def test_system_prompt_guides_subtask_decomposition() -> None:
 
     assert "步骤清单" in prompt
     assert "更新进度" in prompt
+
+
+def test_system_prompt_discourages_leaking_scratch_files() -> None:
+    prompt = build_system_prompt()
+
+    assert "debug.py" in prompt
+    assert "undo" in prompt
+    assert "最终 patch" in prompt

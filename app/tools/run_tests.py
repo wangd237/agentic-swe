@@ -13,6 +13,17 @@ from app.tools.common import resolve_repo_path
 FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)
 ASSERTION_LINE_PATTERN = re.compile(r"^\s*(?:E\s+|>\s*)?(?P<assertion>assert .+)$", re.MULTILINE)
+OUTPUT_EXCERPT_MAX_CHARS = 1200
+
+
+def _build_output_excerpt(output: str, *, max_chars: int = OUTPUT_EXCERPT_MAX_CHARS) -> str:
+    """保留失败输出的尾部片段，给模型补充 unittest 等难以结构化提取的细节。"""
+
+    compact_lines = [line.rstrip() for line in output.splitlines() if line.strip()]
+    compact_output = "\n".join(compact_lines)
+    if len(compact_output) <= max_chars:
+        return compact_output
+    return "...<truncated>\n" + compact_output[-max_chars:]
 
 
 def _inject_pytest_flags(command: str, additional_flags: list[str] | None = None) -> str:
@@ -39,6 +50,7 @@ def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
         }
 
     combined_output = "\n".join(part for part in [stdout, stderr] if part).strip()
+    output_excerpt = _build_output_excerpt(combined_output)
     failed_tests = [match.strip() for match in FAILED_TEST_PATTERN.findall(combined_output)]
     assertion_lines = [
         match.group("assertion").strip()
@@ -73,6 +85,7 @@ def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
         "failed_tests": failed_tests,
         "assertion_lines": assertion_lines,
         "locations": locations,
+        "output_excerpt": output_excerpt,
         "short_summary": short_summary,
     }
 
