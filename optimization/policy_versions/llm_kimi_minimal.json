@@ -11,6 +11,7 @@
   "llm_api_key_env": "KIMI_API_KEY",
   "llm_base_url_env": "KIMI_BASE_URL",
   "llm_model_env": "KIMI_MODEL",
+  "llm_base_url": "https://api.moonshot.cn/v1",
   "llm_max_output_tokens": 8000,
   "pytest_additional_flags": [
     "-p no:unraisableexception",
