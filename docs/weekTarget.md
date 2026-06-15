@@ -1,138 +1,181 @@
-# Week Target：Agent 工具链升级
+# Week Target：Harness 深水区 — 对齐 Claude Code 执行架构
 
-**主题：参照 Claude Code harness 设计，把 agent 从「能修」升级到「修得好、修得快、修错了能回退」。不做展示层。**
+**主题：把我们 agent 的 harness 从「能工作」升级到 Claude Code 级别的工程化执行架构。6 个交付物，按对修复能力的影响从大到小排列。**
 
 预期时间：2026-06-15 → 2026-06-22
 
 ## 背景
 
-当前 agent 的工具链：`list_files / search_code / read_file / run_tests / write_file / show_diff`。6 个工具，能跑通闭环（33 runs / 87.9% 成功率），但有三个硬伤：
+过去两周，agent 从 0 到 1（ReAct 循环），再从 1 到 2（edit_file / checkpoint / 并行 / 结构化失败）。当前 harness 状态：
 
-1. **只能全量覆写文件** — `write_file` 要求模型输出完整文件。修一行代码要重新生成整个模块，浪费 token 且容易引入错误
-2. **破坏性写入无保护** — 写错了回不去，只能从头重来。Claude Code 每次 Edit 前自动 snapshot
-3. **测试失败信息是 raw dump** — 模型收到几百行 pytest traceback，真正有用的只有最后几行，被 `summarize_for_model` 截断后往往看不到关键断言
+| 能力 | 我们 | Claude Code | 差距 |
+|------|------|-------------|------|
+| 工作区隔离 | ✅ copy to workspace | ✅ git worktree | 路径安全够了 |
+| 写入回退 | ⚠️ 手动文件复制 checkpoint | ✅ git commit + reset | 脆弱，多文件回退不可靠 |
+| 行动前规划 | ❌ 直接调工具 | ✅ thinking block 先行 | 复杂 bug 容易盲改 |
+| 上下文管理 | ❌ 无感知 | ✅ 接近上限时压缩旧消息 | 长任务可能丢上下文 |
+| 子任务分解 | ❌ 无 | ✅ TodoWrite 拆任务 | 多文件修复一步到底 |
+| 搜索能力 | ⚠️ 字面搜索 | ✅ Grep 正则 + 文件:行号:内容 | 复杂模式搜不到 |
+| 工具反馈 | ⚠️ 统一截断 max_chars | ✅ 按工具类型智能截断 | 关键信息被噪音挤掉 |
+| Prompt 缓存 | ❌ | ✅ 系统提示词缓存 | 纯成本优化 |
 
-这些不是展示层问题，是直接限制修复成功率的问题。本周参照 Claude Code 的 harness 设计逐一解决。
+本周补齐全部 7 项差距。
 
-## 5 个交付物
+## 6 个交付物（按影响从大到小）
 
-### 交付物 1：`edit_file` — 精确部分编辑
+### 交付物 1：Git 原生工作区 — 原子 checkpoint + 多文件回退
 
-当前 `write_file`：模型输出 300 行文件修 1 行 → 浪费 token 且容易出错。Claude Code 用 `Edit(old_string, new_string)` 做精确替换。
+当前 checkpoint 实现：写入前 shutil.copy2 到 `.agent_checkpoints/step_N/`，undo 时 copy 回来。问题：
+- 大文件每次完整复制，浪费磁盘和 IO
+- 一次写入多个文件时 checkpoint 是逐个的，回退不一致
+- `.agent_checkpoints/` 目录需要处处过滤（list_files / show_diff）
 
-新增 `edit_file` 工具：
-- 参数：`relative_path`, `old_string`, `new_string`
-- 语义：在文件中找到 `old_string` 的**精确匹配**（含缩进），替换为 `new_string`
-- 如果 `old_string` 不唯一 → 返回 error + 列出匹配行号 + 上下文，让模型提供更精确的 `old_string`
-- 如果 `old_string` 不存在 → 返回 error
-- 复用现有 `write_file` 的路径安全校验
-- 替换成功时返回结构化信息：`replacement_count=1`、目标行号、`old_length/new_length`，方便 trace 和模型复盘
+Claude Code 的做法：workspace 初始化时 `git init && git add -A && git commit -m "initial"`。每次写入 = `git add <file> && git commit -m "<tool_name>: <relative_path>"`。Undo = `git reset --hard HEAD~1`。Show diff = `git diff initial..HEAD`。
 
-涉及文件：
-- `app/tools/edit_file.py` — 新文件
-- `app/agent/tool_definitions.py` — 注册 `edit_file` 工具 schema
-- `app/agent/tool_executor.py` — 分发 `edit_file`
+改造内容：
+- `copy_repo_to_workspace` 后自动 `git init && git add -A && git commit --no-gpg-sign -m "initial"`
+- `write_file` / `edit_file` 成功后自动 `git add <relative_path> && git commit --no-gpg-sign -m "<tool_name>: <relative_path>"`
+- `undo` → `git reset --hard HEAD~1`，可连续 undo 多次
+- `show_diff` → `git diff initial..HEAD`（天然排除 `.agent_checkpoints/` 因为它不在 git track 里）
+- 删除现有 `.agent_checkpoints/` 目录逻辑（`_checkpoint_before_write` / `_finalize_checkpoint` / `_undo_last_write` / `_checkpoint_stack`）
+- 删除 `common.py` 中 `.agent_checkpoints` 的 ignore 条目
 
-### 交付物 2：Checkpoint + Undo
-
-Claude Code harness：每次 Edit 前记录文件状态，出问题可以回退。当前 agent：`write_file` 直接覆写，不可逆。
-
-实现方案：
-- `write_file` 和 `edit_file` 执行前，自动把目标文件复制到 `.agent_checkpoints/step_N/<relative_path>`，保留目录结构
-- `ToolExecutor` 中维护写操作 step 计数，每次写操作前保存“写入前状态”
-- 新增 `undo` 工具：回滚最近一次写操作影响的文件，恢复到该写操作前的 checkpoint，返回回退了哪些文件
-- `.agent_checkpoints/` 是 agent 内部状态，不应污染 `show_diff`、最终 `patch.diff` 或对外评测产物
-- Agent 循环里 `run_tests` 失败后，模型可以选择 `undo` + 重新尝试，而不是在错误基础上叠错误
-
-涉及文件：
-- `app/agent/tool_executor.py` — checkpoint 逻辑 + `undo` 分发
-- `app/agent/tool_definitions.py` — 注册 `undo` 工具 schema
-- `app/tools/show_diff.py` — 过滤 `.agent_checkpoints/`
-- agent 循环无改动（模型自己决定何时 undo）
-
-### 交付物 3：结构化测试失败信息
-
-当前 `run_tests` 失败时，`summarize_for_model` 把整个 pytest 输出截断到 4000 字符。模型通常只能看到前几十行 import 错误或 fixture setup，实际的 `AssertionError` 被截掉了。
-
-改造 `run_tests` 工具返回结构：
-- 成功路径：返回现有 summary，不改
-- 失败路径：解析 pytest 输出（`=== short test summary ===` 和 `FAILURES` 段的 `AssertionError`），提取：
-  - 失败的测试名
-  - 断言内容（expected vs actual 或 assert 行）
-  - 所在文件和行号
-  - 构造 `data.failure_summary`，包含 `failed_tests`、`assertion_lines`、`locations`、`short_summary`
-- `summarize_for_model` 优先用 `failure_summary`，不够才用完整输出
+收益：
+- Checkpoint 存储从完整文件复制变成 git object delta，几乎零空间开销
+- 多文件回退自然原子（git 的 commit 粒度包含当次写入的所有文件）
+- show_diff 天然干净，不需要过滤忽略目录
+- 免费获得完整版本历史（`git log` 可审计 agent 的所有写入）
 
 涉及文件：
-- `app/tools/run_tests.py` — 解析 pytest 输出，构造 `failure_summary`
-- `app/agent/tool_executor.py` 的 `summarize_for_model` — 优先用 `failure_summary`
+- `app/runtime/harness.py` — `copy_repo_to_workspace` 后 git init
+- `app/agent/tool_executor.py` — 删除 checkpoint 逻辑，改为 git 操作（或抽到 harness）
+- `app/tools/show_diff.py` — 改为 `git diff initial..HEAD`
+- `app/agent/tool_definitions.py` — `undo` schema 不变（接口兼容）
+- `app/tools/common.py` — 删除 `.agent_checkpoints` ignore
 
-### 交付物 4：并行只读工具调用
+### 交付物 2：规划先行 — 模型行动前输出推理
 
-当前 agent 一次一个工具。`list_files` → 等结果 → `read_file` → 等结果，5 个只读 tool call 要 5 个 API round trip。Claude Code 允许同一轮并发多个只读工具。
+当前：模型在收到任务后直接输出 `tool_use`。对于简单任务（task_019 加一个 None guard）够了。但对于复杂任务（task_024 jinja2 静态分析），模型经常先读了一堆无关文件才开始理解问题——因为它没有先停下来想。
 
-实现方案：
-- 在 ReAct 循环中，同一轮 LLM 返回的多个 `tool_use` block：
-  - 如果全是只读工具（`list_files / search_code / read_file / show_diff`）→ 并发执行（`concurrent.futures.ThreadPoolExecutor`）
-  - 如果包含写入工具（`write_file / edit_file / undo`）→ 写操作前的只读工具仍可并发，写入保持顺序
-- Trace 里记录并发关系（`parallel_group_id`），但回传给 LLM 的 tool result 顺序必须保持原始 `tool_use` 顺序，避免消息链错位
-- 只改执行层，不改 LLM 端——模型不知道并发，它只是同一轮返回了多个 tool_use
+Claude Code：模型在调用工具前先输出 thinking block（`type: "text"`），描述当前理解、计划做什么、为什么。这是模型自己生成的，不是系统注入的。
+
+实现方案（最小改造）：
+- 改 `build_system_prompt()`：明确要求模型「在调用任何工具之前，先简短分析当前情况和下一步计划。不要跳过这个步骤。」
+- Agent 循环中：当 assistant response 包含 text block 时，优先把 text 作为「思考」记录到 trace，然后再处理 tool_use
+- Trace 中新增 `action_type: "planning"` 的 step 类型
+- **不引入额外 LLM 调用** — 规划和行动在同一轮 response 中，token 开销只增加几十个字的推理文本
+
+验证方式：对比加 planning 前后的 agent 行为——平均 tool calls 是否降低（规划更精确）、复杂任务成功率是否提升。
 
 涉及文件：
-- `app/agent/llm_agent.py` — ReAct 循环中工具执行段
+- `app/agent/llm_prompts.py` — system prompt 加 planning 指令
+- `app/agent/llm_agent.py` — trace 记录 text block 为 planning step
 
-### 交付物 5：重跑失败 case，验证提升
+### 交付物 3：上下文窗口感知 + 压缩
 
-工具链升级完成后，重跑之前 4 条 incomplete 的任务。对比：
+当前：agent 无感知上下文上限。OpenAI-compatible API 的 context window 通常 128K tokens，12 iterations × 每轮 4000 字符 tool result = ~50K 字符，一般够用。但复杂任务（读大文件 + 多次搜索 + 长 traceback）可能逼近。一旦超出，API 返回 error，agent 崩溃。
 
-- 如果有 case 因为新工具（`edit_file` 减少 token 浪费、checkpoint 允许回退重试、结构化错误帮助定位）而转为 `success` → 记入 `docs/agent_eval_summary.md` 作为升级证据
-- 如果仍然失败 → 分析根因，确认是能力边界而非工具链缺陷
-- 产出：升级前 vs 升级后的对比数据（成功率、平均 tool calls、平均 duration）
-- 外部 LLM API 调用需要人工审批；本周允许在审批后使用真实 API 做 rerun 验证
+Claude Code：追踪每条消息的 token 估算，接近上限时将旧消息压缩为摘要。
+
+实现方案（实用主义，不引入 tokenizer 依赖）：
+- 在 agent 循环中维护 `context_char_estimate`：每次 append message 时累加字符数
+- 设定安全阈值 `max_context_chars`（默认 80000，保守估计约 20K tokens）
+- 当 `context_char_estimate > max_context_chars` 时触发压缩：
+  - 保留：system prompt + 最近 3 轮对话 + 当前 user message
+  - 压缩中间轮次：仅保留每轮 tool call 的 name + summary（丢弃完整 tool result）
+  - 插入一条 system 注入消息：「Earlier context has been summarized. Key findings so far: ...」
+- `max_context_chars` 放入 `LLMConfig`，可配置
+
+涉及文件：
+- `app/agent/llm_agent.py` — 上下文追踪 + 压缩逻辑
+- `app/agent/llm_config.py` — 新增 `max_context_chars` 字段
+
+### 交付物 4：子任务分解 — 复杂任务先拆再修
+
+当前：agent 对多文件 bug 的典型失败模式——先修了文件 A，跑测试仍失败，再修文件 B，又失败，步步摸黑直到 iteration 耗尽。
+
+Claude Code：用 TodoWrite 把复杂任务拆成子任务，每完成一个勾掉一个，agent 始终知道自己在哪一步、还剩什么。
+
+实现方案（轻量版）：
+- 在 system prompt 中指导模型：「遇到多步骤或跨文件修复时，先列出步骤清单，然后逐项完成。」
+- 模型通过 text response 自行输出清单（如 "1. 定位根因 → 2. 修复文件A → 3. 修复文件B → 4. 验证"），后续每轮更新进度
+- **不引入 TodoWrite 工具** — 避免工具膨胀。用 prompt 引导模型自主管理步骤
+- 在 `_classify_final_state` 中新增 incomplete_reason：`"task_incomplete"` — 当模型明确表示任务未全部完成但主动停止时使用（区别于 `no_patch` / `max_iterations`）
+
+涉及文件：
+- `app/agent/llm_prompts.py` — system prompt 加子任务分解指导
+- `app/agent/llm_agent.py` — `_classify_final_state` 新增 reason
+
+### 交付物 5：Grep 工具 — 正则代码搜索
+
+当前 `search_code`：传入字面字符串，`grep -F`（固定字符串匹配）。这意味着搜 `def test_\w+` 不行，搜 `import\s+os` 不行，搜 `return\s+False` 不行。
+
+Claude Code 最常用的工具是 Grep（正则搜索），返回 `file:line:content` 格式。这对模型定位代码是质变——一次正则搜出所有匹配，模型可以批量读取相关文件，而不是逐个猜测函数名然后字面搜索。
+
+新增 `grep` 工具：
+- 参数：`pattern`（正则表达式）、`glob`（可选文件过滤，如 `*.py`）、`max_results`（默认 20）
+- 实现：`grep -rnP`（或 Python `re` 遍历文件，跨平台更可靠）
+- 返回：`matches: [{file, line, content}]`，带截断控制
+- `search_code` 保留不删（字面搜索对新手模型更友好，两个工具互补）
+
+涉及文件：
+- `app/tools/grep.py` — 新文件
+- `app/agent/tool_definitions.py` — 注册 grep 工具 schema
+- `app/agent/tool_executor.py` — 分发 grep
+- `app/agent/llm_prompts.py` — system prompt 提示 grep 可用于正则搜索
+
+### 交付物 6：上下文感知的 tool result 截断
+
+当前 `summarize_for_model`：所有工具统一截断到 `max_chars` 字符。问题：
+- `read_file` 的文件内容被截断 → 模型看不到完整代码
+- `run_tests` 成功的 stdout（几百行 `test_xxx PASSED`）占满空间，关键的 diff 或错误被挤掉
+- `list_files` 的文件列表被截断 → 模型不知道有哪些文件
+
+Claude Code：按工具类型智能保留/丢弃字段。
+
+改造 `summarize_for_model`：
+- `run_tests`：成功 → 仅保留 summary（"N tests passed"）；失败 → 优先保留 `failure_summary`（已在交付物 3 中实现）
+- `read_file`：**不截断** — 模型需要看到完整源码才能正确编辑。如果文件超过某个上限（20000 字符），返回摘要 + 提示模型用 offset/limit 分段读取
+- `list_files`：保留完整文件列表（一般不超 2000 字符），仅在不匹配的 huge repo 时截断
+- `search_code` / `grep`：保留匹配行 + 文件路径，截断到 `max_matches`
+- `show_diff`：不截断（diff 本身紧凑）
+- `write_file` / `edit_file`：保留 summary + changed_files + checkpoint 信息，丢弃完整 old/new content 回显
+
+涉及文件：
+- `app/agent/tool_executor.py` — `summarize_for_model` 改造为按工具类型分发
+
+---
 
 ## 不做
 
-- 不做多模型对比（Kimi/GLM）
+- 不做 Prompt caching（OpenAI-compatible 服务端自己处理，客户端不做）
+- 不做 Streaming 响应
+- 不做 Sub-agent 生成（多 agent 不在当前架构范围内）
+- 不做 Permission system（自动化 agent 不需要）
 - 不加新 benchmark 任务
-- 不做文档/展示层工作（README、case study、one-pager 等暂缓）
-- 不做 Reflection / multi-agent
-- 不做 prompt 优化（除非跑失败 case 时发现明显问题）
+- 不做文档/展示层工作
+- 不做多模型对比（上周计划，本周先搁置）
 
 ## 验收标准
 
 | 检查项 | 达标线 |
 |--------|--------|
-| `edit_file` 可用 | 模型能通过 old/new string 精确编辑文件，唯一/非唯一/不存在三种路径均正确处理 |
-| checkpoint + undo 闭环 | `write_file`/`edit_file` 自动 checkpoint，`undo` 可回退，workspace 不变 |
-| 结构化测试失败信息 | 失败时 `failure_summary` 包含测试名、断言内容、文件行号 |
-| 并行只读 | 同轮多个只读 tool_use 并发执行，trace 有并发标记 |
-| 测试通过 | `python -m pytest tests/test_llm_agent.py -q` 新增 + 已有测试全部通过 |
-| 升级验证 | 重跑 4 条 incomplete case，记录对比数据 |
+| Git 原生工作区 | `write_file`/`edit_file` 后 git log 有对应 commit，`undo` = git reset，`show_diff` = git diff，删除旧 checkpoint 代码 |
+| 规划先行 | agent 在调工具前输出推理文本，trace 有 planning step 记录 |
+| 上下文压缩 | 超过阈值时自动压缩旧消息，不丢失关键信息 |
+| 子任务分解 | 复杂任务模型自动列出步骤并按步骤推进 |
+| Grep 工具 | 正则搜索返回 file:line:content，与 search_code 共存 |
+| 智能截断 | 按工具类型差异化截断，read_file 不截断，成功测试只保留摘要 |
+| 已有测试 | `python -m pytest tests/test_llm_agent.py tests/test_edit_file.py tests/test_tool_executor.py -q` 全部通过 |
+| 升级验证 | 在 10 条任务（含 2 条之前失败的）上跑升级版 agent，对比升级前后 |
 | `git status` | 干净 |
-
-## 当前追踪状态
-
-| 交付物 | 当前状态 | 证据 / 下一步 |
-|--------|----------|---------------|
-| `edit_file` 精确部分编辑 | 已完成首版 | 已新增工具实现、LLM tool schema、executor 分发、prompt 引导；测试覆盖唯一匹配、不唯一、不存在、路径越界，以及 agent loop 自动验证 |
-| Checkpoint + Undo | 已完成首版 | `write_file` / `edit_file` 写入前自动 checkpoint，`undo` 可回滚最近一次成功写操作；`.agent_checkpoints/` 已从 diff / patch 过滤 |
-| 结构化测试失败信息 | 已完成首版 | `run_tests` 已返回 `data.failure_summary`（失败测试、断言行、文件行号、短摘要），`summarize_for_model` 已优先回传结构化失败摘要 |
-| 并行只读工具调用 | 已完成首版 | 同轮连续只读工具会并发执行，trace 记录 `parallel_group_id`，回传给 LLM 的 tool result 顺序保持原始 `tool_use` 顺序 |
-| 重跑 4 条 incomplete case | 已完成首版 | 已审批真实 API rerun：`task_132` 保持 `incomplete/no_patch` 但 tool calls `14 -> 5` 且 trace 出现并行只读；`task_054` 用正常 minimal policy 从旧受限 incomplete 转为 `success` |
-| focused tests | 当前通过 | `python -m pytest tests/test_runtime_diagnostics.py tests/test_tool_executor.py tests/test_edit_file.py tests/test_llm_agent.py tests/test_write_file.py -q --basetemp .pytest_tmp_week_target` 当前为 `29 passed` |
 
 ## 推荐执行顺序
 
-1. 先实现 `edit_file`，用单元测试覆盖唯一匹配、不唯一、不存在、路径越界。
-2. 再实现 checkpoint + undo，并确认 `.agent_checkpoints/` 不进入 diff / patch。
-3. 改造 `run_tests` 的结构化失败摘要，让模型优先看到关键断言。
-4. 在前三项稳定后，再做并行只读工具调用；保持 trace 可审计、tool result 回传顺序稳定。
-5. 最后审批外部 API 调用，重跑 4 条 incomplete case，记录升级前后对比。
-
-## 参考
-
-Claude Code 的 harness 设计核心原则（来自源码分析）：
-- 每次写入前自动 snapshot → checkpoint
-- `Edit` 工具用 `old_string` 精确匹配，不唯一时报错而非盲替
-- 工具返回对模型友好的结构化信息，而非 raw dump
-- 只读工具独立于写入工具，可安全并发
+1. **Git 原生工作区** — 先做，因为会删旧 checkpoint 代码，影响面最大
+2. **智能截断** — 在 git 改动后的工具层上改，依赖最少
+3. **Grep 工具** — 独立新文件，不碰现有逻辑
+4. **规划先行** — prompt 改动 + trace 改动，代码量小但需配合前面的工具变更
+5. **子任务分解** — 依赖规划先行，也是 prompt 改动为主
+6. **上下文压缩** — 最后做，依赖全部工具就位后才知道哪些消息需要优先保留
+7. **升级验证** — 最后跑 10 条，记录对比

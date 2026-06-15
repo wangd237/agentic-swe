@@ -144,6 +144,7 @@ class ToolExecutor:
             "relative_path": normalized_relative_path,
             "existed": existed,
             "checkpoint_path": str(checkpoint_path),
+            "step_dir": str(step_dir),
         }
         if existed:
             if not target_path.is_file():
@@ -165,6 +166,8 @@ class ToolExecutor:
     def _finalize_checkpoint(self, checkpoint_record: dict[str, Any], *, keep: bool) -> None:
         if keep:
             self._checkpoint_stack.append(checkpoint_record)
+            return
+        shutil.rmtree(checkpoint_record["step_dir"], ignore_errors=True)
 
     def _undo_last_write(self) -> dict[str, Any]:
         if not self._checkpoint_stack:

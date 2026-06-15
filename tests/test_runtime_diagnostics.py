@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -51,6 +52,29 @@ def test_run_tests_returns_split_duration_metrics(tmp_path: Path) -> None:
     assert result["data"]["subprocess_duration_sec"] == result["data"]["command_execution_duration_sec"]
     assert result["data"]["duration_sec"] >= result["data"]["pre_execution_duration_sec"]
     assert result["data"]["duration_sec"] >= result["data"]["subprocess_duration_sec"]
+
+
+def test_run_tests_forces_utf8_subprocess_io(tmp_path: Path, monkeypatch) -> None:
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    observed_kwargs: dict[str, object] = {}
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        observed_kwargs.update(kwargs)
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    result = run_tests(str(repo_dir), "python -m pytest test_pass.py -q", timeout_sec=30)
+
+    assert result["ok"] is True
+    assert observed_kwargs["encoding"] == "utf-8"
+    assert observed_kwargs["errors"] == "replace"
+    assert observed_kwargs["text"] is True
+    env = observed_kwargs["env"]
+    assert isinstance(env, dict)
+    assert env["PYTHONIOENCODING"] == "utf-8"
+    assert env["PYTHONUTF8"] == "1"
 
 
 def test_run_tests_records_injected_pytest_flags(tmp_path: Path) -> None:
@@ -130,6 +154,26 @@ def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:
     assert failure_summary["locations"][0]["path"] == "test_fail.py"
     assert failure_summary["assertion_lines"]
     assert "assert value() == 2" in failure_summary["short_summary"]
+
+
+def test_run_tests_preserves_non_ascii_pytest_output(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    test_file = repo_dir / "test_fail_unicode.py"
+    test_file.write_text(
+        "def test_unicode_value():\n"
+        "    assert '实际' == '期望'\n",
+        encoding="utf-8",
+    )
+
+    result = run_tests(str(repo_dir), "python -m pytest test_fail_unicode.py -q", timeout_sec=30)
+
+    failure_summary = result["data"]["failure_summary"]
+    assert result["ok"] is False
+    assert "实际" in result["data"]["stdout"]
+    assert "期望" in result["data"]["stdout"]
+    assert any("实际" in line for line in failure_summary["assertion_lines"])
+    assert any("期望" in line for line in failure_summary["assertion_lines"])
 
 
 def test_run_observation_task_writes_trace_tool_metrics() -> None:

@@ -122,6 +122,8 @@ def run_tests(
         env_setup_started_at = perf_counter()
         env = dict(os.environ)
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
         env_setup_duration_sec = round(perf_counter() - env_setup_started_at, 4)
 
         command_started_at = perf_counter()
@@ -131,6 +133,8 @@ def run_tests(
             shell=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout_sec,
             env=env,
         )
