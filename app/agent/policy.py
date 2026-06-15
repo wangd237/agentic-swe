@@ -26,6 +26,7 @@ class PolicyConfig(BaseModel):
     llm_model_env: str | None = None
     llm_base_url: str | None = None
     llm_max_output_tokens: int | None = None
+    llm_max_context_chars: int | None = None
     pytest_additional_flags: list[str] = []
 
     def to_dict(self) -> dict:

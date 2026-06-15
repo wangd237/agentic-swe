@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import json
-import shutil
-from pathlib import Path
 from typing import Any
 
 from app.agent.policy import PolicyConfig
-from app.tools.common import resolve_repo_relative_path, resolve_repo_path
+from app.runtime.git_workspace import commit_workspace_path, undo_last_workspace_commit
+from app.tools.grep import grep
 from app.tools.list_files import list_files
 from app.tools.read_file import read_file
 from app.tools.edit_file import edit_file
@@ -33,8 +32,6 @@ class ToolExecutor:
         self.original_repo_path = str(original_repo_path)
         self.policy_config = policy_config
         self.test_command = test_command
-        self._write_step_index = 0
-        self._checkpoint_stack: list[dict[str, Any]] = []
 
     def execute(self, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
         """执行单次工具调用。"""
@@ -50,6 +47,13 @@ class ToolExecutor:
                     self.repo_path,
                     query=str(tool_input.get("query", "")),
                 )
+            if tool_name == "grep":
+                return grep(
+                    self.repo_path,
+                    pattern=str(tool_input.get("pattern", "")),
+                    glob=tool_input.get("glob"),
+                    max_results=int(tool_input.get("max_results", 20)),
+                )
             if tool_name == "read_file":
                 return read_file(
                     self.repo_path,
@@ -64,29 +68,35 @@ class ToolExecutor:
                     additional_pytest_flags=self.policy_config.pytest_additional_flags,
                 )
             if tool_name == "write_file":
-                checkpoint = self._checkpoint_before_write(
-                    relative_path=str(tool_input.get("relative_path", "")),
-                    tool_name=tool_name,
-                )
+                relative_path = str(tool_input.get("relative_path", ""))
                 result = write_file(
                     self.repo_path,
-                    relative_path=str(tool_input.get("relative_path", "")),
+                    relative_path=relative_path,
                     content=str(tool_input.get("content", "")),
-                ) | {"checkpoint": self._checkpoint_result(checkpoint)}
-                self._finalize_checkpoint(checkpoint, keep=bool(result.get("ok")))
+                )
+                if result.get("ok"):
+                    result = result | {
+                        "commit": self._commit_write(
+                            tool_name=tool_name,
+                            relative_path=relative_path,
+                        )
+                    }
                 return result
             if tool_name == "edit_file":
-                checkpoint = self._checkpoint_before_write(
-                    relative_path=str(tool_input.get("relative_path", "")),
-                    tool_name=tool_name,
-                )
+                relative_path = str(tool_input.get("relative_path", ""))
                 result = edit_file(
                     self.repo_path,
-                    relative_path=str(tool_input.get("relative_path", "")),
+                    relative_path=relative_path,
                     old_string=str(tool_input.get("old_string", "")),
                     new_string=str(tool_input.get("new_string", "")),
-                ) | {"checkpoint": self._checkpoint_result(checkpoint)}
-                self._finalize_checkpoint(checkpoint, keep=bool(result.get("ok")))
+                )
+                if result.get("ok"):
+                    result = result | {
+                        "commit": self._commit_write(
+                            tool_name=tool_name,
+                            relative_path=relative_path,
+                        )
+                    }
                 return result
             if tool_name == "show_diff":
                 return show_diff(
@@ -130,77 +140,41 @@ class ToolExecutor:
             },
         }
 
-    def _checkpoint_before_write(self, *, relative_path: str, tool_name: str) -> dict[str, Any]:
-        resolved_repo_path = resolve_repo_path(self.repo_path)
-        target_path = resolve_repo_relative_path(resolved_repo_path, relative_path)
+    def _commit_write(self, *, tool_name: str, relative_path: str) -> dict[str, str]:
         normalized_relative_path = str(relative_path).replace("\\", "/")
-        self._write_step_index += 1
-        step_dir = resolved_repo_path / ".agent_checkpoints" / f"step_{self._write_step_index}"
-        checkpoint_path = step_dir / normalized_relative_path
-        existed = target_path.exists()
-        checkpoint_record: dict[str, Any] = {
-            "step": self._write_step_index,
-            "tool_name": tool_name,
-            "relative_path": normalized_relative_path,
-            "existed": existed,
-            "checkpoint_path": str(checkpoint_path),
-            "step_dir": str(step_dir),
-        }
-        if existed:
-            if not target_path.is_file():
-                raise IsADirectoryError(f"目标不是文件: {relative_path}")
-            checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(target_path, checkpoint_path)
-        else:
-            step_dir.mkdir(parents=True, exist_ok=True)
-        return checkpoint_record
-
-    @staticmethod
-    def _checkpoint_result(checkpoint_record: dict[str, Any]) -> dict[str, Any]:
+        commit_hash = commit_workspace_path(
+            self.repo_path,
+            relative_path=normalized_relative_path,
+            message=f"{tool_name}: {normalized_relative_path}",
+        )
         return {
-            "step": checkpoint_record["step"],
-            "relative_path": checkpoint_record["relative_path"],
-            "existed": checkpoint_record["existed"],
+            "hash": commit_hash,
+            "message": f"{tool_name}: {normalized_relative_path}",
+            "relative_path": normalized_relative_path,
         }
-
-    def _finalize_checkpoint(self, checkpoint_record: dict[str, Any], *, keep: bool) -> None:
-        if keep:
-            self._checkpoint_stack.append(checkpoint_record)
-            return
-        shutil.rmtree(checkpoint_record["step_dir"], ignore_errors=True)
 
     def _undo_last_write(self) -> dict[str, Any]:
-        if not self._checkpoint_stack:
+        try:
+            reverted_commit = undo_last_workspace_commit(self.repo_path)
+        except RuntimeError as error:
             return {
                 "ok": False,
                 "tool_name": "undo",
                 "summary": "没有可回滚的写操作。",
                 "data": {"reverted_files": []},
                 "error": {
-                    "type": "no_checkpoint",
-                    "message": "没有可回滚的写操作。",
+                    "type": "no_commit",
+                    "message": str(error),
                 },
             }
-
-        checkpoint_record = self._checkpoint_stack.pop()
-        resolved_repo_path = resolve_repo_path(self.repo_path)
-        relative_path = checkpoint_record["relative_path"]
-        target_path = resolve_repo_relative_path(resolved_repo_path, relative_path)
-        if checkpoint_record["existed"]:
-            checkpoint_path = Path(checkpoint_record["checkpoint_path"])
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(checkpoint_path, target_path)
-        elif target_path.exists():
-            target_path.unlink()
 
         return {
             "ok": True,
             "tool_name": "undo",
-            "summary": f"已回滚最近一次写操作：{relative_path}。",
+            "summary": "已回滚最近一次写操作。",
             "data": {
-                "step": checkpoint_record["step"],
-                "reverted_files": [relative_path],
-                "restored_from_existing_file": checkpoint_record["existed"],
+                "reverted_commit": reverted_commit,
+                "reverted_files": [],
             },
             "error": None,
         }
@@ -209,24 +183,88 @@ class ToolExecutor:
     def summarize_for_model(result: dict[str, Any], *, max_chars: int) -> str:
         """把工具结果压成适合回喂给模型的文本。"""
 
-        failure_summary = result.get("data", {}).get("failure_summary")
-        if result.get("tool_name") == "run_tests" and failure_summary and not result.get("ok", False):
-            payload = json.dumps(
-                {
-                    "ok": result.get("ok", False),
-                    "tool_name": result.get("tool_name"),
-                    "summary": result.get("summary", ""),
-                    "failure_summary": failure_summary,
-                    "exit_code": result.get("data", {}).get("exit_code"),
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-            if len(payload) <= max_chars:
-                return payload
-            return f"{payload[:max_chars]}\n...<truncated>"
+        tool_name = result.get("tool_name")
+        payload: dict[str, Any] = {
+            "ok": result.get("ok", False),
+            "tool_name": tool_name,
+            "summary": result.get("summary", ""),
+            "error": result.get("error"),
+        }
+        data = result.get("data", {})
 
-        payload = json.dumps(result, ensure_ascii=False, indent=2)
-        if len(payload) <= max_chars:
-            return payload
-        return f"{payload[:max_chars]}\n...<truncated>"
+        if tool_name == "run_tests" and result.get("ok", False):
+            payload["data"] = {
+                "exit_code": data.get("exit_code"),
+                "duration_sec": data.get("duration_sec"),
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+
+        failure_summary = result.get("data", {}).get("failure_summary")
+        if tool_name == "run_tests" and failure_summary and not result.get("ok", False):
+            payload["failure_summary"] = failure_summary
+            payload["exit_code"] = data.get("exit_code")
+            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+
+        if tool_name == "read_file" and result.get("ok", False):
+            char_count = int(data.get("char_count", 0) or 0)
+            content = data.get("content", "")
+            payload["data"] = {
+                "relative_path": data.get("relative_path"),
+                "line_count": data.get("line_count"),
+                "char_count": char_count,
+                "truncated": data.get("truncated", False),
+                "content": content if char_count <= 20000 else (
+                    str(content)[:2000]
+                    + "\n...<large file; ask read_file for a smaller range after adding offset/limit support>"
+                ),
+            }
+            return ToolExecutor._json_for_model(
+                payload,
+                max_chars=max(max_chars, min(char_count + 1000, 24000)),
+            )
+
+        if tool_name == "list_files" and result.get("ok", False):
+            payload["data"] = {
+                "recursive": data.get("recursive"),
+                "count": data.get("count"),
+                "files": data.get("files", []),
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 8000))
+
+        if tool_name in {"search_code", "grep"} and result.get("ok", False):
+            matches = data.get("matches", [])
+            payload["data"] = {
+                "query": data.get("query") or data.get("pattern"),
+                "match_count": data.get("match_count", len(matches)),
+                "match_files": data.get("match_files", []),
+                "matches": matches[:50],
+                "truncated_matches": max(len(matches) - 50, 0),
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+
+        if tool_name == "show_diff" and result.get("ok", False):
+            payload["data"] = {
+                "changed_files": data.get("changed_files", []),
+                "diff_text": data.get("diff_text", ""),
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 20000))
+
+        if tool_name in {"write_file", "edit_file", "undo"} and result.get("ok", False):
+            compact_data = {
+                key: value
+                for key, value in data.items()
+                if key not in {"content", "old_content", "new_content"}
+            }
+            payload["data"] = compact_data
+            if "commit" in result:
+                payload["commit"] = result["commit"]
+            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+
+        return ToolExecutor._json_for_model(result, max_chars=max_chars)
+
+    @staticmethod
+    def _json_for_model(payload: dict[str, Any], *, max_chars: int) -> str:
+        text = json.dumps(payload, ensure_ascii=False, indent=2)
+        if len(text) <= max_chars:
+            return text
+        return f"{text[:max_chars]}\n...<truncated>"

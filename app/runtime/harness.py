@@ -6,8 +6,11 @@ from random import randint
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from app.runtime.git_workspace import initialize_git_workspace
+
 
 COPY_IGNORE_DIR_NAMES = {
+    ".git",
     ".pytest_cache",
     "__pycache__",
 }
@@ -73,13 +76,14 @@ def build_run_paths(log_root: str | Path, task_id: str, run_id: str) -> RunPaths
 
 
 def copy_repo_to_workspace(source_repo_path: str | Path, workspace_path: str | Path) -> None:
-    # 复制 benchmark repo 时显式忽略缓存目录，避免测试运行污染原始基准输入。
+    # 复制 benchmark repo 时显式忽略缓存目录，并为 agent 写入建立本地 git baseline。
     shutil.copytree(
         Path(source_repo_path),
         Path(workspace_path),
         dirs_exist_ok=True,
         ignore=shutil.ignore_patterns(*COPY_IGNORE_DIR_NAMES),
     )
+    initialize_git_workspace(workspace_path)
 
 
 def next_run_id(task_runs_dir: str | Path) -> str:

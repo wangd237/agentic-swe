@@ -9,6 +9,7 @@ from time import perf_counter
 from app.agent.patcher import apply_rule_based_patch
 from app.agent.policy import load_policy_config
 from app.agent.planner import create_initial_plan, derive_search_queries
+from app.runtime.git_workspace import commit_workspace_path
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json, write_text
 from app.schemas.result_schema import Result
@@ -290,6 +291,13 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
         files_to_read,
         policy_config=policy_config,
     )
+    if patch_result["ok"]:
+        for modified_file in patch_result.get("modified_files", []):
+            commit_workspace_path(
+                run_paths.workspace_dir,
+                relative_path=modified_file,
+                message=f"rule_based_patch: {modified_file}",
+            )
     trace.steps.append(
         TraceStep(
             step_index=len(trace.steps) + 1,

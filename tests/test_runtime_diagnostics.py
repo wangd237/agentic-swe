@@ -186,6 +186,10 @@ def test_run_observation_task_writes_trace_tool_metrics() -> None:
     trace = output["trace"]
     assert trace["started_at"]
     assert trace["finished_at"]
+    assert output["result"]["modified_files"] == ["sample_repo/parser.py"]
+    patch_diff = Path(output["run_paths"]["patch_diff_path"]).read_text(encoding="utf-8")
+    assert "diff --git a/sample_repo/parser.py b/sample_repo/parser.py" in patch_diff
+    assert "+    if not items:" in patch_diff
 
     run_test_steps = [step for step in trace["steps"] if step["tool_name"] == "run_tests"]
     assert len(run_test_steps) == 2

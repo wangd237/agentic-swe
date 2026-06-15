@@ -22,7 +22,7 @@ from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
 
 
-READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "read_file", "show_diff"}
+READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "grep", "read_file", "show_diff"}
 
 
 class OpenAICompatibleChatClient:
@@ -203,6 +203,63 @@ class LLMCodeAgent(BaseAgent):
         texts = [block.get("text", "") for block in content_blocks if block.get("type") == "text"]
         return "\n".join(part for part in texts if part).strip()
 
+    @staticmethod
+    def _message_char_estimate(messages: list[dict[str, Any]]) -> int:
+        return sum(len(json.dumps(message, ensure_ascii=False)) for message in messages)
+
+    @staticmethod
+    def _summarize_message_for_context(message: dict[str, Any]) -> str:
+        role = message.get("role", "unknown")
+        content = message.get("content", "")
+        if isinstance(content, str):
+            compact = content.replace("\n", " ").strip()
+            return f"{role}: {compact[:300]}"
+
+        parts: list[str] = []
+        for block in content if isinstance(content, list) else []:
+            block_type = block.get("type")
+            if block_type == "text":
+                text = str(block.get("text", "")).replace("\n", " ").strip()
+                parts.append(f"text={text[:200]}")
+            elif block_type == "tool_use":
+                parts.append(
+                    f"tool_use name={block.get('name', '')} id={block.get('id', '')} input={block.get('input', {})}"
+                )
+            elif block_type == "tool_result":
+                result_text = str(block.get("content", "")).replace("\n", " ").strip()
+                parts.append(f"tool_result id={block.get('tool_use_id', '')} content={result_text[:300]}")
+        return f"{role}: " + " | ".join(parts)
+
+    @classmethod
+    def _compress_messages_if_needed(
+        cls,
+        messages: list[dict[str, Any]],
+        *,
+        max_context_chars: int,
+        keep_recent: int = 3,
+    ) -> tuple[list[dict[str, Any]], bool, int, int]:
+        before_chars = cls._message_char_estimate(messages)
+        if before_chars <= max_context_chars or len(messages) <= keep_recent + 1:
+            return messages, False, before_chars, before_chars
+
+        leading_message = messages[0]
+        recent_messages = messages[-keep_recent:]
+        middle_messages = messages[1:-keep_recent]
+        summary_lines = [
+            cls._summarize_message_for_context(message)
+            for message in middle_messages
+        ]
+        summary_message = {
+            "role": "system",
+            "content": (
+                "Earlier context has been summarized. Key findings so far:\n"
+                + "\n".join(f"- {line}" for line in summary_lines)
+            ),
+        }
+        compressed_messages = [leading_message, summary_message, *recent_messages]
+        after_chars = cls._message_char_estimate(compressed_messages)
+        return compressed_messages, True, before_chars, after_chars
+
     def _append_tool_trace_step(
         self,
         *,
@@ -278,6 +335,23 @@ class LLMCodeAgent(BaseAgent):
         }
 
     @staticmethod
+    def _model_reported_incomplete(text: str) -> bool:
+        normalized_text = text.lower()
+        incomplete_markers = [
+            "未完成",
+            "无法完成",
+            "不能完成",
+            "还需要继续",
+            "需要继续",
+            "没有全部完成",
+            "not complete",
+            "incomplete",
+            "cannot complete",
+            "unable to complete",
+        ]
+        return any(marker in normalized_text for marker in incomplete_markers)
+
+    @staticmethod
     def _classify_final_state(
         *,
         patch_applied: bool,
@@ -286,7 +360,10 @@ class LLMCodeAgent(BaseAgent):
         workspace_generation: int,
         ever_used_tool: bool,
         max_iterations_reached: bool,
+        model_reported_incomplete: bool,
     ) -> tuple[str, str]:
+        if model_reported_incomplete and not max_iterations_reached:
+            return "incomplete", "task_incomplete"
         if (
             patch_applied
             and last_test_exit_code == 0
@@ -382,6 +459,33 @@ class LLMCodeAgent(BaseAgent):
         pending_auto_verification = False
         max_iterations_reached = True
 
+        def compress_context_if_needed(reason: str) -> None:
+            nonlocal messages
+            messages, compressed, before_chars, after_chars = self._compress_messages_if_needed(
+                messages,
+                max_context_chars=self.llm_config.max_context_chars,
+            )
+            if not compressed:
+                return
+            trace.steps.append(
+                TraceStep(
+                    step_index=len(trace.steps) + 1,
+                    action_type="context_compression",
+                    tool_name=None,
+                    tool_input={"reason": reason},
+                    tool_output_summary=f"上下文从 {before_chars} 字符压缩到 {after_chars} 字符。",
+                    observation="旧消息已压缩为摘要，保留初始任务输入和最近对话。",
+                    decision="继续 LLM 循环，避免上下文超过安全阈值。",
+                    timestamp=self._utc_timestamp(),
+                    duration_sec=None,
+                    tool_metrics={
+                        "before_chars": before_chars,
+                        "after_chars": after_chars,
+                        "max_context_chars": self.llm_config.max_context_chars,
+                    },
+                )
+            )
+
         for iteration_index in range(self.llm_config.max_iterations):
             response_started_at = perf_counter()
             response = self.client.create_message(
@@ -392,6 +496,7 @@ class LLMCodeAgent(BaseAgent):
             response_duration_sec = round(perf_counter() - response_started_at, 4)
             assistant_blocks = self._normalize_assistant_blocks(response)
             assistant_text = self._extract_text(assistant_blocks)
+            tool_blocks = self._tool_use_blocks(assistant_blocks)
 
             trace.steps.append(
                 TraceStep(
@@ -407,6 +512,21 @@ class LLMCodeAgent(BaseAgent):
                     tool_metrics={"content_block_count": len(assistant_blocks)},
                 )
             )
+            if assistant_text and tool_blocks:
+                trace.steps.append(
+                    TraceStep(
+                        step_index=len(trace.steps) + 1,
+                        action_type="planning",
+                        tool_name=None,
+                        tool_input={"iteration_index": iteration_index + 1},
+                        tool_output_summary=assistant_text[:400],
+                        observation=assistant_text,
+                        decision="模型在调用工具前给出计划，随后执行同轮工具调用。",
+                        timestamp=self._utc_timestamp(),
+                        duration_sec=None,
+                        tool_metrics={"planned_tool_count": len(tool_blocks)},
+                    )
+                )
 
             messages.append(
                 {
@@ -414,9 +534,9 @@ class LLMCodeAgent(BaseAgent):
                     "content": assistant_blocks,
                 }
             )
+            compress_context_if_needed("assistant_response")
 
             tool_results_for_model: list[dict[str, Any]] = []
-            tool_blocks = self._tool_use_blocks(assistant_blocks)
             if tool_blocks:
                 ever_used_tool = True
             parallel_group_counter = 0
@@ -494,6 +614,7 @@ class LLMCodeAgent(BaseAgent):
                         "content": tool_results_for_model,
                     }
                 )
+                compress_context_if_needed("tool_results")
                 continue
 
             if pending_auto_verification and verified_generation != workspace_generation:
@@ -542,6 +663,7 @@ class LLMCodeAgent(BaseAgent):
                         ),
                     }
                 )
+                compress_context_if_needed("auto_verification")
                 continue
 
             final_summary = assistant_text or "模型结束了当前任务。"
@@ -559,11 +681,16 @@ class LLMCodeAgent(BaseAgent):
             workspace_generation=workspace_generation,
             ever_used_tool=ever_used_tool,
             max_iterations_reached=max_iterations_reached,
+            model_reported_incomplete=self._model_reported_incomplete(final_summary),
         )
 
         duration_sec = round(perf_counter() - started_at, 4)
         trace.final_status = final_status
         trace.finished_at = self._utc_timestamp()
+        context_compression_steps = [
+            step for step in trace.steps
+            if step.action_type == "context_compression"
+        ]
 
         result = Result(
             task_id=task.task_id,
@@ -591,6 +718,7 @@ class LLMCodeAgent(BaseAgent):
                 "workspace_generation": workspace_generation,
                 "verified_generation": verified_generation,
                 "incomplete_reason": incomplete_reason,
+                "context_compression_count": len(context_compression_steps),
             },
             recommended_files=trace.read_files[:],
         )

@@ -8,6 +8,7 @@ import pytest
 
 from app.agent.llm_agent import LLMCodeAgent
 from app.agent.llm_config import LLMConfig
+from app.agent.llm_prompts import build_system_prompt
 from app.agent.policy import PolicyConfig
 
 
@@ -20,6 +21,10 @@ class FakeLLMClient:
         if self._call_count == 1:
             return {
                 "content": [
+                    {
+                        "type": "text",
+                        "text": "我会先运行测试确认当前状态。",
+                    },
                     {
                         "type": "tool_use",
                         "id": "tool_1",
@@ -227,6 +232,60 @@ class FakeBadToolClient:
         }
 
 
+class FakeLongContextClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.observed_final_call_messages: list[dict] = []
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "我先读取文件，确认当前实现。",
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "read_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "max_chars": 6000,
+                        },
+                    },
+                ]
+            }
+        if self._call_count == 2:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "我再读取一次文件，制造需要压缩的中间上下文。",
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "tool_2",
+                        "name": "read_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "max_chars": 6000,
+                        },
+                    },
+                ]
+            }
+        self.observed_final_call_messages = messages
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "我已经完成观察，但不需要修改。",
+                }
+            ]
+        }
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -300,6 +359,13 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert output["result"]["tool_stats"]["llm_provider"] == "openai_compatible"
     assert output["result"]["tool_stats"]["llm_model"] == "fake-model"
     assert output["trace"]["total_tool_calls"] == 1
+    planning_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "planning"
+    ]
+    assert len(planning_steps) == 1
+    assert planning_steps[0]["observation"] == "我会先运行测试确认当前状态。"
+    assert planning_steps[0]["tool_metrics"]["planned_tool_count"] == 1
 
 
 def test_llm_agent_parallelizes_same_turn_read_only_tools(tmp_path: Path) -> None:
@@ -833,6 +899,71 @@ def test_llm_agent_returns_artifacts_after_bad_tool_input(tmp_path: Path) -> Non
     assert Path(output["run_paths"]["result_json_path"]).exists()
 
 
+def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "app.py",
+        "VALUE = '" + ("x" * 2000) + "'\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "max_steps": 2,
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeLongContextClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=3, max_context_chars=1000),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    compression_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "context_compression"
+    ]
+    assert compression_steps
+    assert output["result"]["tool_stats"]["context_compression_count"] >= 1
+    assert any(
+        message.get("role") == "system"
+        and "Earlier context has been summarized" in message.get("content", "")
+        for message in client.observed_final_call_messages
+    )
+
+
 def test_llm_config_uses_policy_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CUSTOM_MODEL_ENV", "custom-model-from-env")
     policy = PolicyConfig(
@@ -864,11 +995,13 @@ def test_llm_config_uses_policy_max_steps() -> None:
         agent_type="llm",
         max_steps=3,
         llm_provider="openai_compatible",
+        llm_max_context_chars=1234,
     )
 
     config = LLMConfig.from_policy(policy)
 
     assert config.max_iterations == 3
+    assert config.max_context_chars == 1234
 
 
 def test_llm_config_uses_model_env_as_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -887,3 +1020,25 @@ def test_llm_config_uses_model_env_as_fallback(monkeypatch: pytest.MonkeyPatch) 
     config = LLMConfig.from_policy(policy)
 
     assert config.model == "custom-model-from-env"
+
+
+def test_llm_agent_classifies_model_reported_incomplete_task() -> None:
+    final_status, incomplete_reason = LLMCodeAgent._classify_final_state(
+        patch_applied=True,
+        last_test_exit_code=0,
+        verified_generation=1,
+        workspace_generation=1,
+        ever_used_tool=True,
+        max_iterations_reached=False,
+        model_reported_incomplete=True,
+    )
+
+    assert final_status == "incomplete"
+    assert incomplete_reason == "task_incomplete"
+
+
+def test_system_prompt_guides_subtask_decomposition() -> None:
+    prompt = build_system_prompt()
+
+    assert "步骤清单" in prompt
+    assert "更新进度" in prompt

@@ -36,6 +36,29 @@ def build_tool_definitions() -> list[dict]:
             },
         },
         {
+            "name": "grep",
+            "description": "使用正则表达式搜索代码，返回 file:line:content 风格的匹配行。",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "pattern": {
+                        "type": "string",
+                        "description": "Python re 兼容的正则表达式。",
+                    },
+                    "glob": {
+                        "type": "string",
+                        "description": "可选文件过滤，例如 *.py 或 tests/*.py。",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "最多返回的匹配行数。",
+                        "default": 20,
+                    },
+                },
+                "required": ["pattern"],
+            },
+        },
+        {
             "name": "read_file",
             "description": "读取指定文件内容，适合查看代码、测试或配置文件。",
             "input_schema": {

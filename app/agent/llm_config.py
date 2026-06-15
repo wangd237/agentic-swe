@@ -22,6 +22,7 @@ class LLMConfig(BaseModel):
     max_iterations: int = 8
     max_output_tokens: int = 8000
     max_tool_chars: int = 4000
+    max_context_chars: int = 80000
     temperature: float = 0.0
 
     @staticmethod
@@ -63,6 +64,8 @@ class LLMConfig(BaseModel):
             or cls().max_output_tokens,
             max_iterations=getattr(policy_config, "max_steps", None)
             or cls().max_iterations,
+            max_context_chars=getattr(policy_config, "llm_max_context_chars", None)
+            or cls().max_context_chars,
         )
 
     def require_api_key(self) -> str:
