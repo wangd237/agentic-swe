@@ -93,7 +93,23 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 新增 challenge run 中，`task_126 / task_127 / task_130 / task_131 / task_133` 均被 LLM agent 成功修复。`task_054` 使用 `llm_deepseek_max1` 受限策略，专门验证达到轮次上限时会写入 `incomplete_reason=max_iterations`，补足 failure taxonomy 的第二类真实产物。
 
-## 6. 第一批人工抽检记录
+## 6. 工具链升级 rerun
+
+2026-06-15 按 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 完成首轮工具链升级后，使用真实 OpenAI-compatible / DeepSeek API 重跑旧 incomplete run 所属任务。
+
+| Task | 旧结果 | 新结果 | Tool calls | 关键观察 | Run |
+| --- | --- | --- | ---: | --- | --- |
+| `task_132` | `incomplete/no_patch`，旧 run `14` calls | `incomplete/no_patch` | `5` | 代码与测试已满足目标语义，agent 仍拒绝无 patch 成功；trace 第 2 轮 `read_file` 并行执行并带 `parallel_group_id` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260615T022726937782Z_5832/result.json) |
+| `task_054` | `incomplete/max_iterations`，旧 run 为 `llm_deepseek_max1` 受限策略 | `success` | `9` | agent 使用 `edit_file` 两次修复 `extend()`，第一次测试失败时 `failure_summary` 暴露 `AttributeError`，第二次修正后 3 tests pass | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_054/run_20260615T022958080689Z_9857/result.json) |
+
+对比摘要：
+
+- 旧 4 条 incomplete run：`0 / 4` success，平均 `7.5` tool calls，平均 `28.84s`。
+- 新工具链按唯一任务重跑 2 条：`1 / 2` success，平均 `7.0` tool calls，平均 `43.77s`。
+- `task_054` 是明确正向证据：`edit_file` 减少全文件重写风险，结构化失败摘要帮助模型从中间错误收敛到正确 patch。
+- `task_132` 是边界证据：工具链减少了观察工具调用，但任务本身在当前 repo 中已处于测试通过且无 patch 状态，继续保持 `no_patch` 是合理的保守判定。
+
+## 7. 第一批人工抽检记录
 
 | Task | 抽检结论 |
 | --- | --- |
@@ -127,7 +143,7 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 | `task_125` | 在 cancel scope 内抛出取消异常，避免泄漏 |
 | `task_129` | 子任务失败后父任务清理流程不再被额外取消 |
 
-## 7. 观察
+## 8. 观察
 
 当前样本覆盖了不同类型的修复：
 
@@ -145,7 +161,7 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 当前最重要的结论是：LLM agent 已经不只是跑通单个 demo，而是在多个库、多类缺陷上完成了可审计的工具调用、patch 写入和测试验证闭环。
 
-## 8. 当前边界
+## 9. 当前边界
 
 这仍然是小样本结果，不应夸大成完整 benchmark 通过率。下一步应该补：
 

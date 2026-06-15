@@ -106,6 +106,37 @@ class FakeWriteOnceClient:
         }
 
 
+class FakeEditThenStopClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "edit_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "old_string": "    return 1",
+                            "new_string": "    return 2",
+                        },
+                    }
+                ]
+            }
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "自动验证已通过，当前任务完成。",
+                }
+            ]
+        }
+
+
 class FakeUnsafeCommandClient:
     def __init__(self, unsafe_command: str) -> None:
         self.unsafe_command = unsafe_command
@@ -121,6 +152,46 @@ class FakeUnsafeCommandClient:
                         "command": self.unsafe_command,
                         "timeout_sec": 30,
                     },
+                }
+            ]
+        }
+
+
+class FakeParallelReadClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.observed_tool_result_ids: list[str] = []
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_read_app",
+                        "name": "read_file",
+                        "input": {"relative_path": "demo_pkg/app.py"},
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "tool_read_test",
+                        "name": "read_file",
+                        "input": {"relative_path": "tests/test_app.py"},
+                    },
+                ]
+            }
+        latest_message = messages[-1]
+        self.observed_tool_result_ids = [
+            block["tool_use_id"]
+            for block in latest_message["content"]
+            if block.get("type") == "tool_result"
+        ]
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "我已经完成观察，但不需要修改。",
                 }
             ]
         }
@@ -231,6 +302,74 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert output["trace"]["total_tool_calls"] == 1
 
 
+def test_llm_agent_parallelizes_same_turn_read_only_tools(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "app.py",
+        "def value():\n    return 1\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeParallelReadClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=3),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    read_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "read_file"
+    ]
+    parallel_group_ids = {
+        step["tool_metrics"].get("parallel_group_id")
+        for step in read_steps
+    }
+    assert len(read_steps) == 2
+    assert parallel_group_ids == {"iter_1_parallel_1"}
+    assert client.observed_tool_result_ids == ["tool_read_app", "tool_read_test"]
+
+
 def test_llm_agent_auto_verifies_after_write_before_success(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
@@ -299,6 +438,83 @@ def test_llm_agent_auto_verifies_after_write_before_success(tmp_path: Path) -> N
     assert output["result"]["post_test_exit_code"] == 0
     assert output["result"]["patch_applied"] is True
     assert len(run_test_steps) == 2
+
+
+def test_llm_agent_auto_verifies_after_edit_before_success(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "__init__.py",
+        "",
+    )
+    _write_text(
+        benchmark_repo / "demo_pkg" / "app.py",
+        "def value():\n    return 1\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 2\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=5),
+        client=FakeEditThenStopClient(),
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    edit_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "edit_file"
+    ]
+    run_test_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "run_tests"
+    ]
+    assert output["result"]["final_status"] == "success"
+    assert output["result"]["incomplete_reason"] == ""
+    assert output["result"]["post_test_exit_code"] == 0
+    assert output["result"]["patch_applied"] is True
+    assert output["result"]["tool_stats"]["workspace_generation"] == 1
+    assert len(edit_steps) == 1
+    assert edit_steps[0]["tool_metrics"]["ok"] is True
+    assert len(run_test_steps) == 1
 
 
 def test_llm_agent_classifies_failed_tests_after_patch(tmp_path: Path) -> None:

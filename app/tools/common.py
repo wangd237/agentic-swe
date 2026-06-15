@@ -5,6 +5,7 @@ from pathlib import Path
 
 DEFAULT_IGNORED_DIRS = {
     ".git",
+    ".agent_checkpoints",
     "__pycache__",
     ".pytest_cache",
     ".mypy_cache",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
@@ -19,6 +20,9 @@ from app.runtime.logger import write_json, write_text
 from app.schemas.result_schema import Result
 from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
+
+
+READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "read_file", "show_diff"}
 
 
 class OpenAICompatibleChatClient:
@@ -208,7 +212,13 @@ class LLMCodeAgent(BaseAgent):
         tool_result: dict[str, Any],
         duration_sec: float,
         decision: str,
+        parallel_group_id: str | None = None,
     ) -> None:
+        tool_metrics = {
+            "ok": tool_result.get("ok", False),
+        }
+        if parallel_group_id:
+            tool_metrics["parallel_group_id"] = parallel_group_id
         trace.steps.append(
             TraceStep(
                 step_index=len(trace.steps) + 1,
@@ -223,12 +233,49 @@ class LLMCodeAgent(BaseAgent):
                 decision=decision,
                 timestamp=self._utc_timestamp(),
                 duration_sec=duration_sec,
-                tool_metrics={
-                    "ok": tool_result.get("ok", False),
-                },
+                tool_metrics=tool_metrics,
             )
         )
         trace.total_tool_calls += 1
+
+    @staticmethod
+    def _tool_use_blocks(assistant_blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [block for block in assistant_blocks if block.get("type") == "tool_use"]
+
+    @staticmethod
+    def _partition_tool_batches(tool_blocks: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+        batches: list[list[dict[str, Any]]] = []
+        current_read_only_batch: list[dict[str, Any]] = []
+        for block in tool_blocks:
+            if block.get("name") in READ_ONLY_TOOL_NAMES:
+                current_read_only_batch.append(block)
+                continue
+            if current_read_only_batch:
+                batches.append(current_read_only_batch)
+                current_read_only_batch = []
+            batches.append([block])
+        if current_read_only_batch:
+            batches.append(current_read_only_batch)
+        return batches
+
+    @staticmethod
+    def _execute_tool_block(
+        *,
+        tool_executor: ToolExecutor,
+        block: dict[str, Any],
+    ) -> dict[str, Any]:
+        tool_name = block["name"]
+        tool_input = block.get("input", {})
+        tool_started_at = perf_counter()
+        tool_result = tool_executor.execute(tool_name, tool_input)
+        tool_duration_sec = round(perf_counter() - tool_started_at, 4)
+        return {
+            "block": block,
+            "tool_name": tool_name,
+            "tool_input": tool_input,
+            "tool_result": tool_result,
+            "tool_duration_sec": tool_duration_sec,
+        }
 
     @staticmethod
     def _classify_final_state(
@@ -369,49 +416,76 @@ class LLMCodeAgent(BaseAgent):
             )
 
             tool_results_for_model: list[dict[str, Any]] = []
-            used_tool = False
-            for block in assistant_blocks:
-                if block.get("type") != "tool_use":
-                    continue
-                used_tool = True
+            tool_blocks = self._tool_use_blocks(assistant_blocks)
+            if tool_blocks:
                 ever_used_tool = True
-                tool_name = block["name"]
-                tool_input = block.get("input", {})
-                tool_started_at = perf_counter()
-                tool_result = tool_executor.execute(tool_name, tool_input)
-                tool_duration_sec = round(perf_counter() - tool_started_at, 4)
+            parallel_group_counter = 0
+            for batch in self._partition_tool_batches(tool_blocks):
+                parallel_group_id: str | None = None
+                if len(batch) > 1 and all(block.get("name") in READ_ONLY_TOOL_NAMES for block in batch):
+                    parallel_group_counter += 1
+                    parallel_group_id = f"iter_{iteration_index + 1}_parallel_{parallel_group_counter}"
+                    batch_results: list[dict[str, Any] | None] = [None] * len(batch)
+                    with ThreadPoolExecutor(max_workers=len(batch)) as executor:
+                        future_to_index = {
+                            executor.submit(
+                                self._execute_tool_block,
+                                tool_executor=tool_executor,
+                                block=block,
+                            ): index
+                            for index, block in enumerate(batch)
+                        }
+                        for future in as_completed(future_to_index):
+                            batch_results[future_to_index[future]] = future.result()
+                    executed_results = [result for result in batch_results if result is not None]
+                else:
+                    executed_results = [
+                        self._execute_tool_block(
+                            tool_executor=tool_executor,
+                            block=block,
+                        )
+                        for block in batch
+                    ]
 
-                if tool_name == "read_file" and tool_result.get("ok"):
-                    relative_path = tool_result["data"].get("relative_path", "")
-                    if relative_path and relative_path not in trace.read_files:
-                        trace.read_files.append(relative_path)
-                if tool_name == "run_tests":
-                    last_test_exit_code = tool_result.get("data", {}).get("exit_code")
-                    last_test_summary = tool_result.get("summary", "")
-                    verified_generation = workspace_generation
-                if tool_name == "write_file" and tool_result.get("ok"):
-                    workspace_generation += 1
-                    pending_auto_verification = True
+                for executed in executed_results:
+                    block = executed["block"]
+                    tool_name = executed["tool_name"]
+                    tool_input = executed["tool_input"]
+                    tool_result = executed["tool_result"]
+                    tool_duration_sec = executed["tool_duration_sec"]
 
-                self._append_tool_trace_step(
-                    trace=trace,
-                    tool_name=tool_name,
-                    tool_input=tool_input,
-                    tool_result=tool_result,
-                    duration_sec=tool_duration_sec,
-                    decision="将工具结果回喂给模型继续决策。",
-                )
+                    if tool_name == "read_file" and tool_result.get("ok"):
+                        relative_path = tool_result["data"].get("relative_path", "")
+                        if relative_path and relative_path not in trace.read_files:
+                            trace.read_files.append(relative_path)
+                    if tool_name == "run_tests":
+                        last_test_exit_code = tool_result.get("data", {}).get("exit_code")
+                        last_test_summary = tool_result.get("summary", "")
+                        verified_generation = workspace_generation
+                    if tool_name in {"write_file", "edit_file", "undo"} and tool_result.get("ok"):
+                        workspace_generation += 1
+                        pending_auto_verification = True
 
-                tool_results_for_model.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.get("id", ""),
-                        "content": ToolExecutor.summarize_for_model(
-                            tool_result,
-                            max_chars=self.llm_config.max_tool_chars,
-                        ),
-                    }
-                )
+                    self._append_tool_trace_step(
+                        trace=trace,
+                        tool_name=tool_name,
+                        tool_input=tool_input,
+                        tool_result=tool_result,
+                        duration_sec=tool_duration_sec,
+                        decision="将工具结果回喂给模型继续决策。",
+                        parallel_group_id=parallel_group_id,
+                    )
+
+                    tool_results_for_model.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": block.get("id", ""),
+                            "content": ToolExecutor.summarize_for_model(
+                                tool_result,
+                                max_chars=self.llm_config.max_tool_chars,
+                            ),
+                        }
+                    )
 
             if tool_results_for_model:
                 messages.append(

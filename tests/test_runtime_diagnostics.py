@@ -11,7 +11,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.runtime.task_runner import run_observation_task
-from app.tools.run_tests import _inject_pytest_flags, run_tests
+from app.tools.run_tests import _build_failure_summary, _inject_pytest_flags, run_tests
 
 
 def test_inject_pytest_flags_only_appends_for_pytest_commands() -> None:
@@ -74,6 +74,62 @@ def test_run_tests_records_injected_pytest_flags(tmp_path: Path) -> None:
     assert result["data"]["original_command"] == "python -m pytest test_pass.py -q"
     assert result["data"]["additional_pytest_flags"] == ["-p no:unraisableexception"]
     assert result["data"]["command"].endswith("-p no:unraisableexception")
+
+
+def test_build_failure_summary_extracts_pytest_assertion_details() -> None:
+    pytest_output = """
+=================================== FAILURES ===================================
+__________________________________ test_value __________________________________
+
+    def test_value():
+>       assert value() == 2
+E       assert 1 == 2
+E        +  where 1 = value()
+
+tests/test_app.py:4: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_app.py::test_value - assert 1 == 2
+"""
+
+    summary = _build_failure_summary(pytest_output, "", 1)
+
+    assert summary["failed_tests"] == ["tests/test_app.py::test_value - assert 1 == 2"]
+    assert "assert value() == 2" in summary["assertion_lines"]
+    assert "assert 1 == 2" in summary["assertion_lines"]
+    assert summary["locations"] == [
+        {
+            "path": "tests/test_app.py",
+            "line": 4,
+            "error": "AssertionError",
+        }
+    ]
+    assert "tests/test_app.py::test_value" in summary["short_summary"]
+    assert "tests/test_app.py:4" in summary["short_summary"]
+    assert "assert 1 == 2" in summary["short_summary"]
+
+
+def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    test_file = repo_dir / "test_fail.py"
+    test_file.write_text(
+        "def value():\n"
+        "    return 1\n\n"
+        "def test_value():\n"
+        "    assert value() == 2\n",
+        encoding="utf-8",
+    )
+
+    result = run_tests(str(repo_dir), "python -m pytest test_fail.py -q", timeout_sec=30)
+
+    failure_summary = result["data"]["failure_summary"]
+    assert result["ok"] is False
+    assert failure_summary["failed_tests"]
+    assert any("test_value" in item for item in failure_summary["failed_tests"])
+    assert failure_summary["locations"]
+    assert failure_summary["locations"][0]["path"] == "test_fail.py"
+    assert failure_summary["assertion_lines"]
+    assert "assert value() == 2" in failure_summary["short_summary"]
 
 
 def test_run_observation_task_writes_trace_tool_metrics() -> None:

@@ -87,8 +87,38 @@ def build_tool_definitions() -> list[dict]:
             },
         },
         {
+            "name": "edit_file",
+            "description": "通过精确 old_string/new_string 替换编辑仓库内文件，适合小范围修改。",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "relative_path": {
+                        "type": "string",
+                        "description": "仓库内的相对路径。",
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "要替换的精确原文，必须包含足够上下文以保证唯一匹配。",
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "替换后的新文本。",
+                    },
+                },
+                "required": ["relative_path", "old_string", "new_string"],
+            },
+        },
+        {
             "name": "show_diff",
             "description": "查看当前 workspace 相对原始仓库的 diff。",
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+            },
+        },
+        {
+            "name": "undo",
+            "description": "回滚最近一次 write_file 或 edit_file 写操作影响的文件。",
             "input_schema": {
                 "type": "object",
                 "properties": {},
