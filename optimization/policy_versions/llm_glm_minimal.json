@@ -1,7 +1,7 @@
 {
   "policy_id": "llm_glm_minimal",
   "description": "最小 OpenAI-compatible coding agent 策略示例，使用 GLM / Zhipu 配置。",
-  "max_steps": 12,
+  "max_steps": 16,
   "max_retries": 2,
   "max_patch_files": 1,
   "agent_type": "llm",

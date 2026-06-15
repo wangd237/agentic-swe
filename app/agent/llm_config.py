@@ -19,7 +19,7 @@ class LLMConfig(BaseModel):
     base_url_env: str = "LLM_BASE_URL"
     model_env: str = "LLM_MODEL"
     default_base_url: str = ""
-    max_iterations: int = 8
+    max_iterations: int = 16
     max_output_tokens: int = 8000
     max_tool_chars: int = 4000
     max_context_chars: int = 80000

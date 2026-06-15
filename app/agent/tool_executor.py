@@ -226,9 +226,12 @@ class ToolExecutor:
 
         failure_summary = result.get("data", {}).get("failure_summary")
         if tool_name == "run_tests" and failure_summary and not result.get("ok", False):
-            payload["failure_summary"] = failure_summary
+            payload["failure_summary"] = ToolExecutor._compact_failure_summary_for_model(failure_summary)
             payload["exit_code"] = data.get("exit_code")
-            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+            return ToolExecutor._json_for_model(
+                payload,
+                max_chars=max(max_chars, 12000 if "context_diff" in failure_summary else max_chars),
+            )
 
         if tool_name == "read_file" and result.get("ok", False):
             char_count = int(data.get("char_count", 0) or 0)
@@ -308,3 +311,21 @@ class ToolExecutor:
         if len(text) <= max_chars:
             return text
         return f"{text[:max_chars]}\n...<truncated>"
+
+    @staticmethod
+    def _compact_failure_summary_for_model(failure_summary: dict[str, Any]) -> dict[str, Any]:
+        compact_summary = {
+            "short_summary": failure_summary.get("short_summary", ""),
+            "failed_tests": failure_summary.get("failed_tests", []),
+            "assertion_lines": failure_summary.get("assertion_lines", []),
+            "locations": failure_summary.get("locations", []),
+        }
+        if "context_diff" in failure_summary:
+            compact_summary["context_diff_changed_files"] = failure_summary.get(
+                "context_diff_changed_files",
+                [],
+            )
+            compact_summary["context_diff"] = failure_summary.get("context_diff", "")
+        if "output_excerpt" in failure_summary:
+            compact_summary["output_excerpt"] = failure_summary.get("output_excerpt", "")
+        return compact_summary

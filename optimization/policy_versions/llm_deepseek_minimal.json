@@ -1,7 +1,7 @@
 {
   "policy_id": "llm_deepseek_minimal",
   "description": "最小 OpenAI-compatible coding agent 策略，当前使用 DeepSeek 配置，复用现有工具与 harness。",
-  "max_steps": 12,
+  "max_steps": 16,
   "max_retries": 2,
   "max_patch_files": 1,
   "agent_type": "llm",

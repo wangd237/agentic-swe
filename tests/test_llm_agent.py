@@ -142,6 +142,41 @@ class FakeEditThenStopClient:
         }
 
 
+class FakeThreeSimilarEditsClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.observed_notice = ""
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count <= 3:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": f"tool_{self._call_count}",
+                        "name": "edit_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "old_string": f"VALUE = {self._call_count - 1}",
+                            "new_string": f"VALUE = {self._call_count}",
+                        },
+                    }
+                ]
+            }
+        latest_message = json.dumps(messages[-1], ensure_ascii=False)
+        if "ANTI_LOOP_NOTICE" in latest_message:
+            self.observed_notice = latest_message
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "我已收到反循环提醒，先停止。",
+                }
+            ]
+        }
+
+
 class FakeUnsafeCommandClient:
     def __init__(self, unsafe_command: str) -> None:
         self.unsafe_command = unsafe_command
@@ -646,6 +681,81 @@ def test_llm_agent_classifies_failed_tests_after_patch(tmp_path: Path) -> None:
     assert output["result"]["incomplete_reason"] == "failed_tests"
     assert output["result"]["patch_applied"] is True
     assert output["result"]["post_test_exit_code"] != 0
+    run_test_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "run_tests"
+    ]
+    assert "context_diff" in run_test_steps[-1]["observation"]
+    assert "+    return 2" in run_test_steps[-1]["observation"]
+
+
+def test_llm_agent_injects_anti_loop_notice_after_repeated_similar_edits(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "__init__.py",
+        "",
+    )
+    _write_text(
+        benchmark_repo / "demo_pkg" / "app.py",
+        "VALUE = 0\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_value():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeThreeSimilarEditsClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=5),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    anti_loop_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "anti_loop"
+    ]
+    assert len(anti_loop_steps) == 1
+    assert anti_loop_steps[0]["tool_metrics"]["relative_path"] == "demo_pkg/app.py"
+    assert "ANTI_LOOP_NOTICE" in client.observed_notice
+    assert "python_repl" in client.observed_notice
 
 
 def test_llm_agent_classifies_max_iterations_with_unverified_patch(tmp_path: Path) -> None:
@@ -1004,6 +1114,12 @@ def test_llm_config_uses_policy_max_steps() -> None:
     assert config.max_context_chars == 1234
 
 
+def test_llm_config_default_iterations_match_target2_budget() -> None:
+    config = LLMConfig()
+
+    assert config.max_iterations == 16
+
+
 def test_llm_config_uses_model_env_as_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CUSTOM_MODEL_ENV", "custom-model-from-env")
     policy = PolicyConfig(
@@ -1062,3 +1178,11 @@ def test_system_prompt_describes_python_repl_boundaries() -> None:
     assert "不能 import" in prompt
     assert "不能使用分号" in prompt
     assert "dunder" in prompt
+
+
+def test_system_prompt_requires_reflection_after_failed_tests() -> None:
+    prompt = build_system_prompt()
+
+    assert "run_tests 返回失败" in prompt
+    assert "先用文本解释失败原因" in prompt
+    assert "不要跳过分析直接修改" in prompt

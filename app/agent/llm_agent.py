@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -23,6 +24,12 @@ from app.schemas.trace_schema import Trace, TraceStep
 
 
 READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "grep", "read_file", "show_diff"}
+WRITE_TOOL_NAMES = {"write_file", "edit_file"}
+ANTI_LOOP_MESSAGE = (
+    "你似乎在同一个修复方向上循环：最近连续多次修改同一个文件，"
+    "且编辑模式高度相似。请退一步重新读取相关代码或测试，验证你的核心假设；"
+    "如果涉及第三方库行为，优先用 python_repl 查询实际行为，然后再修改。"
+)
 
 
 class OpenAICompatibleChatClient:
@@ -352,6 +359,68 @@ class LLMCodeAgent(BaseAgent):
         return any(marker in normalized_text for marker in incomplete_markers)
 
     @staticmethod
+    def _write_signature(tool_name: str, tool_input: dict[str, Any]) -> dict[str, str] | None:
+        if tool_name not in WRITE_TOOL_NAMES:
+            return None
+        relative_path = str(tool_input.get("relative_path", "")).replace("\\", "/")
+        if not relative_path:
+            return None
+        return {
+            "tool_name": tool_name,
+            "relative_path": relative_path,
+            "old_string": str(tool_input.get("old_string", "")),
+            "new_string": str(tool_input.get("new_string", "")),
+            "content": str(tool_input.get("content", "")),
+        }
+
+    @staticmethod
+    def _is_similar_text(left: str, right: str, *, threshold: float = 0.8) -> bool:
+        if not left or not right:
+            return left == right
+        return SequenceMatcher(None, left, right).ratio() >= threshold
+
+    @classmethod
+    def _detect_repeated_write_loop(cls, write_history: list[dict[str, str]]) -> bool:
+        if len(write_history) < 3:
+            return False
+        recent_writes = write_history[-3:]
+        relative_paths = {entry["relative_path"] for entry in recent_writes}
+        if len(relative_paths) != 1:
+            return False
+
+        old_strings = [entry.get("old_string", "") for entry in recent_writes]
+        if all(old_strings) and len(set(old_strings)) == 1:
+            return True
+
+        new_texts = [
+            entry.get("new_string") or entry.get("content") or ""
+            for entry in recent_writes
+        ]
+        first_text = new_texts[0]
+        return all(
+            cls._is_similar_text(first_text, text)
+            for text in new_texts[1:]
+        )
+
+    @staticmethod
+    def _inject_context_diff_into_failure(
+        *,
+        tool_result: dict[str, Any],
+        diff_result: dict[str, Any],
+        max_chars: int,
+    ) -> None:
+        failure_summary = tool_result.get("data", {}).get("failure_summary")
+        if not failure_summary or tool_result.get("ok", False):
+            return
+        diff_text = diff_result.get("data", {}).get("diff_text", "")
+        if not diff_text:
+            return
+        if len(diff_text) > max_chars:
+            diff_text = f"{diff_text[:max_chars]}\n...<truncated>"
+        failure_summary["context_diff"] = diff_text
+        failure_summary["context_diff_changed_files"] = diff_result.get("data", {}).get("changed_files", [])
+
+    @staticmethod
     def _classify_final_state(
         *,
         patch_applied: bool,
@@ -458,6 +527,8 @@ class LLMCodeAgent(BaseAgent):
         ever_used_tool = False
         pending_auto_verification = False
         max_iterations_reached = True
+        write_history: list[dict[str, str]] = []
+        anti_loop_injected = False
 
         def compress_context_if_needed(reason: str) -> None:
             nonlocal messages
@@ -582,9 +653,22 @@ class LLMCodeAgent(BaseAgent):
                         last_test_exit_code = tool_result.get("data", {}).get("exit_code")
                         last_test_summary = tool_result.get("summary", "")
                         verified_generation = workspace_generation
+                        if (
+                            last_test_exit_code not in {0, None}
+                            and workspace_generation > 0
+                        ):
+                            diff_result_for_failure = tool_executor.execute("show_diff", {})
+                            self._inject_context_diff_into_failure(
+                                tool_result=tool_result,
+                                diff_result=diff_result_for_failure,
+                                max_chars=self.llm_config.max_tool_chars,
+                            )
                     if tool_name in {"write_file", "edit_file", "undo"} and tool_result.get("ok"):
                         workspace_generation += 1
                         pending_auto_verification = True
+                    write_signature = self._write_signature(tool_name, tool_input)
+                    if write_signature and tool_result.get("ok"):
+                        write_history.append(write_signature)
 
                     self._append_tool_trace_step(
                         trace=trace,
@@ -596,6 +680,33 @@ class LLMCodeAgent(BaseAgent):
                         parallel_group_id=parallel_group_id,
                     )
 
+                    anti_loop_message_for_model = ""
+                    if (
+                        write_signature
+                        and tool_result.get("ok")
+                        and not anti_loop_injected
+                        and self._detect_repeated_write_loop(write_history)
+                    ):
+                        anti_loop_injected = True
+                        trace.steps.append(
+                            TraceStep(
+                                step_index=len(trace.steps) + 1,
+                                action_type="anti_loop",
+                                tool_name=None,
+                                tool_input={"recent_writes": write_history[-3:]},
+                                tool_output_summary="检测到连续相似写操作，已注入反循环提醒。",
+                                observation=ANTI_LOOP_MESSAGE,
+                                decision="提醒模型重新验证假设，而不是继续相同修改方向。",
+                                timestamp=self._utc_timestamp(),
+                                duration_sec=None,
+                                tool_metrics={
+                                    "recent_write_count": 3,
+                                    "relative_path": write_history[-1]["relative_path"],
+                                },
+                            )
+                        )
+                        anti_loop_message_for_model = f"\n\nANTI_LOOP_NOTICE: {ANTI_LOOP_MESSAGE}"
+
                     tool_results_for_model.append(
                         {
                             "type": "tool_result",
@@ -603,7 +714,7 @@ class LLMCodeAgent(BaseAgent):
                             "content": ToolExecutor.summarize_for_model(
                                 tool_result,
                                 max_chars=self.llm_config.max_tool_chars,
-                            ),
+                            ) + anti_loop_message_for_model,
                         }
                     )
 
@@ -641,6 +752,12 @@ class LLMCodeAgent(BaseAgent):
                 last_test_summary = tool_result.get("summary", "")
                 verified_generation = workspace_generation
                 pending_auto_verification = False
+                if last_test_exit_code not in {0, None}:
+                    self._inject_context_diff_into_failure(
+                        tool_result=tool_result,
+                        diff_result=diff_result_for_model,
+                        max_chars=self.llm_config.max_tool_chars,
+                    )
                 self._append_tool_trace_step(
                     trace=trace,
                     tool_name="run_tests",

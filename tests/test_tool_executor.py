@@ -279,6 +279,41 @@ def test_tool_executor_summarize_for_model_prefers_failure_summary() -> None:
     assert "very noisy output" not in summary
 
 
+def test_tool_executor_summarize_for_model_preserves_failure_context_diff() -> None:
+    result = {
+        "ok": False,
+        "tool_name": "run_tests",
+        "summary": "测试失败：tests/test_app.py::test_value。",
+        "data": {
+            "exit_code": 1,
+            "stdout": "very noisy output\n" * 1000,
+            "stderr": "",
+            "failure_summary": {
+                "failed_tests": ["tests/test_app.py::test_value - assert 2 == 1"],
+                "assertion_lines": ["assert value() == 1", "assert 2 == 1"],
+                "locations": [
+                    {
+                        "path": "tests/test_app.py",
+                        "line": 5,
+                        "error": "AssertionError",
+                    }
+                ],
+                "short_summary": "断言: assert value() == 1",
+                "output_excerpt": "very noisy output\n" * 1000,
+                "context_diff_changed_files": ["demo_pkg/app.py"],
+                "context_diff": "diff --git a/demo_pkg/app.py b/demo_pkg/app.py\n+    return 2\n",
+            },
+        },
+        "error": {"type": "test_failure", "message": "failed"},
+    }
+
+    summary = ToolExecutor.summarize_for_model(result, max_chars=800)
+
+    assert "context_diff" in summary
+    assert "+    return 2" in summary
+    assert summary.index("context_diff") < summary.index("output_excerpt")
+
+
 def test_tool_executor_summarize_for_model_compacts_successful_run_tests() -> None:
     result = {
         "ok": True,
