@@ -18,6 +18,11 @@ from app.tools.write_file import write_file
 
 
 SCRATCH_FILE_NAMES = {"debug.py", "tmp.py", "scratch.py", "probe.py"}
+SCRATCH_FILE_REJECTION_MESSAGE = (
+    "Temporary debug/probe files are not supported in this agent workspace. "
+    "Do not create debug.py/tmp.py/scratch.py/probe.py; use read_file, grep, "
+    "run_tests failure output, and edit_file on the target source file instead."
+)
 
 
 class ToolExecutor:
@@ -72,6 +77,13 @@ class ToolExecutor:
                 )
             if tool_name == "write_file":
                 relative_path = str(tool_input.get("relative_path", ""))
+                if self._is_scratch_file(relative_path):
+                    return self._tool_error_result(
+                        tool_name=tool_name,
+                        tool_input=tool_input,
+                        error_type="scratch_file_not_allowed",
+                        message=SCRATCH_FILE_REJECTION_MESSAGE,
+                    )
                 result = write_file(
                     self.repo_path,
                     relative_path=relative_path,
@@ -155,6 +167,11 @@ class ToolExecutor:
             "message": f"{tool_name}: {normalized_relative_path}",
             "relative_path": normalized_relative_path,
         }
+
+    @staticmethod
+    def _is_scratch_file(relative_path: str) -> bool:
+        normalized_relative_path = str(relative_path).replace("\\", "/")
+        return normalized_relative_path.split("/")[-1] in SCRATCH_FILE_NAMES
 
     def _undo_last_write(self) -> dict[str, Any]:
         try:
@@ -262,10 +279,10 @@ class ToolExecutor:
             if "commit" in result:
                 payload["commit"] = result["commit"]
             relative_path = str(compact_data.get("relative_path", "")).replace("\\", "/")
-            if tool_name == "write_file" and relative_path.split("/")[-1] in SCRATCH_FILE_NAMES:
+            if tool_name == "write_file" and ToolExecutor._is_scratch_file(relative_path):
                 payload["scratch_file_warning"] = (
-                    "This looks like a temporary debug/probe file. Do not leave it in the final patch; "
-                    "use undo after extracting the needed insight, then edit the target source file."
+                    "Temporary debug/probe files are not supported. Use read_file, grep, "
+                    "run_tests failure output, and edit_file on the target source file instead."
                 )
             return ToolExecutor._json_for_model(payload, max_chars=max_chars)
 

@@ -79,11 +79,11 @@ Agent 识别到了 `local` version 的特殊分支，但误以为 `Version(...).
 
 Harness 信号：
 - 失败摘要缺少 `AssertionError: False is not true` 等短上下文，不利于模型快速看到实际返回值。
-- Agent 创建了 `debug.py` 探针文件，但没有清理，导致最终 patch 带上无关文件。
+- Agent 创建了 `debug.py` 探针文件，但没有清理，导致最终 patch 带上无关文件；后续 `task_032` 复盘进一步证明，仅靠 prompt 提醒不足，需要工具层直接拦截。
 
 改进优先级：P1/P2。已完成两项改进：
 - `run_tests` failure summary 增加 `output_excerpt`。
-- system prompt 明确要求不要把 `debug.py`、`tmp.py`、`scratch.py` 等临时调试文件留在最终 patch 中；若写入临时探针，应尽快 `undo`。
+- system prompt 明确要求不要创建 `debug.py`、`tmp.py`、`scratch.py`、`probe.py` 等临时调试文件；`ToolExecutor` 对这些文件名的 `write_file` 调用返回 `scratch_file_not_allowed`，引导模型回到 `read_file`、`grep`、`run_tests` 失败输出和目标源码。
 
 ### 3. `task_132` 早期 no_patch：验证/状态判定边界
 
@@ -112,7 +112,7 @@ Harness 信号：这个案例对面试展示很有价值。它说明 agent 的 s
 - 需要精确理解领域库语义的任务：`task_048` 的 packaging version 规则
 - 输出格式非常精细的任务：`task_030` 的 inline table 单行格式
 - 失败摘要过短时，模型容易在错误实现上反复验证，直到 max iterations
-- 临时调试文件需要更强约束，否则会污染最终 patch
+- 临时调试文件需要工具层强约束，否则会污染最终 patch 或让模型陷入无法执行的 debug 脚本循环
 
 ## 已落地改进
 
@@ -124,9 +124,14 @@ Harness 信号：这个案例对面试展示很有价值。它说明 agent 的 s
    - 相关测试：`test_build_failure_summary_includes_output_excerpt_for_unittest_failures`
 
 2. `app/agent/llm_prompts.py`
-   - 明确约束临时调试文件不得留在最终 patch 中
-   - 指导 agent 写入临时探针后用 `undo` 清理
+   - 明确约束 agent 不要创建临时调试文件
+   - 指导 agent 使用 `read_file`、`grep`、`run_tests` 输出和目标源码定位问题
    - 相关测试：`test_system_prompt_discourages_leaking_scratch_files`
+
+3. `app/agent/tool_executor.py`
+   - `write_file` 写入 `debug.py/tmp.py/scratch.py/probe.py` 时直接拒绝
+   - 返回 `scratch_file_not_allowed`，避免无关 debug 文件污染 patch 或消耗迭代次数
+   - 相关测试：`test_tool_executor_rejects_scratch_write_without_commit`
 
 验证命令：
 

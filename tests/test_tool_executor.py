@@ -133,6 +133,42 @@ def test_tool_executor_failed_write_does_not_create_undoable_commit(tmp_path: Pa
     assert _git_log(repo_path) == ["initial"]
 
 
+def test_tool_executor_rejects_scratch_write_without_commit(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    executor = _executor(repo_path)
+
+    write_result = executor.execute(
+        "write_file",
+        {"relative_path": "debug.py", "content": "print('probe')\n"},
+    )
+    undo_result = executor.execute("undo", {})
+
+    assert write_result["ok"] is False
+    assert write_result["error"]["type"] == "scratch_file_not_allowed"
+    assert "edit_file" in write_result["error"]["message"]
+    assert not (repo_path / "debug.py").exists()
+    assert undo_result["ok"] is False
+    assert undo_result["error"]["type"] == "no_commit"
+    assert _git_log(repo_path) == ["initial"]
+
+
+def test_tool_executor_rejects_nested_scratch_write(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    executor = _executor(repo_path)
+
+    write_result = executor.execute(
+        "write_file",
+        {"relative_path": "pkg\\tmp.py", "content": "print('probe')\n"},
+    )
+
+    assert write_result["ok"] is False
+    assert write_result["error"]["type"] == "scratch_file_not_allowed"
+    assert not (repo_path / "pkg" / "tmp.py").exists()
+    assert _git_log(repo_path) == ["initial"]
+
+
 def test_tool_executor_show_diff_uses_git_initial_baseline(tmp_path: Path) -> None:
     original_repo_path = tmp_path / "original"
     repo_path = tmp_path / "repo"
@@ -293,7 +329,8 @@ def test_tool_executor_summarize_for_model_warns_for_scratch_write() -> None:
     payload = json.loads(summary)
 
     assert "scratch_file_warning" in payload
-    assert "undo" in payload["scratch_file_warning"]
+    assert "not supported" in payload["scratch_file_warning"]
+    assert "grep" in payload["scratch_file_warning"]
     assert "target source file" in payload["scratch_file_warning"]
 
 

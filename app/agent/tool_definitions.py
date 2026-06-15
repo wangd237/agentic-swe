@@ -93,7 +93,7 @@ def build_tool_definitions() -> list[dict]:
         },
         {
             "name": "write_file",
-            "description": "覆写仓库内文件内容，用于写入 patch 后的完整文件。",
+            "description": "覆写仓库内文件内容，用于写入 patch 后的完整文件；不要用于创建 debug.py/tmp.py/scratch.py/probe.py 等临时调试文件。",
             "input_schema": {
                 "type": "object",
                 "properties": {
