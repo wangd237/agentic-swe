@@ -142,7 +142,54 @@ def _classify_task_intersections(
     }
 
 
+def _format_artifact_link(path: str | None) -> str:
+    if not path:
+        return "-"
+    normalized_path = str(path).replace("\\", "/")
+    return f"[link]({normalized_path})"
+
+
+def _format_task_policy_result(result: dict[str, Any]) -> str:
+    status = result.get("final_status") or "unknown"
+    reason = result.get("incomplete_reason") or "none"
+    return (
+        f"{status}"
+        f" (reason: `{reason}`, "
+        f"result: {_format_artifact_link(result.get('result_path'))}, "
+        f"trace: {_format_artifact_link(result.get('trace_path'))})"
+    )
+
+
+def _format_task_detail_lines(
+    *,
+    task_ids: list[str],
+    comparison: dict[str, Any],
+    empty_message: str,
+    limit: int = 30,
+) -> str:
+    if not task_ids:
+        return f"- {empty_message}"
+
+    lines: list[str] = []
+    for task_id in task_ids[:limit]:
+        policy_results = comparison["task_matrix"][task_id]
+        details = ", ".join(
+            f"`{policy_id}`={_format_task_policy_result(policy_results[policy_id])}"
+            for policy_id in comparison["policy_ids"]
+            if policy_id in policy_results
+        )
+        lines.append(f"- `{task_id}`: {details}")
+
+    remaining_count = len(task_ids) - limit
+    if remaining_count > 0:
+        lines.append(f"- ... {remaining_count} more")
+    return "\n".join(lines)
+
+
 def build_model_comparison_markdown(comparison: dict[str, Any]) -> str:
+    interim_note = str(comparison.get("interim_note") or "").strip()
+    interim_section = f"\n{interim_note}\n" if interim_note else ""
+
     policy_lines = "\n".join(
         f"| `{item['policy_id']}` | `{item.get('llm_model')}` | {item['task_count']} | "
         f"{item['success_count']} | {item['success_rate']} | {item['average_tool_calls']} | "
@@ -172,17 +219,26 @@ def build_model_comparison_markdown(comparison: dict[str, Any]) -> str:
         ]
     )
 
-    inconsistent_lines = "\n".join(
-        f"- `{task_id}`: "
-        + ", ".join(
-            f"`{policy_id}`={comparison['task_matrix'][task_id][policy_id]['final_status']}"
-            for policy_id in comparison["policy_ids"]
-            if policy_id in comparison["task_matrix"][task_id]
-        )
-        for task_id in intersections["inconsistent"][:30]
-    ) or "- no inconsistent tasks"
+    all_failed_lines = _format_task_detail_lines(
+        task_ids=intersections["all_failed"],
+        comparison=comparison,
+        empty_message="no all-failed tasks",
+    )
+
+    inconsistent_lines = _format_task_detail_lines(
+        task_ids=intersections["inconsistent"],
+        comparison=comparison,
+        empty_message="no inconsistent tasks",
+    )
+
+    incomplete_coverage_lines = "\n".join(
+        f"- `{task_id}`: covered by "
+        + ", ".join(f"`{policy_id}`" for policy_id in comparison["task_matrix"][task_id])
+        for task_id in intersections["incomplete_coverage"][:30]
+    ) or "- no incomplete-coverage tasks"
 
     return f"""# Model Comparison
+{interim_section}
 
 ## Run
 
@@ -206,9 +262,17 @@ def build_model_comparison_markdown(comparison: dict[str, Any]) -> str:
 
 {intersection_lines}
 
+## All-Failed Tasks
+
+{all_failed_lines}
+
 ## Inconsistent Tasks
 
 {inconsistent_lines}
+
+## Incomplete Coverage Tasks
+
+{incomplete_coverage_lines}
 """
 
 
@@ -218,6 +282,7 @@ def aggregate_model_comparison(
     output_dir: str | Path,
     run_label: str | None = None,
     docs_output_path: str | Path | None = None,
+    interim_note: str | None = None,
 ) -> dict[str, Any]:
     output_directory = Path(output_dir).resolve()
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -238,6 +303,8 @@ def aggregate_model_comparison(
         "intersections": _classify_task_intersections(task_matrix, policy_ids),
         "task_matrix": task_matrix,
     }
+    if interim_note:
+        comparison["interim_note"] = interim_note
 
     summary_json_path = output_directory / f"{comparison_id}.json"
     summary_md_path = output_directory / f"{comparison_id}.md"
@@ -265,6 +332,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional docs markdown output, e.g. docs/model_comparison.md.",
     )
+    parser.add_argument(
+        "--interim-note",
+        default=None,
+        help="Optional markdown note inserted under the report title.",
+    )
     return parser
 
 
@@ -275,6 +347,7 @@ def main() -> int:
         output_dir=args.output_dir,
         run_label=args.run_label,
         docs_output_path=args.docs_output,
+        interim_note=args.interim_note,
     )
     comparison = output["comparison"]
     print("=== Model Comparison Summary ===")
