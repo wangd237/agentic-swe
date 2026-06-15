@@ -1,105 +1,77 @@
 # 下一步行动清单
 
-本文件只记录当前真正应该做的下一步。项目目标是服务 AI Agent 实习投递，因此所有行动都必须增强 LLM coding agent 的展示价值。
+本文件只记录当前真正应该做的下一步。项目目标以 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 为准：把 LLM coding agent 打磨到实习/面试可展示，而不是继续扩 benchmark 数量。
 
-## 1. 当前口径
+## 1. 当前阶段
 
-- 主角：OpenAI-compatible LLM coding agent。
-- 证据：真实 issue 派生任务、trace/result/patch、测试验证、case study。
-- 底座：benchmark、harness、规则版 baseline、frozen set、stability recheck。
-- 暂缓：继续堆规则版任务、继续扩 benchmark 数量、继续深挖 maturity / 性能追踪。
+当前处于 **Target 2：多模型规模化验证**。
 
-## 2. Week Target 交付物
+已完成：
 
-当前短期目标以 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 为准：把项目推到“可以放进简历 + 面试中打开给人看”的状态。
+- Target 1 压力测试：14 条 hard task，12/14 success，产出 [docs/stress_test_report.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/stress_test_report.md)。
+- 多模型 runner / aggregator 基础设施。
+- DeepSeek frozen_40 最新基线：`40/40` completed，`39/40` success，success rate `0.975`。
+- 基于 `task_032` trace 落地 scratch-file guard，避免 `debug.py/tmp.py/scratch.py/probe.py` 这类无法执行的临时调试文件污染 patch 或消耗迭代。
+- 当前 interim comparison： [docs/model_comparison.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/model_comparison.md)。
 
-### 交付物 1：LLM Agent 样本扩到 ≥25 条
+尚未完成：
 
-目标：从当前 `5` 条主样本 + `2` 条扩展成功 + `1` 条边界 incomplete，扩到至少 `25` 条真实 LLM agent run。
+- Kimi frozen_40。
+- GLM frozen_40。
+- 三模型正式交集分析。
+- 至少 5 条失败 case 的 trace 级根因分析。
+- Target 2 最终版 `docs/model_comparison.md` 和本地 `docs/agent_evolution.md` 收口。
 
-要求：
+## 2. 当前事实
 
-- 必须包含至少 `3` 条 challenge 边界题；
-- 每跑完约 `5` 条就停下来抽检 diff；
-- 成功不能只看 `final_status`，还要确认 patch 合理；
-- failure / boundary 要记录 `incomplete_reason`，并尽量覆盖至少 `2` 种不同 reason。
+| 项 | 状态 |
+| --- | --- |
+| DeepSeek policy | ready |
+| Kimi policy | ready, waiting for key |
+| GLM policy | ready, waiting for key |
+| `.env` 当前 key | only `DEEPSEEK_API_KEY` |
+| Target 2 completed pairs | `40/120` |
+| Target 2 验收线 | `>=100` completed `(task, model)` pairs |
 
-### 交付物 2：Case Study 扩到 ≥4 条
+当前 `.env` 还缺：
 
-当前要优先把已有成功 run 写清楚，不必等新增 25 条全部跑完。建议详写：
+- `KIMI_API_KEY`
+- `GLM_API_KEY`
 
-- `task_010`
-- `task_024`
-- `task_016`
-- `task_093`
+Kimi/GLM base URL 和 model 已在 policy 中给出默认值，因此只要 key 到位，preflight 就能继续。
 
-每条必须包含关键步骤序列、agent 决策关键点、patch 核心改动、验证结果。
+## 3. 下一步命令
 
-### 交付物 3：README 指标表真实化
+Kimi key 到位后：
 
-README 的 Agent 能力表必须只写真实跑出来的数字，并和 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md) 保持一致。
-
-### 交付物 4：项目一键可跑 + `.env.example`
-
-面试官 clone 后应能快速理解：
-
-- 如何安装依赖；
-- 如何配置 OpenAI-compatible provider；
-- 如何运行一条 LLM agent 任务。
-
-## 3. 当前已完成 / 待完成
-
-| 交付物 | 当前状态 | 下一步 |
-| --- | --- | --- |
-| 样本 ≥25 | 已完成，当前 `33` 条已记录 run | 继续保持抽检，不再盲目刷成功 |
-| ≥3 条 challenge | 已完成，当前 `7` 条 challenge / boundary run | 后续重点转为失败 reason 多样性 |
-| `incomplete_reason` | 已完成，当前已有 `no_patch` 和 `max_iterations` | 后续可继续补 `failed_tests`，但 week target 已达标 |
-| case study ≥4 | 已完成首版 | 可再挑 `task_126/128/133` 补复杂案例 |
-| README 指标 | 已完成首版 | 后续随新增失败样本刷新 |
-| `.env.example` | 已完成首版 | 与 README 快速开始保持一致 |
-
-## 4. 失败分类
-
-- `no_patch`
-- `failed_tests`
-- `max_iterations`
-- `no_tests_run`
-- `unverified_patch`
-
-## 5. 可执行命令
-
-选定更复杂任务后，运行一条 LLM agent 任务：
-
-```bash
-python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --policy optimization/policy_versions/llm_deepseek_minimal.json
+```powershell
+python scripts\run_multi_model_eval.py --manifest benchmarks\manifests\real_issue_tasks_frozen_40_v1.json --policy optimization\policy_versions\llm_kimi_minimal.json --output-dir logs\summaries --run-label target2_kimi_frozen40 --max-workers 1 --retries 0
 ```
 
-运行聚焦测试：
+GLM key 到位后：
 
-```bash
-python -m pytest tests/test_llm_agent.py tests/test_write_file.py -q --basetemp .pytest_tmp_next_step
+```powershell
+python scripts\run_multi_model_eval.py --manifest benchmarks\manifests\real_issue_tasks_frozen_40_v1.json --policy optimization\policy_versions\llm_glm_minimal.json --output-dir logs\summaries --run-label target2_glm_frozen40 --max-workers 1 --retries 0
 ```
 
-查看某次运行结果：
+三模型都跑完后，用最新三个 summary 生成正式报告：
 
-```bash
-Get-Content logs/trajectories/<task_id>/<run_id>/result.json
+```powershell
+python scripts\aggregate_model_comparison.py --summary logs\summaries\multi_model_eval_target2_deepseek_frozen40_scratch_guard_001_001.json --summary <kimi_summary.json> --summary <glm_summary.json> --output-dir logs\summaries --run-label target2_three_model --docs-output docs\model_comparison.md
 ```
 
-## 6. 暂时不要优先做
+## 4. 暂时不要优先做
 
-- 不要把“新增正式 benchmark 数量”作为主目标。
-- 不要继续围绕 `improved_v*` 规则版 patcher 做大迭代。
-- 不要把 pytest 性能复核当成当前主线。
-- 不要先做 UI、多 agent、训练增强。
-- 不要把 DeepSeek 写死进 agent 代码；LLM provider 要保持 OpenAI-compatible 抽象。
+- 不加新 benchmark 任务。
+- 不继续刷 DeepSeek 单模型成功率，除非是为了验证明确的 harness/prompt 改进。
+- 不回到规则版 `improved_v*` 主线。
+- 不做 Anthropic/Claude API 适配。
+- 不做 Web UI、LangGraph、multi-agent 或 reflection。
+- 不把 DeepSeek 写进 agent 代码；继续保持 OpenAI-compatible 抽象。
 
-## 7. 每轮完成后同步清单
+## 5. 每轮完成后检查
 
-每次完成一条重要 agent run 后，至少检查：
-
-- README 是否需要更新小样本数字；
-- `docs/agent_eval_summary.md` 是否记录新 run；
-- `docs/agent_case_studies.md` 是否需要新增案例；
-- `docs/v2_roadmap.md` 的下一步是否仍准确；
-- 是否需要提交并推送。
+- `pytest -q` 是否通过。
+- `docs/model_comparison.md` 是否反映最新真实 run。
+- 本地 `docs/agent_evolution.md` 是否追加设计演进记录。
+- `git status` 是否干净，且 `docs/agent_evolution.md` 仍不被 Git 追踪。
