@@ -6,7 +6,7 @@ import argparse
 import re
 import sys
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -25,7 +25,7 @@ ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _round_float(value: float) -> float:

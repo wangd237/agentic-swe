@@ -14,6 +14,7 @@ FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)
 ASSERTION_LINE_PATTERN = re.compile(r"^\s*(?:E\s+|>\s*)?(?P<assertion>assert .+)$", re.MULTILINE)
 OUTPUT_EXCERPT_MAX_CHARS = 1200
+DEFAULT_PYTEST_FLAGS = ["--tb=short", "--no-header", "--disable-warnings"]
 
 
 def _build_output_excerpt(output: str, *, max_chars: int = OUTPUT_EXCERPT_MAX_CHARS) -> str:
@@ -28,12 +29,10 @@ def _build_output_excerpt(output: str, *, max_chars: int = OUTPUT_EXCERPT_MAX_CH
 
 def _inject_pytest_flags(command: str, additional_flags: list[str] | None = None) -> str:
     # 仅在 pytest 命令形态下追加额外 flags，避免污染非 pytest 测试命令。
-    if not additional_flags:
-        return command
     normalized_command = command.strip()
     if "pytest" not in normalized_command:
         return command
-    for flag in additional_flags:
+    for flag in [*DEFAULT_PYTEST_FLAGS, *(additional_flags or [])]:
         if flag in normalized_command:
             continue
         normalized_command = f"{normalized_command} {flag}"
@@ -65,16 +64,16 @@ def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
         for match in FAILURE_LOCATION_PATTERN.finditer(combined_output)
     ]
     summary_parts: list[str] = []
-    if failed_tests:
-        summary_parts.append("失败测试: " + "; ".join(failed_tests[:3]))
+    if assertion_lines:
+        summary_parts.append("断言: " + " | ".join(assertion_lines[:3]))
     if locations:
         location_text = "; ".join(
             f"{location['path']}:{location['line']} ({location['error']})"
             for location in locations[:3]
         )
         summary_parts.append("位置: " + location_text)
-    if assertion_lines:
-        summary_parts.append("断言: " + " | ".join(assertion_lines[:3]))
+    if failed_tests:
+        summary_parts.append("失败测试: " + "; ".join(failed_tests[:3]))
     if not summary_parts:
         summary_parts.append("测试命令执行失败，但未提取到明确 pytest 断言。")
 

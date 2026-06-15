@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.agent.executor import run_agent
@@ -13,7 +13,7 @@ from app.schemas.task_schema import load_task
 
 def _utc_timestamp() -> str:
     # 批量运行也统一使用 UTC 时间，便于后续做结果比较。
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _next_batch_run_id(summary_dir: Path, run_label: str | None = None) -> str:

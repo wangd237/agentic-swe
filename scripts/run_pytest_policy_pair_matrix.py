@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -20,7 +20,7 @@ from scripts.compare_pytest_policy_pair import compare_pytest_policy_pair
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _next_analysis_id(summary_dir: Path, matrix_label: str) -> str:

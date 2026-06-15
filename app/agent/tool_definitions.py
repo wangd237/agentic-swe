@@ -92,6 +92,20 @@ def build_tool_definitions() -> list[dict]:
             },
         },
         {
+            "name": "python_repl",
+            "description": "受控 Python 单表达式求值工具，用于查询第三方库对象行为；不允许 import、分号、多行、dunder 或文件操作。",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "单行 Python 表达式，例如 Version('1.0+local').base_version。",
+                    },
+                },
+                "required": ["expression"],
+            },
+        },
+        {
             "name": "write_file",
             "description": "覆写仓库内文件内容，用于写入 patch 后的完整文件；不要用于创建 debug.py/tmp.py/scratch.py/probe.py 等临时调试文件。",
             "input_schema": {

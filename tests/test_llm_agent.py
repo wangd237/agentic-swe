@@ -1052,3 +1052,13 @@ def test_system_prompt_discourages_leaking_scratch_files() -> None:
     assert "不支持执行任意调试脚本" in prompt
     assert "不要反复写调试脚本" in prompt
     assert "edit_file 修复" in prompt
+
+
+def test_system_prompt_describes_python_repl_boundaries() -> None:
+    prompt = build_system_prompt()
+
+    assert "python_repl" in prompt
+    assert "第三方库" in prompt
+    assert "不能 import" in prompt
+    assert "不能使用分号" in prompt
+    assert "dunder" in prompt

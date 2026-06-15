@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -18,7 +18,7 @@ from scripts.analyze_duration_regressions import resolve_batch_summary_path
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_json(path: str | Path) -> dict:

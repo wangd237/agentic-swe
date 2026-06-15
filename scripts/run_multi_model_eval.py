@@ -8,7 +8,7 @@ import os
 import sys
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from time import sleep
 from typing import Any
@@ -29,7 +29,7 @@ AgentRunner = Callable[..., dict[str, Any]]
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_json(path: str | Path) -> dict[str, Any]:

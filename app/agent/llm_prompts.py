@@ -20,6 +20,8 @@ def build_system_prompt() -> str:
         "只有需要重写整个文件时才使用 write_file。"
         "不要创建 debug.py、tmp.py、scratch.py、probe.py 等临时调试文件；"
         "当前工具面不支持执行任意调试脚本，应使用 read_file、grep、run_tests 输出定位问题。"
+        "当你不确定第三方库对象的实际行为时，使用 python_repl 查询单个安全表达式；"
+        "python_repl 不能 import、不能写多行、不能使用分号或 dunder。"
         "如果 run_tests 已经给出失败测试和断言位置，不要反复写调试脚本；"
         "应回到目标实现或测试文件，基于失败信息做 edit_file 修复。"
         "在你认为修复完成后，必须运行 run_tests 验证。"

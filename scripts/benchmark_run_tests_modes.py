@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
@@ -27,7 +27,7 @@ COPY_IGNORE_DIR_NAMES = {
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _round_float(value: float) -> float:

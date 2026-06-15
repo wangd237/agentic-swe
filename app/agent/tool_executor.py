@@ -11,6 +11,7 @@ from app.tools.grep import grep
 from app.tools.list_files import list_files
 from app.tools.read_file import read_file
 from app.tools.edit_file import edit_file
+from app.tools.python_repl import python_repl
 from app.tools.run_tests import run_tests
 from app.tools.search_code import search_code
 from app.tools.show_diff import show_diff
@@ -74,6 +75,10 @@ class ToolExecutor:
                     command=self.test_command,
                     timeout_sec=int(tool_input.get("timeout_sec", 120)),
                     additional_pytest_flags=self.policy_config.pytest_additional_flags,
+                )
+            if tool_name == "python_repl":
+                return python_repl(
+                    expression=str(tool_input.get("expression", "")),
                 )
             if tool_name == "write_file":
                 relative_path = str(tool_input.get("relative_path", ""))
@@ -259,6 +264,15 @@ class ToolExecutor:
                 "match_files": data.get("match_files", []),
                 "matches": matches[:50],
                 "truncated_matches": max(len(matches) - 50, 0),
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+
+        if tool_name == "python_repl" and result.get("ok", False):
+            payload["data"] = {
+                "expression": data.get("expression"),
+                "result_repr": data.get("result_repr"),
+                "result_type": data.get("result_type"),
+                "truncated": data.get("truncated", False),
             }
             return ToolExecutor._json_for_model(payload, max_chars=max_chars)
 

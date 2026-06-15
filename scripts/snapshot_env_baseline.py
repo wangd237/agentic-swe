@@ -9,7 +9,7 @@ import statistics
 import subprocess
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -35,11 +35,11 @@ DEFAULT_COMMAND_SPECS = [
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _snapshot_timestamp() -> str:
-    return datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
 
 def _round_float(value: float, digits: int = 4) -> float:

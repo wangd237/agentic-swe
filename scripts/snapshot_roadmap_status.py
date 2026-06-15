@@ -7,7 +7,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -22,7 +22,7 @@ from scripts.validate_challenge_shortlist import summarize_challenge_shortlist
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _next_snapshot_id(summary_dir: Path, run_label: str | None = None) -> str:

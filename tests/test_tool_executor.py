@@ -206,6 +206,46 @@ def test_tool_executor_dispatches_grep(tmp_path: Path) -> None:
     assert result["data"]["matches"][0]["line_number"] == 1
 
 
+def test_tool_executor_dispatches_python_repl(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    executor = _executor(repo_path)
+
+    result = executor.execute(
+        "python_repl",
+        {"expression": "Version('4.1.0a2.dev1235+local').base_version"},
+    )
+
+    assert result["ok"] is True
+    assert result["data"]["result_repr"] == "'4.1.0'"
+
+
+def test_tool_executor_summarize_for_model_compacts_python_repl() -> None:
+    result = {
+        "ok": True,
+        "tool_name": "python_repl",
+        "summary": "表达式求值成功。",
+        "data": {
+            "expression": "Version('1.0').base_version",
+            "result_repr": "'1.0'",
+            "result_type": "str",
+            "truncated": False,
+            "extra_noise": "x" * 1000,
+        },
+        "error": None,
+    }
+
+    summary = ToolExecutor.summarize_for_model(result, max_chars=500)
+    payload = json.loads(summary)
+
+    assert payload["data"] == {
+        "expression": "Version('1.0').base_version",
+        "result_repr": "'1.0'",
+        "result_type": "str",
+        "truncated": False,
+    }
+
+
 def test_tool_executor_summarize_for_model_prefers_failure_summary() -> None:
     result = {
         "ok": False,

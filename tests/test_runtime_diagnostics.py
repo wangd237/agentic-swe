@@ -17,13 +17,13 @@ from app.tools.run_tests import _build_failure_summary, _inject_pytest_flags, ru
 
 def test_inject_pytest_flags_only_appends_for_pytest_commands() -> None:
     assert _inject_pytest_flags("python -m pytest tests/test_demo.py -q", ["-p no:unraisableexception"]) == (
-        "python -m pytest tests/test_demo.py -q -p no:unraisableexception"
+        "python -m pytest tests/test_demo.py -q --tb=short --no-header --disable-warnings -p no:unraisableexception"
     )
     assert _inject_pytest_flags("python -m unittest -q", ["-p no:unraisableexception"]) == "python -m unittest -q"
     assert _inject_pytest_flags(
-        "python -m pytest tests/test_demo.py -q -p no:unraisableexception",
+        "python -m pytest tests/test_demo.py -q --tb=short --no-header --disable-warnings -p no:unraisableexception",
         ["-p no:unraisableexception"],
-    ) == "python -m pytest tests/test_demo.py -q -p no:unraisableexception"
+    ) == "python -m pytest tests/test_demo.py -q --tb=short --no-header --disable-warnings -p no:unraisableexception"
 
 
 def test_run_tests_returns_split_duration_metrics(tmp_path: Path) -> None:
@@ -130,6 +130,7 @@ FAILED tests/test_app.py::test_value - assert 1 == 2
     assert "tests/test_app.py::test_value" in summary["short_summary"]
     assert "tests/test_app.py:4" in summary["short_summary"]
     assert "assert 1 == 2" in summary["short_summary"]
+    assert summary["short_summary"].index("assert 1 == 2") < summary["short_summary"].index("tests/test_app.py::test_value")
     assert "E       assert 1 == 2" in summary["output_excerpt"]
 
 
@@ -172,6 +173,9 @@ def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:
 
     failure_summary = result["data"]["failure_summary"]
     assert result["ok"] is False
+    assert "--tb=short" in result["data"]["command"]
+    assert "--no-header" in result["data"]["command"]
+    assert "--disable-warnings" in result["data"]["command"]
     assert failure_summary["failed_tests"]
     assert any("test_value" in item for item in failure_summary["failed_tests"])
     assert failure_summary["locations"]

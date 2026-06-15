@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -18,7 +18,7 @@ from app.runtime.logger import write_json, write_text
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _round_float(value: float) -> float:

@@ -6,7 +6,7 @@ import argparse
 import json
 import statistics
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -20,7 +20,7 @@ from evals.batch_eval import run_batch_eval
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_json(path: str | Path) -> dict:

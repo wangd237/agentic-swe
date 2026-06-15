@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, pstdev
 
@@ -20,7 +20,7 @@ from scripts.analyze_trace_hotspots import infer_step_duration_sec
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_json(path: str | Path) -> dict:

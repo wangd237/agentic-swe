@@ -7,7 +7,7 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -72,7 +72,7 @@ TARGET_FAMILY_SPECS = [
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_json(path: str | Path) -> dict:

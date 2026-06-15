@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -68,7 +68,7 @@ MODULE_GROUP_RULES: list[tuple[str, tuple[str, ...]]] = [
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _round_float(value: float) -> float:
