@@ -1,0 +1,43 @@
+[project]
+name = "agentic-swe"
+version = "0.1.0"
+description = "OpenAI-compatible coding agent that fixes real GitHub issues"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "openai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.5",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "evals", "scripts"]
+
+[tool.pytest.ini_options]
+addopts = "--basetemp=.pytest_tmp"
+testpaths = ["tests"]
+norecursedirs = [
+    ".git",
+    ".pytest_cache",
+    ".pytest_tmp*",
+    "benchmarks",
+    "logs",
+    "evals",
+    "third_project",
+]
