@@ -18,6 +18,11 @@ class TraceStep(BaseModel):
     decision: str = ""
     timestamp: str = ""
     duration_sec: float | None = None
+    phase: str | None = None
+    state_snapshot: dict[str, Any] = Field(default_factory=dict)
+    evidence_ids: list[str] = Field(default_factory=list)
+    reflection_type: str | None = None
+    verification_strength: str | None = None
     tool_metrics: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

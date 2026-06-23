@@ -60,7 +60,7 @@ def build_tool_definitions() -> list[dict]:
         },
         {
             "name": "read_file",
-            "description": "读取指定文件内容，适合查看代码、测试或配置文件。",
+            "description": "读取指定文件内容，适合查看代码、测试或配置文件；定位到失败行后优先使用 start_line/end_line 读取局部上下文。",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -72,6 +72,16 @@ def build_tool_definitions() -> list[dict]:
                         "type": "integer",
                         "description": "最多返回的字符数。",
                         "default": 6000,
+                    },
+                    "start_line": {
+                        "type": "integer",
+                        "description": "可选，按 1 开始的起始行号；适合围绕测试失败位置读取局部代码。",
+                        "minimum": 1,
+                    },
+                    "end_line": {
+                        "type": "integer",
+                        "description": "可选，按 1 开始的结束行号，必须大于等于 start_line。",
+                        "minimum": 1,
                     },
                 },
                 "required": ["relative_path"],
@@ -119,6 +129,10 @@ def build_tool_definitions() -> list[dict]:
                         "type": "string",
                         "description": "写入后的完整文件内容。",
                     },
+                    "localization_override_reason": {
+                        "type": "string",
+                        "description": "可选；仅当目标文件不在定位候选中但必须修改时填写，说明具体证据和原因。",
+                    },
                 },
                 "required": ["relative_path", "content"],
             },
@@ -140,6 +154,10 @@ def build_tool_definitions() -> list[dict]:
                     "new_string": {
                         "type": "string",
                         "description": "替换后的新文本。",
+                    },
+                    "localization_override_reason": {
+                        "type": "string",
+                        "description": "可选；仅当目标文件不在定位候选中但必须修改时填写，说明具体证据和原因。",
                     },
                 },
                 "required": ["relative_path", "old_string", "new_string"],

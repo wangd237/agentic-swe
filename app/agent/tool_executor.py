@@ -68,6 +68,16 @@ class ToolExecutor:
                     self.repo_path,
                     relative_path=str(tool_input.get("relative_path", "")),
                     max_chars=int(tool_input.get("max_chars", 6000)),
+                    start_line=(
+                        int(tool_input["start_line"])
+                        if tool_input.get("start_line") is not None
+                        else None
+                    ),
+                    end_line=(
+                        int(tool_input["end_line"])
+                        if tool_input.get("end_line") is not None
+                        else None
+                    ),
                 )
             if tool_name == "run_tests":
                 return run_tests(
@@ -239,7 +249,10 @@ class ToolExecutor:
             payload["data"] = {
                 "relative_path": data.get("relative_path"),
                 "line_count": data.get("line_count"),
+                "start_line": data.get("start_line"),
+                "end_line": data.get("end_line"),
                 "char_count": char_count,
+                "returned_line_count": data.get("returned_line_count"),
                 "truncated": data.get("truncated", False),
                 "content": content if char_count <= 20000 else (
                     str(content)[:2000]

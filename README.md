@@ -4,12 +4,16 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-一个面向真实 GitHub issue 的 OpenAI-compatible coding agent —— 用 LLM 自动定位并修复代码缺陷，从任务构造、隔离执行、轨迹落盘、批量评测到策略优化和回归验证，形成完整闭环。
+一个面向真实 repo 的 bug repair coding agent —— 接收软件问题描述，在隔离 workspace 中理解问题、复现失败、定位代码、生成补丁、验证修复，并输出可审计结果。
 
 ## 核心结果
 
 | 指标 | 结果 |
 | --- | --- |
+| Agent Core v1 状态 | `complete`，见 [currentTask.md](currentTask.md) |
+| 核心工作流 | `UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL` |
+| Agent core 回归测试 | `110 passed` |
+| 用户入口验证 | `repair_bug.run_repair_bug()` 已覆盖 full verification 与 weak/static verification |
 | 正式真实任务数 | `66` 条，覆盖 `16` 个开源生态 |
 | 规则版 baseline 成功率 / 测试通过率 | `100%` / `100%`（策略 `improved_v71`） |
 | LLM agent 全局成功率 | `91.3%`（`149` runs, `136` success） |
@@ -31,19 +35,59 @@
 - **baseline 对照**：规则版 baseline（`improved_v71`）作为稳定下限与 LLM agent 对比，不是只用 LLM 打分
 - **回归保护**：冻结集 `frozen_40` + 稳定性复跑，保证策略迭代不会悄悄退化
 
+## Agent Core v1
+
+当前项目主线是 coding agent 本体，而不是 GitHub crawler、PR 自动化或 benchmark dashboard。Agent Core v1 已将原来的松散 ReAct tool loop 收束为阶段化状态机：
+
+```text
+UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL
+```
+
+核心能力：
+
+- **显式 AgentState**：记录当前阶段、issue summary、failure signature、localization candidates、hypotheses、modified files、verification strength。
+- **phase-aware tool policy**：不同阶段限制可用工具，禁止过早 `edit_file` / `write_file`，要求 patch 前具备复现或弱/静态证据和定位候选。
+- **代码定位**：结合任务提示、失败摘要、搜索命中、AST symbol index、测试与实现 import 关系，产出候选文件和证据。
+- **分级验证**：区分 `none` / `weak` / `targeted` / `full`，弱验证不能被报告为普通成功。
+- **反思与自我纠错**：测试失败、定位低置信、修改过宽或弱验证时记录结构化 reflection，必要时自动 undo。
+- **可审计 trace/metrics**：trace step 携带 `phase`、`state_snapshot`、`evidence_ids`、`reflection_type`、`verification_strength`，并输出 agent-core metrics。
+
+## 用户入口
+
+本地 repo bug repair 可以直接使用 `scripts/repair_bug.py`：
+
+```bash
+python scripts/repair_bug.py --repo path/to/local_repo --issue "描述你遇到的 bug" --test "python -m pytest -q"
+```
+
+如果不传 `--test`，脚本会自动发现 pytest；若没有测试目录或 pytest 配置，会进入 weak/static verification 路径。CLI summary 会明确打印：
+
+```text
+final_status:
+verification_strength:
+incomplete_reason:
+pre_test_exit_code:
+post_test_exit_code:
+summary_path:
+trace_path:
+result_path:
+```
+
+这意味着 full verification 成功会与 `success_weak_verification` 明确区分，agent 不会把弱验证包装成普通成功。
+
 ## Agent Run Loop
 
 ```text
-GitHub issue / semi-real task
+local repo + issue text / semi-real task / GitHub issue input
           |
           v
-   manifest 选题与任务定义
+   task definition
           |
           v
    repo workspace 隔离复制
           |
           v
-   agent loop（读文件 / 搜索 / 测试 / patch / diff）
+   phased agent loop（understand / reproduce / localize / patch / verify / final）
           |
           v
    轨迹与结果落盘（task.json / trace.json / result.json / patch.diff）
@@ -55,6 +99,7 @@ GitHub issue / semi-real task
 - 每次 run 落盘 `trace.json` / `result.json` / `patch.diff`，可复盘每一步决策
 - 成功判定依赖 `run_tests` 和 `final_status`，不是让模型自称完成
 - 测试失败后 agent 会看到 `context_diff`，避免只凭 pytest 断言盲改
+- trace 中记录阶段、状态快照、证据 id、反思类型和验证强度
 
 **工程严谨性**
 - harness 一等公民：工作区隔离、路径边界、产物契约、批量复现
@@ -93,6 +138,9 @@ cp .env.example .env  # 填入 API key / base URL / model
 # 运行 LLM agent
 python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/llm_deepseek_minimal.json
 
+# 用户本地 repo bug repair
+python scripts/repair_bug.py --repo path/to/local_repo --issue "AttributeError: 'NoneType' object has no attribute 'apply'" --test "python -m pytest -q"
+
 # 规则版 baseline（对照用）
 python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy optimization/policy_versions/improved_v71.json
 
@@ -100,7 +148,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy
 python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v71.json --run-label frozen20_v71 --stability-check --stability-repetitions 3
 ```
 
-说明：LLM agent 已接入完整 tool-use 闭环，输出预算默认 `8000` tokens。支持 DeepSeek / Kimi / GLM 等兼容服务，通过 `.env` 或环境变量配置。规则版入口仍保留用于 baseline 对照。
+说明：LLM agent 已接入阶段化 tool-use 闭环，输出预算默认 `8000` tokens。支持 DeepSeek / Kimi / GLM 等 OpenAI-compatible 服务，通过 `.env` 或环境变量配置。规则版入口仍保留用于 baseline 对照。
 
 ## 项目结构
 
@@ -141,14 +189,17 @@ Python · Pydantic · pytest · OpenAI-compatible Chat Completions · subprocess
 
 ## 当前阶段
 
-项目主角已切到 LLM coding agent：它能在隔离 workspace 里读 issue、搜代码、改文件、跑测试、落盘 trace。benchmark / frozen / stability 体系的角色是给 agent 提供可信验证层和 baseline 参照：
+项目主角已切到 LLM coding agent core：它能在隔离 workspace 里读 issue、复现失败、定位候选、改文件、查看 diff、跑 targeted/full tests、落盘 trace。benchmark / frozen / stability 体系的角色是给 agent 提供可信验证层和 baseline 参照：
 
 - ✅ LLM tool-use agent
+- ✅ Agent Core v1 phase workflow
+- ✅ full vs weak/static verification 区分
+- ✅ 用户本地 repo repair 入口 smoke
 - ✅ case study trace / result / patch 证据
 - ✅ 正式集 + 冻结集 + 策略版本化
 - ✅ 批量评测 + 稳定性复跑 + maturity 审计
 
-后续重点：更复杂的跨文件任务、失败类型分类、以及更精简的 README 叙事。
+后续重点：更多真实本地 repo 修复案例、精简 `llm_agent.py` 中重复的 post-patch verification 逻辑、以及在不偏离 agent core 的前提下扩展任务难度。
 
 ## License
 

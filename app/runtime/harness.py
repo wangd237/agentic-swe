@@ -11,9 +11,31 @@ from app.runtime.git_workspace import initialize_git_workspace
 
 COPY_IGNORE_DIR_NAMES = {
     ".git",
+    ".mypy_cache",
+    ".nox",
+    ".ruff_cache",
     ".pytest_cache",
+    ".tox",
+    ".venv",
+    "build",
+    "dist",
+    "htmlcov",
+    "logs",
+    "node_modules",
+    "venv",
     "__pycache__",
 }
+
+COPY_IGNORE_PATTERNS = (
+    ".pytest_tmp*",
+    "*.egg-info",
+)
+
+
+def ignore_workspace_copy_artifacts(src: str, names: list[str]) -> set[str]:
+    ignored = set(shutil.ignore_patterns(*COPY_IGNORE_PATTERNS)(src, names))
+    ignored.update(name for name in names if name in COPY_IGNORE_DIR_NAMES)
+    return ignored
 
 
 @dataclass(slots=True)
@@ -81,7 +103,7 @@ def copy_repo_to_workspace(source_repo_path: str | Path, workspace_path: str | P
         Path(source_repo_path),
         Path(workspace_path),
         dirs_exist_ok=True,
-        ignore=shutil.ignore_patterns(*COPY_IGNORE_DIR_NAMES),
+        ignore=ignore_workspace_copy_artifacts,
     )
     initialize_git_workspace(workspace_path)
 

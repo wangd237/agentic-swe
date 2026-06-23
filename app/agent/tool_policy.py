@@ -1,0 +1,135 @@
+"""Phase-aware tool policy for the LLM repair agent."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from app.agent.memory import AgentState, PhaseName
+
+
+WRITE_TOOLS = {"edit_file", "write_file"}
+MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
+
+ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
+    "understand": {"list_files", "grep", "search_code", "read_file", "run_tests"},
+    "reproduce": {"run_tests", "read_file", "show_diff"},
+    "localize": {"grep", "search_code", "read_file", "python_repl", "run_tests"},
+    "patch": {"read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
+    "verify": {"run_tests", "show_diff", "read_file", "undo"},
+    "final": {"show_diff"},
+}
+
+
+def tool_policy_error(*, tool_name: str, message: str, tool_input: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "ok": False,
+        "tool_name": tool_name,
+        "summary": f"工具策略阻止：{message}",
+        "data": {
+            "tool_input": tool_input,
+            "policy_blocked": True,
+        },
+        "error": {
+            "type": "tool_policy_violation",
+            "message": message,
+        },
+    }
+
+
+class ToolPolicy:
+    """Small gatekeeper that turns agent phases into enforceable constraints."""
+
+    def validate(self, *, state: AgentState, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any] | None:
+        allowed_tools = ALLOWED_TOOLS_BY_PHASE[state.phase]
+        if tool_name not in allowed_tools:
+            return tool_policy_error(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                message=f"`{tool_name}` is not allowed during `{state.phase}` phase.",
+            )
+
+        if tool_name in WRITE_TOOLS and not self.can_patch(state):
+            return tool_policy_error(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                message=(
+                    "PATCH gate is closed. Run tests or explicitly mark weak/static reproduction evidence "
+                    "and gather localization evidence before editing files."
+                ),
+            )
+
+        if tool_name == "run_tests" and self.requires_diff_before_tests(state):
+            return tool_policy_error(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                message=(
+                    "A patch is pending verification. Call show_diff before running tests."
+                ),
+            )
+
+        if tool_name in WRITE_TOOLS:
+            relative_path = str(tool_input.get("relative_path", "")).replace("\\", "/")
+            candidate_paths = {
+                candidate.relative_path
+                for candidate in state.localization_candidates
+            }
+            if relative_path and relative_path not in candidate_paths:
+                override_reason = str(tool_input.get("localization_override_reason", "")).strip()
+                if len(override_reason) >= MIN_LOCALIZATION_OVERRIDE_REASON_CHARS:
+                    return None
+                return tool_policy_error(
+                    tool_name=tool_name,
+                    tool_input=tool_input,
+                    message=(
+                        f"`{relative_path}` must be a localization candidate before it can be modified. "
+                        "Provide a specific localization_override_reason to override this gate."
+                    ),
+                )
+        return None
+
+    @staticmethod
+    def can_patch(state: AgentState) -> bool:
+        has_patch_entry_evidence = (
+            state.has_reproduction_evidence
+            or state.reproduction_evidence_kind == "weak_static"
+        )
+        return (
+            state.phase == "patch"
+            and has_patch_entry_evidence
+            and bool(state.localization_candidates)
+        )
+
+    @staticmethod
+    def requires_diff_before_tests(state: AgentState) -> bool:
+        return (
+            state.workspace_generation > 0
+            and state.diff_observed_generation != state.workspace_generation
+        )
+
+
+def next_phase_after_tool(*, state: AgentState, tool_name: str, tool_result: dict[str, Any]) -> PhaseName:
+    """Advance the lightweight state machine from observed tool evidence."""
+
+    if tool_name == "run_tests":
+        if state.has_reproduction_evidence and state.localization_candidates:
+            return "patch"
+        if state.phase in {"understand", "reproduce"}:
+            return "localize"
+        if state.phase == "patch":
+            return "verify"
+        return state.phase
+
+    if tool_name in {"grep", "search_code", "read_file", "python_repl"}:
+        if state.has_reproduction_evidence and state.localization_candidates:
+            return "patch"
+        if state.phase == "understand":
+            return "reproduce"
+        return state.phase
+
+    if tool_name in WRITE_TOOLS and tool_result.get("ok"):
+        return "verify"
+
+    if tool_name == "show_diff" and state.phase == "verify":
+        return "verify"
+
+    return state.phase

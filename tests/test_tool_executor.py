@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from app.agent.policy import DEFAULT_POLICY
 from app.agent.tool_executor import ToolExecutor
+from app.agent.tool_definitions import build_tool_definitions
 from app.runtime.git_workspace import initialize_git_workspace, run_git
 
 
@@ -206,6 +207,28 @@ def test_tool_executor_dispatches_grep(tmp_path: Path) -> None:
     assert result["data"]["matches"][0]["line_number"] == 1
 
 
+def test_tool_executor_dispatches_read_file_line_range(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    target_path = repo_path / "pkg" / "app.py"
+    target_path.parent.mkdir(parents=True)
+    target_path.write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    executor = _executor(repo_path)
+
+    result = executor.execute(
+        "read_file",
+        {
+            "relative_path": "pkg/app.py",
+            "start_line": 2,
+            "end_line": 3,
+        },
+    )
+
+    assert result["ok"] is True
+    assert result["data"]["content"] == "two\nthree\n"
+    assert result["data"]["start_line"] == 2
+    assert result["data"]["end_line"] == 3
+
+
 def test_tool_executor_dispatches_python_repl(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     repo_path.mkdir()
@@ -345,7 +368,10 @@ def test_tool_executor_summarize_for_model_preserves_read_file_content() -> None
             "relative_path": "demo.py",
             "content": content,
             "line_count": 300,
+            "start_line": 10,
+            "end_line": 309,
             "char_count": len(content),
+            "returned_line_count": 300,
             "truncated": False,
         },
         "error": None,
@@ -355,7 +381,22 @@ def test_tool_executor_summarize_for_model_preserves_read_file_content() -> None
     payload = json.loads(summary)
 
     assert payload["data"]["content"] == content
+    assert payload["data"]["start_line"] == 10
+    assert payload["data"]["end_line"] == 309
+    assert payload["data"]["returned_line_count"] == 300
     assert "...<truncated>" not in summary
+
+
+def test_read_file_tool_schema_exposes_line_range() -> None:
+    read_file_schema = next(
+        tool for tool in build_tool_definitions()
+        if tool["name"] == "read_file"
+    )
+
+    properties = read_file_schema["input_schema"]["properties"]
+    assert properties["start_line"]["minimum"] == 1
+    assert properties["end_line"]["minimum"] == 1
+    assert "局部上下文" in read_file_schema["description"]
 
 
 def test_tool_executor_summarize_for_model_strips_write_content() -> None:
