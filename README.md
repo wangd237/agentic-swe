@@ -1,8 +1,14 @@
 # Agentic SWE
 
-[![CI](https://github.com/wangd237/agentic-swe/actions/workflows/ci.yml/badge.svg)](https://github.com/wangd237/agentic-swe/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+<img src="https://img.shields.io/badge/Python-3.10-blue" alt="Python">
+
+![Pydantic](https://img.shields.io/badge/Pydantic-v2-purple)
+![pytest](https://img.shields.io/badge/pytest-tested-blue)
+![OpenAI Compatible](https://img.shields.io/badge/OpenAI_Compatible-API-purple)
+![Tool Calling](https://img.shields.io/badge/Tool_Calling-enabled-green)
+![CLI](https://img.shields.io/badge/CLI-supported-gray)
+![JSON Trace](https://img.shields.io/badge/JSON_Trace-auditable-orange)
+[![MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 一个面向真实 repo 的 bug repair coding agent —— 接收软件问题描述，在隔离 workspace 中理解问题、复现失败、定位代码、生成补丁、验证修复，并输出可审计结果。
 
