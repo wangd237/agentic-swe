@@ -12,9 +12,9 @@ MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
     "understand": {"list_files", "grep", "search_code", "read_file", "run_tests"},
-    "reproduce": {"run_tests", "read_file", "show_diff"},
+    "reproduce": {"grep", "search_code", "run_tests", "read_file", "show_diff"},
     "localize": {"grep", "search_code", "read_file", "python_repl", "run_tests"},
-    "patch": {"read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
+    "patch": {"grep", "search_code", "read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
     "verify": {"run_tests", "show_diff", "read_file", "undo"},
     "final": {"show_diff"},
 }
@@ -40,7 +40,9 @@ class ToolPolicy:
     """Small gatekeeper that turns agent phases into enforceable constraints."""
 
     def validate(self, *, state: AgentState, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any] | None:
-        allowed_tools = ALLOWED_TOOLS_BY_PHASE[state.phase]
+        allowed_tools = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
+        if self.is_patch_recovery_state(state):
+            allowed_tools.update(WRITE_TOOLS)
         if tool_name not in allowed_tools:
             return tool_policy_error(
                 tool_name=tool_name,
@@ -94,8 +96,18 @@ class ToolPolicy:
             or state.reproduction_evidence_kind == "weak_static"
         )
         return (
-            state.phase == "patch"
+            state.phase in {"patch", "localize"}
             and has_patch_entry_evidence
+            and bool(state.localization_candidates)
+            and (state.phase == "patch" or ToolPolicy.is_patch_recovery_state(state))
+        )
+
+    @staticmethod
+    def is_patch_recovery_state(state: AgentState) -> bool:
+        return (
+            state.phase == "localize"
+            and state.workspace_generation > 0
+            and state.has_reproduction_evidence
             and bool(state.localization_candidates)
         )
 

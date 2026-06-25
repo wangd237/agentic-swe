@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
+from pathlib import Path
 from time import perf_counter
 
 from app.tools.common import resolve_repo_path
@@ -13,6 +15,11 @@ from app.tools.common import resolve_repo_path
 FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)
 ASSERTION_LINE_PATTERN = re.compile(r"^\s*(?:E\s+|>\s*)?(?P<assertion>assert .+)$", re.MULTILINE)
+TRACEBACK_EXCEPTION_PATTERN = re.compile(
+    r"^(?P<type>[A-Za-z_][A-Za-z0-9_]*(?:Error|Exception|Warning)):\s*(?P<message>.+)$",
+    re.MULTILINE,
+)
+SYMBOL_PATTERN = re.compile(r"'(?P<quoted>[A-Za-z_][A-Za-z0-9_\.]*)'|(?P<bare>[A-Z][A-Za-z0-9_]{2,})")
 OUTPUT_EXCERPT_MAX_CHARS = 1200
 DEFAULT_PYTEST_FLAGS = ["--tb=short", "--no-header", "--disable-warnings"]
 
@@ -39,17 +46,38 @@ def _inject_pytest_flags(command: str, additional_flags: list[str] | None = None
     return normalized_command
 
 
+def _extract_exception_signal(output: str) -> tuple[dict[str, str], list[str]]:
+    matches = list(TRACEBACK_EXCEPTION_PATTERN.finditer(output))
+    if not matches:
+        return {}, []
+
+    match = matches[-1]
+    exception = {
+        "type": match.group("type").strip(),
+        "message": match.group("message").strip(),
+    }
+    symbols: list[str] = []
+    for symbol_match in SYMBOL_PATTERN.finditer(exception["message"]):
+        symbol = (symbol_match.group("quoted") or symbol_match.group("bare") or "").strip()
+        if symbol and symbol not in symbols and symbol not in {exception["type"]}:
+            symbols.append(symbol)
+    return exception, symbols[:8]
+
+
 def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
     if exit_code == 0:
         return {
             "failed_tests": [],
             "assertion_lines": [],
             "locations": [],
+            "exception": {},
+            "possible_symbols": [],
             "short_summary": "",
         }
 
     combined_output = "\n".join(part for part in [stdout, stderr] if part).strip()
     output_excerpt = _build_output_excerpt(combined_output)
+    exception, possible_symbols = _extract_exception_signal(combined_output)
     failed_tests = [match.strip() for match in FAILED_TEST_PATTERN.findall(combined_output)]
     assertion_lines = [
         match.group("assertion").strip()
@@ -74,6 +102,10 @@ def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
         summary_parts.append("位置: " + location_text)
     if failed_tests:
         summary_parts.append("失败测试: " + "; ".join(failed_tests[:3]))
+    if exception:
+        summary_parts.append(f"异常: {exception['type']}: {exception['message']}")
+    if possible_symbols:
+        summary_parts.append("相关符号: " + ", ".join(possible_symbols[:5]))
     if not summary_parts:
         summary_parts.append("测试命令执行失败，但未提取到明确 pytest 断言。")
 
@@ -84,6 +116,8 @@ def _build_failure_summary(stdout: str, stderr: str, exit_code: int) -> dict:
         "failed_tests": failed_tests,
         "assertion_lines": assertion_lines,
         "locations": locations,
+        "exception": exception,
+        "possible_symbols": possible_symbols,
         "output_excerpt": output_excerpt,
         "short_summary": short_summary,
     }
@@ -136,6 +170,19 @@ def run_tests(
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUTF8"] = "1"
+        path_key = "Path" if os.name == "nt" else "PATH"
+        current_path = env.get(path_key, "")
+        env[path_key] = os.pathsep.join(
+            part for part in [str(Path(sys.executable).parent), current_path] if part
+        )
+        pythonpath_entries = [str(resolved_repo_path)]
+        src_path = resolved_repo_path / "src"
+        if src_path.exists():
+            pythonpath_entries.append(str(src_path))
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        if existing_pythonpath:
+            pythonpath_entries.append(existing_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
         env_setup_duration_sec = round(perf_counter() - env_setup_started_at, 4)
 
         command_started_at = perf_counter()
@@ -178,6 +225,7 @@ def run_tests(
                 "duration_sec": duration_sec,
                 "resolve_repo_path_duration_sec": resolve_repo_path_duration_sec,
                 "env_setup_duration_sec": env_setup_duration_sec,
+                "pythonpath_prefix": pythonpath_entries[:2],
                 "pre_execution_duration_sec": pre_execution_duration_sec,
                 "command_execution_duration_sec": command_execution_duration_sec,
                 "subprocess_duration_sec": command_execution_duration_sec,

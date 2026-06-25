@@ -293,11 +293,38 @@ class ToolExecutor:
             return ToolExecutor._json_for_model(payload, max_chars=max_chars)
 
         if tool_name == "show_diff" and result.get("ok", False):
+            diff_text = str(data.get("diff_text", ""))
             payload["data"] = {
                 "changed_files": data.get("changed_files", []),
-                "diff_text": data.get("diff_text", ""),
+                "diff_char_count": len(diff_text),
+                "diff_text": diff_text,
+                "truncated": False,
             }
-            return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 20000))
+            compact_limit = min(max_chars, 6000)
+            if len(diff_text) > compact_limit:
+                payload["data"]["diff_text"] = (
+                    diff_text[:compact_limit]
+                    + "\n...<diff truncated; use read_file on changed files for exact context>"
+                )
+                payload["data"]["truncated"] = True
+            return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, compact_limit + 1000))
+
+        if tool_name == "edit_file" and not result.get("ok", False):
+            similar_contexts = data.get("similar_contexts", [])[:3]
+            payload["data"] = {
+                "relative_path": data.get("relative_path"),
+                "replacement_count": data.get("replacement_count"),
+                "old_length": data.get("old_length"),
+                "new_length": data.get("new_length"),
+                "recommended_next_old_string": (
+                    similar_contexts[0].get("suggested_old_string")
+                    if similar_contexts and isinstance(similar_contexts[0], dict)
+                    else None
+                ),
+                "similar_contexts": similar_contexts,
+                "matches": data.get("matches", [])[:3],
+            }
+            return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 6000))
 
         if tool_name in {"write_file", "edit_file", "undo"} and result.get("ok", False):
             compact_data = {
@@ -332,6 +359,8 @@ class ToolExecutor:
             "failed_tests": failure_summary.get("failed_tests", []),
             "assertion_lines": failure_summary.get("assertion_lines", []),
             "locations": failure_summary.get("locations", []),
+            "exception": failure_summary.get("exception", {}),
+            "possible_symbols": failure_summary.get("possible_symbols", []),
         }
         if "context_diff" in failure_summary:
             compact_summary["context_diff_changed_files"] = failure_summary.get(
@@ -341,4 +370,8 @@ class ToolExecutor:
             compact_summary["context_diff"] = failure_summary.get("context_diff", "")
         if "output_excerpt" in failure_summary:
             compact_summary["output_excerpt"] = failure_summary.get("output_excerpt", "")
+        if "guided_search" in failure_summary:
+            compact_summary["guided_search"] = failure_summary.get("guided_search", [])
+        if "guided_search_skipped" in failure_summary:
+            compact_summary["guided_search_skipped"] = failure_summary.get("guided_search_skipped", [])
         return compact_summary

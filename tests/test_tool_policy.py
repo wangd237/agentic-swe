@@ -75,6 +75,41 @@ def test_tool_policy_allows_patch_with_explicit_weak_static_evidence() -> None:
     assert result is None
 
 
+def test_tool_policy_allows_read_only_search_during_patch() -> None:
+    state = AgentState(phase="patch", has_reproduction_evidence=True)
+    state.remember_candidate(
+        "pkg/app.py",
+        reason="test_failure_location",
+        evidence="tests point to pkg/app.py",
+        confidence=0.8,
+    )
+    policy = ToolPolicy()
+
+    result = policy.validate(
+        state=state,
+        tool_name="grep",
+        tool_input={"pattern": "def root"},
+    )
+
+    assert result is None
+
+
+def test_tool_policy_allows_read_only_search_during_reproduce() -> None:
+    state = AgentState(phase="reproduce", has_reproduction_evidence=True)
+    policy = ToolPolicy()
+
+    assert policy.validate(
+        state=state,
+        tool_name="grep",
+        tool_input={"pattern": "class PersonName"},
+    ) is None
+    assert policy.validate(
+        state=state,
+        tool_name="search_code",
+        tool_input={"query": "PersonName"},
+    ) is None
+
+
 def test_tool_policy_requires_candidate_before_write() -> None:
     state = AgentState(phase="patch", has_reproduction_evidence=True)
     state.remember_candidate(
@@ -186,3 +221,58 @@ def test_tool_policy_allows_tests_after_current_diff_is_observed() -> None:
     )
 
     assert result is None
+
+
+def test_tool_policy_allows_patch_recovery_write_after_failed_patch() -> None:
+    state = AgentState(
+        phase="localize",
+        has_reproduction_evidence=True,
+        workspace_generation=1,
+    )
+    state.remember_candidate(
+        "pkg/app.py",
+        reason="failed_patch_file",
+        evidence="previous patch verification failed in this file",
+        confidence=0.8,
+    )
+    policy = ToolPolicy()
+
+    result = policy.validate(
+        state=state,
+        tool_name="edit_file",
+        tool_input={
+            "relative_path": "pkg/app.py",
+            "old_string": "return 1",
+            "new_string": "return 2",
+        },
+    )
+
+    assert result is None
+
+
+def test_tool_policy_keeps_initial_localize_write_blocked() -> None:
+    state = AgentState(
+        phase="localize",
+        has_reproduction_evidence=True,
+        workspace_generation=0,
+    )
+    state.remember_candidate(
+        "pkg/app.py",
+        reason="candidate",
+        evidence="read during localization",
+        confidence=0.8,
+    )
+    policy = ToolPolicy()
+
+    result = policy.validate(
+        state=state,
+        tool_name="edit_file",
+        tool_input={
+            "relative_path": "pkg/app.py",
+            "old_string": "return 1",
+            "new_string": "return 2",
+        },
+    )
+
+    assert result is not None
+    assert result["error"]["type"] == "tool_policy_violation"

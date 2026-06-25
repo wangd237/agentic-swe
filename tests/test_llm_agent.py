@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.agent.llm_agent import LLMCodeAgent
+from app.agent.llm_agent import EDIT_RECOVERY_MESSAGE, LLMCodeAgent
 from app.agent.llm_config import LLMConfig
 from app.agent.llm_prompts import build_system_prompt
 from app.agent.policy import PolicyConfig
@@ -184,6 +184,59 @@ class FakeWriteThenRunTestsWithoutDiffClient:
         }
 
 
+class FakeWriteThenDuplicateRunTestsClient:
+    def __init__(self, fixed_file_content: str) -> None:
+        self._call_count = 0
+        self.fixed_file_content = fixed_file_content
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "run_tests",
+                        "input": {"timeout_sec": 30},
+                    }
+                ]
+            }
+        if self._call_count == 2:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_2",
+                        "name": "write_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "content": self.fixed_file_content,
+                        },
+                    }
+                ]
+            }
+        if self._call_count == 3:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_3",
+                        "name": "run_tests",
+                        "input": {"timeout_sec": 30},
+                    }
+                ]
+            }
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "重复验证已跳过，当前任务完成。",
+                }
+            ]
+        }
+
+
 class FakeWriteOnceClient:
     def __init__(self, fixed_file_content: str) -> None:
         self.fixed_file_content = fixed_file_content
@@ -323,6 +376,50 @@ class FakeEditThenStopClient:
                 {
                     "type": "text",
                     "text": "自动验证已通过，当前任务完成。",
+                }
+            ]
+        }
+
+
+class FakeBadEditThenInspectRecoveryClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.observed_recovery_message = ""
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_test",
+                        "name": "run_tests",
+                        "input": {"timeout_sec": 30},
+                    }
+                ]
+            }
+        if self._call_count == 2:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_bad_edit",
+                        "name": "edit_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "old_string": "    return 999",
+                            "new_string": "    return 2",
+                        },
+                    }
+                ]
+            }
+        self.observed_recovery_message = json.dumps(messages[-1], ensure_ascii=False)
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "我看到 edit recovery 提示，先停止。",
                 }
             ]
         }
@@ -533,6 +630,28 @@ def _write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def test_llm_agent_guided_failure_search_requires_symbols_without_locations() -> None:
+    assert LLMCodeAgent._should_run_guided_failure_search(
+        {
+            "locations": [],
+            "possible_symbols": ["PersonName"],
+        }
+    ) is True
+    assert LLMCodeAgent._should_run_guided_failure_search(
+        {
+            "locations": [{"path": "tests/test_app.py", "line": 4}],
+            "possible_symbols": ["PersonName"],
+        }
+    ) is False
+    assert LLMCodeAgent._should_run_guided_failure_search(
+        {
+            "locations": [],
+            "possible_symbols": ["PersonName"],
+            "guided_search": [{"query": "PersonName"}],
+        }
+    ) is False
+
+
 def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
@@ -604,16 +723,16 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     }
     assert output["result"]["tool_stats"]["tool_routing"] == {
         "schema_strategy": "phase_state_filtered",
-        "total_tool_schema_sent": 10,
-        "avg_tool_schema_count": 5.0,
+        "total_tool_schema_sent": 12,
+        "avg_tool_schema_count": 6.0,
         "tools_by_phase": {
             "understand": ["list_files", "search_code", "grep", "read_file", "run_tests"],
-            "patch": ["read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+            "patch": ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
         },
     }
     assert client.received_tool_names_by_call == [
         ["list_files", "search_code", "grep", "read_file", "run_tests"],
-        ["read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+        ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
     ]
     assert output["result"]["tool_stats"]["agent_core_metrics"]["pre_repro_rate"] == 1.0
     assert output["result"]["tool_stats"]["agent_core_metrics"]["write_before_repro_count"] == 0
@@ -635,7 +754,7 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         if step["action_type"] == "llm_response"
     ]
     assert [step["tool_metrics"].get("llm_total_tokens") for step in llm_steps] == [111, 222]
-    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 5]
+    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 7]
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
@@ -1040,6 +1159,76 @@ def test_llm_agent_immediate_verification_prevents_tests_before_diff_violation(t
     assert immediate_verification_steps
     assert show_diff_steps[0]["step_index"] < immediate_verification_steps[0]["step_index"]
     assert output["result"]["final_status"] == "success"
+
+
+def test_llm_agent_skips_duplicate_full_run_tests_after_verified_generation(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=6),
+        client=FakeWriteThenDuplicateRunTestsClient("def value():\n    return 1\n"),
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    run_test_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "run_tests"
+    ]
+    deduped_steps = [
+        step for step in run_test_steps
+        if step["tool_metrics"].get("deduped") is True
+    ]
+    actual_run_test_steps = [
+        step for step in run_test_steps
+        if step["tool_metrics"].get("deduped") is not True
+    ]
+
+    assert output["result"]["final_status"] == "success"
+    assert output["result"]["post_test_exit_code"] == 0
+    assert output["result"]["tool_stats"]["verified_generation"] == 1
+    assert len(actual_run_test_steps) == 3
+    assert len(deduped_steps) == 1
+    assert "跳过重复 full run_tests" in deduped_steps[0]["observation"]
 
 
 def test_llm_agent_downgrades_success_for_weak_fallback_verification(tmp_path: Path) -> None:
@@ -1973,6 +2162,74 @@ def test_llm_agent_returns_artifacts_after_bad_tool_input(tmp_path: Path) -> Non
     assert bad_tool_steps[0]["tool_metrics"]["ok"] is False
     assert output["run_paths"]["result_json_path"]
     assert Path(output["run_paths"]["result_json_path"]).exists()
+
+
+def test_llm_agent_injects_edit_recovery_notice_after_missing_old_string(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(
+        benchmark_repo / "demo_pkg" / "app.py",
+        "def value():\n    return 1\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 2\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeBadEditThenInspectRecoveryClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=3),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    missing_old_string_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "edit_file"
+        and step["tool_metrics"].get("error_type") == "old_string_not_found"
+    ]
+
+    assert missing_old_string_steps
+    assert EDIT_RECOVERY_MESSAGE in client.observed_recovery_message
+    assert "similar_contexts" in client.observed_recovery_message
+    assert "suggested_old_string" in client.observed_recovery_message
 
 
 def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: Path) -> None:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from difflib import SequenceMatcher
+
 from app.tools.common import resolve_repo_relative_path, resolve_repo_path
 from app.tools.write_file import _remove_parent_pycache_dirs
 
@@ -38,6 +40,78 @@ def _match_contexts(content: str, old_string: str) -> list[dict]:
     return contexts
 
 
+def _normalized_similarity_text(value: str) -> str:
+    return " ".join(value.strip().split())
+
+
+def _similar_contexts(
+    content: str,
+    old_string: str,
+    *,
+    max_suggestions: int = 3,
+    context_radius: int = 2,
+) -> list[dict]:
+    old_text = _normalized_similarity_text(old_string)
+    if not old_text:
+        return []
+
+    raw_lines = content.splitlines(keepends=True)
+    display_lines = content.splitlines()
+    if not raw_lines:
+        return []
+
+    old_line_count = max(1, len(old_string.splitlines()))
+    candidate_sizes = sorted(
+        {
+            max(1, old_line_count - 1),
+            old_line_count,
+            min(len(raw_lines), old_line_count + 1),
+        }
+    )
+
+    candidates: list[dict] = []
+    seen_ranges: set[tuple[int, int]] = set()
+    for size in candidate_sizes:
+        if size > len(raw_lines):
+            continue
+        for start_index in range(0, len(raw_lines) - size + 1):
+            end_index = start_index + size
+            candidate_text = "".join(raw_lines[start_index:end_index])
+            similarity = SequenceMatcher(
+                None,
+                old_text,
+                _normalized_similarity_text(candidate_text),
+            ).ratio()
+            if similarity < 0.25:
+                continue
+            line_range = (start_index + 1, end_index)
+            if line_range in seen_ranges:
+                continue
+            seen_ranges.add(line_range)
+            candidates.append(
+                {
+                    "similarity": round(similarity, 3),
+                    "start_line": start_index + 1,
+                    "end_line": end_index,
+                    "suggested_old_string": candidate_text,
+                    "context": _context_for_line(
+                        display_lines,
+                        start_index + 1,
+                        radius=context_radius,
+                    ),
+                }
+            )
+
+    candidates.sort(
+        key=lambda candidate: (
+            candidate["similarity"],
+            -(candidate["end_line"] - candidate["start_line"]),
+        ),
+        reverse=True,
+    )
+    return candidates[:max_suggestions]
+
+
 def edit_file(repo_path: str, relative_path: str, old_string: str, new_string: str) -> dict:
     try:
         resolved_repo_path = resolve_repo_path(repo_path)
@@ -67,20 +141,28 @@ def edit_file(repo_path: str, relative_path: str, old_string: str, new_string: s
         replacement_count = content.count(old_string)
         normalized_relative_path = str(relative_path).replace("\\", "/")
         if replacement_count == 0:
+            suggestions = _similar_contexts(content, old_string)
             return {
                 "ok": False,
                 "tool_name": "edit_file",
-                "summary": f"未在 {relative_path} 中找到 old_string。",
+                "summary": (
+                    f"未在 {relative_path} 中找到 old_string。"
+                    + (" 已返回相似上下文建议。" if suggestions else "")
+                ),
                 "data": {
                     "repo_path": str(resolved_repo_path),
                     "relative_path": normalized_relative_path,
                     "old_length": len(old_string),
                     "new_length": len(new_string),
                     "replacement_count": 0,
+                    "similar_contexts": suggestions,
                 },
                 "error": {
                     "type": "old_string_not_found",
-                    "message": "old_string 不存在，请读取文件后提供精确原文。",
+                    "message": (
+                        "old_string 不存在，请优先参考 similar_contexts 中的 "
+                        "suggested_old_string 后重试。"
+                    ),
                 },
             }
         if replacement_count > 1:

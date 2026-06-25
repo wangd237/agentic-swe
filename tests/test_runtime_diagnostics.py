@@ -77,6 +77,27 @@ def test_run_tests_forces_utf8_subprocess_io(tmp_path: Path, monkeypatch) -> Non
     assert env["PYTHONUTF8"] == "1"
 
 
+def test_run_tests_prioritizes_workspace_src_on_pythonpath(tmp_path: Path, monkeypatch) -> None:
+    repo_dir = tmp_path / "repo"
+    external_dir = tmp_path / "external"
+    (repo_dir / "src" / "demo_pkg").mkdir(parents=True)
+    (external_dir / "demo_pkg").mkdir(parents=True)
+    (repo_dir / "src" / "demo_pkg" / "__init__.py").write_text("VALUE = 'workspace'\n", encoding="utf-8")
+    (external_dir / "demo_pkg" / "__init__.py").write_text("VALUE = 'external'\n", encoding="utf-8")
+    (repo_dir / "test_import.py").write_text(
+        "from demo_pkg import VALUE\n\n"
+        "def test_workspace_src_wins():\n"
+        "    assert VALUE == 'workspace'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PYTHONPATH", str(external_dir))
+
+    result = run_tests(str(repo_dir), "python -m pytest test_import.py -q", timeout_sec=30)
+
+    assert result["ok"] is True
+    assert result["data"]["pythonpath_prefix"] == [str(repo_dir.resolve()), str((repo_dir / "src").resolve())]
+
+
 def test_run_tests_records_injected_pytest_flags(tmp_path: Path) -> None:
     repo_dir = tmp_path / "repo"
     repo_dir.mkdir()
@@ -155,6 +176,26 @@ tests/test_specifiers.py:36: AssertionError
     assert "self.assertTrue" in summary["output_excerpt"]
     assert "False is not true" in summary["output_excerpt"]
     assert summary["locations"][0]["path"] == "tests/test_specifiers.py"
+
+
+def test_build_failure_summary_extracts_plain_traceback_exception_signal() -> None:
+    traceback_output = """
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    assert 'S' in ds.PatientName
+TypeError: argument of type 'PersonName' is not iterable
+"""
+
+    summary = _build_failure_summary("", traceback_output, 1)
+
+    assert summary["exception"] == {
+        "type": "TypeError",
+        "message": "argument of type 'PersonName' is not iterable",
+    }
+    assert summary["possible_symbols"] == ["PersonName"]
+    assert "TypeError" in summary["short_summary"]
+    assert "PersonName" in summary["short_summary"]
+    assert "not iterable" in summary["output_excerpt"]
 
 
 def test_run_tests_returns_failure_summary(tmp_path: Path) -> None:

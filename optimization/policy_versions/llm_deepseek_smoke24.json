@@ -1,0 +1,20 @@
+{
+  "policy_id": "llm_deepseek_smoke24",
+  "description": "SWE-bench Lite smoke policy using DeepSeek with a higher iteration cap for harder real-repo samples.",
+  "max_steps": 24,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "agent_type": "llm",
+  "patch_strategy": "baseline",
+  "llm_provider": "openai_compatible",
+  "llm_model": "deepseek-chat",
+  "llm_api_key_env": "DEEPSEEK_API_KEY",
+  "llm_base_url_env": "DEEPSEEK_BASE_URL",
+  "llm_model_env": "DEEPSEEK_MODEL",
+  "llm_base_url": "https://api.deepseek.com",
+  "llm_max_output_tokens": 8000,
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ]
+}

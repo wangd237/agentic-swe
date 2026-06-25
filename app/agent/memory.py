@@ -30,6 +30,9 @@ class FailureSignature(BaseModel):
             "failed_tests": failure_summary.get("failed_tests", []),
             "assertion_lines": failure_summary.get("assertion_lines", []),
             "locations": failure_summary.get("locations", []),
+            "exception": failure_summary.get("exception", {}),
+            "possible_symbols": failure_summary.get("possible_symbols", []),
+            "guided_search": failure_summary.get("guided_search", []),
             "short_summary": failure_summary.get("short_summary", ""),
         }
         payload_text = json.dumps(payload, ensure_ascii=False, sort_keys=True)

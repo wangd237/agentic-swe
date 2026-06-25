@@ -1,5 +1,25 @@
 # Current Task: Agent Core Upgrade
 
+## Current Direction Update
+
+The project is now moving from local token/tool-routing experiments back to the broader agent-core direction.
+
+Reference map:
+
+- `docs/agent_core_capability_map.md`
+
+Current focus:
+
+```text
+Agent Core Refocus v2: Verification Quality
+```
+
+Reason:
+
+- v8-v10 improved or tested tool routing and failure-signal handling, but also showed the risk of overfitting to one SWE-bench Lite sample.
+- The next priority should be agent trustworthiness: clearly distinguishing local smoke success, targeted success, full verification success, and official benchmark resolved.
+- SWE-bench Lite remains a measurement tool, not the product direction.
+
 ## Tracking Status
 
 Status: **complete for Agent Core Upgrade v1**

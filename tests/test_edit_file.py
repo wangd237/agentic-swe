@@ -55,6 +55,37 @@ def test_edit_file_rejects_missing_old_string(tmp_path: Path) -> None:
     assert target_path.read_text(encoding="utf-8") == "value = 1\n"
 
 
+def test_edit_file_missing_old_string_returns_similar_contexts(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    target_path = repo_path / "pkg" / "app.py"
+    target_path.parent.mkdir(parents=True)
+    target_path.write_text(
+        "def parse_time_string(value):\n"
+        "    value = value.replace(' ', '')\n"
+        "    if len(value) == 6:\n"
+        "        return int(value[:2]), int(value[2:4]), int(value[4:6])\n"
+        "    raise ValueError(value)\n",
+        encoding="utf-8",
+    )
+
+    result = edit_file(
+        str(repo_path),
+        "pkg/app.py",
+        "    if len(value) == 9:\n"
+        "        return int(value[:2]), int(value[2:4]), int(value[4:6]), int(value[6:9])\n",
+        "replacement",
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["type"] == "old_string_not_found"
+    assert result["data"]["similar_contexts"]
+    suggestion = result["data"]["similar_contexts"][0]
+    assert suggestion["similarity"] > 0
+    assert "suggested_old_string" in suggestion
+    assert "if len(value) == 6" in suggestion["context"]
+    assert target_path.read_text(encoding="utf-8").startswith("def parse_time_string")
+
+
 def test_edit_file_rejects_path_escape(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     repo_path.mkdir()

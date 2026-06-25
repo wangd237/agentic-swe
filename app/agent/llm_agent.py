@@ -47,6 +47,11 @@ ANTI_LOOP_MESSAGE = (
     "且编辑模式高度相似。请退一步重新读取相关代码或测试，验证你的核心假设；"
     "如果涉及第三方库行为，优先用 python_repl 查询实际行为，然后再修改。"
 )
+EDIT_RECOVERY_MESSAGE = (
+    "EDIT_RECOVERY_NOTICE: edit_file 没有找到 old_string。请优先使用工具结果里的 "
+    "similar_contexts[].suggested_old_string 作为下一次 edit_file 的 old_string；"
+    "如果仍不确定，请 read_file 读取该建议行号附近的最新内容后再编辑。"
+)
 
 
 class OpenAICompatibleChatClient:
@@ -347,6 +352,8 @@ class LLMCodeAgent(BaseAgent):
         data = tool_result.get("data")
         if isinstance(data, dict) and data.get("policy_blocked"):
             tool_metrics["policy_blocked"] = True
+        if isinstance(data, dict) and data.get("deduped"):
+            tool_metrics["deduped"] = True
         if parallel_group_id:
             tool_metrics["parallel_group_id"] = parallel_group_id
         trace.steps.append(
@@ -498,6 +505,16 @@ class LLMCodeAgent(BaseAgent):
         failure_summary["context_diff_changed_files"] = diff_result.get("data", {}).get("changed_files", [])
 
     @staticmethod
+    def _should_run_guided_failure_search(failure_summary: dict[str, Any] | None) -> bool:
+        if not failure_summary:
+            return False
+        if failure_summary.get("locations"):
+            return False
+        if failure_summary.get("guided_search"):
+            return False
+        return bool(failure_summary.get("possible_symbols"))
+
+    @staticmethod
     def _evidence_ids_for_tool(tool_name: str, tool_input: dict[str, Any], tool_result: dict[str, Any]) -> list[str]:
         data = tool_result.get("data", {})
         if not isinstance(data, dict):
@@ -613,6 +630,7 @@ class LLMCodeAgent(BaseAgent):
             agent_state.reproduction_evidence_kind = "weak_static"
         latest_failure_summary: dict[str, Any] | None = None
         search_match_files: list[str] = []
+        searched_queries: set[str] = set()
         agent_state.set_localization_candidates(
             rank_candidates(
                 repo_path=run_paths.workspace_dir,
@@ -705,6 +723,8 @@ class LLMCodeAgent(BaseAgent):
         post_test_summary = ""
         workspace_generation = 0
         verified_generation: int | None = None
+        last_full_verified_generation: int | None = None
+        last_full_verified_exit_code: int | None = None
         ever_used_tool = False
         pending_auto_verification = False
         max_iterations_reached = True
@@ -753,6 +773,71 @@ class LLMCodeAgent(BaseAgent):
                     existing_candidates=agent_state.localization_candidates,
                 )
             )
+
+        def run_guided_failure_search(failure_summary: dict[str, Any] | None, *, source: str) -> None:
+            if not self._should_run_guided_failure_search(failure_summary):
+                return
+            assert failure_summary is not None
+            guided_results: list[dict[str, Any]] = []
+            symbols = [str(item).strip() for item in failure_summary.get("possible_symbols", [])][:3]
+            skipped_symbols: list[dict[str, str]] = []
+            for symbol in symbols:
+                if not symbol:
+                    continue
+                normalized_symbol = symbol.casefold()
+                already_covered = any(
+                    normalized_symbol in query or query in normalized_symbol
+                    for query in searched_queries
+                )
+                if already_covered:
+                    skipped_symbols.append({"query": symbol, "reason": "already_searched"})
+                    continue
+                tool_input = {
+                    "query": symbol,
+                    "source": source,
+                    "automatic": True,
+                }
+                searched_queries.add(normalized_symbol)
+                started_at = perf_counter()
+                search_result = tool_executor.execute("search_code", tool_input)
+                duration_sec = round(perf_counter() - started_at, 4)
+                matches = search_result.get("data", {}).get("matches", [])[:10]
+                match_files = [
+                    str(path).replace("\\", "/")
+                    for path in search_result.get("data", {}).get("match_files", [])[:5]
+                ]
+                guided_results.append(
+                    {
+                        "query": symbol,
+                        "match_count": search_result.get("data", {}).get("match_count", 0),
+                        "match_files": match_files,
+                        "matches": matches[:5],
+                    }
+                )
+                for relative_path in match_files:
+                    if relative_path and relative_path not in search_match_files:
+                        search_match_files.append(relative_path)
+                    if relative_path:
+                        agent_state.remember_candidate(
+                            relative_path,
+                            reason="guided_failure_search",
+                            evidence=f"run_tests exception symbol `{symbol}` matched this file.",
+                            confidence=0.6,
+                        )
+                self._append_tool_trace_step(
+                    trace=trace,
+                    state=agent_state,
+                    tool_name="search_code",
+                    tool_input=tool_input,
+                    tool_result=search_result,
+                    duration_sec=duration_sec,
+                    decision="run_tests 失败后根据 possible_symbols 自动执行只读搜索，补充定位信号。",
+                )
+            if guided_results:
+                failure_summary["guided_search"] = guided_results
+                refresh_localization_candidates()
+            if skipped_symbols:
+                failure_summary["guided_search_skipped"] = skipped_symbols
 
         if agent_state.localization_candidates:
             record_phase_milestone(
@@ -829,11 +914,59 @@ class LLMCodeAgent(BaseAgent):
                 )
             )
 
+        def already_full_verified_current_generation() -> bool:
+            return (
+                workspace_generation > 0
+                and verified_generation == workspace_generation
+                and last_full_verified_generation == workspace_generation
+                and last_full_verified_exit_code == 0
+            )
+
+        def skipped_duplicate_full_verification_result(tool_input: dict[str, Any]) -> dict[str, Any]:
+            return {
+                "ok": True,
+                "tool_name": "run_tests",
+                "summary": "跳过重复 full run_tests：当前 workspace generation 已经通过 full verification。",
+                "data": {
+                    "exit_code": 0,
+                    "duration_sec": 0.0,
+                    "verification_scope": "full",
+                    "workspace_generation": workspace_generation,
+                    "verified_generation": verified_generation,
+                    "deduped": True,
+                    "tool_input": tool_input,
+                },
+                "error": None,
+            }
+
+        def execute_tool_block_or_skip(block: dict[str, Any]) -> dict[str, Any]:
+            tool_name = block["name"]
+            tool_input = block.get("input", {})
+            if (
+                tool_name == "run_tests"
+                and str(tool_input.get("verification_scope", "full")) != "targeted"
+                and already_full_verified_current_generation()
+            ):
+                return {
+                    "block": block,
+                    "tool_name": tool_name,
+                    "tool_input": tool_input,
+                    "tool_result": skipped_duplicate_full_verification_result(tool_input),
+                    "tool_duration_sec": 0.0,
+                }
+            return self._execute_tool_block(
+                tool_executor=tool_executor,
+                tool_policy=tool_policy,
+                state=agent_state,
+                block=block,
+            )
+
         def run_immediate_auto_verification() -> str:
             nonlocal latest_failure_summary
             nonlocal last_test_exit_code, last_test_summary
             nonlocal post_test_exit_code, post_test_summary
             nonlocal verified_generation, pending_auto_verification
+            nonlocal last_full_verified_generation, last_full_verified_exit_code
 
             diff_input = {"source": "immediate_auto_verification"}
             diff_started_at = perf_counter()
@@ -900,6 +1033,8 @@ class LLMCodeAgent(BaseAgent):
             post_test_exit_code = last_test_exit_code
             post_test_summary = last_test_summary
             verified_generation = workspace_generation
+            last_full_verified_generation = workspace_generation
+            last_full_verified_exit_code = last_test_exit_code
             pending_auto_verification = False
             agent_state.has_reproduction_evidence = True
             if agent_state.reproduction_evidence_kind != "weak_static":
@@ -921,6 +1056,8 @@ class LLMCodeAgent(BaseAgent):
             )
             failure_summary = tool_result.get("data", {}).get("failure_summary")
             if failure_summary:
+                if last_test_exit_code not in {0, None}:
+                    run_guided_failure_search(failure_summary, source="immediate_auto_verification")
                 latest_failure_summary = failure_summary
                 agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
                 refresh_localization_candidates()
@@ -1113,12 +1250,7 @@ class LLMCodeAgent(BaseAgent):
                     executed_results = [result for result in batch_results if result is not None]
                 else:
                     executed_results = [
-                        self._execute_tool_block(
-                            tool_executor=tool_executor,
-                            tool_policy=tool_policy,
-                            state=agent_state,
-                            block=block,
-                        )
+                        execute_tool_block_or_skip(block)
                         for block in batch
                     ]
 
@@ -1148,6 +1280,15 @@ class LLMCodeAgent(BaseAgent):
                             )
                             refresh_localization_candidates()
                     if tool_name in {"search_code", "grep"} and tool_result.get("ok"):
+                        query_text = str(
+                            tool_result.get("data", {}).get("query")
+                            or tool_result.get("data", {}).get("pattern")
+                            or tool_input.get("query")
+                            or tool_input.get("pattern")
+                            or ""
+                        ).strip()
+                        if query_text:
+                            searched_queries.add(query_text.casefold())
                         for relative_path in tool_result.get("data", {}).get("match_files", [])[:5]:
                             normalized_path = str(relative_path).replace("\\", "/")
                             if normalized_path and normalized_path not in search_match_files:
@@ -1169,14 +1310,16 @@ class LLMCodeAgent(BaseAgent):
                         last_test_exit_code = tool_result.get("data", {}).get("exit_code")
                         last_test_summary = tool_result.get("summary", "")
                         policy_blocked = bool(tool_result.get("data", {}).get("policy_blocked"))
+                        verification_scope = str(tool_input.get("verification_scope", "full"))
                         if not policy_blocked:
-                            verification_scope = str(tool_input.get("verification_scope", ""))
                             if workspace_generation == 0 and pre_test_exit_code is None:
                                 pre_test_exit_code = last_test_exit_code
                                 pre_test_summary = last_test_summary
                             if workspace_generation > 0 and verification_scope != "targeted":
                                 post_test_exit_code = last_test_exit_code
                                 post_test_summary = last_test_summary
+                                last_full_verified_generation = workspace_generation
+                                last_full_verified_exit_code = last_test_exit_code
                             verified_generation = workspace_generation
                             agent_state.has_reproduction_evidence = True
                             if agent_state.reproduction_evidence_kind != "weak_static":
@@ -1192,6 +1335,8 @@ class LLMCodeAgent(BaseAgent):
                         diff_result_for_failure: dict[str, Any] | None = None
                         failure_summary = tool_result.get("data", {}).get("failure_summary")
                         if failure_summary:
+                            if last_test_exit_code not in {0, None}:
+                                run_guided_failure_search(failure_summary, source="agent_run_tests")
                             latest_failure_summary = failure_summary
                             agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
                             for location in failure_summary.get("locations", []):
@@ -1362,6 +1507,13 @@ class LLMCodeAgent(BaseAgent):
                         )
                         anti_loop_message_for_model = f"\n\nANTI_LOOP_NOTICE: {ANTI_LOOP_MESSAGE}"
 
+                    edit_recovery_message_for_model = ""
+                    if (
+                        tool_name == "edit_file"
+                        and (tool_result.get("error") or {}).get("type") == "old_string_not_found"
+                    ):
+                        edit_recovery_message_for_model = f"\n\n{EDIT_RECOVERY_MESSAGE}"
+
                     immediate_auto_verification_message = ""
                     if (
                         tool_name in {"write_file", "edit_file"}
@@ -1381,7 +1533,8 @@ class LLMCodeAgent(BaseAgent):
                             )
                             + immediate_auto_verification_message
                             + reflection_message_for_model
-                            + anti_loop_message_for_model,
+                            + anti_loop_message_for_model
+                            + edit_recovery_message_for_model,
                         }
                     )
 

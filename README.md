@@ -1,14 +1,13 @@
 # Agentic SWE
 
-<img src="https://img.shields.io/badge/Python-3.10-blue" alt="Python">
-
-![Pydantic](https://img.shields.io/badge/Pydantic-v2-purple)
-![pytest](https://img.shields.io/badge/pytest-tested-blue)
-![OpenAI Compatible](https://img.shields.io/badge/OpenAI_Compatible-API-purple)
-![Tool Calling](https://img.shields.io/badge/Tool_Calling-enabled-green)
-![CLI](https://img.shields.io/badge/CLI-supported-gray)
-![JSON Trace](https://img.shields.io/badge/JSON_Trace-auditable-orange)
-[![MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python"></a>
+<a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-purple?logo=pydantic&logoColor=white" alt="Pydantic"></a>
+<a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/pytest-tested-blue?logo=pytest&logoColor=white" alt="pytest"></a>
+<a href="https://platform.openai.com/"><img src="https://img.shields.io/badge/OpenAI_Compatible-API-purple?logo=openai&logoColor=white" alt="OpenAI Compatible"></a>
+<a href="#"><img src="https://img.shields.io/badge/Tool_Calling-enabled-green" alt="Tool Calling"></a>
+<a href="#"><img src="https://img.shields.io/badge/CLI-supported-gray" alt="CLI"></a>
+<a href="#"><img src="https://img.shields.io/badge/JSON_Trace-auditable-orange" alt="JSON Trace"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
 
 一个面向真实 repo 的 bug repair coding agent —— 接收软件问题描述，在隔离 workspace 中理解问题、复现失败、定位代码、生成补丁、验证修复，并输出可审计结果。
 
@@ -18,8 +17,9 @@
 | --- | --- |
 | Agent Core v1 状态 | `complete`，见 [currentTask.md](currentTask.md) |
 | 核心工作流 | `UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL` |
-| Agent core 回归测试 | `110 passed` |
+| Agent core 回归测试 | `115 passed` |
 | 用户入口验证 | `repair_bug.run_repair_bug()` 已覆盖 full verification 与 weak/static verification |
+| Tool routing / token 优化 | `task_010` 从 `30,510` tokens 降至 `18,553` tokens，LLM 调用从 `7` 降至 `5` |
 | 正式真实任务数 | `66` 条，覆盖 `16` 个开源生态 |
 | 规则版 baseline 成功率 / 测试通过率 | `100%` / `100%`（策略 `improved_v71`） |
 | LLM agent 全局成功率 | `91.3%`（`149` runs, `136` success） |
@@ -53,6 +53,8 @@ UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL
 
 - **显式 AgentState**：记录当前阶段、issue summary、failure signature、localization candidates、hypotheses、modified files、verification strength。
 - **phase-aware tool policy**：不同阶段限制可用工具，禁止过早 `edit_file` / `write_file`，要求 patch 前具备复现或弱/静态证据和定位候选。
+- **phase/state-aware tool routing**：LLM 每轮只接收当前阶段和状态允许的工具 Schema，减少无关工具 token 和选择噪音。
+- **立即自动验证**：`write_file` / `edit_file` 成功后由 runtime 立即执行 `show_diff + run_tests`，减少模型单独决策验证步骤的轮次。
 - **代码定位**：结合任务提示、失败摘要、搜索命中、AST symbol index、测试与实现 import 关系，产出候选文件和证据。
 - **分级验证**：区分 `none` / `weak` / `targeted` / `full`，弱验证不能被报告为普通成功。
 - **反思与自我纠错**：测试失败、定位低置信、修改过宽或弱验证时记录结构化 reflection，必要时自动 undo。
@@ -74,6 +76,7 @@ verification_strength:
 incomplete_reason:
 pre_test_exit_code:
 post_test_exit_code:
+llm_total_tokens:
 summary_path:
 trace_path:
 result_path:
@@ -122,6 +125,7 @@ local repo + issue text / semi-real task / GitHub issue input
 - 通过 OpenAI-compatible tool calling 调用现有工具，当前使用 DeepSeek
 - 可切换到 Kimi、GLM 等兼容服务
 - 受控 `python_repl`：只允许单表达式，拒绝 import、分号、多行和 dunder
+- 记录每次任务的 `llm_usage` 和 tool routing 指标，便于量化 token 优化效果
 
 ## 代表性案例
 
@@ -154,7 +158,7 @@ python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy
 python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v71.json --run-label frozen20_v71 --stability-check --stability-repetitions 3
 ```
 
-说明：LLM agent 已接入阶段化 tool-use 闭环，输出预算默认 `8000` tokens。支持 DeepSeek / Kimi / GLM 等 OpenAI-compatible 服务，通过 `.env` 或环境变量配置。规则版入口仍保留用于 baseline 对照。
+说明：LLM agent 已接入阶段化 tool-use 闭环，输出预算默认 `8000` tokens。支持 DeepSeek / Kimi / GLM 等 OpenAI-compatible 服务，通过 `.env` 或环境变量配置。规则版入口仍保留用于 baseline 对照。工具路由和 token 优化记录见 [项目1改进记录.md](项目1改进记录.md)。
 
 ## 项目结构
 
@@ -179,6 +183,7 @@ scripts/        # 单任务、批量评测、稳定性复跑等脚本
 
 - 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
 - Agent 概览：[docs/agent_overview.md](docs/agent_overview.md)
+- Agent Core 能力地图：[docs/agent_core_capability_map.md](docs/agent_core_capability_map.md)
 - Agent 小样本评测：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
 - Agent 案例：[docs/agent_case_studies.md](docs/agent_case_studies.md)
 - 架构说明：[docs/architecture.md](docs/architecture.md)
@@ -199,13 +204,16 @@ Python · Pydantic · pytest · OpenAI-compatible Chat Completions · subprocess
 
 - ✅ LLM tool-use agent
 - ✅ Agent Core v1 phase workflow
+- ✅ phase/state-aware tool schema routing
+- ✅ post-patch immediate auto verification
+- ✅ LLM token usage tracking
 - ✅ full vs weak/static verification 区分
 - ✅ 用户本地 repo repair 入口 smoke
 - ✅ case study trace / result / patch 证据
 - ✅ 正式集 + 冻结集 + 策略版本化
 - ✅ 批量评测 + 稳定性复跑 + maturity 审计
 
-后续重点：更多真实本地 repo 修复案例、精简 `llm_agent.py` 中重复的 post-patch verification 逻辑、以及在不偏离 agent core 的前提下扩展任务难度。
+后续重点：更多真实本地 repo 修复案例、继续将确定性工程流程从 LLM 决策层下沉到 runtime、以及在不偏离 agent core 的前提下扩展任务难度。
 
 ## License
 

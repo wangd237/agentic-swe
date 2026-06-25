@@ -288,17 +288,33 @@ def test_tool_executor_summarize_for_model_prefers_failure_summary() -> None:
                         "error": "AssertionError",
                     }
                 ],
+                "exception": {
+                    "type": "TypeError",
+                    "message": "argument of type 'PersonName' is not iterable",
+                },
+                "possible_symbols": ["PersonName"],
+                "guided_search": [
+                    {
+                        "query": "PersonName",
+                        "match_count": 3,
+                        "match_files": ["pydicom/valuerep.py"],
+                    }
+                ],
                 "short_summary": "失败测试: tests/test_app.py::test_value - assert 1 == 2",
             },
         },
         "error": {"type": "test_failure", "message": "failed"},
     }
 
-    summary = ToolExecutor.summarize_for_model(result, max_chars=800)
+    summary = ToolExecutor.summarize_for_model(result, max_chars=1400)
 
     assert "failure_summary" in summary
     assert "tests/test_app.py::test_value" in summary
     assert "assert 1 == 2" in summary
+    assert "TypeError" in summary
+    assert "PersonName" in summary
+    assert "guided_search" in summary
+    assert "pydicom/valuerep.py" in summary
     assert "very noisy output" not in summary
 
 
@@ -356,6 +372,31 @@ def test_tool_executor_summarize_for_model_compacts_successful_run_tests() -> No
     assert "测试命令执行成功" in summary
     assert "exit_code" in summary
     assert "test passed" not in summary
+
+
+def test_tool_executor_summarize_for_model_compacts_large_diff() -> None:
+    diff_text = "diff --git a/demo.py b/demo.py\n" + "\n".join(
+        f"+line_{index}" for index in range(1000)
+    )
+    result = {
+        "ok": True,
+        "tool_name": "show_diff",
+        "summary": "共检测到 1 个变更文件。",
+        "data": {
+            "changed_files": ["demo.py"],
+            "diff_text": diff_text,
+        },
+        "error": None,
+    }
+
+    summary = ToolExecutor.summarize_for_model(result, max_chars=1200)
+    payload = json.loads(summary)
+
+    assert payload["data"]["changed_files"] == ["demo.py"]
+    assert payload["data"]["diff_char_count"] == len(diff_text)
+    assert payload["data"]["truncated"] is True
+    assert len(payload["data"]["diff_text"]) < len(diff_text)
+    assert "use read_file on changed files" in payload["data"]["diff_text"]
 
 
 def test_tool_executor_summarize_for_model_preserves_read_file_content() -> None:
@@ -422,6 +463,40 @@ def test_tool_executor_summarize_for_model_strips_write_content() -> None:
     assert "write_file: demo.py" in summary
     assert "content_length" in summary
     assert "secret content" not in summary
+
+
+def test_tool_executor_summarize_for_model_keeps_edit_failure_suggestions() -> None:
+    result = {
+        "ok": False,
+        "tool_name": "edit_file",
+        "summary": "未在 pkg/app.py 中找到 old_string。已返回相似上下文建议。",
+        "data": {
+            "repo_path": "repo",
+            "relative_path": "pkg/app.py",
+            "old_length": 80,
+            "new_length": 20,
+            "replacement_count": 0,
+            "similar_contexts": [
+                {
+                    "similarity": 0.82,
+                    "start_line": 3,
+                    "end_line": 4,
+                    "suggested_old_string": "    if len(value) == 6:\n",
+                    "context": "2: value = value.replace(' ', '')\n3: if len(value) == 6:",
+                }
+            ],
+        },
+        "error": {"type": "old_string_not_found", "message": "missing"},
+    }
+
+    summary = ToolExecutor.summarize_for_model(result, max_chars=1000)
+    payload = json.loads(summary)
+
+    assert payload["error"]["type"] == "old_string_not_found"
+    assert payload["data"]["relative_path"] == "pkg/app.py"
+    assert payload["data"]["recommended_next_old_string"] == "    if len(value) == 6:\n"
+    assert payload["data"]["similar_contexts"][0]["suggested_old_string"]
+    assert "repo_path" not in payload["data"]
 
 
 def test_tool_executor_summarize_for_model_warns_for_scratch_write() -> None:

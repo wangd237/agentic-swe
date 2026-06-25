@@ -38,8 +38,24 @@ def test_state_tool_router_hides_undo_before_workspace_changes() -> None:
     }
 
     assert "undo" not in routed_tool_names
+    assert "grep" in routed_tool_names
+    assert "search_code" in routed_tool_names
     assert "edit_file" in routed_tool_names
     assert "write_file" in routed_tool_names
+
+
+def test_state_tool_router_exposes_read_only_search_during_reproduce() -> None:
+    state = AgentState(phase="reproduce")
+
+    routed_tool_names = {
+        tool["name"]
+        for tool in build_tools_for_state(state)
+    }
+
+    assert "grep" in routed_tool_names
+    assert "search_code" in routed_tool_names
+    assert "edit_file" not in routed_tool_names
+    assert "write_file" not in routed_tool_names
 
 
 def test_state_tool_router_hides_verify_tests_until_current_diff_is_observed() -> None:
@@ -72,3 +88,27 @@ def test_state_tool_router_allows_verify_tests_after_current_diff_is_observed() 
 
     assert "run_tests" in routed_tool_names
     assert "show_diff" in routed_tool_names
+
+
+def test_state_tool_router_exposes_write_tools_during_patch_recovery() -> None:
+    state = AgentState(
+        phase="localize",
+        has_reproduction_evidence=True,
+        workspace_generation=1,
+    )
+    state.remember_candidate(
+        "pkg/app.py",
+        reason="failed_patch_file",
+        evidence="previous patch verification failed in this file",
+        confidence=0.8,
+    )
+
+    routed_tool_names = {
+        tool["name"]
+        for tool in build_tools_for_state(state)
+    }
+
+    assert "edit_file" in routed_tool_names
+    assert "write_file" in routed_tool_names
+    assert "show_diff" in routed_tool_names
+    assert "undo" in routed_tool_names
