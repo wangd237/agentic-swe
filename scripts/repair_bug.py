@@ -408,6 +408,9 @@ def print_summary(output: dict[str, Any]) -> None:
     print(f"incomplete_reason: {result.get('incomplete_reason') or 'none'}")
     print(f"pre_test_exit_code: {result.get('pre_test_exit_code')}")
     print(f"post_test_exit_code: {result.get('post_test_exit_code')}")
+    llm_usage = result.get("tool_stats", {}).get("llm_usage", {})
+    if isinstance(llm_usage, dict) and llm_usage.get("total_tokens") is not None:
+        print(f"llm_total_tokens: {llm_usage.get('total_tokens')}")
     print(f"summary_path: {output.get('summary_path', run_paths.get('summary_md_path', ''))}")
     print(f"trace_path: {output.get('trace_path', run_paths.get('trace_json_path', ''))}")
     print(f"result_path: {output.get('result_path', run_paths.get('result_json_path', ''))}")

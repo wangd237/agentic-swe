@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from app.agent.memory import AgentState
 from app.agent.tool_definitions import build_tool_definitions
+from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE
+from app.agent.tool_router import build_tools_for_phase, build_tools_for_state
 
 
 def test_tool_definitions_include_python_repl_boundaries() -> None:
@@ -11,3 +14,61 @@ def test_tool_definitions_include_python_repl_boundaries() -> None:
     assert "import" in python_repl_tool["description"]
     assert "分号" in python_repl_tool["description"]
     assert "dunder" in python_repl_tool["description"]
+
+
+def test_phase_tool_router_reuses_policy_allowed_tools() -> None:
+    all_tool_names = {tool["name"] for tool in build_tool_definitions()}
+
+    for phase, allowed_tool_names in ALLOWED_TOOLS_BY_PHASE.items():
+        routed_tool_names = {
+            tool["name"]
+            for tool in build_tools_for_phase(phase)
+        }
+
+        assert allowed_tool_names <= all_tool_names
+        assert routed_tool_names == allowed_tool_names
+
+
+def test_state_tool_router_hides_undo_before_workspace_changes() -> None:
+    state = AgentState(phase="patch", workspace_generation=0)
+
+    routed_tool_names = {
+        tool["name"]
+        for tool in build_tools_for_state(state)
+    }
+
+    assert "undo" not in routed_tool_names
+    assert "edit_file" in routed_tool_names
+    assert "write_file" in routed_tool_names
+
+
+def test_state_tool_router_hides_verify_tests_until_current_diff_is_observed() -> None:
+    state = AgentState(
+        phase="verify",
+        workspace_generation=1,
+        diff_observed_generation=None,
+    )
+
+    routed_tool_names = {
+        tool["name"]
+        for tool in build_tools_for_state(state)
+    }
+
+    assert "run_tests" not in routed_tool_names
+    assert "show_diff" in routed_tool_names
+
+
+def test_state_tool_router_allows_verify_tests_after_current_diff_is_observed() -> None:
+    state = AgentState(
+        phase="verify",
+        workspace_generation=1,
+        diff_observed_generation=1,
+    )
+
+    routed_tool_names = {
+        tool["name"]
+        for tool in build_tools_for_state(state)
+    }
+
+    assert "run_tests" in routed_tool_names
+    assert "show_diff" in routed_tool_names

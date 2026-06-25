@@ -421,7 +421,15 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
 
     def fake_run_agent(**_: object) -> dict:
         return {
-            "result": {"run_id": "run_001", "final_status": "success"},
+            "result": {
+                "run_id": "run_001",
+                "final_status": "success",
+                "tool_stats": {
+                    "llm_usage": {
+                        "total_tokens": 1234,
+                    },
+                },
+            },
             "run_paths": {
                 "summary_md_path": str(repo_root / "logs" / "summary.md"),
                 "trace_json_path": str(repo_root / "logs" / "trace.json"),
@@ -456,6 +464,7 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
     assert "incomplete_reason:" in captured.out
     assert "pre_test_exit_code:" in captured.out
     assert "post_test_exit_code:" in captured.out
+    assert "llm_total_tokens: 1234" in captured.out
     assert "summary_path:" in captured.out
     assert "trace_path:" in captured.out
     assert "result_path:" in captured.out

@@ -15,11 +15,14 @@ from app.agent.policy import PolicyConfig
 class FakeLLMClient:
     def __init__(self) -> None:
         self._call_count = 0
+        self.received_tool_names_by_call: list[list[str]] = []
 
     def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
         self._call_count += 1
+        self.received_tool_names_by_call.append([tool["name"] for tool in tools])
         if self._call_count == 1:
             return {
+                "usage": {"total_tokens": 111},
                 "content": [
                     {
                         "type": "text",
@@ -37,6 +40,7 @@ class FakeLLMClient:
                 ]
             }
         return {
+            "usage": {"total_tokens": 222},
             "content": [
                 {
                     "type": "text",
@@ -573,9 +577,10 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         },
     )
 
+    client = FakeLLMClient()
     agent = LLMCodeAgent(
         llm_config=LLMConfig(model="fake-model", max_iterations=3),
-        client=FakeLLMClient(),
+        client=client,
     )
 
     output = agent.run(
@@ -592,6 +597,24 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert output["result"]["tool_stats"]["agent_type"] == "llm"
     assert output["result"]["tool_stats"]["llm_provider"] == "openai_compatible"
     assert output["result"]["tool_stats"]["llm_model"] == "fake-model"
+    assert output["result"]["tool_stats"]["llm_usage"] == {
+        "call_count": 2,
+        "total_tokens": 333,
+        "missing_usage_count": 0,
+    }
+    assert output["result"]["tool_stats"]["tool_routing"] == {
+        "schema_strategy": "phase_state_filtered",
+        "total_tool_schema_sent": 10,
+        "avg_tool_schema_count": 5.0,
+        "tools_by_phase": {
+            "understand": ["list_files", "search_code", "grep", "read_file", "run_tests"],
+            "patch": ["read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+        },
+    }
+    assert client.received_tool_names_by_call == [
+        ["list_files", "search_code", "grep", "read_file", "run_tests"],
+        ["read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+    ]
     assert output["result"]["tool_stats"]["agent_core_metrics"]["pre_repro_rate"] == 1.0
     assert output["result"]["tool_stats"]["agent_core_metrics"]["write_before_repro_count"] == 0
     assert output["result"]["tool_stats"]["agent_core_metrics"]["success_full_verify_rate"] == 0.0
@@ -607,6 +630,13 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         "我会先运行测试确认当前状态。"
     ]
     assert planning_steps[0]["tool_metrics"]["planned_tool_count"] == 1
+    llm_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "llm_response"
+    ]
+    assert [step["tool_metrics"].get("llm_total_tokens") for step in llm_steps] == [111, 222]
+    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 5]
+    assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
     assert output["trace"]["steps"][-1]["action_type"] == "finalize"
@@ -936,7 +966,7 @@ def test_llm_agent_auto_verification_runs_targeted_before_full_tests(tmp_path: P
     assert memory_payload["patch_style"] in {"single_file_rewrite", "rewrite_sequence"}
 
 
-def test_llm_agent_blocks_patch_verification_tests_before_show_diff(tmp_path: Path) -> None:
+def test_llm_agent_immediate_verification_prevents_tests_before_diff_violation(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
     task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
@@ -1000,9 +1030,15 @@ def test_llm_agent_blocks_patch_verification_tests_before_show_diff(tmp_path: Pa
         if step["tool_name"] == "show_diff"
     ]
 
-    assert blocked_steps
+    immediate_verification_steps = [
+        step for step in run_test_steps
+        if step["tool_input"].get("source") == "immediate_auto_verification"
+    ]
+
+    assert not blocked_steps
     assert show_diff_steps
-    assert blocked_steps[0]["step_index"] < show_diff_steps[0]["step_index"]
+    assert immediate_verification_steps
+    assert show_diff_steps[0]["step_index"] < immediate_verification_steps[0]["step_index"]
     assert output["result"]["final_status"] == "success"
 
 
@@ -1513,9 +1549,13 @@ def test_llm_agent_final_verifies_last_iteration_write(tmp_path: Path) -> None:
         step for step in output["trace"]["steps"]
         if step["tool_name"] == "run_tests"
     ]
-    final_verification_steps = [
+    immediate_verification_steps = [
         step for step in run_test_steps
-        if step["tool_input"].get("source") == "final_pending_verification"
+        if step["tool_input"].get("source") == "immediate_auto_verification"
+    ]
+    full_immediate_verification_steps = [
+        step for step in immediate_verification_steps
+        if step["tool_input"].get("verification_scope") == "full"
     ]
 
     assert output["result"]["final_status"] == "success"
@@ -1523,8 +1563,8 @@ def test_llm_agent_final_verifies_last_iteration_write(tmp_path: Path) -> None:
     assert output["result"]["tool_stats"]["workspace_generation"] == 1
     assert output["result"]["tool_stats"]["verified_generation"] == 1
     assert output["result"]["post_test_exit_code"] == 0
-    assert final_verification_steps
-    assert final_verification_steps[0]["tool_input"]["verification_scope"] == "full"
+    assert immediate_verification_steps
+    assert full_immediate_verification_steps
 
 
 def test_llm_agent_allows_weak_static_patch_but_keeps_weak_status(tmp_path: Path) -> None:

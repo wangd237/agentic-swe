@@ -24,9 +24,9 @@ from app.agent.strategy_memory import (
     format_strategy_memory_hints,
     retrieve_strategy_memories,
 )
-from app.agent.tool_definitions import build_tool_definitions
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
+from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
 from app.agent.verification import (
     adjust_final_status_for_verification,
     build_targeted_pytest_command,
@@ -146,6 +146,31 @@ class OpenAICompatibleChatClient:
         return converted
 
     @staticmethod
+    def _usage_value(usage: Any, key: str) -> int | None:
+        if usage is None:
+            return None
+        if isinstance(usage, dict):
+            value = usage.get(key)
+        else:
+            value = getattr(usage, key, None)
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def _normalize_usage(cls, usage: Any) -> dict[str, int]:
+        total_tokens = cls._usage_value(usage, "total_tokens")
+        if total_tokens is None:
+            prompt_tokens = cls._usage_value(usage, "prompt_tokens")
+            completion_tokens = cls._usage_value(usage, "completion_tokens")
+            if prompt_tokens is not None and completion_tokens is not None:
+                total_tokens = prompt_tokens + completion_tokens
+        return {"total_tokens": total_tokens} if total_tokens is not None else {}
+
+    @staticmethod
     def _normalize_openai_response(response: Any) -> dict[str, Any]:
         message = response.choices[0].message
         content: list[dict[str, Any]] = []
@@ -164,7 +189,11 @@ class OpenAICompatibleChatClient:
                     "input": tool_input,
                 }
             )
-        return {"content": content}
+        normalized = {"content": content}
+        usage = OpenAICompatibleChatClient._normalize_usage(getattr(response, "usage", None))
+        if usage:
+            normalized["usage"] = usage
+        return normalized
 
     def create_message(
         self,
@@ -221,6 +250,19 @@ class LLMCodeAgent(BaseAgent):
                     }
                 )
         return normalized
+
+    @staticmethod
+    def _response_total_tokens(response: dict[str, Any]) -> int | None:
+        usage = response.get("usage")
+        if not isinstance(usage, dict):
+            return None
+        value = usage.get("total_tokens")
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _extract_text(content_blocks: list[dict[str, Any]]) -> str:
@@ -609,7 +651,6 @@ class LLMCodeAgent(BaseAgent):
         )
         tool_policy = ToolPolicy()
         system_prompt = build_system_prompt()
-        tools = build_tool_definitions()
         strategy_memory_path = repository_root / "logs" / "agent_memory" / "strategy_memory.jsonl"
         retrieved_memories = retrieve_strategy_memories(
             memory_path=strategy_memory_path,
@@ -672,6 +713,11 @@ class LLMCodeAgent(BaseAgent):
         successful_write_before_repro_count = 0
         last_failure_signature_before_patch: FailureSignature | None = None
         recorded_phase_milestones = {"understand"}
+        llm_call_count = 0
+        llm_total_tokens = 0
+        llm_missing_usage_count = 0
+        total_tool_schema_sent = 0
+        tools_by_phase: dict[str, list[str]] = {}
 
         def record_phase_milestone(phase: str, *, summary: str, evidence: dict[str, Any] | None = None) -> None:
             if phase in recorded_phase_milestones:
@@ -783,7 +829,194 @@ class LLMCodeAgent(BaseAgent):
                 )
             )
 
+        def run_immediate_auto_verification() -> str:
+            nonlocal latest_failure_summary
+            nonlocal last_test_exit_code, last_test_summary
+            nonlocal post_test_exit_code, post_test_summary
+            nonlocal verified_generation, pending_auto_verification
+
+            diff_input = {"source": "immediate_auto_verification"}
+            diff_started_at = perf_counter()
+            diff_result_for_model = tool_executor.execute("show_diff", diff_input)
+            diff_duration_sec = round(perf_counter() - diff_started_at, 4)
+            if diff_result_for_model.get("ok"):
+                agent_state.remember_diff_observed()
+            self._append_tool_trace_step(
+                trace=trace,
+                state=agent_state,
+                tool_name="show_diff",
+                tool_input=diff_input,
+                tool_result=diff_result_for_model,
+                duration_sec=diff_duration_sec,
+                decision="写入成功后立即查看 diff，减少模型单独决策验证步骤。",
+            )
+
+            targeted_result_for_model: dict[str, Any] | None = None
+            targeted_command = build_targeted_pytest_command(
+                base_command=task.test_command,
+                failure_summary=latest_failure_summary,
+            )
+            if targeted_command:
+                targeted_input = {
+                    "timeout_sec": 120,
+                    "command": targeted_command,
+                    "verification_scope": "targeted",
+                    "source": "immediate_auto_verification",
+                }
+                targeted_started_at = perf_counter()
+                previous_test_command = tool_executor.test_command
+                tool_executor.test_command = targeted_command
+                try:
+                    targeted_result_for_model = tool_executor.execute("run_tests", targeted_input)
+                finally:
+                    tool_executor.test_command = previous_test_command
+                targeted_duration_sec = round(perf_counter() - targeted_started_at, 4)
+                self._append_tool_trace_step(
+                    trace=trace,
+                    state=agent_state,
+                    tool_name="run_tests",
+                    tool_input=targeted_input,
+                    tool_result=targeted_result_for_model,
+                    duration_sec=targeted_duration_sec,
+                    decision="写入成功后立即运行失败节点的 targeted test。",
+                )
+                agent_state.verification_strength = strength_after_test(
+                    current=agent_state.verification_strength,
+                    exit_code=targeted_result_for_model.get("data", {}).get("exit_code"),
+                    workspace_generation=0,
+                    command_source=str(task.metadata.get("test_command_source", "")),
+                )
+
+            tool_input = {
+                "timeout_sec": 120,
+                "verification_scope": "full",
+                "source": "immediate_auto_verification",
+            }
+            tool_started_at = perf_counter()
+            tool_result = tool_executor.execute("run_tests", tool_input)
+            tool_duration_sec = round(perf_counter() - tool_started_at, 4)
+            last_test_exit_code = tool_result.get("data", {}).get("exit_code")
+            last_test_summary = tool_result.get("summary", "")
+            post_test_exit_code = last_test_exit_code
+            post_test_summary = last_test_summary
+            verified_generation = workspace_generation
+            pending_auto_verification = False
+            agent_state.has_reproduction_evidence = True
+            if agent_state.reproduction_evidence_kind != "weak_static":
+                agent_state.reproduction_evidence_kind = "test"
+            record_phase_milestone(
+                "reproduce",
+                summary="立即自动 run_tests 已提供复现或验证证据。",
+                evidence={
+                    "exit_code": last_test_exit_code,
+                    "workspace_generation": workspace_generation,
+                    "source": "immediate_auto_verification",
+                },
+            )
+            agent_state.verification_strength = strength_after_test(
+                current=agent_state.verification_strength,
+                exit_code=last_test_exit_code,
+                workspace_generation=workspace_generation,
+                command_source=str(task.metadata.get("test_command_source", "")),
+            )
+            failure_summary = tool_result.get("data", {}).get("failure_summary")
+            if failure_summary:
+                latest_failure_summary = failure_summary
+                agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
+                refresh_localization_candidates()
+            if last_test_exit_code not in {0, None}:
+                self._inject_context_diff_into_failure(
+                    tool_result=tool_result,
+                    diff_result=diff_result_for_model,
+                    max_chars=self.llm_config.max_tool_chars,
+                )
+            if last_test_exit_code == 0 and workspace_generation > 0:
+                record_phase_milestone(
+                    "verify",
+                    summary="立即自动 full run_tests 已通过，具备验证证据。",
+                    evidence={
+                        "exit_code": last_test_exit_code,
+                        "workspace_generation": workspace_generation,
+                        "source": "immediate_auto_verification",
+                    },
+                )
+            self._append_tool_trace_step(
+                trace=trace,
+                state=agent_state,
+                tool_name="run_tests",
+                tool_input=tool_input,
+                tool_result=tool_result,
+                duration_sec=tool_duration_sec,
+                decision="写入成功后立即运行测试，并把验证结果与写入结果同轮回喂给模型。",
+            )
+
+            auto_reflection_message = ""
+            if last_test_exit_code not in {0, None}:
+                changed_files = diff_result_for_model.get("data", {}).get("changed_files", [])
+                reflection_decision = reflect_after_failed_verification(
+                    state=agent_state,
+                    previous_failure_signature=last_failure_signature_before_patch,
+                    current_failure_signature=agent_state.failure_signature,
+                    changed_files=changed_files,
+                    max_patch_files=policy_config.max_patch_files,
+                )
+                agent_state.phase = reflection_decision.next_phase
+                auto_reflection_message = build_reflection_message(reflection_decision)
+                trace.steps.append(
+                    TraceStep(
+                        step_index=len(trace.steps) + 1,
+                        action_type="reflection",
+                        tool_name=None,
+                        tool_input={"changed_files": changed_files, "source": "immediate_auto_verification"},
+                        tool_output_summary=reflection_decision.likely_cause,
+                        observation=auto_reflection_message,
+                        decision=f"立即自动验证失败后反思，转入 {reflection_decision.next_phase} 阶段。",
+                        timestamp=self._utc_timestamp(),
+                        duration_sec=None,
+                        phase=agent_state.phase,
+                        state_snapshot=agent_state.snapshot(),
+                        evidence_ids=[
+                            f"reflection:{reflection_decision.likely_cause}",
+                            *(f"diff:{path}" for path in changed_files[:5]),
+                        ],
+                        reflection_type=reflection_decision.likely_cause,
+                        verification_strength=agent_state.verification_strength,
+                        tool_metrics=reflection_decision.model_dump(mode="json"),
+                    )
+                )
+                if reflection_decision.should_undo:
+                    undo_result = auto_undo_after_reflection(reflection_decision.likely_cause)
+                    auto_reflection_message += (
+                        "\n\nAUTO_UNDO_RESULT:\n"
+                        f"{ToolExecutor.summarize_for_model(undo_result, max_chars=self.llm_config.max_tool_chars)}"
+                    )
+
+            auto_verification_parts = [
+                (
+                    "IMMEDIATE_AUTO_VERIFICATION: 写入工具成功后，系统已立即执行 show_diff "
+                    "和 run_tests，以减少模型单独决策验证步骤。"
+                ),
+                "show_diff:\n"
+                f"{ToolExecutor.summarize_for_model(diff_result_for_model, max_chars=self.llm_config.max_tool_chars)}",
+            ]
+            if targeted_result_for_model:
+                auto_verification_parts.append(
+                    "targeted_run_tests:\n"
+                    f"{ToolExecutor.summarize_for_model(targeted_result_for_model, max_chars=self.llm_config.max_tool_chars)}"
+                )
+            auto_verification_parts.append(
+                "run_tests:\n"
+                f"{ToolExecutor.summarize_for_model(tool_result, max_chars=self.llm_config.max_tool_chars)}"
+            )
+            if auto_reflection_message:
+                auto_verification_parts.append(auto_reflection_message)
+            return "\n\n" + "\n\n".join(auto_verification_parts)
+
         for iteration_index in range(self.llm_config.max_iterations):
+            tools = build_tools_for_state(agent_state)
+            current_tool_names = tool_names(tools)
+            total_tool_schema_sent += len(tools)
+            tools_by_phase.setdefault(agent_state.phase, current_tool_names)
             response_started_at = perf_counter()
             response = self.client.create_message(
                 system_prompt=system_prompt,
@@ -791,9 +1024,23 @@ class LLMCodeAgent(BaseAgent):
                 tools=tools,
             )
             response_duration_sec = round(perf_counter() - response_started_at, 4)
+            llm_call_count += 1
+            response_total_tokens = self._response_total_tokens(response)
+            if response_total_tokens is None:
+                llm_missing_usage_count += 1
+            else:
+                llm_total_tokens += response_total_tokens
             assistant_blocks = self._normalize_assistant_blocks(response)
             assistant_text = self._extract_text(assistant_blocks)
             tool_blocks = self._tool_use_blocks(assistant_blocks)
+            llm_response_metrics: dict[str, Any] = {
+                "content_block_count": len(assistant_blocks),
+                "tool_schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
+                "tool_schema_count": len(tools),
+                "tool_schema_names": current_tool_names,
+            }
+            if response_total_tokens is not None:
+                llm_response_metrics["llm_total_tokens"] = response_total_tokens
 
             trace.steps.append(
                 TraceStep(
@@ -809,7 +1056,7 @@ class LLMCodeAgent(BaseAgent):
                     phase=agent_state.phase,
                     state_snapshot=agent_state.snapshot(),
                     verification_strength=agent_state.verification_strength,
-                    tool_metrics={"content_block_count": len(assistant_blocks)},
+                    tool_metrics=llm_response_metrics,
                 )
             )
             if assistant_text and tool_blocks:
@@ -1115,6 +1362,15 @@ class LLMCodeAgent(BaseAgent):
                         )
                         anti_loop_message_for_model = f"\n\nANTI_LOOP_NOTICE: {ANTI_LOOP_MESSAGE}"
 
+                    immediate_auto_verification_message = ""
+                    if (
+                        tool_name in {"write_file", "edit_file"}
+                        and tool_result.get("ok")
+                        and pending_auto_verification
+                        and verified_generation != workspace_generation
+                    ):
+                        immediate_auto_verification_message = run_immediate_auto_verification()
+
                     tool_results_for_model.append(
                         {
                             "type": "tool_result",
@@ -1122,7 +1378,10 @@ class LLMCodeAgent(BaseAgent):
                             "content": ToolExecutor.summarize_for_model(
                                 tool_result,
                                 max_chars=self.llm_config.max_tool_chars,
-                            ) + reflection_message_for_model + anti_loop_message_for_model,
+                            )
+                            + immediate_auto_verification_message
+                            + reflection_message_for_model
+                            + anti_loop_message_for_model,
                         }
                     )
 
@@ -1581,6 +1840,20 @@ class LLMCodeAgent(BaseAgent):
                 "verification_strength": agent_state.verification_strength,
                 "write_before_repro_count": successful_write_before_repro_count,
                 "localization_candidate_count": len(agent_state.localization_candidates),
+                "llm_usage": {
+                    "call_count": llm_call_count,
+                    "total_tokens": llm_total_tokens,
+                    "missing_usage_count": llm_missing_usage_count,
+                },
+                "tool_routing": {
+                    "schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
+                    "total_tool_schema_sent": total_tool_schema_sent,
+                    "avg_tool_schema_count": round(
+                        total_tool_schema_sent / llm_call_count,
+                        2,
+                    ) if llm_call_count else 0.0,
+                    "tools_by_phase": tools_by_phase,
+                },
                 "agent_core_metrics": run_metrics.to_dict(),
                 "strategy_memory_path": str(strategy_memory_path),
                 "verification_records": {
