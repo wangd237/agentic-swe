@@ -27,7 +27,11 @@ from app.agent.strategy_memory import (
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
 from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
-from app.agent.verifier import accepted_final_status_from_report, build_verifier_report
+from app.agent.verifier import (
+    accepted_final_status_from_report,
+    build_verification_evidence,
+    build_verifier_report,
+)
 from app.agent.verification import (
     adjust_final_status_for_verification,
     build_targeted_pytest_command,
@@ -1872,11 +1876,32 @@ class LLMCodeAgent(BaseAgent):
             verification_strength=agent_state.verification_strength,
             patch_applied=patch_applied,
         )
+        modified_files = diff_result.get("data", {}).get("changed_files", [])
+        observed_failure = ""
+        if latest_failure_summary:
+            failure_type = str(latest_failure_summary.get("type", "")).strip()
+            failure_message = str(latest_failure_summary.get("message", "")).strip()
+            observed_failure = ": ".join(
+                part for part in [failure_type, failure_message] if part
+            )
+        verification_evidence = build_verification_evidence(
+            patch_applied=patch_applied,
+            modified_files=modified_files,
+            verification_strength=agent_state.verification_strength,
+            test_command=task.test_command,
+            pre_test_exit_code=pre_test_exit_code,
+            post_test_exit_code=post_test_exit_code,
+            pre_test_summary=pre_test_summary,
+            post_test_summary=post_test_summary,
+            observed_failure=observed_failure,
+            source_type=task.source_type,
+            task_metadata=task.metadata,
+        )
         verifier_report = build_verifier_report(
             final_status=final_status,
             verification_strength=agent_state.verification_strength,
             patch_applied=patch_applied,
-            modified_files=diff_result.get("data", {}).get("changed_files", []),
+            modified_files=modified_files,
             pre_test_exit_code=pre_test_exit_code,
             post_test_exit_code=post_test_exit_code,
             source_type=task.source_type,
@@ -1952,6 +1977,7 @@ class LLMCodeAgent(BaseAgent):
                     "verified_generation": verified_generation,
                     "workspace_generation": workspace_generation,
                     "verifier_report": verifier_report.to_dict(),
+                    "verification_evidence": verification_evidence.to_dict(),
                 },
             )
         )
@@ -1969,7 +1995,7 @@ class LLMCodeAgent(BaseAgent):
             workspace_generation=workspace_generation,
             verified_generation=verified_generation,
             write_before_repro_count=successful_write_before_repro_count,
-            modified_files=diff_result.get("data", {}).get("changed_files", []),
+            modified_files=modified_files,
             localization_candidate_paths=[
                 candidate.relative_path
                 for candidate in agent_state.localization_candidates
@@ -1992,7 +2018,7 @@ class LLMCodeAgent(BaseAgent):
             test_summary=last_test_summary or final_summary or "",
             patch_applied=patch_applied,
             patch_summary=diff_result.get("summary", ""),
-            modified_files=diff_result.get("data", {}).get("changed_files", []),
+            modified_files=modified_files,
             duration_sec=duration_sec,
             tool_stats={
                 "policy_id": policy_config.policy_id,
@@ -2010,6 +2036,7 @@ class LLMCodeAgent(BaseAgent):
                 "final_phase": agent_state.phase,
                 "verification_strength": agent_state.verification_strength,
                 "verifier_report": verifier_report.to_dict(),
+                "verification_evidence": verification_evidence.to_dict(),
                 "write_before_repro_count": successful_write_before_repro_count,
                 "localization_candidate_count": len(agent_state.localization_candidates),
                 "llm_usage": {
@@ -2041,6 +2068,7 @@ class LLMCodeAgent(BaseAgent):
             },
             recommended_files=trace.read_files[:],
             verifier_report=verifier_report.to_dict(),
+            verification_evidence=verification_evidence.to_dict(),
         )
 
         memory_entry = distill_strategy_memory_entry(
@@ -2073,6 +2101,10 @@ class LLMCodeAgent(BaseAgent):
                 f"- verification_level: `{verifier_report.verification_level}`\n"
                 f"- verifier_accepted: `{verifier_report.accepted}`\n"
                 f"- risk_level: `{verifier_report.risk_level}`\n"
+                f"- evidence_scope: `{verification_evidence.verification_scope}`\n"
+                f"- evidence_pre_exit_code: `{verification_evidence.pre_test.get('exit_code')}`\n"
+                f"- evidence_post_exit_code: `{verification_evidence.post_test.get('exit_code')}`\n"
+                f"- evidence_official_harness_required: `{verification_evidence.official_harness.get('required')}`\n"
                 f"- summary: {final_summary or '无'}\n"
             ),
         )

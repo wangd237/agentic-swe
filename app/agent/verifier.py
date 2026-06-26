@@ -40,6 +40,68 @@ class VerifierReport(BaseModel):
         return self.model_dump(mode="json")
 
 
+class VerificationEvidence(BaseModel):
+    """Machine-readable evidence used by the verifier judgment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    patch_applied: bool
+    modified_files: list[str] = Field(default_factory=list)
+    verification_scope: str
+    pre_test: dict[str, Any] = Field(default_factory=dict)
+    post_test: dict[str, Any] = Field(default_factory=dict)
+    official_harness: dict[str, Any] = Field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+def build_verification_evidence(
+    *,
+    patch_applied: bool,
+    modified_files: list[str],
+    verification_strength: str,
+    test_command: str,
+    pre_test_exit_code: int | None,
+    post_test_exit_code: int | None,
+    pre_test_summary: str = "",
+    post_test_summary: str = "",
+    observed_failure: str = "",
+    source_type: str = "",
+    task_metadata: dict[str, Any] | None = None,
+) -> VerificationEvidence:
+    """Build a compact evidence contract for the verifier decision."""
+
+    metadata = task_metadata or {}
+    official_resolved = bool(metadata.get("official_resolved"))
+    official_required = source_type == "swe_bench_lite" or bool(
+        metadata.get("official_harness_required") or metadata.get("swebench_instance_id")
+    )
+
+    return VerificationEvidence(
+        patch_applied=patch_applied,
+        modified_files=modified_files,
+        verification_scope=verification_strength,
+        pre_test={
+            "command": test_command,
+            "exit_code": pre_test_exit_code,
+            "summary": pre_test_summary,
+            "observed_failure": observed_failure,
+        },
+        post_test={
+            "command": test_command,
+            "exit_code": post_test_exit_code,
+            "summary": post_test_summary,
+        },
+        official_harness={
+            "required": official_required,
+            "resolved": official_resolved,
+            "source_type": source_type,
+            "instance_id": metadata.get("swebench_instance_id", ""),
+        },
+    )
+
+
 def build_verifier_report(
     *,
     final_status: str,

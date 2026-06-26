@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from app.agent.verifier import accepted_final_status_from_report, build_verifier_report
+from app.agent.verifier import (
+    accepted_final_status_from_report,
+    build_verification_evidence,
+    build_verifier_report,
+)
 
 
 def test_verifier_accepts_full_verified_non_benchmark_success() -> None:
@@ -79,3 +83,29 @@ def test_verifier_maps_targeted_success_to_unaccepted_targeted_status() -> None:
     assert report.verification_level == "targeted_success"
     assert report.accepted is False
     assert accepted_final_status_from_report(report) == "targeted_only_success"
+
+
+def test_build_verification_evidence_records_test_and_harness_context() -> None:
+    evidence = build_verification_evidence(
+        patch_applied=True,
+        modified_files=["pydicom/valuerep.py"],
+        verification_strength="full",
+        test_command="python -m pytest tests/test_person_name.py -q",
+        pre_test_exit_code=1,
+        post_test_exit_code=0,
+        pre_test_summary="failed before patch",
+        post_test_summary="passed after patch",
+        observed_failure="TypeError: membership failed",
+        source_type="swe_bench_lite",
+        task_metadata={"swebench_instance_id": "pydicom__pydicom-1139"},
+    )
+
+    assert evidence.patch_applied is True
+    assert evidence.modified_files == ["pydicom/valuerep.py"]
+    assert evidence.verification_scope == "full"
+    assert evidence.pre_test["exit_code"] == 1
+    assert evidence.pre_test["observed_failure"] == "TypeError: membership failed"
+    assert evidence.post_test["exit_code"] == 0
+    assert evidence.official_harness["required"] is True
+    assert evidence.official_harness["resolved"] is False
+    assert evidence.official_harness["instance_id"] == "pydicom__pydicom-1139"

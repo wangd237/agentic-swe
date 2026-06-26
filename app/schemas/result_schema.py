@@ -30,6 +30,7 @@ class Result(BaseModel):
     tool_stats: dict[str, Any] = Field(default_factory=dict)
     recommended_files: list[str] = Field(default_factory=list)
     verifier_report: dict[str, Any] = Field(default_factory=dict)
+    verification_evidence: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")

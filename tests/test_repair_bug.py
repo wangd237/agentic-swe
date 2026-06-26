@@ -430,6 +430,10 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
                     "accepted": True,
                     "risk_level": "low",
                 },
+                "verification_evidence": {
+                    "verification_scope": "full",
+                    "official_harness": {"required": False},
+                },
                 "tool_stats": {
                     "llm_usage": {
                         "total_tokens": 1234,
@@ -471,6 +475,8 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
     assert "verification_level: full_verification_success" in captured.out
     assert "verifier_accepted: True" in captured.out
     assert "risk_level: low" in captured.out
+    assert "evidence_scope: full" in captured.out
+    assert "evidence_official_harness_required: False" in captured.out
     assert "incomplete_reason:" in captured.out
     assert "pre_test_exit_code:" in captured.out
     assert "post_test_exit_code:" in captured.out

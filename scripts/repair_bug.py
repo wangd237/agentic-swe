@@ -411,6 +411,12 @@ def print_summary(output: dict[str, Any]) -> None:
         print(f"verification_level: {verifier_report.get('verification_level', 'unknown')}")
         print(f"verifier_accepted: {verifier_report.get('accepted', False)}")
         print(f"risk_level: {verifier_report.get('risk_level', 'unknown')}")
+    verification_evidence = result.get("verification_evidence", {})
+    if isinstance(verification_evidence, dict) and verification_evidence:
+        print(f"evidence_scope: {verification_evidence.get('verification_scope', 'unknown')}")
+        official_harness = verification_evidence.get("official_harness", {})
+        if isinstance(official_harness, dict):
+            print(f"evidence_official_harness_required: {official_harness.get('required', False)}")
     print(f"incomplete_reason: {result.get('incomplete_reason') or 'none'}")
     print(f"pre_test_exit_code: {result.get('pre_test_exit_code')}")
     print(f"post_test_exit_code: {result.get('post_test_exit_code')}")
