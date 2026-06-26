@@ -9,68 +9,128 @@
 <a href="#"><img src="https://img.shields.io/badge/JSON_Trace-auditable-orange" alt="JSON Trace"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
 
-一个面向真实 repo 的 bug repair coding agent —— 接收软件问题描述，在隔离 workspace 中理解问题、复现失败、定位代码、生成补丁、验证修复，并输出可审计结果。
+面向真实代码仓库的 **AI Bug Repair Agent**。输入一个 issue 或本地 repo 的 bug 描述，Agent 会在隔离 workspace 中完成问题理解、失败复现、代码定位、补丁生成、测试验证，并输出可审计的修复结果。
 
-## 核心结果
+这个项目聚焦 Agent 开发岗最核心的能力：**tool use、workflow control、state management、verification、traceability、evaluation**。
+
+## 项目亮点
+
+- 构建阶段化 Coding Agent workflow：`UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL`。
+- 实现 phase-aware tool policy，限制不同阶段可调用工具，避免过早改文件、跳过复现或弱验证误报成功。
+- 实现 phase/state-aware tool routing，LLM 每轮只接收当前阶段必要工具 Schema；在 `task_010` 上 token 从 `30,510` 降至 `18,553`，LLM 调用从 `7` 次降至 `5` 次。
+- 实现 post-patch immediate verification：代码修改后由 runtime 自动执行 `show_diff + run_tests`，降低模型遗漏验证步骤的风险。
+- 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
+- 每次 run 落盘 `trace.json`、`result.json`、`summary.md`、`patch.diff`，可复盘 Agent 的工具调用、阶段状态、token 消耗、验证证据和最终验收结论。
+- 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM 等模型。
+
+## 量化结果
 
 | 指标 | 结果 |
 | --- | --- |
-| Agent Core v1 状态 | `complete`，见 [currentTask.md](currentTask.md) |
-| 核心工作流 | `UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL` |
+| 任务规模 | `66` 条 semi-real 真实 issue，覆盖 `16` 个开源生态 |
+| LLM Agent 全局成功率 | `91.3%`（`149` runs，`136` success） |
+| Stress subset 成功率 | `85.7%`（`14` hard tasks，`12` success） |
+| Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
 | Agent core 回归测试 | `115 passed` |
-| 用户入口验证 | `repair_bug.run_repair_bug()` 已覆盖 full verification 与 weak/static verification |
-| Verification Quality | `verification_evidence` + `evidence_quality` + `verifier_report` + `accepted_final_status` 区分真实可接受成功、本地 smoke、targeted-only 和弱验证 |
-| Tool routing / token 优化 | `task_010` 从 `30,510` tokens 降至 `18,553` tokens，LLM 调用从 `7` 降至 `5` |
-| 正式真实任务数 | `66` 条，覆盖 `16` 个开源生态 |
-| 规则版 baseline 成功率 / 测试通过率 | `100%` / `100%`（策略 `improved_v71`） |
-| LLM agent 全局成功率 | `91.3%`（`149` runs, `136` success） |
-| Target 1 压力测试（stress subset） | `85.7%`（`14` hard tasks, `12` success） |
-| Target 2 重点验证 | `3 / 3` success（`task_048 / task_030 / task_089`） |
-| `frozen_40` 连续无回归版本数 | `8` |
-| 展示案例 | `4` 条 case study，均有 trace / result / patch |
+| Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
+| 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
 
-关键突破：`task_048` 从 `max_iterations` 领域语义盲区转为 success —— agent 通过受控 `python_repl` 查询真实行为后再做最小 patch。
+完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
-完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，case study 见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
-
-## 与 SWE-bench 的区别
-
-本项目不是 SWE-bench 的复现或包装。核心差异：
-
-- **任务来源**：`66` 条 semi-real 任务来自多个开源生态的真实 issue，不是 SWE-bench 的离线数据集
-- **可审计性**：每次 run 落盘 `trace.json` / `result.json` / `patch.diff`，可复盘 agent 每一步决策
-- **baseline 对照**：规则版 baseline（`improved_v71`）作为稳定下限与 LLM agent 对比，不是只用 LLM 打分
-- **回归保护**：冻结集 `frozen_40` + 稳定性复跑，保证策略迭代不会悄悄退化
-
-## Agent Core v1
-
-当前项目主线是 coding agent 本体，而不是 GitHub crawler、PR 自动化或 benchmark dashboard。Agent Core v1 已将原来的松散 ReAct tool loop 收束为阶段化状态机：
+## Agent Workflow
 
 ```text
-UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL
+issue / local repo bug report
+        |
+        v
+UNDERSTAND    解析问题、提取失败线索、建立初始状态
+        |
+        v
+REPRODUCE     运行测试或最小复现，记录 pre-test evidence
+        |
+        v
+LOCALIZE      搜索、读取文件、结合失败摘要和 AST symbol index 定位候选
+        |
+        v
+PATCH         生成最小补丁，受 policy 限制写入范围
+        |
+        v
+VERIFY        自动 show_diff + run_tests，记录 post-test evidence
+        |
+        v
+FINAL         输出 result / trace / patch / verification summary
 ```
 
-核心能力：
+核心设计不是让模型“自由聊天式修代码”，而是把修复任务拆成可约束、可验证、可审计的阶段。
 
-- **显式 AgentState**：记录当前阶段、issue summary、failure signature、localization candidates、hypotheses、modified files、verification strength。
-- **phase-aware tool policy**：不同阶段限制可用工具，禁止过早 `edit_file` / `write_file`，要求 patch 前具备复现或弱/静态证据和定位候选。
-- **phase/state-aware tool routing**：LLM 每轮只接收当前阶段和状态允许的工具 Schema，减少无关工具 token 和选择噪音。
-- **立即自动验证**：`write_file` / `edit_file` 成功后由 runtime 立即执行 `show_diff + run_tests`，减少模型单独决策验证步骤的轮次。
-- **代码定位**：结合任务提示、失败摘要、搜索命中、AST symbol index、测试与实现 import 关系，产出候选文件和证据。
-- **分级验证**：区分 `none` / `weak` / `targeted` / `full`，弱验证不能被报告为普通成功。
-- **验证质量层**：确定性 verifier 输出 `verification_evidence`、`evidence_quality`、`missing_evidence`、`verification_level`、`risk_level`、`accepted`、`caveats` 和 `recommendations`，并通过 `accepted_final_status` 给出产品层验收状态。
-- **反思与自我纠错**：测试失败、定位低置信、修改过宽或弱验证时记录结构化 reflection，必要时自动 undo。
-- **可审计 trace/metrics**：trace step 携带 `phase`、`state_snapshot`、`evidence_ids`、`reflection_type`、`verification_strength`，并输出 agent-core metrics。
+## 核心能力
 
-## 用户入口
+**1. Agent State & Control**
 
-本地 repo bug repair 可以直接使用 `scripts/repair_bug.py`：
+- 显式维护 `AgentState`：阶段、issue summary、failure signature、localization candidates、modified files、verification strength。
+- `ToolPolicy` 约束工具调用顺序，禁止没有复现或定位证据时直接改文件。
+- 测试失败、定位低置信、修改过宽或弱验证时记录 reflection，用于后续修复决策。
+
+**2. Tool Use & Routing**
+
+- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo 等。
+- 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
+- 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
+
+**3. Verification Quality**
+
+项目不会只依赖模型说“修好了”，而是输出结构化验收结论：
+
+```text
+final_status: success
+accepted_final_status: accepted_success
+verification_level: full_verification_success
+evidence_quality: strong
+missing_evidence: none
+```
+
+对于 SWE-bench Lite local smoke，系统会明确标记：
+
+```text
+accepted_final_status: local_smoke_success
+evidence_quality: partial
+missing_evidence: official_harness
+```
+
+这避免把本地 smoke 误报成 official benchmark resolved，也避免把 weak/static verification 包装成可信成功。
+
+**4. Auditability**
+
+每次运行都会输出：
+
+- `trace.json`：完整工具调用、阶段状态、证据 id、reflection 信息。
+- `result.json`：最终状态、测试结果、token 消耗、verification evidence。
+- `summary.md`：面向用户的简洁结果。
+- `patch.diff`：本次修改内容。
+
+## 快速开始
 
 ```bash
-python scripts/repair_bug.py --repo path/to/local_repo --issue "描述你遇到的 bug" --test "python -m pytest -q"
+# 安装依赖
+python -m pip install -r requirements.txt
+
+# 配置模型
+cp .env.example .env
+# 填入 API key / base URL / model
+
+# 运行 semi-real benchmark task
+python scripts/run_issue_agent.py \
+  --task benchmarks/tasks/task_010.json \
+  --policy optimization/policy_versions/llm_deepseek_minimal.json
+
+# 修复用户本地 repo
+python scripts/repair_bug.py \
+  --repo path/to/local_repo \
+  --issue "AttributeError: 'NoneType' object has no attribute 'apply'" \
+  --test "python -m pytest -q"
 ```
 
-如果不传 `--test`，脚本会自动发现 pytest；若没有测试目录或 pytest 配置，会进入 weak/static verification 路径。CLI summary 会明确打印：
+CLI 会直接打印 verification quality 字段，用户无需打开 JSON 也能判断本次结果是否可信：
 
 ```text
 final_status:
@@ -81,152 +141,51 @@ evidence_quality:
 missing_evidence:
 verifier_accepted:
 risk_level:
-evidence_scope:
-evidence_official_harness_required:
-incomplete_reason:
-pre_test_exit_code:
-post_test_exit_code:
 llm_total_tokens:
 summary_path:
 trace_path:
 result_path:
 ```
 
-这意味着 full verification 成功、SWE-bench Lite local smoke、targeted-only 成功和 `success_weak_verification` 会被明确区分，agent 不会把弱验证或本地 smoke 包装成产品层已接受成功。
+## 代表案例
 
-`scripts/run_issue_agent.py` 也会打印同一组 verification quality 字段，方便 benchmark / semi-real task run 后直接判断本次结果是否可接受，而不必手动打开 `result.json`。
-
-## Agent Run Loop
-
-```text
-local repo + issue text / semi-real task / GitHub issue input
-          |
-          v
-   task definition
-          |
-          v
-   repo workspace 隔离复制
-          |
-          v
-   phased agent loop（understand / reproduce / localize / patch / verify / final）
-          |
-          v
-   轨迹与结果落盘（task.json / trace.json / result.json / patch.diff）
-```
-
-## 项目特点
-
-**可审计的修复过程**
-- 每次 run 落盘 `trace.json` / `result.json` / `patch.diff`，可复盘每一步决策
-- 成功判定依赖 `run_tests`、`verification_evidence`、`final_status` 和 verifier 质量结论，不是让模型自称完成
-- 测试失败后 agent 会看到 `context_diff`，避免只凭 pytest 断言盲改
-- trace 中记录阶段、状态快照、证据 id、反思类型和验证强度
-
-**工程严谨性**
-- harness 一等公民：工作区隔离、路径边界、产物契约、批量复现
-- 策略版本化到 `improved_v71`，冻结集 `frozen_40` 连续 `8` 个版本无回归
-- 性能治理支持环境基线快照，拆分"环境变慢"和"策略变慢"
-- challenge 集独立管理，不污染正式 benchmark 口径
-
-**真实任务 & 多维度评测**
-- 任务来自 `16` 个开源生态的真实 issue，非 synthetic demo
-- 评测维度包括成功率、taxonomy、耗时、步数、稳定性复跑和 maturity 审计
-- 规则版 baseline 作为稳定下限与 LLM agent 对照
-
-**灵活的 LLM 接入**
-- 通过 OpenAI-compatible tool calling 调用现有工具，当前使用 DeepSeek
-- 可切换到 Kimi、GLM 等兼容服务
-- 受控 `python_repl`：只允许单表达式，拒绝 import、分号、多行和 dunder
-- 记录每次任务的 `llm_usage` 和 tool routing 指标，便于量化 token 优化效果
-
-## 代表性案例
-
-- `task_024` `pallets/jinja#2069` — 模板变量在分支赋值场景下的控制流语义分析
-- `task_036` `python-jsonschema/jsonschema#1121` — 从"测试失败"到"异常回落语义修复"的典型优化路径
-- `task_122` `fsspec/filesystem_spec#979` — `unstrip_protocol()` 在前缀保护场景下错误返回原路径
-- `task_128` `agronholm/anyio#82` — 嵌套 task group 场景下 asyncio/curio backend 取消异常泄漏
-
-完整任务索引见 [docs/benchmark_registry.md](docs/benchmark_registry.md)，challenge 集见 [docs/challenge_set.md](docs/challenge_set.md)。
-
-## 快速开始
-
-```bash
-# 安装依赖
-python -m pip install -r requirements.txt
-
-# 配置 LLM provider
-cp .env.example .env  # 填入 API key / base URL / model
-
-# 运行 LLM agent
-python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/llm_deepseek_minimal.json
-
-# 用户本地 repo bug repair
-python scripts/repair_bug.py --repo path/to/local_repo --issue "AttributeError: 'NoneType' object has no attribute 'apply'" --test "python -m pytest -q"
-
-# 规则版 baseline（对照用）
-python scripts/run_single_task.py --task benchmarks/tasks/task_128.json --policy optimization/policy_versions/improved_v71.json
-
-# 批量评测 + 稳定性检查 + maturity 审计
-python scripts/run_real_issue_eval.py --manifest benchmarks/manifests/real_issue_tasks_frozen_20_v1.json --policy optimization/policy_versions/improved_v71.json --run-label frozen20_v71 --stability-check --stability-repetitions 3
-```
-
-说明：LLM agent 已接入阶段化 tool-use 闭环，输出预算默认 `8000` tokens。支持 DeepSeek / Kimi / GLM 等 OpenAI-compatible 服务，通过 `.env` 或环境变量配置。规则版入口仍保留用于 baseline 对照。工具路由和 token 优化记录见 [项目1改进记录.md](项目1改进记录.md)。
+- `task_024` `pallets/jinja#2069`：模板变量在分支赋值场景下的控制流语义分析。
+- `task_036` `python-jsonschema/jsonschema#1121`：从测试失败到异常回落语义修复。
+- `task_048`：从 `max_iterations` 失败到成功，Agent 通过受控 `python_repl` 查询真实行为后生成最小 patch。
+- `task_122` `fsspec/filesystem_spec#979`：`unstrip_protocol()` 在前缀保护场景下错误返回原路径。
+- `task_128` `agronholm/anyio#82`：嵌套 task group 场景下 asyncio/curio backend 取消异常泄漏。
 
 ## 项目结构
 
 ```text
 app/
-  agent/        # agent loop、policy、patch strategy
-  runtime/      # harness、workspace 隔离、批量运行
-  schemas/      # Task / Trace / Result 的 pydantic schema
+  agent/        # LLM agent、state、policy、tool routing、verification
+  runtime/      # workspace 隔离、run paths、日志落盘
+  schemas/      # Task / Trace / Result schema
   tools/        # 文件、搜索、测试、写入、diff 工具
 benchmarks/
-  manifests/    # 正式集、challenge 集、冻结集
-  repos/        # semi-real benchmark 仓库
-  tasks/        # 任务定义
+  tasks/        # semi-real / SWE-bench Lite task 定义
+  repos/        # benchmark repos
+  manifests/    # frozen set / evaluation manifests
 docs/           # 架构、评测、案例、路线图
-evals/          # metrics、taxonomy、compare
-logs/           # 运行轨迹与评测产物
-optimization/   # policy 版本与优化记录
-scripts/        # 单任务、批量评测、稳定性复跑等脚本
+evals/          # metrics、taxonomy、对比脚本
+scripts/        # CLI、单任务运行、批量评测、用户 repo 修复
 ```
+
+## 技术栈
+
+Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subprocess sandboxed test execution · JSON Trace · CLI
 
 ## 文档导航
 
 - 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
 - Agent 概览：[docs/agent_overview.md](docs/agent_overview.md)
 - Agent Core 能力地图：[docs/agent_core_capability_map.md](docs/agent_core_capability_map.md)
-- Agent 小样本评测：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
-- Agent 案例：[docs/agent_case_studies.md](docs/agent_case_studies.md)
+- 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
+- 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
 - 架构说明：[docs/architecture.md](docs/architecture.md)
 - Harness 设计：[docs/harness.md](docs/harness.md)
 - 任务注册表：[docs/benchmark_registry.md](docs/benchmark_registry.md)
-- Challenge 说明：[docs/challenge_set.md](docs/challenge_set.md)
-- 实验摘要：[docs/experiment_summary.md](docs/experiment_summary.md)
-- V2 路线图：[docs/v2_roadmap.md](docs/v2_roadmap.md)
-- 实施指南：[GUIDE.md](GUIDE.md)
-
-## 技术栈
-
-Python · Pydantic · pytest · OpenAI-compatible Chat Completions · subprocess 测试执行 · 文件级 patch/diff · manifest 驱动的 benchmark 管理
-
-## 当前阶段
-
-项目主角已切到 LLM coding agent core：它能在隔离 workspace 里读 issue、复现失败、定位候选、改文件、查看 diff、跑 targeted/full tests、落盘 trace。benchmark / frozen / stability 体系的角色是给 agent 提供可信验证层和 baseline 参照：
-
-- ✅ LLM tool-use agent
-- ✅ Agent Core v1 phase workflow
-- ✅ phase/state-aware tool schema routing
-- ✅ post-patch immediate auto verification
-- ✅ LLM token usage tracking
-- ✅ full vs weak/static verification 区分
-- ✅ Verification Quality Layer：`verification_evidence` + `evidence_quality` + `verifier_report` + `accepted_final_status`
-- ✅ 用户本地 repo repair 入口 smoke
-- ✅ case study trace / result / patch 证据
-- ✅ 正式集 + 冻结集 + 策略版本化
-- ✅ 批量评测 + 稳定性复跑 + maturity 审计
-
-后续重点：更多真实本地 repo 修复案例、继续将确定性工程流程从 LLM 决策层下沉到 runtime、以及在不偏离 agent core 的前提下扩展任务难度。
 
 ## License
 
