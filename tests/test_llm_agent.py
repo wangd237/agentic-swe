@@ -984,6 +984,8 @@ def test_llm_agent_auto_verifies_after_write_before_success(tmp_path: Path) -> N
     assert output["result"]["incomplete_reason"] == ""
     assert output["result"]["accepted_final_status"] == "accepted_success"
     assert output["result"]["verifier_report"]["verification_level"] == "full_verification_success"
+    assert output["result"]["verifier_report"]["evidence_quality"] == "strong"
+    assert output["result"]["verifier_report"]["missing_evidence"] == []
     assert output["result"]["verifier_report"]["accepted"] is True
     assert output["result"]["verification_evidence"]["patch_applied"] is True
     assert output["result"]["verification_evidence"]["verification_scope"] == "full"
@@ -1304,6 +1306,8 @@ def test_llm_agent_downgrades_success_for_weak_fallback_verification(tmp_path: P
     assert output["result"]["incomplete_reason"] == "weak_verification"
     assert output["result"]["accepted_final_status"] == "weak_verification_success"
     assert output["result"]["verifier_report"]["verification_level"] == "weak_verification_success"
+    assert output["result"]["verifier_report"]["evidence_quality"] == "weak"
+    assert "full_verification" in output["result"]["verifier_report"]["missing_evidence"]
     assert output["result"]["verifier_report"]["accepted"] is False
     assert output["result"]["verification_evidence"]["verification_scope"] == "weak"
     assert output["result"]["verification_evidence"]["post_test"]["exit_code"] == 0

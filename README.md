@@ -19,7 +19,7 @@
 | 核心工作流 | `UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL` |
 | Agent core 回归测试 | `115 passed` |
 | 用户入口验证 | `repair_bug.run_repair_bug()` 已覆盖 full verification 与 weak/static verification |
-| Verification Quality | `verification_evidence` + `verifier_report` + `accepted_final_status` 区分真实可接受成功、本地 smoke、targeted-only 和弱验证 |
+| Verification Quality | `verification_evidence` + `evidence_quality` + `verifier_report` + `accepted_final_status` 区分真实可接受成功、本地 smoke、targeted-only 和弱验证 |
 | Tool routing / token 优化 | `task_010` 从 `30,510` tokens 降至 `18,553` tokens，LLM 调用从 `7` 降至 `5` |
 | 正式真实任务数 | `66` 条，覆盖 `16` 个开源生态 |
 | 规则版 baseline 成功率 / 测试通过率 | `100%` / `100%`（策略 `improved_v71`） |
@@ -58,7 +58,7 @@ UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL
 - **立即自动验证**：`write_file` / `edit_file` 成功后由 runtime 立即执行 `show_diff + run_tests`，减少模型单独决策验证步骤的轮次。
 - **代码定位**：结合任务提示、失败摘要、搜索命中、AST symbol index、测试与实现 import 关系，产出候选文件和证据。
 - **分级验证**：区分 `none` / `weak` / `targeted` / `full`，弱验证不能被报告为普通成功。
-- **验证质量层**：确定性 verifier 输出 `verification_evidence`、`verification_level`、`risk_level`、`accepted`、`caveats` 和 `recommendations`，并通过 `accepted_final_status` 给出产品层验收状态。
+- **验证质量层**：确定性 verifier 输出 `verification_evidence`、`evidence_quality`、`missing_evidence`、`verification_level`、`risk_level`、`accepted`、`caveats` 和 `recommendations`，并通过 `accepted_final_status` 给出产品层验收状态。
 - **反思与自我纠错**：测试失败、定位低置信、修改过宽或弱验证时记录结构化 reflection，必要时自动 undo。
 - **可审计 trace/metrics**：trace step 携带 `phase`、`state_snapshot`、`evidence_ids`、`reflection_type`、`verification_strength`，并输出 agent-core metrics。
 
@@ -77,6 +77,7 @@ final_status:
 accepted_final_status:
 verification_strength:
 verification_level:
+evidence_quality:
 verifier_accepted:
 risk_level:
 evidence_scope:
@@ -216,7 +217,7 @@ Python · Pydantic · pytest · OpenAI-compatible Chat Completions · subprocess
 - ✅ post-patch immediate auto verification
 - ✅ LLM token usage tracking
 - ✅ full vs weak/static verification 区分
-- ✅ Verification Quality Layer：`verification_evidence` + `verifier_report` + `accepted_final_status`
+- ✅ Verification Quality Layer：`verification_evidence` + `evidence_quality` + `verifier_report` + `accepted_final_status`
 - ✅ 用户本地 repo repair 入口 smoke
 - ✅ case study trace / result / patch 证据
 - ✅ 正式集 + 冻结集 + 策略版本化

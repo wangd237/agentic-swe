@@ -1906,6 +1906,7 @@ class LLMCodeAgent(BaseAgent):
             post_test_exit_code=post_test_exit_code,
             source_type=task.source_type,
             task_metadata=task.metadata,
+            verification_evidence=verification_evidence,
         )
         accepted_final_status = accepted_final_status_from_report(verifier_report)
 
@@ -2099,6 +2100,8 @@ class LLMCodeAgent(BaseAgent):
                 f"- final_phase: `{agent_state.phase}`\n"
                 f"- verification_strength: `{agent_state.verification_strength}`\n"
                 f"- verification_level: `{verifier_report.verification_level}`\n"
+                f"- evidence_quality: `{verifier_report.evidence_quality}`\n"
+                f"- missing_evidence: `{', '.join(verifier_report.missing_evidence) or 'none'}`\n"
                 f"- verifier_accepted: `{verifier_report.accepted}`\n"
                 f"- risk_level: `{verifier_report.risk_level}`\n"
                 f"- evidence_scope: `{verification_evidence.verification_scope}`\n"

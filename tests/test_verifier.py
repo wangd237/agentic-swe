@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.agent.verifier import (
     accepted_final_status_from_report,
+    assess_evidence_quality,
     build_verification_evidence,
     build_verifier_report,
 )
@@ -109,3 +110,64 @@ def test_build_verification_evidence_records_test_and_harness_context() -> None:
     assert evidence.official_harness["required"] is True
     assert evidence.official_harness["resolved"] is False
     assert evidence.official_harness["instance_id"] == "pydicom__pydicom-1139"
+
+
+def test_assess_evidence_quality_marks_full_prefail_postpass_as_strong() -> None:
+    evidence = build_verification_evidence(
+        patch_applied=True,
+        modified_files=["pkg/app.py"],
+        verification_strength="full",
+        test_command="python -m pytest -q",
+        pre_test_exit_code=1,
+        post_test_exit_code=0,
+    )
+
+    quality, missing = assess_evidence_quality(evidence)
+
+    assert quality == "strong"
+    assert missing == []
+
+
+def test_assess_evidence_quality_marks_targeted_success_as_partial() -> None:
+    evidence = build_verification_evidence(
+        patch_applied=True,
+        modified_files=["pkg/app.py"],
+        verification_strength="targeted",
+        test_command="python -m pytest tests/test_app.py -q",
+        pre_test_exit_code=1,
+        post_test_exit_code=0,
+    )
+
+    quality, missing = assess_evidence_quality(evidence)
+
+    assert quality == "partial"
+    assert "full_verification" in missing
+
+
+def test_verifier_report_uses_evidence_quality_gate_for_swebench_smoke() -> None:
+    evidence = build_verification_evidence(
+        patch_applied=True,
+        modified_files=["pydicom/valuerep.py"],
+        verification_strength="full",
+        test_command="python -m pytest tests/test_person_name.py -q",
+        pre_test_exit_code=1,
+        post_test_exit_code=0,
+        source_type="swe_bench_lite",
+        task_metadata={"swebench_instance_id": "pydicom__pydicom-1139"},
+    )
+    report = build_verifier_report(
+        final_status="success",
+        verification_strength="full",
+        patch_applied=True,
+        modified_files=["pydicom/valuerep.py"],
+        pre_test_exit_code=1,
+        post_test_exit_code=0,
+        source_type="swe_bench_lite",
+        task_metadata={"swebench_instance_id": "pydicom__pydicom-1139"},
+        verification_evidence=evidence,
+    )
+
+    assert report.verification_level == "local_smoke_success"
+    assert report.evidence_quality == "partial"
+    assert "official_harness" in report.missing_evidence
+    assert any("official_harness" in caveat for caveat in report.caveats)

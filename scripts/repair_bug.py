@@ -409,6 +409,7 @@ def print_summary(output: dict[str, Any]) -> None:
     verifier_report = result.get("verifier_report", {})
     if isinstance(verifier_report, dict) and verifier_report:
         print(f"verification_level: {verifier_report.get('verification_level', 'unknown')}")
+        print(f"evidence_quality: {verifier_report.get('evidence_quality', 'unknown')}")
         print(f"verifier_accepted: {verifier_report.get('accepted', False)}")
         print(f"risk_level: {verifier_report.get('risk_level', 'unknown')}")
     verification_evidence = result.get("verification_evidence", {})

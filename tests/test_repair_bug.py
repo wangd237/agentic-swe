@@ -427,6 +427,7 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
                 "accepted_final_status": "accepted_success",
                 "verifier_report": {
                     "verification_level": "full_verification_success",
+                    "evidence_quality": "strong",
                     "accepted": True,
                     "risk_level": "low",
                 },
@@ -473,6 +474,7 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
     assert "accepted_final_status: accepted_success" in captured.out
     assert "verification_strength:" in captured.out
     assert "verification_level: full_verification_success" in captured.out
+    assert "evidence_quality: strong" in captured.out
     assert "verifier_accepted: True" in captured.out
     assert "risk_level: low" in captured.out
     assert "evidence_scope: full" in captured.out
