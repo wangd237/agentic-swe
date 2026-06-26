@@ -27,6 +27,7 @@ from app.agent.strategy_memory import (
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
 from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
+from app.agent.verifier import accepted_final_status_from_report, build_verifier_report
 from app.agent.verification import (
     adjust_final_status_for_verification,
     build_targeted_pytest_command,
@@ -1871,6 +1872,17 @@ class LLMCodeAgent(BaseAgent):
             verification_strength=agent_state.verification_strength,
             patch_applied=patch_applied,
         )
+        verifier_report = build_verifier_report(
+            final_status=final_status,
+            verification_strength=agent_state.verification_strength,
+            patch_applied=patch_applied,
+            modified_files=diff_result.get("data", {}).get("changed_files", []),
+            pre_test_exit_code=pre_test_exit_code,
+            post_test_exit_code=post_test_exit_code,
+            source_type=task.source_type,
+            task_metadata=task.metadata,
+        )
+        accepted_final_status = accepted_final_status_from_report(verifier_report)
 
         duration_sec = round(perf_counter() - started_at, 4)
         if incomplete_reason == "weak_verification":
@@ -1927,15 +1939,19 @@ class LLMCodeAgent(BaseAgent):
                 state_snapshot=agent_state.snapshot(),
                 evidence_ids=[
                     f"final:{final_status}",
+                    f"accepted:{accepted_final_status}",
                     f"verification:{agent_state.verification_strength}",
+                    f"verifier:{verifier_report.verification_level}",
                 ],
                 verification_strength=agent_state.verification_strength,
                 tool_metrics={
                     "final_status": final_status,
+                    "accepted_final_status": accepted_final_status,
                     "incomplete_reason": incomplete_reason,
                     "patch_applied": patch_applied,
                     "verified_generation": verified_generation,
                     "workspace_generation": workspace_generation,
+                    "verifier_report": verifier_report.to_dict(),
                 },
             )
         )
@@ -1964,6 +1980,7 @@ class LLMCodeAgent(BaseAgent):
             task_id=task.task_id,
             run_id=run_id,
             final_status=final_status,
+            accepted_final_status=accepted_final_status,
             incomplete_reason=incomplete_reason,
             summary=final_summary or "LLM agent 运行结束。",
             test_command=task.test_command,
@@ -1988,9 +2005,11 @@ class LLMCodeAgent(BaseAgent):
                 "workspace_generation": workspace_generation,
                 "verified_generation": verified_generation,
                 "incomplete_reason": incomplete_reason,
+                "accepted_final_status": accepted_final_status,
                 "context_compression_count": len(context_compression_steps),
                 "final_phase": agent_state.phase,
                 "verification_strength": agent_state.verification_strength,
+                "verifier_report": verifier_report.to_dict(),
                 "write_before_repro_count": successful_write_before_repro_count,
                 "localization_candidate_count": len(agent_state.localization_candidates),
                 "llm_usage": {
@@ -2021,6 +2040,7 @@ class LLMCodeAgent(BaseAgent):
                 },
             },
             recommended_files=trace.read_files[:],
+            verifier_report=verifier_report.to_dict(),
         )
 
         memory_entry = distill_strategy_memory_entry(
@@ -2041,6 +2061,7 @@ class LLMCodeAgent(BaseAgent):
                 f"- task_id: `{task.task_id}`\n"
                 f"- run_id: `{run_id}`\n"
                 f"- final_status: `{final_status}`\n"
+                f"- accepted_final_status: `{accepted_final_status}`\n"
                 f"- agent_type: `{policy_config.agent_type}`\n"
                 f"- policy_id: `{policy_config.policy_id}`\n"
                 f"- llm_provider: `{self.llm_config.provider}`\n"
@@ -2049,6 +2070,9 @@ class LLMCodeAgent(BaseAgent):
                 f"- incomplete_reason: `{incomplete_reason or 'none'}`\n"
                 f"- final_phase: `{agent_state.phase}`\n"
                 f"- verification_strength: `{agent_state.verification_strength}`\n"
+                f"- verification_level: `{verifier_report.verification_level}`\n"
+                f"- verifier_accepted: `{verifier_report.accepted}`\n"
+                f"- risk_level: `{verifier_report.risk_level}`\n"
                 f"- summary: {final_summary or '无'}\n"
             ),
         )

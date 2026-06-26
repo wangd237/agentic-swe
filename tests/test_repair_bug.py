@@ -424,6 +424,12 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
             "result": {
                 "run_id": "run_001",
                 "final_status": "success",
+                "accepted_final_status": "accepted_success",
+                "verifier_report": {
+                    "verification_level": "full_verification_success",
+                    "accepted": True,
+                    "risk_level": "low",
+                },
                 "tool_stats": {
                     "llm_usage": {
                         "total_tokens": 1234,
@@ -460,7 +466,11 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
     assert "=== Repair Bug Run Summary ===" in captured.out
     assert "task_path:" in captured.out
     assert "final_status: success" in captured.out
+    assert "accepted_final_status: accepted_success" in captured.out
     assert "verification_strength:" in captured.out
+    assert "verification_level: full_verification_success" in captured.out
+    assert "verifier_accepted: True" in captured.out
+    assert "risk_level: low" in captured.out
     assert "incomplete_reason:" in captured.out
     assert "pre_test_exit_code:" in captured.out
     assert "post_test_exit_code:" in captured.out

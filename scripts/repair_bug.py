@@ -404,7 +404,13 @@ def print_summary(output: dict[str, Any]) -> None:
     print(f"task_path: {output['task_path']}")
     print(f"cloned_repo_path: {output.get('cloned_repo_path', '')}")
     print(f"final_status: {output.get('final_status', result.get('final_status', 'unknown'))}")
+    print(f"accepted_final_status: {result.get('accepted_final_status', 'unknown')}")
     print(f"verification_strength: {result.get('tool_stats', {}).get('verification_strength', 'unknown')}")
+    verifier_report = result.get("verifier_report", {})
+    if isinstance(verifier_report, dict) and verifier_report:
+        print(f"verification_level: {verifier_report.get('verification_level', 'unknown')}")
+        print(f"verifier_accepted: {verifier_report.get('accepted', False)}")
+        print(f"risk_level: {verifier_report.get('risk_level', 'unknown')}")
     print(f"incomplete_reason: {result.get('incomplete_reason') or 'none'}")
     print(f"pre_test_exit_code: {result.get('pre_test_exit_code')}")
     print(f"post_test_exit_code: {result.get('post_test_exit_code')}")

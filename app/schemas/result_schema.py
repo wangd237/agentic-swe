@@ -12,6 +12,7 @@ class Result(BaseModel):
     task_id: str
     run_id: str
     final_status: str
+    accepted_final_status: str = "not_accepted"
     incomplete_reason: str = ""
     summary: str
     test_command: str = ""
@@ -28,6 +29,7 @@ class Result(BaseModel):
     duration_sec: float | None = None
     tool_stats: dict[str, Any] = Field(default_factory=dict)
     recommended_files: list[str] = Field(default_factory=list)
+    verifier_report: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")

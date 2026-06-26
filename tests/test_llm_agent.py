@@ -982,6 +982,9 @@ def test_llm_agent_auto_verifies_after_write_before_success(tmp_path: Path) -> N
     ]
     assert output["result"]["final_status"] == "success"
     assert output["result"]["incomplete_reason"] == ""
+    assert output["result"]["accepted_final_status"] == "accepted_success"
+    assert output["result"]["verifier_report"]["verification_level"] == "full_verification_success"
+    assert output["result"]["verifier_report"]["accepted"] is True
     assert output["result"]["post_test_exit_code"] == 0
     assert output["result"]["patch_applied"] is True
     assert len(run_test_steps) == 3
@@ -1295,6 +1298,9 @@ def test_llm_agent_downgrades_success_for_weak_fallback_verification(tmp_path: P
 
     assert output["result"]["final_status"] == "success_weak_verification"
     assert output["result"]["incomplete_reason"] == "weak_verification"
+    assert output["result"]["accepted_final_status"] == "weak_verification_success"
+    assert output["result"]["verifier_report"]["verification_level"] == "weak_verification_success"
+    assert output["result"]["verifier_report"]["accepted"] is False
     assert output["result"]["patch_applied"] is True
     assert output["result"]["post_test_exit_code"] == 0
     assert output["result"]["tool_stats"]["verification_strength"] == "weak"
