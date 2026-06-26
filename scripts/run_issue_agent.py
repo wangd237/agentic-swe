@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.agent.executor import run_agent
+from app.agent.summary import build_verification_summary_fields
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,11 +40,21 @@ def main() -> int:
     task = run_output["task"]
     result = run_output["result"]
     run_paths = run_output["run_paths"]
+    verification_summary = build_verification_summary_fields(result)
 
     print("=== Issue Agent Run Summary ===")
     print(f"task_id: {task['task_id']}")
     print(f"run_id: {result['run_id']}")
-    print(f"final_status: {result['final_status']}")
+    print(f"final_status: {verification_summary['final_status']}")
+    print(f"accepted_final_status: {verification_summary['accepted_final_status']}")
+    print(f"verification_strength: {verification_summary['verification_strength']}")
+    print(f"verification_level: {verification_summary['verification_level']}")
+    print(f"evidence_quality: {verification_summary['evidence_quality']}")
+    print(f"missing_evidence: {verification_summary['missing_evidence']}")
+    print(f"verifier_accepted: {verification_summary['verifier_accepted']}")
+    print(f"risk_level: {verification_summary['risk_level']}")
+    print(f"evidence_scope: {verification_summary['evidence_scope']}")
+    print(f"evidence_official_harness_required: {verification_summary['evidence_official_harness_required']}")
     print(f"policy_id: {result['tool_stats']['policy_id']}")
     print(f"agent_type: {result['tool_stats'].get('agent_type', 'unknown')}")
     print(f"llm_provider: {result['tool_stats'].get('llm_provider') or '(none)'}")

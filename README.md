@@ -78,6 +78,7 @@ accepted_final_status:
 verification_strength:
 verification_level:
 evidence_quality:
+missing_evidence:
 verifier_accepted:
 risk_level:
 evidence_scope:
@@ -92,6 +93,8 @@ result_path:
 ```
 
 这意味着 full verification 成功、SWE-bench Lite local smoke、targeted-only 成功和 `success_weak_verification` 会被明确区分，agent 不会把弱验证或本地 smoke 包装成产品层已接受成功。
+
+`scripts/run_issue_agent.py` 也会打印同一组 verification quality 字段，方便 benchmark / semi-real task run 后直接判断本次结果是否可接受，而不必手动打开 `result.json`。
 
 ## Agent Run Loop
 

@@ -20,6 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.agent.executor import run_agent
+from app.agent.summary import build_verification_summary_fields
 from app.schemas.task_schema import Task
 
 
@@ -394,6 +395,7 @@ def print_summary(output: dict[str, Any]) -> None:
     task = output["task"]
     result = output.get("result", {})
     run_paths = output.get("run_paths", {})
+    verification_summary = build_verification_summary_fields(result)
 
     print("=== Repair Bug Run Summary ===")
     print(f"task_id: {task['task_id']}")
@@ -403,21 +405,16 @@ def print_summary(output: dict[str, Any]) -> None:
         print("verification_note: weak fallback; no tests/ directory or pytest config was detected.")
     print(f"task_path: {output['task_path']}")
     print(f"cloned_repo_path: {output.get('cloned_repo_path', '')}")
-    print(f"final_status: {output.get('final_status', result.get('final_status', 'unknown'))}")
-    print(f"accepted_final_status: {result.get('accepted_final_status', 'unknown')}")
-    print(f"verification_strength: {result.get('tool_stats', {}).get('verification_strength', 'unknown')}")
-    verifier_report = result.get("verifier_report", {})
-    if isinstance(verifier_report, dict) and verifier_report:
-        print(f"verification_level: {verifier_report.get('verification_level', 'unknown')}")
-        print(f"evidence_quality: {verifier_report.get('evidence_quality', 'unknown')}")
-        print(f"verifier_accepted: {verifier_report.get('accepted', False)}")
-        print(f"risk_level: {verifier_report.get('risk_level', 'unknown')}")
-    verification_evidence = result.get("verification_evidence", {})
-    if isinstance(verification_evidence, dict) and verification_evidence:
-        print(f"evidence_scope: {verification_evidence.get('verification_scope', 'unknown')}")
-        official_harness = verification_evidence.get("official_harness", {})
-        if isinstance(official_harness, dict):
-            print(f"evidence_official_harness_required: {official_harness.get('required', False)}")
+    print(f"final_status: {verification_summary['final_status']}")
+    print(f"accepted_final_status: {verification_summary['accepted_final_status']}")
+    print(f"verification_strength: {verification_summary['verification_strength']}")
+    print(f"verification_level: {verification_summary['verification_level']}")
+    print(f"evidence_quality: {verification_summary['evidence_quality']}")
+    print(f"missing_evidence: {verification_summary['missing_evidence']}")
+    print(f"verifier_accepted: {verification_summary['verifier_accepted']}")
+    print(f"risk_level: {verification_summary['risk_level']}")
+    print(f"evidence_scope: {verification_summary['evidence_scope']}")
+    print(f"evidence_official_harness_required: {verification_summary['evidence_official_harness_required']}")
     print(f"incomplete_reason: {result.get('incomplete_reason') or 'none'}")
     print(f"pre_test_exit_code: {result.get('pre_test_exit_code')}")
     print(f"post_test_exit_code: {result.get('post_test_exit_code')}")
