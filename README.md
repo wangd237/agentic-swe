@@ -11,7 +11,7 @@
 
 面向真实代码仓库的 **AI Bug Repair Agent**。输入一个 issue 或本地 repo 的 bug 描述，Agent 会在隔离 workspace 中完成问题理解、失败复现、代码定位、补丁生成、测试验证，并输出可审计的修复结果。
 
-这个项目聚焦 Agent 开发岗最核心的能力：**tool use、workflow control、state management、verification、traceability、evaluation**。
+核心目标是把 LLM 从“直接生成代码”约束进可控的工程闭环：**tool use、workflow control、state management、verification、traceability、evaluation**。
 
 ## 项目亮点
 
@@ -20,8 +20,10 @@
 - 实现 phase/state-aware tool routing，LLM 每轮只接收当前阶段必要工具 Schema；在 `task_010` 上 token 从 `30,510` 降至 `18,553`，LLM 调用从 `7` 次降至 `5` 次。
 - 实现 post-patch immediate verification：代码修改后由 runtime 自动执行 `show_diff + run_tests`，降低模型遗漏验证步骤的风险。
 - 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
+- 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints，并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
+- 增加 post-verification auto-finalize：当前 workspace generation 已 `show_diff` 且 full `run_tests` 通过后自动收束，避免模型继续发起多余 `show_diff/read_file/run_tests` 探索。
 - 每次 run 落盘 `trace.json`、`result.json`、`summary.md`、`patch.diff`，可复盘 Agent 的工具调用、阶段状态、token 消耗、验证证据和最终验收结论。
-- 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM 等模型。
+- 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM / Ollama / llama.cpp / LM Studio 等模型；涉及私有代码的真实 A/B 建议使用本地或受信内部 endpoint。
 
 ## 量化结果
 
@@ -34,6 +36,7 @@
 | Agent core 回归测试 | `115 passed` |
 | Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
 | 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
+| v16 code intelligence | 工程接入完成；fake-smoke source top1/top3 `8/8`；真实 A/B 曾因 cost gate 未过，当前等待本地/受信 endpoint 复跑 |
 
 完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
@@ -50,6 +53,7 @@ REPRODUCE     运行测试或最小复现，记录 pre-test evidence
         |
         v
 LOCALIZE      搜索、读取文件、结合失败摘要和 AST symbol index 定位候选
+              可选 codebase-memory-mcp graph hints 增强候选排序
         |
         v
 PATCH         生成最小补丁，受 policy 限制写入范围
@@ -77,7 +81,15 @@ FINAL         输出 result / trace / patch / verification summary
 - 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
 - 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
 
-**3. Verification Quality**
+**3. Code Intelligence / Graph-assisted Localization**
+
+- 默认关闭，不影响 baseline agent 行为。
+- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选。
+- graph hints 只作为 localization prior，不替代源码阅读和测试验证。
+- trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
+- 当前 v16 评测重点是回答：graph-assisted localization 是否降低 token / tool calls / read_file calls，是否提升或至少不降低 accepted success。
+
+**4. Verification Quality**
 
 项目不会只依赖模型说“修好了”，而是输出结构化验收结论：
 
@@ -99,7 +111,7 @@ missing_evidence: official_harness
 
 这避免把本地 smoke 误报成 official benchmark resolved，也避免把 weak/static verification 包装成可信成功。
 
-**4. Auditability**
+**5. Auditability**
 
 每次运行都会输出：
 
@@ -110,6 +122,8 @@ missing_evidence: official_harness
 
 ## 快速开始
 
+### 1. 安装与模型配置
+
 ```bash
 # 安装依赖
 python -m pip install -r requirements.txt
@@ -117,20 +131,126 @@ python -m pip install -r requirements.txt
 # 配置模型
 cp .env.example .env
 # 填入 API key / base URL / model
+```
 
-# 运行 semi-real benchmark task
+默认策略使用 OpenAI-compatible API，示例策略为：
+
+```text
+optimization/policy_versions/llm_deepseek_minimal.json
+```
+
+如果要处理私有代码或运行真实 A/B，建议使用本地或受信内部 OpenAI-compatible endpoint。外部公网 provider 可能会因代码、trace、diff 外发而被安全策略阻断。
+
+本机 Ollama / llama.cpp / LM Studio 示例：
+
+```env
+DEEPSEEK_BASE_URL=http://127.0.0.1:8000/v1
+DEEPSEEK_MODEL=qwen2.5-coder:7b-instruct
+DEEPSEEK_API_KEY=local
+```
+
+当前普通 32GB 内存、无独显机器建议先用 `Qwen2.5-Coder-7B-Instruct` 跑通流程；`14B` 更接近真实修复能力，但 CPU-only 会明显占用电脑资源，适合夜间或低负载时尝试。
+
+### 2. 跑一个内置 benchmark task
+
+适合快速验证 Agent 的完整链路是否可运行：
+
+```bash
 python scripts/run_issue_agent.py \
   --task benchmarks/tasks/task_010.json \
   --policy optimization/policy_versions/llm_deepseek_minimal.json
+```
 
-# 修复用户本地 repo
+### 3. 运行 code intelligence A/B preflight
+
+`codebase-memory-mcp` 是可选增强后端。正式 A/B 会调用 LLM 并可能发送 issue、代码片段、tool outputs、diff 和 trace；请先确认 `.env` 指向本地或受信内部 endpoint。
+
+```bash
+python scripts/run_code_intelligence_ab.py \
+  --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json \
+  --tasks-dir benchmarks/tasks \
+  --baseline-policy optimization/policy_versions/llm_deepseek_minimal.json \
+  --cohort-label v16_frozen15_local_preflight \
+  --codebase-memory-binary .tools/codebase-memory-mcp/codebase-memory-mcp.exe \
+  --limit 8 \
+  --preflight-only \
+  --confirm-external-llm-data
+```
+
+正式 A/B 通过 `--require-v16-acceptance` 启用验收 gate：
+
+```bash
+python scripts/run_code_intelligence_ab.py \
+  --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json \
+  --tasks-dir benchmarks/tasks \
+  --baseline-policy optimization/policy_versions/llm_deepseek_minimal.json \
+  --cohort-label v16_frozen15_local \
+  --codebase-memory-binary .tools/codebase-memory-mcp/codebase-memory-mcp.exe \
+  --limit 8 \
+  --confirm-external-llm-data \
+  --require-v16-acceptance
+```
+
+exit code 语义：
+
+```text
+0: 真实 A/B 已完成，且 v16_acceptance.accepted == true
+2: preflight 阻断，未启动真实 A/B
+3: 真实 A/B 已完成，但 v16_acceptance.accepted != true
+```
+
+### 4. 修复本地 repo
+
+如果代码仓库已经在本机，直接传本地路径：
+
+```bash
 python scripts/repair_bug.py \
   --repo path/to/local_repo \
   --issue "AttributeError: 'NoneType' object has no attribute 'apply'" \
   --test "python -m pytest -q"
 ```
 
-CLI 会直接打印 verification quality 字段，用户无需打开 JSON 也能判断本次结果是否可信：
+`--test` 是验证命令。若不传，脚本会尝试自动发现 pytest；如果没有测试目录或 pytest 配置，会进入 weak/static verification 路径，并在 CLI 中明确标出验证强度不足。
+
+### 5. 修复 GitHub 远程 repo
+
+如果要让 Agent 处理公开 GitHub 仓库，有两种常用方式。
+
+第一种是手动提供 repo URL 和 bug 描述。脚本会先把远程仓库 clone 到 `logs/github_repos/` 下的临时目录，然后基于这份本地副本创建隔离 workspace，再执行理解、复现、定位、修改和验证流程：
+
+```bash
+python scripts/repair_bug.py \
+  --repo https://github.com/owner/repo \
+  --issue "Describe the bug and expected behavior" \
+  --test "python -m pytest -q"
+```
+
+第二种是直接提供公开 GitHub issue URL。此时不需要额外传 `--repo`，脚本会自动：
+
+- 解析 issue 对应的 owner / repo；
+- clone 对应 GitHub repo；
+- 通过 GitHub public API 拉取 issue title/body；
+- 生成一次用户 repair task；
+- 运行 Agent 并输出 trace/result/patch。
+
+```bash
+python scripts/repair_bug.py \
+  --issue-url https://github.com/owner/repo/issues/123 \
+  --test "python -m pytest -q"
+```
+
+这两种方式都不会直接 push 到原始远程仓库。修复结果会以本地运行产物的形式输出，包括 `summary.md`、`result.json`、`trace.json` 和 `patch.diff`；你可以先审查 patch，再决定是否手动提交到自己的分支或 PR。
+
+如果 issue 描述还不够具体，也可以同时追加 `--issue` 作为额外上下文：
+
+```bash
+python scripts/repair_bug.py \
+  --issue-url https://github.com/owner/repo/issues/123 \
+  --issue "Additional reproduction notes or expected behavior" \
+  --test "python -m pytest -q"
+```
+
+运行结束后，CLI 会打印 verification quality 字段，用户无需打开 JSON 也能判断本次结果是否可信：
 
 ```text
 final_status:
@@ -159,7 +279,7 @@ result_path:
 
 ```text
 app/
-  agent/        # LLM agent、state、policy、tool routing、verification
+  agent/        # LLM agent、state、policy、tool routing、verification、code intelligence
   runtime/      # workspace 隔离、run paths、日志落盘
   schemas/      # Task / Trace / Result schema
   tools/        # 文件、搜索、测试、写入、diff 工具
@@ -186,6 +306,7 @@ Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subproc
 - 架构说明：[docs/architecture.md](docs/architecture.md)
 - Harness 设计：[docs/harness.md](docs/harness.md)
 - 任务注册表：[docs/benchmark_registry.md](docs/benchmark_registry.md)
+- 当前任务状态：[currentTask.md](currentTask.md)
 
 ## License
 
