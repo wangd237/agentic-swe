@@ -6,9 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from app.agent.llm_agent import EDIT_RECOVERY_MESSAGE, LLMCodeAgent
+from app.agent.code_intelligence import CodeIntelligenceResult
+from app.agent.llm_agent import EDIT_RECOVERY_MESSAGE, LLMCodeAgent, OpenAICompatibleChatClient
 from app.agent.llm_config import LLMConfig
 from app.agent.llm_prompts import build_system_prompt
+from app.agent.memory import LocalizationCandidate
 from app.agent.policy import PolicyConfig
 
 
@@ -233,6 +235,56 @@ class FakeWriteThenDuplicateRunTestsClient:
                     "type": "text",
                     "text": "重复验证已跳过，当前任务完成。",
                 }
+            ]
+        }
+
+
+class FakeWriteThenInspectAfterVerifiedClient:
+    def __init__(self, fixed_file_content: str) -> None:
+        self._call_count = 0
+        self.fixed_file_content = fixed_file_content
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "run_tests",
+                        "input": {"timeout_sec": 30},
+                    }
+                ]
+            }
+        if self._call_count == 2:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_2",
+                        "name": "write_file",
+                        "input": {
+                            "relative_path": "demo_pkg/app.py",
+                            "content": self.fixed_file_content,
+                        },
+                    }
+                ]
+            }
+        return {
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "tool_3",
+                    "name": "show_diff",
+                    "input": {},
+                },
+                {
+                    "type": "tool_use",
+                    "id": "tool_4",
+                    "name": "read_file",
+                    "input": {"relative_path": "demo_pkg/app.py"},
+                },
             ]
         }
 
@@ -630,6 +682,46 @@ def _write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+class FakeCodeIntelligenceBackend:
+    name = "codebase_memory_cli"
+
+    def collect_localization_hints(self, *, repo_path, issue_text, failure_summary=None, max_results=8):
+        return CodeIntelligenceResult(
+            backend=self.name,
+            enabled=True,
+            available=True,
+            backend_version="codebase-memory-mcp 0.8.1",
+            backend_binary_path="fake-codebase-memory-mcp",
+            candidates=[
+                LocalizationCandidate(
+                    relative_path="demo_pkg/graph_hit.py",
+                    reason="graph_search:Class:GraphHit",
+                    evidence=["codebase-memory-mcp search_graph query `GraphHit` returned rank 1."],
+                    confidence=0.95,
+                )
+            ],
+            compact_hints=(
+                "Graph-assisted localization hints:\n"
+                "- #1 file=demo_pkg/graph_hit.py confidence=0.950 reason=graph_search:Class:GraphHit"
+            ),
+            metrics={
+                "index_attempted": True,
+                "index_success": True,
+                "index_duration_sec": 0.01,
+                "indexed_project": "sample-project",
+                "indexed_node_count": 3,
+                "indexed_edge_count": 2,
+                "graph_tool_calls_total": 1,
+                "graph_search_graph_calls": 1,
+                "graph_query_duration_sec_total": 0.02,
+                "graph_result_raw_chars": 300,
+                "graph_result_compact_chars": 120,
+                "graph_compaction_ratio": 0.4,
+                "graph_candidates_count": 1,
+            },
+        )
+
+
 def test_llm_agent_guided_failure_search_requires_symbols_without_locations() -> None:
     assert LLMCodeAgent._should_run_guided_failure_search(
         {
@@ -758,6 +850,86 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
+
+
+def test_llm_agent_records_enabled_code_intelligence_in_trace_and_result(tmp_path: Path, monkeypatch) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo_graph.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "graph_hit.py", "class GraphHit:\n    pass\n")
+    _write_text(benchmark_repo / "tests" / "test_app.py", "def test_ok():\n    assert True\n")
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "GraphHit bug",
+            "issue_text": "GraphHit should be localized by graph backend",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": [],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo_graph",
+            "description": "demo graph backend",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+            "code_intelligence_backend": "codebase_memory_cli",
+            "code_intelligence_max_results": 3,
+        },
+    )
+    monkeypatch.setattr(
+        "app.agent.llm_agent.build_code_intelligence_backend",
+        lambda policy_config: FakeCodeIntelligenceBackend(),
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=2),
+        client=FakeLLMClient(),
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    code_intelligence_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "code_intelligence"
+    ]
+    assert len(code_intelligence_steps) == 1
+    code_intelligence_step = code_intelligence_steps[0]
+    assert code_intelligence_step["tool_name"] == "codebase_memory_cli"
+    assert "Graph-assisted localization hints" in code_intelligence_step["observation"]
+    assert code_intelligence_step["tool_metrics"]["metrics"]["index_success"] is True
+    assert code_intelligence_step["tool_metrics"]["metrics"]["graph_tool_calls_total"] == 1
+    assert code_intelligence_step["state_snapshot"]["localization_candidates"][0]["relative_path"] == (
+        "demo_pkg/graph_hit.py"
+    )
+    workspace_step = output["trace"]["steps"][0]
+    assert workspace_step["tool_metrics"]["code_intelligence"] == {
+        "backend": "codebase_memory_cli",
+        "enabled": True,
+        "available": True,
+        "fallback_reason": "",
+    }
+    result_metrics = output["result"]["tool_stats"]["code_intelligence"]
+    assert result_metrics["enabled"] is True
+    assert result_metrics["available"] is True
+    assert result_metrics["metrics"]["indexed_project"] == "sample-project"
+    assert result_metrics["metrics"]["graph_candidates_count"] == 1
+    assert output["result"]["tool_stats"]["localization_candidate_count"] == 1
     assert output["trace"]["steps"][-1]["action_type"] == "finalize"
     assert output["trace"]["steps"][-1]["phase"] == "final"
 
@@ -1085,7 +1257,9 @@ def test_llm_agent_auto_verification_runs_targeted_before_full_tests(tmp_path: P
     assert output["result"]["tool_stats"]["agent_core_metrics"]["patch_changed_file_count"] == 1
     assert targeted_steps[0]["evidence_ids"] == ["run_tests:targeted:exit_0"]
     assert full_steps[0]["evidence_ids"] == ["run_tests:full:exit_0"]
-    assert output["trace"]["steps"][-1]["evidence_ids"] == ["final:success", "verification:full"]
+    final_evidence_ids = output["trace"]["steps"][-1]["evidence_ids"]
+    assert "final:success" in final_evidence_ids
+    assert "verification:full" in final_evidence_ids
     memory_path = Path(output["result"]["tool_stats"]["strategy_memory_path"])
     memory_payload = json.loads(memory_path.read_text(encoding="utf-8").splitlines()[-1])
     assert memory_payload["task_id"] == "task_demo"
@@ -1236,8 +1410,90 @@ def test_llm_agent_skips_duplicate_full_run_tests_after_verified_generation(tmp_
     assert output["result"]["post_test_exit_code"] == 0
     assert output["result"]["tool_stats"]["verified_generation"] == 1
     assert len(actual_run_test_steps) == 3
-    assert len(deduped_steps) == 1
-    assert "跳过重复 full run_tests" in deduped_steps[0]["observation"]
+    assert not deduped_steps
+    assert any(
+        step["action_type"] == "auto_finalize"
+        for step in output["trace"]["steps"]
+    )
+
+
+def test_llm_agent_auto_finalizes_after_full_verification_without_extra_inspection(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    client = FakeWriteThenInspectAfterVerifiedClient("def value():\n    return 1\n")
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=6),
+        client=client,
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    tool_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"]
+    ]
+    read_file_steps = [
+        step for step in tool_steps
+        if step["tool_name"] == "read_file"
+    ]
+    show_diff_steps = [
+        step for step in tool_steps
+        if step["tool_name"] == "show_diff"
+    ]
+    auto_finalize_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "auto_finalize"
+    ]
+
+    assert output["result"]["final_status"] == "success"
+    assert output["result"]["post_test_exit_code"] == 0
+    assert output["result"]["tool_stats"]["verified_generation"] == 1
+    assert output["result"]["tool_stats"]["llm_usage"]["call_count"] == 2
+    assert client._call_count == 2
+    assert not read_file_steps
+    assert len(show_diff_steps) == 1
+    assert show_diff_steps[0]["tool_input"].get("source") == "immediate_auto_verification"
+    assert auto_finalize_steps
+    assert auto_finalize_steps[0]["tool_metrics"]["auto_finalize_reason"] == "full_verified_current_generation"
 
 
 def test_llm_agent_downgrades_success_for_weak_fallback_verification(tmp_path: Path) -> None:
@@ -1764,12 +2020,16 @@ def test_llm_agent_final_verifies_last_iteration_write(tmp_path: Path) -> None:
     ]
 
     assert output["result"]["final_status"] == "success"
-    assert output["result"]["tool_stats"]["max_iterations_reached"] is True
+    assert output["result"]["tool_stats"]["max_iterations_reached"] is False
     assert output["result"]["tool_stats"]["workspace_generation"] == 1
     assert output["result"]["tool_stats"]["verified_generation"] == 1
     assert output["result"]["post_test_exit_code"] == 0
     assert immediate_verification_steps
     assert full_immediate_verification_steps
+    assert any(
+        step["action_type"] == "auto_finalize"
+        for step in output["trace"]["steps"]
+    )
 
 
 def test_llm_agent_allows_weak_static_patch_but_keeps_weak_status(tmp_path: Path) -> None:
@@ -2345,12 +2605,44 @@ def test_llm_config_uses_policy_max_steps() -> None:
         max_steps=3,
         llm_provider="openai_compatible",
         llm_max_context_chars=1234,
+        llm_timeout_sec=180,
     )
 
     config = LLMConfig.from_policy(policy)
 
     assert config.max_iterations == 3
     assert config.max_context_chars == 1234
+    assert config.timeout_sec == 180
+
+
+def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: dict[str, object] = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: object) -> None:
+            observed.update(kwargs)
+
+    class FakeOpenAIModule:
+        OpenAI = FakeOpenAI
+
+    monkeypatch.setenv("CUSTOM_API_KEY", "secret")
+    monkeypatch.setenv("CUSTOM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setitem(sys.modules, "openai", FakeOpenAIModule())
+
+    client = OpenAICompatibleChatClient(
+        llm_config=LLMConfig(
+            model="fake-model",
+            api_key_env="CUSTOM_API_KEY",
+            base_url_env="CUSTOM_BASE_URL",
+            timeout_sec=180,
+        )
+    )
+
+    client._ensure_client()
+
+    assert observed["api_key"] == "secret"
+    assert observed["base_url"] == "https://example.test/v1"
+    assert observed["timeout"] == 180
 
 
 def test_llm_config_default_iterations_match_target2_budget() -> None:

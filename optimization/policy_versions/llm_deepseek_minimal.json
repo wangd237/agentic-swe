@@ -13,6 +13,7 @@
   "llm_model_env": "DEEPSEEK_MODEL",
   "llm_base_url": "https://api.deepseek.com",
   "llm_max_output_tokens": 8000,
+  "llm_timeout_sec": 180,
   "pytest_additional_flags": [
     "-p no:unraisableexception",
     "-p no:threadexception"

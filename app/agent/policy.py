@@ -27,7 +27,14 @@ class PolicyConfig(BaseModel):
     llm_base_url: str | None = None
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None
+    llm_timeout_sec: float | None = None
     pytest_additional_flags: list[str] = []
+    code_intelligence_backend: str = "none"
+    codebase_memory_binary: str = "codebase-memory-mcp"
+    codebase_memory_index_mode: str = "fast"
+    codebase_memory_always_shadow_copy: bool = True
+    code_intelligence_timeout_sec: float = 10.0
+    code_intelligence_max_results: int = 8
 
     def to_dict(self) -> dict:
         return self.model_dump(mode="json")

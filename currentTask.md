@@ -1,341 +1,1002 @@
-# Current Task: Agent Core Upgrade
+# Current Task: v16 Codebase Memory / Graph-assisted Localization
 
-## Current Direction Update
+## 当前目标
 
-The project is now moving from local token/tool-routing experiments back to the broader agent-core direction.
+把 `codebase-memory-mcp` 作为可选代码智能后端，增强本项目 agent 在 `LOCALIZE` 阶段的代码库理解能力。
 
-Reference map:
-
-- `docs/agent_core_capability_map.md`
-
-Current focus:
+本轮目标不是重写 tree-sitter、知识图谱或 MCP server，也不是把现有 bug repair loop 推倒重做。更合理的方向是：
 
 ```text
-Agent Core Refocus v2: Verification Quality
+现有 bug repair agent loop
+  + 可选 code intelligence backend
+  + graph-assisted localization hints
+  + 保留本项目 verification gate
 ```
 
-Reason:
+## 为什么要做
 
-- v8-v10 improved or tested tool routing and failure-signal handling, but also showed the risk of overfitting to one SWE-bench Lite sample.
-- The next priority should be agent trustworthiness: clearly distinguishing local smoke success, targeted success, full verification success, and official benchmark resolved.
-- SWE-bench Lite remains a measurement tool, not the product direction.
+当前项目强在端到端 bug repair workflow：
 
-## Tracking Status
+- issue / local repo 输入
+- 失败复现
+- 文件定位
+- patch 生成
+- 测试验证
+- trace / result / patch / summary 落盘
+- verification quality / evidence gate
 
-Status: **complete for Agent Core Upgrade v1**
+但当前代码定位主要依赖 `grep`、`search_code`、`read_file` 和轻量 symbol index。对于大型 repo、跨文件调用、入口与缺陷点分离、issue 缺少明确文件路径的任务，这套定位能力容易出现：
 
-Last verified command:
+- 多轮盲搜
+- token 消耗高
+- 读取上下文过宽
+- 定位候选不稳定
+- max_iterations 风险上升
+
+`codebase-memory-mcp` 的价值在于提供结构化代码智能能力：代码库索引、符号搜索、调用链、架构概览、语义检索和影响分析。它适合作为本项目 `LOCALIZE` 阶段的外部增强器。
+
+## 预期新增能力
+
+### 1. 更强的代码定位
+
+用 `search_graph` 辅助定位函数、类、方法、路由和模块节点，减少纯文本搜索带来的绕路。
+
+适用场景：
+
+- issue 中有类名 / 函数名 / 行为描述，但没有文件路径
+- traceback 只给出上层入口，真正缺陷点在下游函数
+- 搜索关键词在测试、文档、实现中大量重复
+
+### 2. 跨文件调用链理解
+
+用 `trace_path` 辅助回答：
+
+- 谁调用了这个函数
+- 这个函数调用了谁
+- 入口到缺陷点之间有哪些中间层
+- 修改某个函数可能影响哪些路径
+
+这可以补足当前 agent 只能靠模型逐步读文件拼接调用关系的问题。
+
+### 3. 架构级上下文
+
+用 `get_architecture` 给大型 repo 提供压缩后的结构地图，例如语言、包、入口、路由、热点、边界和模块聚类。
+
+这不是为了让模型阅读完整架构报告，而是为了在陌生仓库中更快判断：
+
+- 测试对应的实现模块在哪里
+- 哪些目录是核心逻辑
+- 哪些文件只是 examples / tests / docs / generated
+
+### 4. 降低定位阶段 token 和工具调用成本
+
+目标是把一部分：
 
 ```text
-python -m pytest tests/test_agent_memory.py tests/test_strategy_memory.py tests/test_verification.py tests/test_llm_agent.py tests/test_reflector.py tests/test_tool_policy.py tests/test_code_locator.py tests/test_run_metrics.py tests/test_read_file.py tests/test_tool_executor.py tests/test_runtime_diagnostics.py tests/test_repair_bug.py -q
+grep -> read_file -> grep -> read_file -> guess -> read_file
 ```
 
-Last verified result:
+替换为：
 
 ```text
-110 passed
+search_graph -> trace_path -> compact localization hints
 ```
 
-Current implementation evidence:
+但前提是 graph 结果必须压缩，只向模型暴露 top candidates、文件、符号、简短原因和必要片段。
 
-- Structured state and memory models exist in `app/agent/memory.py`.
-- Phase-aware tool policy exists in `app/agent/tool_policy.py`.
-- Code localization ranking exists in `app/agent/code_locator.py`.
-- Graded verification helpers exist in `app/agent/verification.py`.
-- Structured reflection helpers exist in `app/agent/reflector.py`.
-- Agent-core metrics exist in `app/agent/run_metrics.py`.
-- Strategy memory exists in `app/agent/strategy_memory.py`.
-- The main LLM repair loop integrates phase state, tool policy, localization, verification, reflection, trace fields, and metrics in `app/agent/llm_agent.py`.
-- Trace schema now carries `phase`, `state_snapshot`, `evidence_ids`, `reflection_type`, and `verification_strength`.
-- Tests currently cover state models, tool policy gates, localization, verification grading, reflection decisions, strategy memory, trace/phase recording, read-file line ranges, tool executor behavior, and LLM-agent policy integration.
-- A user-facing `repair_bug.run_repair_bug()` smoke test now creates a local buggy repo, generates a task through the CLI helper path, runs the real `LLMCodeAgent` core with a fake LLM client, reproduces the failing test, patches in an isolated workspace, performs automatic diff plus targeted/full verification, and reaches `final_status=success` with `verification_strength=full`.
-- `pre_repro_rate` now treats a pre-patch failing `run_tests` result as valid reproduction evidence, because failing tests are the expected proof for bug repair.
-- A weak/static user-entry smoke test now creates a local repo without tests, lets `repair_bug.run_repair_bug()` discover `pytest_fallback`, applies a patch through the real `LLMCodeAgent` core with a fake LLM client, and verifies that the result is downgraded to `final_status=success_weak_verification` with `incomplete_reason=weak_verification` and `verification_strength=weak`.
-- The user-facing CLI summary now prints `verification_strength`, `incomplete_reason`, `pre_test_exit_code`, and `post_test_exit_code`, so users can distinguish full verification from weak/static verification.
-- Weak/static reproduction evidence is preserved through fallback `run_tests` calls instead of being overwritten as normal test evidence.
-- Dirty worktree review is complete for this task: files are classified below as Agent Core v1, user-entry validation, or deferred/peripheral work.
+### 5. Patch 后影响范围提示
 
-## Worktree Scope Classification
+后续可用 `detect_changes` 或调用链信息辅助判断 patch 影响面：
 
-### Agent Core v1 Scope
+- 是否只影响目标函数
+- 是否触达高风险入口
+- 是否可能影响路由 / 服务边界 / 公共 API
 
-These files are part of the current Agent Core Upgrade v1 implementation or its direct tests:
+注意：graph evidence 只能作为 risk / impact hint，不能替代测试验证。
 
-- `app/agent/llm_agent.py`
-- `app/agent/llm_prompts.py`
-- `app/agent/tool_definitions.py`
-- `app/agent/tool_executor.py`
-- `app/agent/code_locator.py`
-- `app/agent/memory.py`
-- `app/agent/reflector.py`
-- `app/agent/run_metrics.py`
-- `app/agent/strategy_memory.py`
-- `app/agent/tool_policy.py`
-- `app/agent/verification.py`
-- `app/schemas/trace_schema.py`
-- `app/tools/read_file.py`
-- `app/runtime/harness.py`
-- `tests/test_agent_memory.py`
-- `tests/test_code_locator.py`
-- `tests/test_harness.py`
-- `tests/test_llm_agent.py`
-- `tests/test_read_file.py`
-- `tests/test_reflector.py`
-- `tests/test_run_metrics.py`
-- `tests/test_strategy_memory.py`
-- `tests/test_tool_executor.py`
-- `tests/test_tool_policy.py`
-- `tests/test_verification.py`
+### 6. 多语言扩展入口
 
-### User-Entry Validation Scope
+当前项目主要在 Python semi-real task 上验证。接入外部 code intelligence backend 后，未来对 TypeScript / JavaScript / Go / Java / Rust 等 repo 的定位能力可以不完全依赖 grep 和模型经验。
 
-These files support the user-facing local-repo repair path used to validate the agent core:
+## 主要风险
 
-- `scripts/repair_bug.py`
-- `tests/test_repair_bug.py`
+### 1. 系统复杂度上升
 
-The GitHub repo/issue URL helpers in `scripts/repair_bug.py` are retained as input compatibility only. They should not become the next engineering focus.
+接入后会多出：
 
-### Documentation / Tracking Scope
+- 外部二进制或 MCP/CLI 调用
+- 索引缓存
+- 超时控制
+- 结果压缩
+- fallback 路径
+- trace 记录
+- 版本记录
 
-These files document or track the current direction:
+因此第一版必须保持可选，不应破坏当前默认 repair loop。
 
-- `currentTask.md`
-- `README.md`
-- `docs/agent_overview.md`
+### 2. 索引成本可能抵消收益
 
-### Deferred / Peripheral Scope
+小仓库或简单任务直接 grep 可能更快。不能无脑每次启用 graph backend。
 
-These changed files should not define Agent Core v1 completion unless explicitly pulled into a later task:
+第一版先允许手动 policy 开关，后续再设计条件触发：
 
-- `.gitignore`
-- `docs/stress_test_report.md`
-- `evals/compare_evals.py`
+- repo 较大
+- 多轮 grep/read_file 后仍无高置信候选
+- failure summary 中有符号名但没有文件路径
+- 任务历史显示定位阶段 token 消耗较高
 
-### Unrelated / User-Owned Scope
+### 3. Graph 结果可能增加 token
 
-These untracked files appear outside the Agent Core v1 implementation boundary and should not be modified or cleaned up without explicit user direction:
+如果直接把架构概览、调用链和搜索结果原样塞给模型，token 可能比当前方案更高。
 
-- `mytask.py`
-- `面试准备.md`
-
-## Future Work
-
-- Refactor duplicated auto-verification/final-verification logic in `app/agent/llm_agent.py` after behavior is locked by tests.
-- Keep GitHub repo/issue URL support as an input convenience only unless a later task explicitly asks for GitHub/PR workflow work.
-- Do not move into dashboards, bulk benchmarks, SWE-bench Docker integration, token management, or broad multi-language support until the agent core has been exercised on more local/real-repo repair cases.
-
-## Direction
-
-The project must refocus on the coding agent itself.
-
-The final goal is not a benchmark runner, GitHub crawler, or PR automation tool. The goal is a real-repo bug repair coding agent that can receive a software issue, work inside an isolated repository workspace, understand the problem, reproduce it, localize the relevant code, patch it, verify the fix, and output an auditable result.
-
-## Expected Agent Workflow
-
-Upgrade the current loose ReAct-style tool loop into a more disciplined agent workflow:
+必须做 compact result：
 
 ```text
-UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL
+top candidate
+file path
+symbol
+short reason
+inbound/outbound summary
+optional tiny snippet
 ```
 
-The agent should use tools inside each phase, but the phase should control what the agent is allowed to do and what evidence it must produce before moving on.
+### 4. 模型可能过度相信静态图
 
-## Core Technical Direction
+静态 call graph 可能漏掉动态 dispatch、反射、框架魔法、运行时 monkey patch 或类型推断边界。
 
-The recommended architecture is:
+Graph hint 只能提高定位优先级，不能覆盖：
+
+- 测试失败事实
+- 实际源码语义
+- patch 后验证结果
+
+### 5. 验证 gate 不能被替代
+
+`codebase-memory-mcp` 带来的是 localization / impact evidence，不是 verification evidence。
+
+本项目现有 Verification Quality Layer 必须继续作为最终判断：
 
 ```text
-Plan-and-Execute state machine
-  + phase-local ReAct micro-loops
-  + structured reflection / self-correction
+graph evidence != test evidence
+graph-assisted localization != accepted_success
 ```
 
-This keeps the flexibility of tool-use agents while adding engineering discipline:
+### 6. 外部依赖影响可复现性
 
-- explicit phases
-- phase-specific tool permissions
-- patch entry gates
-- verification requirements
-- structured failure recovery
-- traceable decisions
+评测必须记录：
 
-## P0 Improvements
+- backend 类型
+- binary path
+- codebase-memory-mcp version
+- index status
+- tool calls
+- timeout / fallback reason
+- compact hints 内容
 
-### 1. Explicit Agent State
+否则成功率变化无法复盘。
 
-Introduce structured run state, such as:
+### 7. 安全和边界风险
 
-- current phase
-- issue summary
-- failure signature
-- localization candidates
-- hypotheses
-- modified files
-- verification strength
+索引目标必须是当前 run 的隔离 workspace，而不是原始 repo 或用户家目录中的其他项目。
 
-Candidate module:
+默认要求：
+
+- 只索引 task workspace
+- 不自动写 agent 全局配置
+- 不在 benchmark 原始 repo 上产生副作用
+- 所有外部调用有 timeout
+- graph backend 失败时 fallback 到当前定位流程
+
+### 8. 评测归因会变复杂
+
+接入后如果成功率提升，需要知道提升来自哪里：
+
+- graph 定位命中正确文件
+- graph 定位命中正确函数
+- token 降低
+- 工具调用减少
+- 模型随机性
+- 任务本身简单
+
+因此需要新增 localization quality / exploration efficiency 指标。
+
+## 实施原则
+
+1. 先做 backend-only graph-assisted localization，不急着把所有 MCP graph tools 暴露给 LLM。
+2. 当前 agent 主循环、tool policy 和 verification gate 保持稳定。
+3. 没有安装或调用失败时，自动退回现有 grep/read_file 定位。
+4. 外部 graph 结果必须压缩后再进入模型上下文。
+5. 所有 graph 调用都进入 trace，方便复盘和 A/B 评测。
+6. 第一版只证明定位增强是否有效，不追求完整多语言产品化。
+
+## 推荐技术路线
+
+### v16.1：Backend 抽象
+
+新增可选代码智能后端抽象：
 
 ```text
-app/agent/memory.py
+app/agent/code_intelligence.py
 ```
 
-Suggested structures:
-
-- `AgentState`
-- `FailureSignature`
-- `LocalizationCandidate`
-- `ReflectionDecision`
-
-### 2. Phase-Aware Tool Control
-
-Introduce a tool policy layer so tools are not available freely in every phase.
-
-Candidate module:
+候选接口：
 
 ```text
-app/agent/tool_policy.py
+CodeIntelligenceBackend
+NullCodeIntelligenceBackend
+CodebaseMemoryCliBackend
 ```
 
-Initial policy:
+默认使用 `NullCodeIntelligenceBackend`，保证不改变当前行为。
+
+Policy 中新增可选字段：
+
+```json
+{
+  "code_intelligence_backend": "none",
+  "codebase_memory_binary": "codebase-memory-mcp",
+  "code_intelligence_timeout_sec": 10,
+  "code_intelligence_max_results": 8
+}
+```
+
+### v16.2：最小 CLI Backend
+
+优先使用 `codebase-memory-mcp cli ...`，避免第一版实现完整 MCP client。
+
+第一批只接：
+
+- `index_repository`
+- `search_graph`
+
+目标：
+
+- 能索引当前 workspace
+- 能根据 issue / failure summary / possible symbols 查询候选符号
+- 能在失败时返回 fallback reason，而不是中断 agent
+
+### v16.3：Graph Hints 转 LocalizationCandidate
+
+把 graph search 结果转成当前 agent 可消费的定位候选：
 
 ```text
-UNDERSTAND: list_files, grep, search_code, read_file
-REPRODUCE: run_tests, read_file
-LOCALIZE: grep, search_code, read_file, python_repl
-PATCH: read_file, edit_file, write_file, show_diff, undo
-VERIFY: run_tests, show_diff, read_file, undo
-FINAL: show_diff
+file_path
+symbol_name
+node_type
+score
+reason
+source = graph
+evidence_ids
 ```
 
-Hard gates:
+并写入：
 
-- no `edit_file` / `write_file` before `PATCH`
-- no `PATCH` before reproduction evidence, unless explicitly marked as weak/static
-- modified files should be localization candidates, unless an override reason is provided
-- every write must be followed by verification
-- weak verification must not be reported as normal success
+- `AgentState.localization_candidates`
+- trace step
+- result 中的 localization metrics
 
-### 3. Better Localization
+### v16.4：调用链和代码片段增强
 
-Improve code localization before patching.
+在 v16.2 / v16.3 稳定后，再加入：
 
-Candidate module:
+- `trace_path`
+- `get_code_snippet`
+
+返回给模型的内容必须压缩成：
 
 ```text
-app/agent/code_locator.py
+Graph-assisted localization hints:
+- file: ...
+  symbol: ...
+  reason: ...
+  inbound: top 3 callers
+  outbound: top 3 callees
+  snippet: optional short excerpt
 ```
 
-Inputs to use:
+### v16.5：A/B 评测
 
-- task hints
-- issue keywords
-- stack trace / failure summary locations
-- failed test names
-- search/grep hits
-- Python AST symbol index
-- import relationships between tests and implementation files
-
-Target output:
+选择一小批任务做对照：
 
 ```text
-top candidate files with reason, evidence, and confidence
+A: 当前 grep/read_file localization
+B: graph-assisted localization
 ```
 
-### 4. Stronger Verification
+建议样本：
 
-Verification should be explicit and graded.
+- 8-12 个任务
+- 包含简单单文件任务
+- 包含跨文件调用任务
+- 包含 issue 有符号名但无文件路径的任务
+- 包含历史上 max_iterations 或定位绕路较多的任务
 
-Candidate module:
+指标：
+
+- success rate
+- accepted_final_status
+- evidence_quality
+- total tokens
+- LLM calls
+- tool calls
+- graph tool calls
+- 首次命中正确文件的轮次
+- 是否命中正确函数 / 类
+- patch modified file count
+- incomplete_reason
+- fallback rate
+
+### v16.6：是否暴露聚合型 LLM Tool
+
+只有当 backend-only 方案证明有效后，再考虑新增一个模型可调用聚合工具：
 
 ```text
-app/agent/verification.py
+graph_search_codebase(query, symbols, max_results)
 ```
 
-Verification levels:
+它内部组合底层 graph 工具，但对 LLM 只暴露一个窄接口，避免 tool schema 和动作空间膨胀。
 
-- `none`
-- `weak`
-- `targeted`
-- `full`
+## 暂不做
 
-Expected behavior:
+- 不重写 tree-sitter / graph indexer。
+- 不一开始实现完整 MCP client。
+- 不直接暴露 `codebase-memory-mcp` 的全部 14 个工具给模型。
+- 不把 graph result 当作 verification result。
+- 不默认要求所有用户必须安装外部 binary。
+- 不为了接入 graph backend 牺牲现有 repair loop、tool policy 和 verifier gate。
+- 不先追求广泛多语言 benchmark；先验证 Python / semi-real 任务中的定位收益。
 
-- run pre-reproduction before patching when possible
-- run targeted tests after patching if a failing test can be identified
-- run the original full test command before reporting success
-- show diff before final verification
-- distinguish real success from weak or unverified results
+## 当前验收标准
 
-### 5. Reflection And Self-Correction
+v16 初步完成应满足：
 
-Add structured reflection when:
+- 默认配置下现有测试和行为不变。
+- 开启 `code_intelligence_backend=codebase_memory_cli` 后，可以对当前 workspace 索引并返回 compact localization hints。
+- graph backend 失败、超时或未安装时，agent 能自动 fallback 到现有定位流程。
+- trace/result 能记录 graph backend 是否启用、调用了什么、返回了哪些压缩候选、是否 fallback。
+- 至少完成一组小样本 A/B 对比，能回答 graph-assisted localization 是否降低 token / 工具调用 / 定位绕路，是否提升成功率或减少 incomplete。
 
-- tests fail after a patch
-- failure signature does not change
-- the agent repeatedly edits the same file
-- localization confidence is low
-- diff touches too many files
-- verification is weak or missing
+## 指标记录要求
 
-Candidate module:
+后续尝试利用 `codebase-memory-mcp` 时，必须同步记录量化指标。目标不是只证明“能接入”，而是能回答：
 
 ```text
-app/agent/reflector.py
+graph-assisted localization 是否真的让 agent 更快、更准、更省、更可靠？
 ```
 
-Reflection should decide:
+### 1. Backend 启用与可用性指标
 
-- whether the failure changed
-- likely cause
-- next phase
-- required next actions
-- whether to undo the last patch
+每次 run 记录：
 
-## Trace And Metrics
+- `code_intelligence_backend`：`none` / `codebase_memory_cli` / future backend name。
+- `backend_enabled`：是否按 policy 启用。
+- `backend_available`：外部工具是否可执行。
+- `backend_version`：`codebase-memory-mcp` 版本。
+- `backend_binary_path`：实际调用的 binary 路径。
+- `backend_fallback_reason`：未启用、未安装、超时、索引失败、查询失败、结果为空等。
 
-Extend trace data so agent behavior can be evaluated directly.
+用途：
 
-Useful fields:
+- 区分“graph 方案无效”和“根本没有成功启用”。
+- 保证 A/B 评测可复现。
 
-- `phase`
-- `state_snapshot`
-- `evidence_ids`
-- `reflection_type`
+### 2. 索引成本指标
+
+每次 graph-enabled run 记录：
+
+- `index_attempted`
+- `index_success`
+- `index_duration_sec`
+- `indexed_file_count`（如果后端返回）
+- `indexed_node_count`（如果后端返回）
+- `indexed_edge_count`（如果后端返回）
+- `index_cache_hit`（如果后续支持缓存）
+- `index_error`
+
+用途：
+
+- 判断索引成本是否抵消定位收益。
+- 后续决定何时启用 graph backend：默认启用、按 repo 大小启用，还是定位失败后再启用。
+
+### 3. Graph 查询成本指标
+
+每次 run 记录：
+
+- `graph_tool_calls_total`
+- `graph_search_graph_calls`
+- `graph_trace_path_calls`
+- `graph_get_code_snippet_calls`
+- `graph_get_architecture_calls`
+- `graph_query_duration_sec_total`
+- `graph_query_duration_sec_by_tool`
+- `graph_result_raw_chars`
+- `graph_result_compact_chars`
+- `graph_compaction_ratio`
+
+用途：
+
+- 判断 graph 工具是否减少了 LLM 上下文成本，还是把 token 压力转移到了 graph result。
+- 发现某个 graph tool 是否返回过宽或过慢。
+
+### 4. 定位质量指标
+
+每次 run 记录：
+
+- `graph_candidates_count`
+- `graph_candidates_top_files`
+- `graph_candidates_top_symbols`
+- `graph_candidate_sources`：symbol search / call trace / architecture / semantic 等。
+- `localization_candidates_count_before_graph`
+- `localization_candidates_count_after_graph`
+- `first_correct_file_rank`：如果任务 gold / target path 可知。
+- `first_correct_symbol_rank`：如果任务 gold symbol 可知。
+- `correct_file_in_top_1`
+- `correct_file_in_top_3`
+- `correct_symbol_in_top_3`
+- `graph_hint_used_by_model`：可先用启发式判断，例如 patch 文件是否来自 graph top candidates。
+
+用途：
+
+- 不只看最终 success，还要判断 graph 是否真的帮助定位。
+- 如果最终失败但 graph 已命中正确文件，问题可能在 patch generation；如果 graph 没命中，问题在 localization。
+
+### 5. Agent 成本与行为指标
+
+继续记录并对比现有指标：
+
+- `llm_call_count`
+- `llm_total_tokens`
+- `tool_calls_total`
+- `read_file_calls`
+- `grep_calls`
+- `search_code_calls`
+- `run_tests_calls`
+- `write_or_edit_calls`
+- `max_iterations_hit`
+- `phase_step_count.localize`
+- `time_to_first_patch_sec`
+- `time_to_first_correct_file_read_sec`（如果可计算）
+
+用途：
+
+- 判断 graph backend 是否减少 grep/read_file 绕路。
+- 判断 graph backend 是否只是增加了前置成本，没有减少 LLM 探索成本。
+
+### 6. 修复质量与验证指标
+
+继续记录当前 verification quality 字段：
+
+- `final_status`
+- `accepted_final_status`
 - `verification_strength`
+- `verification_level`
+- `evidence_quality`
+- `missing_evidence`
+- `modified_files`
+- `modified_file_count`
+- `patch_diff_chars`
+- `incomplete_reason`
 
-Key metrics:
+用途：
 
-- `phase_completion_rate`
-- `pre_repro_rate`
-- `localization_precision@3`
-- `write_before_repro_count`
-- `unverified_patch_rate`
-- `success_full_verify_rate`
-- `weak_success_rate`
-- `undo_recovery_rate`
+- 防止 graph-assisted localization 提高定位速度，却造成更宽、更冒险或未充分验证的 patch。
+- 确认 graph evidence 没有被误当成 verification evidence。
 
-## What To Defer
+### 7. A/B 对比维度
 
-Do not make the next engineering push about these outer features:
+同一批任务至少保留两组结果：
 
-- GitHub PR creation
-- private repository support
-- token management
-- dashboard / leaderboard
-- full SWE-bench Docker integration
-- broad multi-language support
-- bulk issue processing
+```text
+A: backend=none
+B: backend=codebase_memory_cli
+```
 
-These features may be useful later, but they do not directly improve the agent core.
+对比表至少包含：
 
-## Next Engineering Task Package
+| 维度 | 指标 |
+| --- | --- |
+| 成功率 | `success_rate`, `accepted_success_rate` |
+| 验证质量 | `strong_evidence_rate`, `partial_or_weak_rate` |
+| 成本 | `avg_llm_tokens`, `avg_llm_calls`, `avg_tool_calls`, `avg_duration_sec` |
+| 定位效率 | `avg_localize_steps`, `avg_read_file_calls`, `avg_grep_search_calls` |
+| Graph 成本 | `avg_index_duration_sec`, `avg_graph_query_duration_sec`, `fallback_rate` |
+| 定位质量 | `correct_file_top1/top3`, `correct_symbol_top3` |
+| Patch 风险 | `avg_modified_file_count`, `avg_patch_diff_chars` |
 
-Implement Agent Core Upgrade v1:
+### 8. 记录位置
 
-1. Add structured `AgentState` and related memory models.
-2. Add phase-aware tool policy.
-3. Extend trace steps with phase/state fields while keeping backward compatibility.
-4. Update the main LLM system prompt to require the phase workflow.
-5. Enforce at least the first hard gate: no writes before reproduction/localization evidence.
-6. Add tests proving the agent/tool policy blocks premature writes and records phase information.
+短期先写入：
+
+- 单次 run 的 `result.json`
+- 单次 run 的 `trace.json`
+- batch / A-B 汇总的 `logs/summaries/*.json`
+- 每轮运行后的人工汇总必须追加到 `项目1改进记录.md`
+- 可选补充汇总文档：`docs/optimization_log.md` 或后续新增 `docs/code_intelligence_eval.md`
+
+后续如果指标稳定，再把核心字段提升为正式 schema。
+
+### 9. 每轮运行记录纪律
+
+每一轮 graph-assisted localization 实验完成后，都要把结果和关键指标写入 `项目1改进记录.md`，不能只保留在 `result.json` / `trace.json` / `logs/summaries` 中。
+
+执行约束：
+
+- 每次运行命令后，无论结果是成功、失败、preflight 阻断、preview-only、fake-smoke 还是 focused regression，都必须追加一条运行记录。
+- 运行记录必须写在 `项目1改进记录.md` 中，且包含命令、退出码或测试结果、关键指标、结论和下一步判断。
+- 如果本轮运行产生 summary / result / trace / targets JSON，必须记录对应路径，便于后续复盘。
+- 没有完成 `项目1改进记录.md` 追加记录时，本轮运行不视为闭环完成。
+
+单轮记录至少包含：
+
+- 日期和实验版本，例如 `v16.2` / `v16.3`。
+- 任务 ID、repo、run ID。
+- backend 配置：`none` 或 `codebase_memory_cli`。
+- backend 状态：是否启用、是否可用、是否 fallback、fallback reason。
+- 索引指标：是否成功、耗时、节点/边/文件数量（如果可得）。
+- graph 查询指标：调用次数、总耗时、raw/compact 字符量。
+- 定位指标：graph top candidates、是否命中正确文件/符号、命中 rank。
+- agent 成本：LLM 调用、token、工具调用、localize step、grep/read_file 调用数。
+- 修复结果：`final_status`、`accepted_final_status`、`evidence_quality`、`missing_evidence`。
+- 定性结论：本轮相比 baseline 是 improvement / regression / inconclusive，以及原因。
+
+建议表格格式：
+
+```markdown
+| 版本 | Task | Backend | Run ID | Status | Accepted | Evidence | Tokens | LLM Calls | Tool Calls | Graph Calls | Index Sec | Correct File Rank | Fallback | 结论 |
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
+```
+
+如果本轮是 A/B 对比，需要同时记录 `backend=none` 和 `backend=codebase_memory_cli` 两组结果，并在表格下方写出指标 delta：
+
+- token delta
+- LLM calls delta
+- tool calls delta
+- localize step delta
+- success / accepted status 是否变化
+- correct file / symbol rank 是否变化
+- graph 索引成本是否值得
+
+## 下一步具体动作
+
+1. 阅读当前 `app/agent/code_locator.py`、`app/agent/memory.py`、`app/agent/llm_agent.py` 中 localization candidate 的数据流。
+2. 设计 `CodeIntelligenceBackend` 的最小接口，不绑定具体 MCP 实现。
+3. 增加 policy 字段和配置读取，默认关闭。
+4. 实现 `NullCodeIntelligenceBackend`。
+5. 实现 `CodebaseMemoryCliBackend` 的 dry-run / availability check。
+6. 用一个小型本地 repo 验证 `index_repository + search_graph` 能返回可解析结果。
+7. 将 graph candidates 合并进当前 localization candidates，并写入 trace。
+8. 补测试：默认关闭不改变行为、backend 失败 fallback、graph candidate 格式化稳定。
+9. 选择 8-12 个任务做 v16 A/B 评测。
+
+## 当前执行状态（v16.5.25）
+
+截至 `v16.5.25`，前 8 项工程接入任务已经完成，并且已进入正式 A/B 前置门禁阶段。
+
+已完成能力：
+
+- `CodeIntelligenceBackend` 抽象已落地，默认 `backend=none`，默认行为不变。
+- `CodebaseMemoryCliBackend` 已接入真实 `codebase-memory-mcp 0.8.1` release binary。
+- graph backend 使用 shadow copy 索引，避免污染原始 repo，并修复 Windows / run workspace 路径导致的 index fallback。
+- 已支持真实 `index_repository + search_graph`，并能解析 JSON + log 混合输出。
+- graph candidates 已写入 trace / result / summary。
+- A/B runner、deterministic smoke runner、summary / A-B delta analyzer、binary prepare、backend diagnostic 已具备。
+- `target_files_hint` 已传入 summary，能计算 `correct_file_rank`。
+- 新增 source-only rank，避免测试文件命中造成定位指标虚高。
+- A/B summary 已新增 `v16_acceptance` checklist，真实 A/B 完成后可自动给出是否满足 v16 验收的逐项判定。
+- `v16_acceptance` 已区分 success / accepted 的 improvement 与 regression：候选变好不再被误判为失败，候选退化会被拦截。
+- A/B summary 已将 graph hint evidence 拆分为 generated / presented_to_model / used_in_patch 三层，便于解释真实 A/B 中 graph hint 到底卡在哪一步。
+- Summary CLI 已新增 `--require-v16-acceptance` gate：当真实 A/B summary 的 `v16_acceptance.accepted != true` 时返回 exit code `3`，便于自动化区分“preflight 阻断”与“评测完成但验收未过”。
+- A/B runner 也已新增 `--require-v16-acceptance` gate，并会把真实 A/B 的 `ab_aggregate` / `v16_acceptance` 摘要复制到顶层 eval summary；真实 A/B 一次命令即可返回验收 exit code `0/3`。
+- A/B runner 的 acceptance gate 已修正为只在真实 A/B 已生成 `v16_acceptance` 时生效；`--preflight-only --require-v16-acceptance` 不再被误判为验收失败。
+- 已用现有 fake-smoke 真实轨迹文件 replay summary acceptance gate，确认 replay 时必须传入 `--targets-json` 才能正确计算 target/source rank；带 targets 后唯一失败项为 `graph_hint_used_at_least_once`，符合 fake-smoke 不生成 patch 的预期。
+- A/B runner 已自动写出 `<eval_id>_targets.json`，并在 CLI / Markdown / summary 中暴露 `targets_json_path`，真实 A/B 后可直接用于 standalone summary replay。
+- graph candidate 已做 bug repair 场景重排：实现文件优先，测试文件、包目录、`__init__.py` 降权。
+- graph 返回测试文件时，已能通过 test-to-implementation mapping 补充实现候选。
+- frozen15 前 8 任务 fake-smoke 中，`codebase_memory_cli` 达到：
+  - fallback rate：`0.0`
+  - target top1/top3：`8/8`
+  - source-only top1/top3：`8/8`
+- 真实 A/B preflight gate 已实现：
+  - binary 检查；
+  - `.env` 加载；
+  - LLM key / base URL 检查；
+  - 外部 LLM 数据发送 consent 检查；
+  - 外部 LLM 数据发送 preview-only 审计清单；
+  - task count 检查；
+  - target hint 覆盖检查；
+  - blocker 存在时真实 A/B 默认 abort；
+  - `missing_external_llm_data_consent` 不可被 `--ignore-preflight-blockers` 绕过；
+  - CLI exit code 为 `2`，避免自动化误判真实 A/B 已完成。
+
+最近一次 focused regression：
+
+```text
+D:\Apps\Conda\python.exe -m pytest tests/test_run_code_intelligence_ab_smoke.py tests/test_prepare_codebase_memory_binary.py tests/test_run_code_intelligence_ab.py tests/test_summarize_code_intelligence_runs.py tests/test_code_intelligence.py tests/test_code_locator.py tests/test_tool_definitions.py tests/test_llm_agent.py -q
+
+93 passed in 34.54s
+```
+
+当前真实 A/B 结论：
+
+```text
+用户已明确确认外部 LLM 数据发送，带 --confirm-external-llm-data 的 preflight 已通过。
+
+第一次真实 A/B 启动后因 OpenAI-compatible SDK TLS handshake timeout 失败，未生成 A/B pairs。
+
+随后新增 llm_timeout_sec 配置，将 DeepSeek minimal policy 的 LLM timeout 提高到 180s，并完成第二次真实 A/B：
+
+eval_id: code_intelligence_ab_v16_frozen15_v16528_real_retry_001
+pair_count: 8
+baseline_success_rate: 1.0
+graph_success_rate: 1.0
+candidate_fallback_rate: 0.0
+candidate_source_file_top1_count: 8/8
+graph_hints_generated_count: 8
+graph_hints_presented_to_model_count: 8
+graph_hint_used_in_patch_count: 8
+v16_acceptance_ready_to_judge: true
+v16_acceptance_accepted: false
+failed_check_ids:
+  - tokens_not_increased_on_average
+  - tool_calls_not_increased_on_average
+  - read_file_calls_not_increased_on_average
+```
+
+当前 preflight 结论：
+
+```text
+without --confirm-external-llm-data:
+ready_for_real_ab: False
+blockers: ['missing_external_llm_data_consent']
+
+with --confirm-external-llm-data:
+ready_for_real_ab: True
+blockers: []
+
+warnings: []
+codebase-memory binary: codebase-memory-mcp 0.8.1 available
+task_count: 8
+target_files_hint: 8/8
+```
+
+当前 A/B delta：
+
+```text
+average_token_delta: +844.125
+average_llm_call_delta: +0.125
+average_tool_call_delta: +0.25
+average_localize_step_delta: 0.0
+average_read_file_call_delta: +0.125
+average_grep_call_delta: 0.0
+average_search_code_call_delta: 0.0
+average_candidate_graph_calls: 5.0
+average_candidate_index_duration_sec: 0.069
+average_modified_file_count_delta: 0.0
+average_patch_diff_chars_delta: 0.0
+success_improved_count: 0
+success_regressed_count: 0
+accepted_improved_count: 0
+accepted_regressed_count: 0
+```
+
+主要失败来源：
+
+```text
+task_022 拉高平均成本：
+token_delta: +6316
+llm_call_delta: +1
+tool_call_delta: +2
+read_file_call_delta: +1
+```
+
+当前优化方向：
+
+1. 压缩 graph-assisted localization hints，减少 prompt token 增量。
+2. 检查 `task_022` candidate trace，找出 graph hint 是否导致额外 read_file / LLM turn。
+3. 考虑让 graph hint 只在 baseline 定位低置信或多轮搜索后启用，而不是所有任务前置启用。
+4. 保留当前优势：fallback 0、source top1 8/8、graph hint used in patch 8/8、无 success / accepted regression。
+
+当前外部数据发送 preview 结论：
+
+```text
+eval_id: code_intelligence_ab_v16_frozen15_external_data_preview_001
+task_count: 8
+repo_count: 8
+total_issue_text_chars: 3609
+total_target_file_hints: 16
+contains_full_issue_text: false
+contains_code_snippets: false
+external_data_preview_path: logs/summaries/code_intelligence_ab_v16_frozen15_external_data_preview_001_external_data_preview.json
+```
+
+当前 fake-smoke acceptance checklist 验证：
+
+```text
+ab_summary_json: logs/summaries/code_intelligence_runs_v16_frozen15_graph_hint_layers_smoke_smoke_ab_001.json
+pair_count: 8
+ready_to_judge: true
+accepted: false
+failed_checks: ['graph_hint_used_at_least_once']
+candidate_source_file_top1_count: 8
+candidate_fallback_rate: 0.0
+graph_hints_generated_count: 8
+graph_hints_presented_to_model_count: 8
+graph_hint_used_in_patch_count: 0
+success_improved_count: 0
+success_regressed_count: 0
+accepted_improved_count: 0
+accepted_regressed_count: 0
+average_token_delta: 0.0
+average_tool_call_delta: 0.0
+```
+
+说明：这是 deterministic fake-smoke，不是真实 A/B；失败项符合预期，因为 fake LLM 只复现测试后停止，不生成真实 patch，也不会形成 graph hint 被模型用于修改的证据。
+
+当前 summary CLI acceptance gate 验证：
+
+```text
+D:\Apps\Conda\python.exe -m pytest tests/test_summarize_code_intelligence_runs.py -q
+
+13 passed in 0.93s
+
+覆盖：
+- 未传 --ab-pairs 时，即使传入 --require-v16-acceptance 也返回 exit code 3；
+- A/B pairs 存在但 v16_acceptance 未通过时返回 exit code 3；
+- A/B pairs 存在且 v16_acceptance 通过时返回 exit code 0。
+- replay 场景缺少 --targets-json 时 source rank 会失败；补上 targets 后 rank 指标恢复，避免真实 A/B 复盘误判。
+```
+
+当前 A/B runner acceptance gate 验证：
+
+```text
+D:\Apps\Conda\python.exe -m pytest tests/test_run_code_intelligence_ab.py -q
+
+17 passed in 0.45s
+
+覆盖：
+- 真实 A/B summary 的 ab_aggregate / v16_acceptance 会复制到顶层 eval summary；
+- A/B runner 传入 --require-v16-acceptance 后，v16_acceptance 未通过会返回 exit code 3；
+- v16_acceptance 通过会返回 exit code 0；
+- 该 gate 不改变 preflight abort 的 exit code 2。
+- preflight-only 即使传入 --require-v16-acceptance，在没有真实 A/B summary 时仍返回 exit code 0。
+- dry-run / preview-only 会写出 targets_json_path，内容为 task_id -> target files。
+```
+
+当前确认前 preview / preflight 复测：
+
+```text
+preview-only:
+eval_id: code_intelligence_ab_v16_frozen15_v16523_external_data_preview_001
+external_data_preview_only: True
+aborted_by_preflight: False
+ready_for_real_ab: False
+blockers: ['missing_external_llm_data_consent']
+task_count: 8
+exit code: 0
+
+preflight-only + --require-v16-acceptance:
+eval_id: code_intelligence_ab_v16_frozen15_v16523_consent_preflight_002
+preflight_only: True
+aborted_by_preflight: False
+ready_for_real_ab: False
+blockers: ['missing_external_llm_data_consent']
+task_count: 8
+exit code: 0
+```
+
+当前 fake-smoke 真实轨迹 replay 验收演练：
+
+```text
+without --targets-json:
+summary_id: code_intelligence_runs_v16_frozen15_v16524_gate_replay_001
+run_count: 16
+ab_pair_count: 8
+fallback_rate: 0.0
+correct_file_top1_count: 0
+v16_acceptance_accepted: False
+failed_checks: ['candidate_source_top1_all_pairs', 'candidate_source_top3_all_pairs', 'graph_hint_used_at_least_once']
+exit code: 3
+
+with --targets-json logs/summaries/v16_frozen15_graph_hint_layers_targets.json:
+summary_id: code_intelligence_runs_v16_frozen15_v16524_gate_replay_with_targets_001
+run_count: 16
+ab_pair_count: 8
+fallback_rate: 0.0
+correct_file_top1_count: 8
+candidate_source_file_top1_count: 8
+candidate_source_file_top3_count: 8
+graph_hints_generated_count: 8
+graph_hints_presented_to_model_count: 8
+graph_hint_used_in_patch_count: 0
+v16_acceptance_accepted: False
+failed_checks: ['graph_hint_used_at_least_once']
+exit code: 3
+```
+
+说明：这仍是 deterministic fake-smoke replay，不是真实 A/B；失败项符合预期，因为 fake LLM 不生成 patch。这个 replay 证明 summary acceptance gate 在真实落盘 result/trace 文件上可用，同时明确真实 A/B 复盘必须携带 target mapping。
+
+当前 targets-json 产物验证：
+
+```text
+eval_id: code_intelligence_ab_v16_frozen15_v16525_targets_preview_001
+external_data_preview_only: True
+aborted_by_preflight: False
+ready_for_real_ab: False
+blockers: ['missing_external_llm_data_consent']
+targets_json_path: logs/summaries/code_intelligence_ab_v16_frozen15_v16525_targets_preview_001_targets.json
+task_count: 8
+targets task count: 8
+exit code: 0
+```
+
+targets JSON 内容包含：
+
+```text
+task_006 -> setup.py, tests/test_setup.py
+task_008 -> requests_encoding_repo/utils.py, tests/test_utils.py
+task_010 -> rich_ansi_repo/ansi.py, tests/test_ansi.py
+task_013 -> rich_handler_repo/logging.py, tests/test_logging.py
+task_016 -> click_flag_repo/core.py, tests/test_flags.py
+task_017 -> pytest_marker_repo/markers.py, tests/test_markers.py
+task_019 -> dateutil_tz_repo/tz.py, tests/test_tz.py
+task_022 -> dateutil_parser_repo_v2/parser.py, tests/test_parser.py
+```
+
+因此，v16 尚不能标记完成。必须在获得外部 LLM 数据发送确认后运行正式 A/B，并用 summary 回答 graph-assisted localization 是否降低 token / 工具调用 / 定位绕路，是否提升 success / accepted success，是否减少 incomplete。
+
+## 下一步执行命令
+
+### 1. 确认前可先生成外部数据发送 preview
+
+```powershell
+$bin = (Resolve-Path '.tools\codebase-memory-mcp\codebase-memory-mcp.exe').Path
+D:\Apps\Conda\python.exe scripts\run_code_intelligence_ab.py --manifest benchmarks\manifests\real_issue_tasks_frozen_15_v1.json --tasks-dir benchmarks\tasks --baseline-policy optimization\policy_versions\llm_deepseek_minimal.json --cohort-label v16_frozen15_external_data_preview --codebase-memory-binary $bin --limit 8 --external-data-preview-only
+```
+
+预期：
+
+```text
+external_data_preview_only: True
+aborted_by_preflight: False
+external_data_preview_path: logs/summaries/..._external_data_preview.json
+```
+
+### 2. 显式确认外部 LLM 数据发送后先跑 preflight
+
+```powershell
+$bin = (Resolve-Path '.tools\codebase-memory-mcp\codebase-memory-mcp.exe').Path
+D:\Apps\Conda\python.exe scripts\run_code_intelligence_ab.py --manifest benchmarks\manifests\real_issue_tasks_frozen_15_v1.json --tasks-dir benchmarks\tasks --baseline-policy optimization\policy_versions\llm_deepseek_minimal.json --cohort-label v16_frozen15_real --codebase-memory-binary $bin --limit 8 --preflight-only --confirm-external-llm-data
+```
+
+预期：
+
+```text
+ready_for_real_ab: True
+blockers: []
+```
+
+### 3. 正式真实 A/B
+
+preflight 通过后，运行：
+
+```powershell
+$bin = (Resolve-Path '.tools\codebase-memory-mcp\codebase-memory-mcp.exe').Path
+D:\Apps\Conda\python.exe scripts\run_code_intelligence_ab.py --manifest benchmarks\manifests\real_issue_tasks_frozen_15_v1.json --tasks-dir benchmarks\tasks --baseline-policy optimization\policy_versions\llm_deepseek_minimal.json --cohort-label v16_frozen15_real --codebase-memory-binary $bin --limit 8 --confirm-external-llm-data --require-v16-acceptance
+```
+
+如果 preflight 未通过，该命令应：
+
+```text
+aborted_by_preflight: True
+exit code: 2
+```
+
+注意：`--ignore-preflight-blockers` 只能用于诊断性覆盖技术 blocker，不能覆盖 `missing_external_llm_data_consent`。真实 A/B 要发送外部 LLM 数据时，必须显式传入 `--confirm-external-llm-data`。
+
+如果 preflight 通过，该命令应生成：
+
+- baseline batch summary；
+- graph batch summary；
+- A/B summary JSON / Markdown；
+- 每个 task 的 baseline / graph result pair；
+- A/B delta：
+  - token delta；
+  - LLM call delta；
+  - tool call delta；
+  - localize step delta；
+  - read_file / grep / search_code delta；
+  - success / accepted status 变化；
+  - target correct rank；
+  - source-only correct rank；
+  - graph index / query cost；
+  - fallback rate；
+  - patch risk delta。
+
+并在顶层 eval summary 中复制：
+
+- `ab_aggregate`
+- `v16_acceptance`
+- `outputs.ab_summary_json`
+- `outputs.ab_summary_md`
+
+CLI exit code 语义：
+
+```text
+0: 真实 A/B 已完成，且 v16_acceptance.accepted == true；
+2: preflight 阻断，未启动真实 A/B；
+3: 真实 A/B 已完成并生成 summary，但 v16_acceptance.accepted != true。
+```
+
+### 4. 真实 A/B 后必须追加记录
+
+真实 A/B 完成或被 preflight 阻断后，必须继续追加到 `项目1改进记录.md`，至少包含：
+
+- 命令；
+- run / eval ID；
+- preflight 状态；
+- baseline / graph summary 路径；
+- A/B aggregate；
+- `v16_acceptance` checklist；
+- 每个 task 的 key delta；
+- 是否满足 v16 验收；
+- 如果不满足，具体 blocker 或 regression。
+
+### 5. 真实 A/B 后建议执行 Summary Acceptance Gate
+
+当真实 A/B 已生成 baseline / graph result pairs 后，用 summary CLI 的验收 gate 作为自动化判定入口：
+
+```powershell
+D:\Apps\Conda\python.exe scripts\summarize_code_intelligence_runs.py `
+  --result <baseline_result_1.json> --result <graph_result_1.json> `
+  --result <baseline_result_2.json> --result <graph_result_2.json> `
+  --cohort-label v16_frozen15_real_acceptance `
+  --targets-json <outputs.targets_json_path 或 顶层 targets_json_path> `
+  --ab-pairs `
+  --require-v16-acceptance
+```
+
+预期：
+
+```text
+exit code 0: v16_acceptance.accepted == true，满足 v16 验收；
+exit code 3: A/B 已可汇总，但 v16_acceptance.accepted != true，需要查看 failed_check_ids；
+exit code 2: A/B runner preflight 阻断，通常是真实运行前置条件未满足。
+```
+
+## 当前完成判定
+
+当前状态：
+
+```text
+engineering integration: complete
+fake-smoke localization quality: strong
+real A/B infrastructure: ready
+external LLM data consent: confirmed
+real A/B execution: completed once, retry requested
+local cost optimization: auto_finalize_after_full_verification implemented and regression-tested
+local prompt cost optimization: graph_hint_display_compaction implemented and regression-tested
+latest real A/B request: project preflight passed, external LLM execution rejected by safety review
+v16 final acceptance: failed_cost_checks_pending_safe_real_ab_rerun
+```
+
+真实 A/B 已生成可审计结果，但由于平均 token / tool calls / read_file calls 增加，`v16_acceptance.accepted == false`。已完成两轮本地成本优化：
+
+- 当当前 workspace generation 已经观察到 diff 且 full run_tests 通过时，agent 会自动收束，避免额外 `show_diff` / `read_file` / LLM turn。
+- graph hints 给模型的展示文本已压缩为 top3 的 `file/conf/reason`，去掉 verbose evidence；完整 candidates / evidence / metrics 仍保留在结构化 trace/result 字段中。
+
+当前核心回归结果为：
+
+```text
+D:\Apps\Conda\python.exe -m pytest tests/test_code_intelligence.py tests/test_llm_agent.py tests/test_run_code_intelligence_ab.py tests/test_summarize_code_intelligence_runs.py -q
+81 passed in 37.35s
+```
+
+由于随后真实 A/B retry2 和 v16.5.32 real-ab 请求均被安全审查拒绝，本地优化尚未通过新的真实 A/B 量化验收。v16.5.32 项目内 preflight 已通过：
+
+```text
+eval_id: code_intelligence_ab_v16_frozen15_v16532_real_preflight_001
+ready_for_real_ab: True
+blockers: []
+```
+
+但正式执行仍会把私有工作区数据发送到未确认为受信内部目的地的外部 OpenAI-compatible LLM provider，因此不能运行。必须在安全允许的受信 LLM 环境中复跑正式 A/B，或使用合规的本地/内部模型端点生成新的 baseline / graph result pairs，并确认 `v16_acceptance.accepted == true`，才能把本任务标记为完成。

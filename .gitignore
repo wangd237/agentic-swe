@@ -17,6 +17,12 @@ logs/summaries/
 logs/env_baselines/
 logs/user_tasks/
 logs/github_repos/
+logs/agent_memory/
+logs/v14_weak_repo/
+
+# 本地下载/准备的外部工具与大型 benchmark working copies
+.tools/
+benchmarks/repos/swebench_lite/
 
 # 本地协作配置
 .claude/

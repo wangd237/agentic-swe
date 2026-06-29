@@ -11,6 +11,7 @@ from time import perf_counter
 from typing import Any
 
 from app.agent.base import BaseAgent
+from app.agent.code_intelligence import build_code_intelligence_backend
 from app.agent.code_locator import rank_candidates
 from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.agent.llm_prompts import build_system_prompt, build_user_prompt
@@ -81,6 +82,7 @@ class OpenAICompatibleChatClient:
         self._client = OpenAI(
             api_key=api_key,
             base_url=self.llm_config.resolve_base_url(),
+            timeout=self.llm_config.timeout_sec,
         )
         return self._client
 
@@ -636,11 +638,18 @@ class LLMCodeAgent(BaseAgent):
         latest_failure_summary: dict[str, Any] | None = None
         search_match_files: list[str] = []
         searched_queries: set[str] = set()
+        code_intelligence_backend = build_code_intelligence_backend(policy_config)
+        code_intelligence_result = code_intelligence_backend.collect_localization_hints(
+            repo_path=run_paths.workspace_dir,
+            issue_text=agent_state.issue_summary,
+            max_results=policy_config.code_intelligence_max_results,
+        )
         agent_state.set_localization_candidates(
             rank_candidates(
                 repo_path=run_paths.workspace_dir,
                 issue_text=agent_state.issue_summary,
                 target_files_hint=task.target_files_hint,
+                existing_candidates=code_intelligence_result.candidates,
             )
         )
         trace.steps.append(
@@ -661,9 +670,46 @@ class LLMCodeAgent(BaseAgent):
                 state_snapshot=agent_state.snapshot(),
                 evidence_ids=["workspace:copy"],
                 verification_strength=agent_state.verification_strength,
-                tool_metrics={"ignored_dir_count": len(COPY_IGNORE_DIR_NAMES)},
+                tool_metrics={
+                    "ignored_dir_count": len(COPY_IGNORE_DIR_NAMES),
+                    "code_intelligence": {
+                        "backend": code_intelligence_result.backend,
+                        "enabled": code_intelligence_result.enabled,
+                        "available": code_intelligence_result.available,
+                        "fallback_reason": code_intelligence_result.fallback_reason,
+                    },
+                },
             )
         )
+        if code_intelligence_result.enabled:
+            trace.steps.append(
+                TraceStep(
+                    step_index=len(trace.steps) + 1,
+                    action_type="code_intelligence",
+                    tool_name=code_intelligence_result.backend,
+                    tool_input={
+                        "backend": code_intelligence_result.backend,
+                        "max_results": policy_config.code_intelligence_max_results,
+                    },
+                    tool_output_summary=(
+                        f"code intelligence backend returned "
+                        f"{len(code_intelligence_result.candidates)} candidates"
+                    ),
+                    observation=code_intelligence_result.compact_hints
+                    or code_intelligence_result.fallback_reason
+                    or "no graph hints",
+                    decision="将 graph-assisted localization hints 作为弱定位先验合并进候选列表。",
+                    timestamp=self._utc_timestamp(),
+                    phase=agent_state.phase,
+                    state_snapshot=agent_state.snapshot(),
+                    evidence_ids=[
+                        f"code_intelligence:{code_intelligence_result.backend}",
+                        f"fallback:{code_intelligence_result.fallback_reason or 'none'}",
+                    ],
+                    verification_strength=agent_state.verification_strength,
+                    tool_metrics=code_intelligence_result.to_dict(),
+                )
+            )
         write_json(run_paths.task_json_path, task)
 
         tool_executor = ToolExecutor(
@@ -927,6 +973,49 @@ class LLMCodeAgent(BaseAgent):
                 and last_full_verified_exit_code == 0
             )
 
+        def can_auto_finalize_current_generation() -> bool:
+            return (
+                already_full_verified_current_generation()
+                and agent_state.workspace_generation == workspace_generation
+                and agent_state.diff_observed_generation == workspace_generation
+                and not pending_auto_verification
+            )
+
+        def append_auto_finalize_trace(source: str) -> None:
+            trace.steps.append(
+                TraceStep(
+                    step_index=len(trace.steps) + 1,
+                    action_type="auto_finalize",
+                    tool_name=None,
+                    tool_input={
+                        "source": source,
+                        "workspace_generation": workspace_generation,
+                        "verified_generation": verified_generation,
+                        "diff_observed_generation": agent_state.diff_observed_generation,
+                    },
+                    tool_output_summary="当前补丁 generation 已查看 diff 且 full run_tests 通过。",
+                    observation=(
+                        "AUTO_FINALIZE: 当前改动已经具备 diff 证据和 full verification，"
+                        "无需再让模型发起额外的 show_diff/read_file/run_tests 探索。"
+                    ),
+                    decision="提前收束 LLM 循环，进入最终结果汇总。",
+                    timestamp=self._utc_timestamp(),
+                    duration_sec=None,
+                    phase=agent_state.phase,
+                    state_snapshot=agent_state.snapshot(),
+                    evidence_ids=[
+                        f"workspace_generation:{workspace_generation}",
+                        "diff:observed",
+                        "verification:full",
+                    ],
+                    verification_strength=agent_state.verification_strength,
+                    tool_metrics={
+                        "auto_finalize_reason": "full_verified_current_generation",
+                        "last_full_verified_exit_code": last_full_verified_exit_code,
+                    },
+                )
+            )
+
         def skipped_duplicate_full_verification_result(tool_input: dict[str, Any]) -> dict[str, Any]:
             return {
                 "ok": True,
@@ -1155,6 +1244,12 @@ class LLMCodeAgent(BaseAgent):
             return "\n\n" + "\n\n".join(auto_verification_parts)
 
         for iteration_index in range(self.llm_config.max_iterations):
+            if can_auto_finalize_current_generation():
+                append_auto_finalize_trace("loop_start")
+                final_summary = "自动验证已通过，当前任务完成。"
+                max_iterations_reached = False
+                break
+
             tools = build_tools_for_state(agent_state)
             current_tool_names = tool_names(tools)
             total_tool_schema_sent += len(tools)
@@ -1233,6 +1328,7 @@ class LLMCodeAgent(BaseAgent):
             if tool_blocks:
                 ever_used_tool = True
             parallel_group_counter = 0
+            auto_finalize_after_tool = False
             for batch in self._partition_tool_batches(tool_blocks):
                 parallel_group_id: str | None = None
                 if len(batch) > 1 and all(block.get("name") in READ_ONLY_TOOL_NAMES for block in batch):
@@ -1543,6 +1639,19 @@ class LLMCodeAgent(BaseAgent):
                         }
                     )
 
+                    if immediate_auto_verification_message and can_auto_finalize_current_generation():
+                        append_auto_finalize_trace("immediate_auto_verification")
+                        final_summary = "自动验证已通过，当前任务完成。"
+                        max_iterations_reached = False
+                        auto_finalize_after_tool = True
+                        break
+
+                if auto_finalize_after_tool:
+                    break
+
+            if auto_finalize_after_tool:
+                break
+
             if tool_results_for_model:
                 messages.append(
                     {
@@ -1726,6 +1835,11 @@ class LLMCodeAgent(BaseAgent):
                 )
                 if auto_reflection_message:
                     auto_verification_parts.append(auto_reflection_message)
+                if can_auto_finalize_current_generation():
+                    append_auto_finalize_trace("auto_verification_after_model_stop")
+                    final_summary = "自动验证已通过，当前任务完成。"
+                    max_iterations_reached = False
+                    break
                 messages.append(
                     {
                         "role": "user",
@@ -2040,6 +2154,7 @@ class LLMCodeAgent(BaseAgent):
                 "verification_evidence": verification_evidence.to_dict(),
                 "write_before_repro_count": successful_write_before_repro_count,
                 "localization_candidate_count": len(agent_state.localization_candidates),
+                "code_intelligence": code_intelligence_result.to_dict(),
                 "llm_usage": {
                     "call_count": llm_call_count,
                     "total_tokens": llm_total_tokens,

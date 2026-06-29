@@ -25,6 +25,16 @@ def test_implementation_candidates_for_test_path_uses_imports(tmp_path: Path) ->
     assert candidates[0] == "demo_pkg/parser.py"
 
 
+def test_implementation_candidates_for_test_path_uses_mirrored_setup_file(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    write_text(repo / "setup.py", "def get_install_requires():\n    return []\n")
+    write_text(repo / "tests" / "test_setup.py", "def test_setup():\n    assert True\n")
+
+    candidates = implementation_candidates_for_test_path("tests/test_setup.py", repo)
+
+    assert candidates == ["setup.py"]
+
+
 def test_rank_candidates_prioritizes_implementation_from_failing_test(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     write_text(repo / "demo_pkg" / "parser.py", "def parse_items(items):\n    return items\n")
