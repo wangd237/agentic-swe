@@ -92,9 +92,13 @@ class AgentState(BaseModel):
     verification_strength: VerificationStrength = "none"
     workspace_generation: int = 0
     diff_observed_generation: int | None = None
+    search_graph_calls: int = 0
 
     def snapshot(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
+
+    def record_search_graph_call(self) -> None:
+        self.search_graph_calls += 1
 
     def remember_read_file(self, relative_path: str) -> None:
         normalized = relative_path.replace("\\", "/")

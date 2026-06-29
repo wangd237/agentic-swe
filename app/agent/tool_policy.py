@@ -12,7 +12,7 @@ MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
     "understand": {"list_files", "grep", "search_code", "read_file", "run_tests"},
-    "reproduce": {"grep", "search_code", "run_tests", "read_file", "show_diff"},
+    "reproduce": {"grep", "search_code", "search_graph", "run_tests", "read_file", "show_diff"},
     "localize": {"grep", "search_code", "search_graph", "read_file", "python_repl", "run_tests"},
     "patch": {"grep", "search_code", "read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
     "verify": {"run_tests", "show_diff", "read_file", "undo"},
@@ -87,6 +87,19 @@ class ToolPolicy:
                         "Provide a specific localization_override_reason to override this gate."
                     ),
                 )
+
+        if tool_name == "search_graph":
+            if state.search_graph_calls >= 3:
+                return tool_policy_error(
+                    tool_name=tool_name,
+                    tool_input=tool_input,
+                    message=(
+                        "search_graph 已被调用 3 次，达到单次 run 上限。"
+                        "请基于已有搜索结果和已读文件做出定位判断。"
+                    ),
+                )
+            state.record_search_graph_call()
+
         return None
 
     @staticmethod
