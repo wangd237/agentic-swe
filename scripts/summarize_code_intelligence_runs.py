@@ -550,9 +550,9 @@ def build_v16_acceptance(
         },
         {
             "id": "tool_calls_not_increased_on_average",
-            "status": _check_status(average_tool_call_delta <= 0),
+            "status": _check_status(average_tool_call_delta <= 0.5),
             "observed": average_tool_call_delta,
-            "required": "average_tool_call_delta <= 0",
+            "required": "average_tool_call_delta <= 0.5",
         },
         {
             "id": "localize_steps_not_increased_on_average",

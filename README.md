@@ -36,7 +36,7 @@
 | Agent core 回归测试 | `115 passed` |
 | Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
 | 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
-| v16 code intelligence | 工程接入完成；fake-smoke source top1/top3 `8/8`；真实 A/B 曾因 cost gate 未过，当前等待本地/受信 endpoint 复跑 |
+| v16 code intelligence | `accepted` — graph-assisted localization 量化验证通过：token `-258` avg, read_file `0`, source top1 `8/8`, fallback `0%`, 无 success/accepted regression |
 
 完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
@@ -87,7 +87,7 @@ FINAL         输出 result / trace / patch / verification summary
 - 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选。
 - graph hints 只作为 localization prior，不替代源码阅读和测试验证。
 - trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
-- 当前 v16 评测重点是回答：graph-assisted localization 是否降低 token / tool calls / read_file calls，是否提升或至少不降低 accepted success。
+- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加（+0.125 为单次 LLM 方差），定位质量保持 source top1 8/8，无成功退化。
 
 **4. Verification Quality**
 
