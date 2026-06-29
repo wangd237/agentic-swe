@@ -22,6 +22,21 @@ from app.tools.search_code import search_code
 from app.tools.show_diff import show_diff
 
 
+def _resolve_test_patch_path(
+    *,
+    source_repo_path: str | Path,
+    source_type: str = "",
+) -> Path | None:
+    """Return the test.patch path for a SWE-bench Lite task, or None."""
+    if source_type != "swe_bench_lite":
+        return None
+    repo = Path(source_repo_path).resolve()
+    slug = repo.name
+    artifacts_dir = repo.parent.parent / slug
+    candidate = artifacts_dir / "test.patch"
+    return candidate if candidate.exists() else None
+
+
 def load_and_validate_task(task_path: str | Path) -> Task:
     # 任务加载和校验是所有 phase 的共同入口。
     return load_task(task_path)
@@ -175,7 +190,15 @@ def run_observation_task(task_path: str | Path, repo_root: str | Path, policy_pa
     run_paths.run_dir.mkdir(parents=True, exist_ok=True)
 
     workspace_copy_started_at = perf_counter()
-    copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
+    _test_patch_path = _resolve_test_patch_path(
+        source_repo_path=source_repo_path,
+        source_type=task.source_type,
+    )
+    copy_repo_to_workspace(
+        source_repo_path,
+        run_paths.workspace_dir,
+        test_patch_path=_test_patch_path,
+    )
     workspace_copy_duration_sec = round(perf_counter() - workspace_copy_started_at, 4)
 
     trace = Trace(task_id=task.task_id, run_id=run_id, started_at=_utc_timestamp())

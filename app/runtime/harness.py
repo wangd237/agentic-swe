@@ -1,6 +1,7 @@
 """Harness 运行时辅助结构。"""
 
 import shutil
+import subprocess
 from datetime import datetime, timezone
 from random import randint
 from dataclasses import asdict, dataclass
@@ -97,7 +98,12 @@ def build_run_paths(log_root: str | Path, task_id: str, run_id: str) -> RunPaths
     )
 
 
-def copy_repo_to_workspace(source_repo_path: str | Path, workspace_path: str | Path) -> None:
+def copy_repo_to_workspace(
+    source_repo_path: str | Path,
+    workspace_path: str | Path,
+    *,
+    test_patch_path: str | Path | None = None,
+) -> None:
     # 复制 benchmark repo 时显式忽略缓存目录，并为 agent 写入建立本地 git baseline。
     shutil.copytree(
         Path(source_repo_path),
@@ -106,6 +112,48 @@ def copy_repo_to_workspace(source_repo_path: str | Path, workspace_path: str | P
         ignore=ignore_workspace_copy_artifacts,
     )
     initialize_git_workspace(workspace_path)
+    _apply_test_patch(workspace_path, test_patch_path)
+    _pip_install_editable(workspace_path)
+
+
+def _apply_test_patch(workspace_path: str | Path, test_patch_path: str | Path | None) -> None:
+    """Apply SWE-bench test.patch so fail-to-pass tests exist before agent runs."""
+    if test_patch_path is None:
+        return
+    patch = Path(test_patch_path)
+    if not patch.exists():
+        return
+    try:
+        subprocess.run(
+            ["git", "apply", str(patch)],
+            cwd=str(workspace_path),
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+
+
+def _pip_install_editable(workspace_path: str | Path) -> None:
+    """Try pip install -e . so repo packages are importable in tests."""
+    workspace = Path(workspace_path)
+    for candidate in ("setup.py", "setup.cfg", "pyproject.toml"):
+        if not (workspace / candidate).exists():
+            continue
+        try:
+            subprocess.run(
+                ["python", "-m", "pip", "install", "-e", ".", "-q"],
+                cwd=str(workspace),
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        except (subprocess.TimeoutExpired, OSError):
+            pass
+        return
 
 
 def next_run_id(task_runs_dir: str | Path) -> str:

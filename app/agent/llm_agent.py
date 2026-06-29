@@ -48,6 +48,23 @@ from app.schemas.trace_schema import Trace, TraceStep
 
 READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "grep", "read_file", "show_diff"}
 WRITE_TOOL_NAMES = {"write_file", "edit_file"}
+
+
+def _resolve_test_patch_path(
+    *,
+    source_repo_path: str | Path,
+    source_type: str = "",
+) -> Path | None:
+    """Return the test.patch path for a SWE-bench Lite task, or None."""
+    if source_type != "swe_bench_lite":
+        return None
+    repo = Path(source_repo_path).resolve()
+    slug = repo.name
+    artifacts_dir = repo.parent.parent / slug
+    candidate = artifacts_dir / "test.patch"
+    return candidate if candidate.exists() else None
+
+
 ANTI_LOOP_MESSAGE = (
     "你似乎在同一个修复方向上循环：最近连续多次修改同一个文件，"
     "且编辑模式高度相似。请退一步重新读取相关代码或测试，验证你的核心假设；"
@@ -83,6 +100,7 @@ class OpenAICompatibleChatClient:
             api_key=api_key,
             base_url=self.llm_config.resolve_base_url(),
             timeout=self.llm_config.timeout_sec,
+            max_retries=self.llm_config.client_max_retries,
         )
         return self._client
 
@@ -391,6 +409,55 @@ class LLMCodeAgent(BaseAgent):
         return [block for block in assistant_blocks if block.get("type") == "tool_use"]
 
     @staticmethod
+    def _json_objects_from_text(text: str) -> list[dict[str, Any]]:
+        decoder = json.JSONDecoder()
+        objects: list[dict[str, Any]] = []
+        start = 0
+        while True:
+            brace_index = text.find("{", start)
+            if brace_index < 0:
+                return objects
+            try:
+                value, end_index = decoder.raw_decode(text[brace_index:])
+            except json.JSONDecodeError:
+                start = brace_index + 1
+                continue
+            if isinstance(value, dict):
+                objects.append(value)
+            start = brace_index + max(end_index, 1)
+
+    @classmethod
+    def _recover_text_tool_blocks(
+        cls,
+        *,
+        text: str,
+        allowed_tool_names: list[str],
+        max_blocks: int = 1,
+    ) -> list[dict[str, Any]]:
+        allowed = set(allowed_tool_names)
+        recovered: list[dict[str, Any]] = []
+        for payload in cls._json_objects_from_text(text):
+            tool_name = payload.get("name")
+            if not isinstance(tool_name, str) or tool_name not in allowed:
+                continue
+            tool_input = payload.get("arguments", payload.get("input", {}))
+            if tool_input is None:
+                tool_input = {}
+            if not isinstance(tool_input, dict):
+                continue
+            recovered.append(
+                {
+                    "type": "tool_use",
+                    "id": f"text_tool_{len(recovered) + 1}",
+                    "name": tool_name,
+                    "input": tool_input,
+                }
+            )
+            if len(recovered) >= max_blocks:
+                break
+        return recovered
+
+    @staticmethod
     def _partition_tool_batches(tool_blocks: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
         batches: list[list[dict[str, Any]]] = []
         current_read_only_batch: list[dict[str, Any]] = []
@@ -621,7 +688,15 @@ class LLMCodeAgent(BaseAgent):
         run_paths.run_dir.mkdir(parents=True, exist_ok=True)
 
         workspace_copy_started_at = perf_counter()
-        copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
+        _test_patch_path = _resolve_test_patch_path(
+            source_repo_path=source_repo_path,
+            source_type=task.source_type,
+        )
+        copy_repo_to_workspace(
+            source_repo_path,
+            run_paths.workspace_dir,
+            test_patch_path=_test_patch_path,
+        )
         workspace_copy_duration_sec = round(perf_counter() - workspace_copy_started_at, 4)
 
         trace = Trace(task_id=task.task_id, run_id=run_id, started_at=self._utc_timestamp())
@@ -1270,6 +1345,15 @@ class LLMCodeAgent(BaseAgent):
             assistant_blocks = self._normalize_assistant_blocks(response)
             assistant_text = self._extract_text(assistant_blocks)
             tool_blocks = self._tool_use_blocks(assistant_blocks)
+            recovered_text_tool_blocks: list[dict[str, Any]] = []
+            if assistant_text and not tool_blocks:
+                recovered_text_tool_blocks = self._recover_text_tool_blocks(
+                    text=assistant_text,
+                    allowed_tool_names=current_tool_names,
+                )
+                if recovered_text_tool_blocks:
+                    assistant_blocks = [*assistant_blocks, *recovered_text_tool_blocks]
+                    tool_blocks = recovered_text_tool_blocks
             llm_response_metrics: dict[str, Any] = {
                 "content_block_count": len(assistant_blocks),
                 "tool_schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
@@ -1278,6 +1362,11 @@ class LLMCodeAgent(BaseAgent):
             }
             if response_total_tokens is not None:
                 llm_response_metrics["llm_total_tokens"] = response_total_tokens
+            if recovered_text_tool_blocks:
+                llm_response_metrics["recovered_text_tool_call_count"] = len(recovered_text_tool_blocks)
+                llm_response_metrics["recovered_text_tool_names"] = [
+                    str(block.get("name", "")) for block in recovered_text_tool_blocks
+                ]
 
             trace.steps.append(
                 TraceStep(
