@@ -91,6 +91,26 @@ class CodeIntelligenceBackend(ABC):
     ) -> CodeIntelligenceResult:
         """Return compact localization candidates for the current workspace."""
 
+    @abstractmethod
+    def search_graph_query(
+        self,
+        *,
+        name_pattern: str,
+        max_results: int = 10,
+    ) -> dict[str, Any]:
+        """Execute a graph search and return structured results.
+
+        Returns a dict with keys:
+          - ok: bool
+          - summary: str
+          - data: dict with 'results' (list of {file, symbol, type, confidence})
+          - error: dict or None
+        """
+
+    @abstractmethod
+    def cleanup(self) -> None:
+        """Release any temporary resources (shadow copies, caches)."""
+
 
 class NullCodeIntelligenceBackend(CodeIntelligenceBackend):
     """Default backend that preserves existing behavior."""
@@ -118,6 +138,26 @@ class NullCodeIntelligenceBackend(CodeIntelligenceBackend):
             },
         )
 
+    def search_graph_query(
+        self,
+        *,
+        name_pattern: str,
+        max_results: int = 10,
+    ) -> dict[str, Any]:
+        return {
+            "ok": False,
+            "tool_name": "search_graph",
+            "summary": "Code intelligence backend is not enabled.",
+            "data": {"results": [], "backend": "none"},
+            "error": {
+                "type": "backend_disabled",
+                "message": "Code intelligence backend is not configured.",
+            },
+        }
+
+    def cleanup(self) -> None:
+        pass
+
 
 @dataclass(slots=True)
 class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
@@ -136,6 +176,12 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
     env: dict[str, str] | None = None
 
     name = "codebase_memory_cli"
+
+    def __post_init__(self) -> None:
+        self._indexed_project: str | None = None
+        self._cached_binary_path: str = ""
+        self._cached_env: dict[str, str] = {}
+        self._shadow_root: Path | None = None
 
     @staticmethod
     def _ignore_shadow_copy_artifacts(src: str, names: list[str]) -> set[str]:
@@ -526,9 +572,25 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
                     compact_hints=compact_hints,
                     metrics=base_metrics,
                 )
+                # Store indexed state so search_graph_query() can query later.
+                self._cached_binary_path = binary_path
+                self._indexed_project = project_name
+                self._cached_env = repo_cache_env
+                self._shadow_root = shadow_root
+                return CodeIntelligenceResult(
+                    backend=self.name,
+                    enabled=True,
+                    available=True,
+                    backend_binary_path=binary_path,
+                    backend_version=version,
+                    fallback_reason="empty_results" if not candidates else "",
+                    candidates=candidates,
+                    compact_hints=compact_hints,
+                    metrics=base_metrics,
+                )
             finally:
                 if shadow_root is not None:
-                    shutil.rmtree(shadow_root, ignore_errors=True)
+                    self._shadow_root = shadow_root
         except subprocess.TimeoutExpired:
             base_metrics["index_success"] = False
             return CodeIntelligenceResult(
@@ -550,6 +612,73 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
                 fallback_reason=f"backend_error:{str(exc)[:160]}",
                 metrics=base_metrics,
             )
+
+    def search_graph_query(
+        self,
+        *,
+        name_pattern: str,
+        max_results: int = 10,
+    ) -> dict[str, Any]:
+        if not self._indexed_project or not self._cached_binary_path:
+            return {
+                "ok": False,
+                "tool_name": "search_graph",
+                "summary": "Graph index is not available.",
+                "data": {"results": [], "backend": self.name},
+                "error": {
+                    "type": "index_not_ready",
+                    "message": "The codebase graph has not been indexed for this run.",
+                },
+            }
+        try:
+            payload, _duration_sec = self._cli_tool(
+                self._cached_binary_path,
+                "search_graph",
+                {
+                    "project": self._indexed_project,
+                    "name_pattern": name_pattern,
+                    "limit": max_results,
+                },
+                env_override=self._cached_env,
+            )
+            results: list[dict[str, Any]] = []
+            for rank, item in enumerate(self._result_items(payload)):
+                candidate_entry = self._candidate_from_item(item, query=name_pattern, rank=rank)
+                if candidate_entry:
+                    results.append({
+                        "file": candidate_entry.relative_path,
+                        "reason": candidate_entry.reason,
+                        "confidence": candidate_entry.confidence,
+                    })
+            match_files = [entry["file"] for entry in results[:5]]
+            return {
+                "ok": True,
+                "tool_name": "search_graph",
+                "summary": f"Graph search for `{name_pattern}` matched {len(results)} results across {len(match_files)} files.",
+                "data": {
+                    "name_pattern": name_pattern,
+                    "result_count": len(results),
+                    "results": results[:max_results],
+                    "match_files": match_files,
+                },
+                "error": None,
+            }
+        except (subprocess.TimeoutExpired, RuntimeError, OSError) as exc:
+            return {
+                "ok": False,
+                "tool_name": "search_graph",
+                "summary": f"Graph search failed: {exc}",
+                "data": {"results": [], "match_files": [], "name_pattern": name_pattern},
+                "error": {
+                    "type": "graph_query_error",
+                    "message": str(exc)[:200],
+                },
+            }
+
+    def cleanup(self) -> None:
+        if self._shadow_root is not None:
+            shutil.rmtree(self._shadow_root, ignore_errors=True)
+            self._shadow_root = None
 
 
 def build_code_intelligence_backend(policy_config: object) -> CodeIntelligenceBackend:

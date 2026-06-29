@@ -751,6 +751,23 @@ class FakeCodeIntelligenceBackend:
             },
         )
 
+    def search_graph_query(self, *, name_pattern, max_results=10):
+        return {
+            "ok": True,
+            "tool_name": "search_graph",
+            "summary": f"Graph search for '{name_pattern}' matched 1 result.",
+            "data": {
+                "name_pattern": name_pattern,
+                "result_count": 1,
+                "results": [{"file": "demo_pkg/graph_hit.py", "reason": "graph_search:Class:GraphHit", "confidence": 0.95}],
+                "match_files": ["demo_pkg/graph_hit.py"],
+            },
+            "error": None,
+        }
+
+    def cleanup(self):
+        pass
+
 
 def test_llm_agent_guided_failure_search_requires_symbols_without_locations() -> None:
     assert LLMCodeAgent._should_run_guided_failure_search(

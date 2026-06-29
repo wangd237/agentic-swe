@@ -13,7 +13,7 @@ MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
     "understand": {"list_files", "grep", "search_code", "read_file", "run_tests"},
     "reproduce": {"grep", "search_code", "run_tests", "read_file", "show_diff"},
-    "localize": {"grep", "search_code", "read_file", "python_repl", "run_tests"},
+    "localize": {"grep", "search_code", "search_graph", "read_file", "python_repl", "run_tests"},
     "patch": {"grep", "search_code", "read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
     "verify": {"run_tests", "show_diff", "read_file", "undo"},
     "final": {"show_diff"},
@@ -131,7 +131,7 @@ def next_phase_after_tool(*, state: AgentState, tool_name: str, tool_result: dic
             return "verify"
         return state.phase
 
-    if tool_name in {"grep", "search_code", "read_file", "python_repl"}:
+    if tool_name in {"grep", "search_code", "search_graph", "read_file", "python_repl"}:
         if state.has_reproduction_evidence and state.localization_candidates:
             return "patch"
         if state.phase == "understand":

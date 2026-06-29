@@ -36,11 +36,13 @@ class ToolExecutor:
         original_repo_path: str | Path,
         policy_config: PolicyConfig,
         test_command: str,
+        code_intelligence_backend: Any | None = None,
     ) -> None:
         self.repo_path = str(repo_path)
         self.original_repo_path = str(original_repo_path)
         self.policy_config = policy_config
         self.test_command = test_command
+        self.code_intelligence_backend = code_intelligence_backend
 
     def execute(self, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
         """执行单次工具调用。"""
@@ -135,6 +137,8 @@ class ToolExecutor:
                 )
             if tool_name == "undo":
                 return self._undo_last_write()
+            if tool_name == "search_graph":
+                return self._execute_search_graph(tool_input)
         except Exception as error:
             return self._tool_error_result(
                 tool_name=tool_name,
@@ -214,6 +218,28 @@ class ToolExecutor:
             "error": None,
         }
 
+    def _execute_search_graph(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        if self.code_intelligence_backend is None:
+            return self._tool_error_result(
+                tool_name="search_graph",
+                tool_input=tool_input,
+                error_type="backend_unavailable",
+                message="Code intelligence backend is not available for graph search.",
+            )
+        name_pattern = str(tool_input.get("name_pattern", "")).strip()
+        if not name_pattern:
+            return self._tool_error_result(
+                tool_name="search_graph",
+                tool_input=tool_input,
+                error_type="invalid_query",
+                message="name_pattern is required for search_graph.",
+            )
+        max_results = int(tool_input.get("max_results", 10))
+        return self.code_intelligence_backend.search_graph_query(
+            name_pattern=name_pattern,
+            max_results=max_results,
+        )
+
     @staticmethod
     def summarize_for_model(result: dict[str, Any], *, max_chars: int) -> str:
         """把工具结果压成适合回喂给模型的文本。"""
@@ -272,7 +298,7 @@ class ToolExecutor:
             }
             return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 8000))
 
-        if tool_name in {"search_code", "grep"} and result.get("ok", False):
+        if tool_name in {"search_code", "grep", "search_graph"} and result.get("ok", False):
             matches = data.get("matches", [])
             payload["data"] = {
                 "query": data.get("query") or data.get("pattern"),

@@ -46,7 +46,7 @@ from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
 
 
-READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "grep", "read_file", "show_diff"}
+READ_ONLY_TOOL_NAMES = {"list_files", "search_code", "search_graph", "grep", "read_file", "show_diff"}
 WRITE_TOOL_NAMES = {"write_file", "edit_file"}
 
 
@@ -600,7 +600,7 @@ class LLMCodeAgent(BaseAgent):
         if tool_name == "read_file":
             relative_path = str(data.get("relative_path") or tool_input.get("relative_path", "")).replace("\\", "/")
             return [f"read_file:{relative_path}"] if relative_path else []
-        if tool_name in {"search_code", "grep"}:
+        if tool_name in {"search_code", "grep", "search_graph"}:
             match_files = [
                 str(path).replace("\\", "/")
                 for path in data.get("match_files", [])[:5]
@@ -792,6 +792,7 @@ class LLMCodeAgent(BaseAgent):
             original_repo_path=source_repo_path,
             policy_config=policy_config,
             test_command=task.test_command,
+            code_intelligence_backend=code_intelligence_backend,
         )
         tool_policy = ToolPolicy()
         system_prompt = build_system_prompt()
@@ -1469,7 +1470,7 @@ class LLMCodeAgent(BaseAgent):
                                 confidence=0.5,
                             )
                             refresh_localization_candidates()
-                    if tool_name in {"search_code", "grep"} and tool_result.get("ok"):
+                    if tool_name in {"search_code", "grep", "search_graph"} and tool_result.get("ok"):
                         query_text = str(
                             tool_result.get("data", {}).get("query")
                             or tool_result.get("data", {}).get("pattern")
@@ -2284,6 +2285,8 @@ class LLMCodeAgent(BaseAgent):
             result_path=run_paths.result_json_path,
         )
         append_strategy_memory(strategy_memory_path, memory_entry)
+
+        code_intelligence_backend.cleanup()
 
         write_json(run_paths.trace_json_path, trace)
         write_json(run_paths.result_json_path, result)

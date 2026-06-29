@@ -179,4 +179,23 @@ def build_tool_definitions() -> list[dict]:
                 "properties": {},
             },
         },
+        {
+            "name": "search_graph",
+            "description": "Query the codebase graph for symbols matching a name pattern. Returns structured results with file paths, symbol names, and confidence scores. Use this when grep/search_code returns too many results or when you need to understand cross-file call relationships.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "name_pattern": {
+                        "type": "string",
+                        "description": "Regex pattern to match symbol names, e.g. '.*hostname.*' or '_bind_to_schema'.",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return.",
+                        "default": 10,
+                    },
+                },
+                "required": ["name_pattern"],
+            },
+        },
     ]
