@@ -1,0 +1,58 @@
+{
+  "task_id": "swe_lite_marshmallow_code_marshmallow_1343",
+  "repo_name": "marshmallow_code_marshmallow",
+  "repo_path": "benchmarks/repos/swebench_lite/marshmallow_code_marshmallow_1343",
+  "issue_title": "SWE-bench Lite: marshmallow-code__marshmallow-1343",
+  "issue_text": "[version 2.20.0] TypeError: 'NoneType' object is not subscriptable\nAfter update from version 2.19.5 to 2.20.0 I got error for code like:\r\n\r\n```python\r\nfrom marshmallow import Schema, fields, validates\r\n\r\n\r\nclass Bar(Schema):\r\n    value = fields.String()\r\n\r\n    @validates('value')  # <- issue here\r\n    def validate_value(self, value):\r\n        pass\r\n\r\n\r\nclass Foo(Schema):\r\n    bar = fields.Nested(Bar)\r\n\r\n\r\nsch = Foo()\r\n\r\nsch.validate({\r\n    'bar': 'invalid',\r\n})\r\n```\r\n\r\n```\r\nTraceback (most recent call last):\r\n  File \"/_/bug_mschema.py\", line 19, in <module>\r\n    'bar': 'invalid',\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/schema.py\", line 628, in validate\r\n    _, errors = self._do_load(data, many, partial=partial, postprocess=False)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/schema.py\", line 670, in _do_load\r\n    index_errors=self.opts.index_errors,\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/marshalling.py\", line 292, in deserialize\r\n    index=(index if index_errors else None)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/marshalling.py\", line 65, in call_and_store\r\n    value = getter_func(data)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/marshalling.py\", line 285, in <lambda>\r\n    data\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/fields.py\", line 265, in deserialize\r\n    output = self._deserialize(value, attr, data)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/fields.py\", line 465, in _deserialize\r\n    data, errors = self.schema.load(value)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/schema.py\", line 588, in load\r\n    result, errors = self._do_load(data, many, partial=partial, postprocess=True)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/schema.py\", line 674, in _do_load\r\n    self._invoke_field_validators(unmarshal, data=result, many=many)\r\n  File \"/_/env/lib/python3.7/site-packages/marshmallow/schema.py\", line 894, in _invoke_field_validators\r\n    value = data[field_obj.attribute or field_name]\r\nTypeError: 'NoneType' object is not subscriptable\r\n```\n\nHints from SWE-bench:\nThanks for reporting. I was able to reproduce this on 2.20.0. This is likely a regression from https://github.com/marshmallow-code/marshmallow/pull/1323 . I don't have time to look into it now. Would appreciate a PR.",
+  "test_command": "python -m pytest -q tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_nested_type_with_validates_method",
+  "success_criteria": "Lightweight smoke run: generate a patch for this SWE-bench Lite instance. Official scoring still requires SWE-bench harness evaluation.",
+  "difficulty": "medium",
+  "tags": [
+    "swe-bench",
+    "swe-bench-lite",
+    "real-issue",
+    "python"
+  ],
+  "target_files_hint": [
+    "src/marshmallow/schema.py"
+  ],
+  "source_type": "swe_bench_lite",
+  "metadata": {
+    "swebench_dataset": "princeton-nlp/SWE-bench_Lite",
+    "swebench_instance_id": "marshmallow-code__marshmallow-1343",
+    "repo_full_name": "marshmallow-code/marshmallow",
+    "base_commit": "2be2d83a1a9a6d3d9b85804f3ab545cecc409bb0",
+    "version": "2.20",
+    "created_at": "2019-08-13T04:36:01Z",
+    "fail_to_pass": [
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_nested_type_with_validates_method"
+    ],
+    "pass_to_pass": [
+      "tests/test_marshalling.py::test_missing_is_falsy",
+      "tests/test_marshalling.py::TestMarshaller::test_prefix",
+      "tests/test_marshalling.py::TestMarshaller::test_marshalling_generator",
+      "tests/test_marshalling.py::TestMarshaller::test_default_to_missing",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_load_only_param",
+      "tests/test_marshalling.py::TestMarshaller::test_missing_data_are_skipped",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_with_load_only_doesnt_validate",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_dump_to_param",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_dump_to_and_prefix_params",
+      "tests/test_marshalling.py::TestMarshaller::test_stores_indices_of_errors_when_many_equals_true",
+      "tests/test_marshalling.py::TestMarshaller::test_doesnt_store_errors_when_index_errors_equals_false",
+      "tests/test_marshalling.py::TestUnmarshaller::test_extra_data_is_ignored",
+      "tests/test_marshalling.py::TestUnmarshaller::test_stores_errors",
+      "tests/test_marshalling.py::TestUnmarshaller::test_stores_indices_of_errors_when_many_equals_true",
+      "tests/test_marshalling.py::TestUnmarshaller::test_doesnt_store_errors_when_index_errors_equals_false",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize",
+      "tests/test_marshalling.py::TestUnmarshaller::test_extra_fields",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_many",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_stores_errors",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_attribute_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_load_from_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_dump_only_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_type_root_data",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_type_nested_data"
+    ],
+    "official_harness_required": true
+  }
+}

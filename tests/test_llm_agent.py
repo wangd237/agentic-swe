@@ -532,6 +532,36 @@ class FakeUnsafeCommandClient:
         }
 
 
+class FakeTextJsonToolClient:
+    def __init__(self) -> None:
+        self._call_count = 0
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "我会先运行测试。\n\n"
+                            "```json\n"
+                            "{\"name\":\"run_tests\",\"arguments\":{\"timeout_sec\":30}}\n"
+                            "```"
+                        ),
+                    }
+                ]
+            }
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "测试已运行，但没有补丁。",
+                }
+            ]
+        }
+
+
 class FakeParallelReadClient:
     def __init__(self) -> None:
         self._call_count = 0
@@ -742,6 +772,92 @@ def test_llm_agent_guided_failure_search_requires_symbols_without_locations() ->
             "guided_search": [{"query": "PersonName"}],
         }
     ) is False
+
+
+def test_llm_agent_recovers_text_json_tool_call_only_for_allowed_tools() -> None:
+    text = (
+        "```json\n"
+        "{\"name\":\"write_file\",\"arguments\":{\"relative_path\":\"demo.py\",\"content\":\"x\"}}\n"
+        "```\n"
+        "```json\n"
+        "{\"name\":\"run_tests\",\"arguments\":{\"timeout_sec\":30}}\n"
+        "```"
+    )
+
+    recovered = LLMCodeAgent._recover_text_tool_blocks(
+        text=text,
+        allowed_tool_names=["run_tests"],
+    )
+
+    assert recovered == [
+        {
+            "type": "tool_use",
+            "id": "text_tool_1",
+            "name": "run_tests",
+            "input": {"timeout_sec": 30},
+        }
+    ]
+
+
+def test_llm_agent_executes_recovered_text_json_tool_call(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["tests/test_app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "llm_model": "fake-model",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=2),
+        client=FakeTextJsonToolClient(),
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    assert output["trace"]["total_tool_calls"] == 1
+    assert output["result"]["pre_test_exit_code"] == 0
+    llm_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "llm_response"
+    ]
+    assert llm_steps[0]["tool_metrics"]["recovered_text_tool_call_count"] == 1
+    assert llm_steps[0]["tool_metrics"]["recovered_text_tool_names"] == ["run_tests"]
 
 
 def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
@@ -2590,11 +2706,27 @@ def test_llm_config_uses_policy_env_names(monkeypatch: pytest.MonkeyPatch) -> No
     config = LLMConfig.from_policy(policy)
 
     assert config.provider == "openai_compatible"
-    assert config.model == "policy-model"
+    assert config.model == "custom-model-from-env"
     assert config.api_key_env == "CUSTOM_API_KEY"
     assert config.base_url_env == "CUSTOM_BASE_URL"
     assert config.model_env == "CUSTOM_MODEL_ENV"
     assert config.default_base_url == "https://example.test/v1"
+
+
+def test_llm_config_uses_policy_model_when_model_env_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CUSTOM_MODEL_ENV", raising=False)
+    policy = PolicyConfig(
+        policy_id="llm_custom_provider",
+        description="custom provider",
+        agent_type="llm",
+        llm_provider="openai_compatible",
+        llm_model="policy-model",
+        llm_model_env="CUSTOM_MODEL_ENV",
+    )
+
+    config = LLMConfig.from_policy(policy)
+
+    assert config.model == "policy-model"
 
 
 def test_llm_config_uses_policy_max_steps() -> None:
@@ -2606,6 +2738,7 @@ def test_llm_config_uses_policy_max_steps() -> None:
         llm_provider="openai_compatible",
         llm_max_context_chars=1234,
         llm_timeout_sec=180,
+        llm_client_max_retries=0,
     )
 
     config = LLMConfig.from_policy(policy)
@@ -2613,6 +2746,7 @@ def test_llm_config_uses_policy_max_steps() -> None:
     assert config.max_iterations == 3
     assert config.max_context_chars == 1234
     assert config.timeout_sec == 180
+    assert config.client_max_retries == 0
 
 
 def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -2635,6 +2769,7 @@ def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) 
             api_key_env="CUSTOM_API_KEY",
             base_url_env="CUSTOM_BASE_URL",
             timeout_sec=180,
+            client_max_retries=0,
         )
     )
 
@@ -2643,6 +2778,7 @@ def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) 
     assert observed["api_key"] == "secret"
     assert observed["base_url"] == "https://example.test/v1"
     assert observed["timeout"] == 180
+    assert observed["max_retries"] == 0
 
 
 def test_llm_config_default_iterations_match_target2_budget() -> None:

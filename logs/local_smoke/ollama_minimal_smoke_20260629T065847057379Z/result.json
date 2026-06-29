@@ -1,0 +1,82 @@
+{
+  "smoke_id": "ollama_minimal_smoke_20260629T065847057379Z",
+  "task_id": "task_010",
+  "repo_name": "rich_ansi_repo",
+  "model": "qwen2.5-coder:7b-instruct-q4_k_m",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "llm_timeout_sec": 240,
+  "test_timeout_sec": 60,
+  "max_chars_per_file": 6000,
+  "candidate_files": [
+    "rich_ansi_repo/ansi.py"
+  ],
+  "hint_files_read": [
+    "rich_ansi_repo/ansi.py",
+    "tests/test_ansi.py"
+  ],
+  "duration_sec": 19.7184,
+  "pre_test": {
+    "command": "python -m pytest tests/test_ansi.py -q",
+    "exit_code": 1,
+    "duration_sec": 1.0108,
+    "stdout_tail": "F..                                                                      [100%]\n================================== FAILURES ===================================\n____________ AnsiDecodeTests.test_crlf_line_endings_are_preserved _____________\n\nself = <test_ansi.AnsiDecodeTests testMethod=test_crlf_line_endings_are_preserved>\n\n    def test_crlf_line_endings_are_preserved(self) -> None:\n        # 这里接受统一归一化到 LF，只要不要退化成空白行即可。\n>       self.assertEqual(Text.from_ansi(\"Hello\\r\\nWorld\\r\\n\").plain, \"Hello\\nWorld\\n\")\nE       AssertionError: '\\n\\n' != 'Hello\\nWorld\\n'\nE       - \nE       - \nE       + Hello\nE       + World\n\n..\\..\\..\\..\\benchmarks\\repos\\rich_ansi_repo\\tests\\test_ansi.py:19: AssertionError\n=========================== short test summary info ===========================\nFAILED tests\\test_ansi.py::AnsiDecodeTests::test_crlf_line_endings_are_preserved\n1 failed, 2 passed in 0.08s\n",
+    "stderr_tail": "D:\\Apps\\Conda\\Lib\\site-packages\\requests\\__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!\n  warnings.warn(\n"
+  },
+  "llm": {
+    "ok": true,
+    "duration_sec": 17.6326,
+    "call_count": 1,
+    "usage": {
+      "prompt_tokens": 762,
+      "completion_tokens": 47,
+      "total_tokens": 809
+    },
+    "assistant_text": "{\n  \"relative_path\": \"rich_ansi_repo/ansi.py\",\n  \"old_string\": \"if not line:\\n                continue\",\n  \"new_string\": \"if not line.strip():\\n                continue\"\n}",
+    "error": null,
+    "calls": [
+      {
+        "ok": true,
+        "duration_sec": 17.6326,
+        "usage": {
+          "prompt_tokens": 762,
+          "completion_tokens": 47,
+          "total_tokens": 809
+        },
+        "error": null
+      }
+    ]
+  },
+  "patch_payload": {
+    "relative_path": "rich_ansi_repo/ansi.py",
+    "old_string": "if not line:\n                continue",
+    "new_string": "if not line.strip():\n                continue"
+  },
+  "apply_result": {
+    "ok": true,
+    "relative_path": "rich_ansi_repo/ansi.py",
+    "old_string": "if not line:\n                continue",
+    "new_string": "if not line.strip():\n                continue"
+  },
+  "post_test": {
+    "command": "python -m pytest tests/test_ansi.py -q",
+    "exit_code": 1,
+    "duration_sec": 1.0645,
+    "stdout_tail": "F..                                                                      [100%]\n================================== FAILURES ===================================\n____________ AnsiDecodeTests.test_crlf_line_endings_are_preserved _____________\n\nself = <test_ansi.AnsiDecodeTests testMethod=test_crlf_line_endings_are_preserved>\n\n    def test_crlf_line_endings_are_preserved(self) -> None:\n        # 这里接受统一归一化到 LF，只要不要退化成空白行即可。\n>       self.assertEqual(Text.from_ansi(\"Hello\\r\\nWorld\\r\\n\").plain, \"Hello\\nWorld\\n\")\nE       AssertionError: '\\n\\n' != 'Hello\\nWorld\\n'\nE       - \nE       - \nE       + Hello\nE       + World\n\n..\\..\\..\\..\\benchmarks\\repos\\rich_ansi_repo\\tests\\test_ansi.py:19: AssertionError\n=========================== short test summary info ===========================\nFAILED tests\\test_ansi.py::AnsiDecodeTests::test_crlf_line_endings_are_preserved\n1 failed, 2 passed in 0.06s\n",
+    "stderr_tail": "D:\\Apps\\Conda\\Lib\\site-packages\\requests\\__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!\n  warnings.warn(\n"
+  },
+  "diff": {
+    "diff": "--- a/rich_ansi_repo/ansi.py\n+++ b/rich_ansi_repo/ansi.py\n@@ -21,7 +21,7 @@\n     def decode_text(self, terminal_text: str) -> str:\n         parts: list[str] = []\n         for line in re.split(r\"(?<=\\n)\", terminal_text):\n-            if not line:\n+            if not line.strip():\n                 continue\n             has_newline = line.endswith(\"\\n\")\n             decoded_line = self.decode_line(line.rstrip(\"\\n\"))\n",
+    "diff_chars": 417,
+    "changed_files": [
+      "rich_ansi_repo/ansi.py"
+    ]
+  },
+  "accepted": false,
+  "paths": {
+    "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065847057379Z",
+    "workspace": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065847057379Z\\workspace",
+    "result_json": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065847057379Z\\result.json",
+    "summary_md": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065847057379Z\\summary.md"
+  }
+}

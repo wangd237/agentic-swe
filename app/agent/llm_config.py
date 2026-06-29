@@ -24,6 +24,7 @@ class LLMConfig(BaseModel):
     max_tool_chars: int = 4000
     max_context_chars: int = 80000
     timeout_sec: float = 60.0
+    client_max_retries: int = 2
     temperature: float = 0.0
 
     @staticmethod
@@ -50,7 +51,7 @@ class LLMConfig(BaseModel):
 
         provider = getattr(policy_config, "llm_provider", None) or cls().provider
         model_env = getattr(policy_config, "llm_model_env", None) or cls().model_env
-        model = getattr(policy_config, "llm_model", None) or os.environ.get(model_env, "").strip() or cls().model
+        model = os.environ.get(model_env, "").strip() or getattr(policy_config, "llm_model", None) or cls().model
         return cls(
             provider=provider,
             model=model,
@@ -69,6 +70,9 @@ class LLMConfig(BaseModel):
             or cls().max_context_chars,
             timeout_sec=getattr(policy_config, "llm_timeout_sec", None)
             or cls().timeout_sec,
+            client_max_retries=getattr(policy_config, "llm_client_max_retries", None)
+            if getattr(policy_config, "llm_client_max_retries", None) is not None
+            else cls().client_max_retries,
         )
 
     def require_api_key(self) -> str:

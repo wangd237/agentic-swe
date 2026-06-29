@@ -1,0 +1,87 @@
+{
+  "smoke_id": "ollama_minimal_smoke_20260629T065737002877Z",
+  "task_id": "task_008",
+  "repo_name": "requests_encoding_repo",
+  "model": "qwen2.5-coder:7b-instruct-q4_k_m",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "max_tokens": 512,
+  "llm_timeout_sec": 240,
+  "test_timeout_sec": 60,
+  "max_chars_per_file": 5000,
+  "candidate_files": [
+    "requests_encoding_repo/utils.py"
+  ],
+  "hint_files_read": [
+    "requests_encoding_repo/utils.py",
+    "tests/test_utils.py"
+  ],
+  "duration_sec": 30.668,
+  "pre_test": {
+    "command": "python -m pytest tests/test_utils.py -q",
+    "exit_code": 1,
+    "duration_sec": 1.0182,
+    "stdout_tail": "FF.                                                                      [100%]\n================================== FAILURES ===================================\n_________ HeaderEncodingTests.test_double_quoted_charset_is_detected __________\n\nself = <test_utils.HeaderEncodingTests testMethod=test_double_quoted_charset_is_detected>\n\n    def test_double_quoted_charset_is_detected(self) -> None:\n        headers = {\"Content-Type\": 'text/html; charset=\"utf-8\"'}\n>       self.assertEqual(get_encoding_from_headers(headers), \"utf-8\")\nE       AssertionError: None != 'utf-8'\n\ntests\\test_utils.py:17: AssertionError\n_________ HeaderEncodingTests.test_single_quoted_charset_is_detected __________\n\nself = <test_utils.HeaderEncodingTests testMethod=test_single_quoted_charset_is_detected>\n\n    def test_single_quoted_charset_is_detected(self) -> None:\n        headers = {\"Content-Type\": \"text/html; charset='utf-8'\"}\n>       self.assertEqual(get_encoding_from_headers(headers), \"utf-8\")\nE       AssertionError: None != 'utf-8'\n\ntests\\test_utils.py:21: AssertionError\n=========================== short test summary info ===========================\nFAILED tests\\test_utils.py::HeaderEncodingTests::test_double_quoted_charset_is_detected\nFAILED tests\\test_utils.py::HeaderEncodingTests::test_single_quoted_charset_is_detected\n2 failed, 1 passed in 0.06s\n",
+    "stderr_tail": "D:\\Apps\\Conda\\Lib\\site-packages\\requests\\__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!\n  warnings.warn(\n"
+  },
+  "llm": {
+    "ok": true,
+    "duration_sec": 29.6489,
+    "call_count": 2,
+    "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "last_call": {
+        "prompt_tokens": 697,
+        "completion_tokens": 76,
+        "total_tokens": 773
+      }
+    },
+    "assistant_text": "{\n  \"relative_path\": \"requests_encoding_repo/utils.py\",\n  \"old_string\": \"if value.startswith('\"') or value.startswith(\\\"'\\\"):\",\n  \"new_string\": \"if (value[0] == '\\\"' and value[-1] == '\\\"') or (value[0] == \\\"'\\\" and value[-1] == \\\"'\\\"):\"\n}",
+    "error": null,
+    "calls": [
+      {
+        "ok": true,
+        "duration_sec": 15.2142,
+        "usage": {
+          "prompt_tokens": 503,
+          "completion_tokens": 52,
+          "total_tokens": 555
+        },
+        "error": null
+      },
+      {
+        "ok": true,
+        "duration_sec": 14.4347,
+        "usage": {
+          "prompt_tokens": 697,
+          "completion_tokens": 76,
+          "total_tokens": 773
+        },
+        "error": null
+      }
+    ]
+  },
+  "patch_payload": null,
+  "apply_result": {
+    "ok": false,
+    "reason": "invalid_patch_schema",
+    "relative_path": "",
+    "allowed_paths": [
+      "requests_encoding_repo/utils.py"
+    ]
+  },
+  "post_test": null,
+  "diff": {
+    "diff": "",
+    "diff_chars": 0,
+    "changed_files": []
+  },
+  "accepted": false,
+  "paths": {
+    "run_dir": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065737002877Z",
+    "workspace": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065737002877Z\\workspace",
+    "result_json": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065737002877Z\\result.json",
+    "summary_md": "E:\\My_Projects\\agentic-software-engineering-roadmap\\logs\\local_smoke\\ollama_minimal_smoke_20260629T065737002877Z\\summary.md"
+  }
+}

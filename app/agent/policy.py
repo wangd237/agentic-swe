@@ -28,6 +28,7 @@ class PolicyConfig(BaseModel):
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None
     llm_timeout_sec: float | None = None
+    llm_client_max_retries: int | None = None
     pytest_additional_flags: list[str] = []
     code_intelligence_backend: str = "none"
     codebase_memory_binary: str = "codebase-memory-mcp"
