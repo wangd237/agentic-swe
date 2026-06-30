@@ -1347,3 +1347,59 @@ acceptance recheck: logs\summaries\code_intelligence_runs_v16_frozen15_public_ex
 ### Gate 调整记录
 
 `scripts/summarize_code_intelligence_runs.py:553` — `tool_calls_not_increased_on_average` 阈值从 `<= 0` 放宽至 `<= 0.5`，因为 +0.125 是单次 LLM 运行方差（limit=1 时 task_006 为 0 delta），非 graph hints 系统性开销。测试 13/13 通过。
+
+## v16.6 search_graph agent tool（完成，待更强模型激活）
+
+### 目标
+
+将 graph 从 "harness 前置注入" 升级为 "agent 可主动调用的 tool"。Agent 在 LOCALIZE 阶段可以调用 `search_graph(name_pattern)` 查询代码结构图。
+
+### 已完成的基础设施
+
+| 组件 | 状态 |
+|---|---|
+| `CodeIntelligenceBackend.search_graph_query()` | 完成 |
+| `NullCodeIntelligenceBackend` fallback（backend=none 时不破坏） | 完成 |
+| `CodebaseMemoryCliBackend` 存储索引后状态供后续查询 | 完成 |
+| Shadow copy 清理推迟到 `backend.cleanup()` | 完成 |
+| `search_graph` tool schema in `tool_definitions.py` | 完成 |
+| Phase gate：LOCALIZE + REPRODUCE 阶段可用 | 完成 |
+| 速率限制：单次 run 最多 3 次 search_graph | 完成 |
+| System prompt 引导：软建议 → 硬规则 → few-shot 示例 | 完成 |
+| 10 个 SWE-bench Lite 任务导入 + clone | 完成 |
+| `copy_repo_to_workspace` 自动 test.patch + pip install | 完成 |
+
+### 4 轮 prompt 干预效果
+
+| 版本 | 干预方式 | search_graph 调用次数 |
+|---|---|---|
+| v16.6.0 | tool schema 存在，无 prompt 引导 | 0 |
+| v16.6.1 | 软建议："当文本搜索结果太多时尝试" | 0 |
+| v16.6.2 | 硬规则："必须调用" + 4 个触发条件 | 0 |
+| v16.6.3 | few-shot：具体调用示例 + 返回格式 | 0 |
+
+**共计 28 次 agent run，search_graph 被调用 0 次。** 模型 (deepseek-v4-pro) 不具备探索新 tool 的行为倾向。
+
+### 量化证据（harness graph hints 仍然有效）
+
+A/B 对比 6 个 SWE-bench 任务（baseline vs graph backend）：
+
+| 指标 | Delta |
+|---|---|
+| Total tool calls | -14.7% |
+| Grep | -26.7% |
+| SearchCode | -29.4% |
+| ReadFile | -16.2% |
+| LLM calls | -7.0% |
+| Success rate | 持平 (3/6) |
+
+Graph 的 harness 前置 hints 有效降低了文本搜索成本。Agent 主动调用 graph 的能力已建好，等待更强模型。
+
+### 判定
+
+```
+search_graph infrastructure: complete (82 tests passed)
+search_graph agent active usage: blocked by model behavior
+recommendation: activate when using Claude Opus / GPT-5.4 / or other
+  model that naturally explores new tools
+````
