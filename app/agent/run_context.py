@@ -90,24 +90,26 @@ class RunContext:
         )
 
     def record_phase_milestone(self, phase: str, *, summary: str, evidence: dict | None = None) -> None:
+        from app.schemas.trace_schema import TraceStep
+
         if phase in self.recorded_phase_milestones:
             return
         self.recorded_phase_milestones.add(phase)
         self.trace.steps.append(
-            {
-                "step_index": len(self.trace.steps) + 1,
-                "action_type": "phase_milestone",
-                "tool_name": None,
-                "tool_input": evidence or {},
-                "tool_output_summary": summary,
-                "observation": summary,
-                "decision": f"Phase evidence satisfied, recording {phase.upper()} milestone.",
-                "phase": phase,
-                "state_snapshot": self.agent_state.snapshot(),
-                "evidence_ids": [f"phase:{phase}"],
-                "verification_strength": self.agent_state.verification_strength,
-                "tool_metrics": {"phase": phase},
-            }
+            TraceStep(
+                step_index=len(self.trace.steps) + 1,
+                action_type="phase_milestone",
+                tool_name=None,
+                tool_input=evidence or {},
+                tool_output_summary=summary,
+                observation=summary,
+                decision=f"Phase evidence satisfied, recording {phase.upper()} milestone.",
+                phase=phase,
+                state_snapshot=self.agent_state.snapshot(),
+                evidence_ids=[f"phase:{phase}"],
+                verification_strength=self.agent_state.verification_strength,
+                tool_metrics={"phase": phase},
+            )
         )
 
     def refresh_localization_candidates(self) -> None:
@@ -399,10 +401,13 @@ class RunContext:
                 state_snapshot=self.agent_state.snapshot(),
                 verification_strength=self.agent_state.verification_strength,
                 duration_sec=duration_sec,
+                tool_metrics={
+                    "ok": tool_result.get("ok", False),
+                },
             )
         )
 
-
+    def execute_tool_block_or_skip(self, block: dict[str, Any]) -> dict[str, Any]:
         tool_name = block["name"]
         tool_input = block.get("input", {})
         if (
@@ -505,31 +510,35 @@ class RunContext:
         )
 
 
-        self.messages = ctx._microcompact_messages(
+    def compress_context_if_needed(self, reason: str) -> None:
+        from app.agent.llm_agent import LLMCodeAgent
+        from app.schemas.trace_schema import TraceStep
+
+        self.messages = LLMCodeAgent._microcompact_messages(
             self.messages, max_chars=self.llm_config.max_tool_chars
         )
-        self.messages, compressed, before_chars, after_chars = ctx._compress_messages_if_needed(
+        self.messages, compressed, before_chars, after_chars = LLMCodeAgent._compress_messages_if_needed(
             self.messages,
             max_context_chars=self.llm_config.max_context_chars,
         )
         if not compressed:
             return
         self.trace.steps.append(
-            {
-                "step_index": len(self.trace.steps) + 1,
-                "action_type": "context_compression",
-                "tool_name": None,
-                "tool_input": {"reason": reason},
-                "tool_output_summary": f"Context compressed from {before_chars} to {after_chars} chars.",
-                "observation": "Old messages summarized, keeping initial input and recent conversation.",
-                "decision": "Continue LLM loop, avoid exceeding context threshold.",
-                "phase": self.agent_state.phase,
-                "state_snapshot": self.agent_state.snapshot(),
-                "verification_strength": self.agent_state.verification_strength,
-                "tool_metrics": {
+            TraceStep(
+                step_index=len(self.trace.steps) + 1,
+                action_type="context_compression",
+                tool_name=None,
+                tool_input={"reason": reason},
+                tool_output_summary=f"Context compressed from {before_chars} to {after_chars} chars.",
+                observation="Old messages summarized, keeping initial input and recent conversation.",
+                decision="Continue LLM loop, avoid exceeding context threshold.",
+                phase=self.agent_state.phase,
+                state_snapshot=self.agent_state.snapshot(),
+                verification_strength=self.agent_state.verification_strength,
+                tool_metrics={
                     "before_chars": before_chars,
                     "after_chars": after_chars,
                     "max_context_chars": self.llm_config.max_context_chars,
                 },
-            }
+            )
         )

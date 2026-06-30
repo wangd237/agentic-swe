@@ -867,6 +867,28 @@ class LLMCodeAgent(BaseAgent):
             }
         ]
 
+        from app.agent.run_context import RunContext
+        ctx = RunContext(
+            task=task,
+            policy_config=policy_config,
+            agent_state=agent_state,
+            trace=trace,
+            run_paths=run_paths,
+            code_intelligence_backend=code_intelligence_backend,
+            tool_executor=tool_executor,
+            tool_policy=tool_policy,
+            repository_root=repository_root,
+            source_repo_path=source_repo_path,
+            system_prompt=system_prompt,
+            strategy_memory_path=strategy_memory_path,
+            messages=messages,
+            latest_failure_summary=latest_failure_summary,
+            search_match_files=search_match_files,
+            searched_queries=searched_queries,
+            llm_config=self.llm_config,
+            client=self.client,
+        )
+
         final_summary = ""
         final_status = "incomplete"
         last_test_exit_code: int | None = None
