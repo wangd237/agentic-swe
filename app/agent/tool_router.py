@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.agent.code_intelligence import CodeIntelligenceBackend, CodeIntelligenceResult
+from app.agent.code_intelligence import CodeIntelligenceBackend
 from app.agent.memory import AgentState, PhaseName
 from app.agent.tool_definitions import build_tool_definitions
 from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy
