@@ -124,7 +124,285 @@ class RunContext:
             )
         )
 
-    def execute_tool_block_or_skip(self, block: dict[str, Any]) -> dict[str, Any]:
+    def run_immediate_auto_verification(self) -> str:
+        from time import perf_counter
+        from app.agent.verification import build_targeted_pytest_command, strength_after_test
+        from app.agent.reflector import reflect_after_failed_verification, build_reflection_message
+        from app.agent.memory import FailureSignature
+        from app.agent.tool_executor import ToolExecutor
+
+        diff_input = {"source": "immediate_auto_verification"}
+        diff_started_at = perf_counter()
+        diff_result_for_model = self.tool_executor.execute("show_diff", diff_input)
+        diff_duration_sec = round(perf_counter() - diff_started_at, 4)
+        if diff_result_for_model.get("ok"):
+            self.agent_state.remember_diff_observed()
+        self._append_tool_trace_step(
+            tool_name="show_diff",
+            tool_input=diff_input,
+            tool_result=diff_result_for_model,
+            duration_sec=diff_duration_sec,
+            decision="Show diff immediately after write.",
+        )
+
+        targeted_result_for_model: dict[str, Any] | None = None
+        targeted_command = build_targeted_pytest_command(
+            base_command=self.task.test_command,
+            failure_summary=self.latest_failure_summary,
+        )
+        if targeted_command:
+            targeted_input = {
+                "timeout_sec": 120,
+                "command": targeted_command,
+                "verification_scope": "targeted",
+                "source": "immediate_auto_verification",
+            }
+            targeted_started_at = perf_counter()
+            previous_test_command = self.tool_executor.test_command
+            self.tool_executor.test_command = targeted_command
+            try:
+                targeted_result_for_model = self.tool_executor.execute("run_tests", targeted_input)
+            finally:
+                self.tool_executor.test_command = previous_test_command
+            targeted_duration_sec = round(perf_counter() - targeted_started_at, 4)
+            self._append_tool_trace_step(
+                tool_name="run_tests",
+                tool_input=targeted_input,
+                tool_result=targeted_result_for_model,
+                duration_sec=targeted_duration_sec,
+                decision="Run targeted test after write.",
+            )
+            self.agent_state.verification_strength = strength_after_test(
+                current=self.agent_state.verification_strength,
+                exit_code=targeted_result_for_model.get("data", {}).get("exit_code"),
+                workspace_generation=0,
+                command_source=str(self.task.metadata.get("test_command_source", "")),
+            )
+
+        tool_input = {"timeout_sec": 120, "verification_scope": "full", "source": "immediate_auto_verification"}
+        tool_started_at = perf_counter()
+        tool_result = self.tool_executor.execute("run_tests", tool_input)
+        tool_duration_sec = round(perf_counter() - tool_started_at, 4)
+        self.last_test_exit_code = tool_result.get("data", {}).get("exit_code")
+        self.last_test_summary = tool_result.get("summary", "")
+        self.post_test_exit_code = self.last_test_exit_code
+        self.post_test_summary = self.last_test_summary
+        self.verified_generation = self.workspace_generation
+        self.last_full_verified_generation = self.workspace_generation
+        self.last_full_verified_exit_code = self.last_test_exit_code
+        self.pending_auto_verification = False
+        self.agent_state.has_reproduction_evidence = True
+        if self.agent_state.reproduction_evidence_kind != "weak_static":
+            self.agent_state.reproduction_evidence_kind = "test"
+        self.record_phase_milestone(
+            "reproduce",
+            summary="Auto run_tests provided reproduction or verification evidence.",
+            evidence={"exit_code": self.last_test_exit_code, "workspace_generation": self.workspace_generation},
+        )
+        self.agent_state.verification_strength = strength_after_test(
+            current=self.agent_state.verification_strength,
+            exit_code=self.last_test_exit_code,
+            workspace_generation=self.workspace_generation,
+            command_source=str(self.task.metadata.get("test_command_source", "")),
+        )
+        failure_summary = tool_result.get("data", {}).get("failure_summary")
+        if failure_summary:
+            if self.last_test_exit_code not in {0, None}:
+                self.run_guided_failure_search(failure_summary, source="immediate_auto_verification")
+            self.latest_failure_summary = failure_summary
+            self.agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
+            self.refresh_localization_candidates()
+        if self.last_test_exit_code not in {0, None}:
+            self._inject_context_diff_into_failure(
+                tool_result=tool_result,
+                diff_result=diff_result_for_model,
+                max_chars=self.llm_config.max_tool_chars,
+            )
+        if self.last_test_exit_code == 0 and self.workspace_generation > 0:
+            self.record_phase_milestone(
+                "verify",
+                summary="Auto full run_tests passed, verification evidence recorded.",
+                evidence={"exit_code": self.last_test_exit_code, "workspace_generation": self.workspace_generation},
+            )
+        self._append_tool_trace_step(
+            tool_name="run_tests",
+            tool_input=tool_input,
+            tool_result=tool_result,
+            duration_sec=tool_duration_sec,
+            decision="Auto run_tests after write; results fed back to model.",
+        )
+
+        auto_reflection_message = ""
+        if self.last_test_exit_code not in {0, None}:
+            changed_files = diff_result_for_model.get("data", {}).get("changed_files", [])
+            reflection_decision = reflect_after_failed_verification(
+                state=self.agent_state,
+                previous_failure_signature=self.last_failure_signature_before_patch,
+                current_failure_signature=self.agent_state.failure_signature,
+                changed_files=changed_files,
+                max_patch_files=self.policy_config.max_patch_files,
+            )
+            self.agent_state.phase = reflection_decision.next_phase
+            auto_reflection_message = build_reflection_message(reflection_decision)
+            if reflection_decision.should_undo:
+                undo_result = self.auto_undo_after_reflection(reflection_decision.likely_cause)
+                auto_reflection_message += (
+                    "\n\nAUTO_UNDO_RESULT:\n"
+                    f"{ToolExecutor.summarize_for_model(undo_result, max_chars=self.llm_config.max_tool_chars)}"
+                )
+
+        auto_verification_parts = [
+            "IMMEDIATE_AUTO_VERIFICATION: show_diff and run_tests executed automatically after write.",
+            "show_diff:\n"
+            f"{ToolExecutor.summarize_for_model(diff_result_for_model, max_chars=self.llm_config.max_tool_chars)}",
+        ]
+        if targeted_result_for_model:
+            auto_verification_parts.append(
+                "targeted_run_tests:\n"
+                f"{ToolExecutor.summarize_for_model(targeted_result_for_model, max_chars=self.llm_config.max_tool_chars)}"
+            )
+        auto_verification_parts.append(
+            "run_tests:\n"
+            f"{ToolExecutor.summarize_for_model(tool_result, max_chars=self.llm_config.max_tool_chars)}"
+        )
+        if auto_reflection_message:
+            auto_verification_parts.append(auto_reflection_message)
+        return "\n\n" + "\n\n".join(auto_verification_parts)
+
+    @staticmethod
+    def _inject_context_diff_into_failure(
+        *,
+        tool_result: dict[str, Any],
+        diff_result: dict[str, Any],
+        max_chars: int,
+    ) -> None:
+        failure_summary = tool_result.get("data", {}).get("failure_summary")
+        if not failure_summary or tool_result.get("ok", False):
+            return
+        diff_text = diff_result.get("data", {}).get("diff_text", "")
+        if not diff_text:
+            return
+        if len(diff_text) > max_chars:
+            diff_text = f"{diff_text[:max_chars]}\n...<truncated>"
+        failure_summary["context_diff"] = diff_text
+        failure_summary["context_diff_changed_files"] = diff_result.get("data", {}).get("changed_files", [])
+
+    def run_guided_failure_search(self, failure_summary: dict[str, Any] | None, *, source: str) -> None:
+        if not self._should_run_guided_failure_search(failure_summary):
+            return
+        from time import perf_counter
+
+        assert failure_summary is not None
+        guided_results: list[dict[str, Any]] = []
+        symbols = [str(item).strip() for item in failure_summary.get("possible_symbols", [])][:3]
+        skipped_symbols: list[dict[str, str]] = []
+        for symbol in symbols:
+            if not symbol:
+                continue
+            normalized_symbol = symbol.casefold()
+            already_covered = any(
+                normalized_symbol in query or query in normalized_symbol
+                for query in self.searched_queries
+            )
+            if already_covered:
+                skipped_symbols.append({"query": symbol, "reason": "already_searched"})
+                continue
+            tool_input = {"query": symbol, "source": source, "automatic": True}
+            self.searched_queries.add(normalized_symbol)
+            started_at = perf_counter()
+            search_result = self.tool_executor.execute("search_code", tool_input)
+            duration_sec = round(perf_counter() - started_at, 4)
+            match_files = [
+                str(path).replace("\\", "/")
+                for path in search_result.get("data", {}).get("match_files", [])[:5]
+            ]
+            guided_results.append({
+                "query": symbol,
+                "match_count": search_result.get("data", {}).get("match_count", 0),
+                "match_files": match_files,
+                "matches": search_result.get("data", {}).get("matches", [])[:5],
+            })
+            for relative_path in match_files:
+                if relative_path and relative_path not in self.search_match_files:
+                    self.search_match_files.append(relative_path)
+                if relative_path:
+                    self.agent_state.remember_candidate(
+                        relative_path,
+                        reason="guided_failure_search",
+                        evidence=f"run_tests exception symbol `{symbol}` matched this file.",
+                        confidence=0.6,
+                    )
+            self._append_tool_trace_step(
+                tool_name="search_code",
+                tool_input=tool_input,
+                tool_result=search_result,
+                duration_sec=duration_sec,
+                decision="Auto search for possible symbols after test failure.",
+            )
+        if guided_results:
+            failure_summary["guided_search"] = guided_results
+            self.refresh_localization_candidates()
+        if skipped_symbols:
+            failure_summary["guided_search_skipped"] = skipped_symbols
+
+    @staticmethod
+    def _should_run_guided_failure_search(failure_summary: dict[str, Any] | None) -> bool:
+        if not failure_summary:
+            return False
+        if failure_summary.get("locations"):
+            return False
+        if failure_summary.get("guided_search"):
+            return False
+        return bool(failure_summary.get("possible_symbols"))
+
+    def auto_undo_after_reflection(self, reason: str) -> dict[str, Any]:
+        from time import perf_counter
+
+        undo_started_at = perf_counter()
+        undo_result = self.tool_executor.execute("undo", {})
+        undo_duration_sec = round(perf_counter() - undo_started_at, 4)
+        if undo_result.get("ok"):
+            self.workspace_generation += 1
+            self.agent_state.remember_workspace_write()
+            self.pending_auto_verification = False
+            self.agent_state.modified_files = []
+        self._append_tool_trace_step(
+            tool_name="undo",
+            tool_input={"reason": reason, "automatic": True},
+            tool_result=undo_result,
+            duration_sec=undo_duration_sec,
+            decision="Reflection decided to undo recent patch; executing automatically.",
+        )
+        return undo_result
+
+    def _append_tool_trace_step(
+        self,
+        *,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        tool_result: dict[str, Any],
+        duration_sec: float,
+        decision: str,
+    ) -> None:
+        from app.schemas.trace_schema import TraceStep
+
+        self.trace.steps.append(
+            TraceStep(
+                step_index=len(self.trace.steps) + 1,
+                action_type="tool_call",
+                tool_name=tool_name,
+                tool_input=tool_input,
+                tool_output_summary=tool_result.get("summary", ""),
+                observation=str(tool_result),
+                decision=decision,
+                phase=self.agent_state.phase,
+                state_snapshot=self.agent_state.snapshot(),
+                verification_strength=self.agent_state.verification_strength,
+                duration_sec=duration_sec,
+            )
+        )
+
+
         tool_name = block["name"]
         tool_input = block.get("input", {})
         if (
