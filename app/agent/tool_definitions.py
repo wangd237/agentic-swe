@@ -23,7 +23,7 @@ def build_tool_definitions() -> list[dict]:
         },
         {
             "name": "search_graph",
-            "description": "【推荐优先使用】查询代码结构图，返回按置信度排序的符号定义位置。当需要定位函数/类/方法的定义位置，或跨文件调用关系时，优先使用 search_graph 而非 grep。",
+            "description": "搜索代码结构图，返回符号（函数/类/方法/变量）的定义位置及置信度。优先于 grep 使用。",
             "input_schema": {
                 "type": "object",
                 "properties": {

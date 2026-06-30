@@ -17,5 +17,11 @@
   "pytest_additional_flags": [
     "-p no:unraisableexception",
     "-p no:threadexception"
-  ]
+  ],
+  "code_intelligence_backend": "codebase_memory_cli",
+  "codebase_memory_binary": ".tools/codebase-memory-mcp/codebase-memory-mcp.exe",
+  "codebase_memory_index_mode": "fast",
+  "codebase_memory_always_shadow_copy": true,
+  "code_intelligence_timeout_sec": 30.0,
+  "code_intelligence_max_results": 5
 }
