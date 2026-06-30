@@ -81,9 +81,16 @@ FINAL         输出 result / trace / patch / verification summary
 
 - 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo、**代码结构搜索（search_graph）** 等。
 - 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
+- 工具属性（只读、并发安全、写入）在 `tool_definitions.py` 中单一数据源声明，`llm_agent`、`tool_policy`、`run_metrics` 从此导出，加新工具无需修改多个文件。
 - 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
 
-**3. Code Intelligence / Graph-assisted Localization**
+**3. 上下文工程**
+
+- 多策略上下文压缩：在总字符超限前，对单个超大工具结果做前置截断（microCompact），再 fall through 到现有全量摘要压缩。
+- 测试失败信息内置 `failure_summary` 结构化提取（failed tests、断言位置、异常类型、possible symbols），让模型不看完整日志也能定位失败根因。
+- 自动引导失败搜索：从测试失败输出中提取符号名自动执行补充搜索，无需模型主动发起。
+
+**4. Code Intelligence / Graph-assisted Localization**
 
 - 默认关闭，不影响 baseline agent 行为。
 - 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选；同时向 agent 暴露 `search_graph` tool，允许在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段主动查询代码结构图（单次 run 限 3 次调用，无 backend 时自动降级）。
