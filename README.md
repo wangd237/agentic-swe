@@ -29,16 +29,16 @@
 
 | 指标 | 结果 |
 | --- | --- |
-| 任务规模 | `66` 条 semi-real 真实 issue，覆盖 `16` 个开源生态 |
+| 任务规模 | `66` 条 semi-real 真实 issue，覆盖 `16` 个开源生态 + `10` 个 SWE-bench Lite 任务 |
 | LLM Agent 全局成功率 | `91.3%`（`149` runs，`136` success） |
 | Stress subset 成功率 | `85.7%`（`14` hard tasks，`12` success） |
 | Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
-| Agent core 回归测试 | `115+ passed` |
+| Agent core 回归测试 | `82+ passed`（总 `367` 测试） |
 | SWE-bench Lite 可运行 | `6 / 10 tasks`（覆盖 marshmallow / pydicom / astroid） |
 | Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
 | 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
 | v16 code intelligence | `accepted` — graph-assisted localization 量化验证通过：token `-258` avg, read_file `0`, source top1 `8/8`, fallback `0%`, 无 success/accepted regression |
-| `search_graph` agent tool | 模型在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段可主动查询代码结构图；首次调用验证：marshmallow_1359 tool calls `-37%`, grep `-67%`, read_file `-57%` |
+| `search_graph` agent tool | 模型主动查询代码结构图；Click #2894 修复后：grep `-67%`，token `-22%`，总调用 `-24%`，稳定进入 PATCH 阶段 |
 
 完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
