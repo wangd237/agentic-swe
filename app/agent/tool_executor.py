@@ -232,7 +232,7 @@ class ToolExecutor:
                 tool_name="search_graph",
                 tool_input=tool_input,
                 error_type="invalid_query",
-                message="name_pattern is required for search_graph.",
+                message="symbol_name is required for search_graph (e.g. symbol_name='Option' or symbol_name='_bind_to_schema').",
             )
         max_results = int(tool_input.get("max_results", 10))
         return self.code_intelligence_backend.search_graph_query(

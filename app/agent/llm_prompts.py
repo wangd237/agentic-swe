@@ -22,7 +22,8 @@ def build_system_prompt() -> str:
         # ====== 定位策略 ======
         "【代码定位规则】"
         "搜索函数名、类名、变量名时，使用 search_graph(symbol_name=\"函数名\")。"
-        "直接传符号名称即可，不需要加 .* 或 .*...* 等正则包裹——系统会自动做子串匹配。"
+        "直接传符号名称即可，不需要加 . 或 __init__ 等后缀——search_graph 只搜索定义符号，不支持方法/属性路径。"
+        "例如搜索 Option 类的定义位置：search_graph(symbol_name=\"Option\")，然后 read_file 自行阅读 __init__ 等细节。"
         "search_graph 返回按置信度排序的结果，第一条就是正确文件。"
         "如果 search_graph 返回空结果，再 fallback 到 search_code 或 grep。"
         "字面关键字用 search_code，函数/导入/断言等模式匹配用 grep 正则搜索。"
