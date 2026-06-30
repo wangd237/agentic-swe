@@ -20,7 +20,7 @@
 - 实现 phase/state-aware tool routing，LLM 每轮只接收当前阶段必要工具 Schema；在 `task_010` 上 token 从 `30,510` 降至 `18,553`，LLM 调用从 `7` 次降至 `5` 次。
 - 实现 post-patch immediate verification：代码修改后由 runtime 自动执行 `show_diff + run_tests`，降低模型遗漏验证步骤的风险。
 - 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
-- 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints，并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
+- 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints + `search_graph` agent tool（UNDERSTAND/REPRODUCE/LOCALIZE 阶段可用，单次 run 限 3 次调用，无 backend 时自动降级），并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
 - 增加 post-verification auto-finalize：当前 workspace generation 已 `show_diff` 且 full `run_tests` 通过后自动收束，避免模型继续发起多余 `show_diff/read_file/run_tests` 探索。
 - 每次 run 落盘 `trace.json`、`result.json`、`summary.md`、`patch.diff`，可复盘 Agent 的工具调用、阶段状态、token 消耗、验证证据和最终验收结论。
 - 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM / Ollama / llama.cpp / LM Studio 等模型；涉及私有代码的真实 A/B 建议使用本地或受信内部 endpoint。
@@ -33,10 +33,12 @@
 | LLM Agent 全局成功率 | `91.3%`（`149` runs，`136` success） |
 | Stress subset 成功率 | `85.7%`（`14` hard tasks，`12` success） |
 | Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
-| Agent core 回归测试 | `115 passed` |
+| Agent core 回归测试 | `115+ passed` |
+| SWE-bench Lite 可运行 | `6 / 10 tasks`（覆盖 marshmallow / pydicom / astroid） |
 | Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
 | 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
 | v16 code intelligence | `accepted` — graph-assisted localization 量化验证通过：token `-258` avg, read_file `0`, source top1 `8/8`, fallback `0%`, 无 success/accepted regression |
+| `search_graph` agent tool | 模型在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段可主动查询代码结构图；首次调用验证：marshmallow_1359 tool calls `-37%`, grep `-67%`, read_file `-57%` |
 
 完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
@@ -77,17 +79,17 @@ FINAL         输出 result / trace / patch / verification summary
 
 **2. Tool Use & Routing**
 
-- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo 等。
+- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo、**代码结构搜索（search_graph）** 等。
 - 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
 - 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
 
 **3. Code Intelligence / Graph-assisted Localization**
 
 - 默认关闭，不影响 baseline agent 行为。
-- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选。
+- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选；同时向 agent 暴露 `search_graph` tool，允许在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段主动查询代码结构图（单次 run 限 3 次调用，无 backend 时自动降级）。
 - graph hints 只作为 localization prior，不替代源码阅读和测试验证。
 - trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
-- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加（+0.125 为单次 LLM 方差），定位质量保持 source top1 8/8，无成功退化。
+- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加，定位质量保持 source top1 8/8，无成功退化。
 
 **4. Verification Quality**
 
