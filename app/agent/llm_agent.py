@@ -1326,7 +1326,10 @@ class LLMCodeAgent(BaseAgent):
                 max_iterations_reached = False
                 break
 
-            tools = build_tools_for_state(agent_state)
+            tools = build_tools_for_state(
+                agent_state,
+                code_intelligence_backend=code_intelligence_backend,
+            )
             current_tool_names = tool_names(tools)
             total_tool_schema_sent += len(tools)
             tools_by_phase.setdefault(agent_state.phase, current_tool_names)

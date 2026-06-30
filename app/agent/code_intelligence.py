@@ -98,14 +98,11 @@ class CodeIntelligenceBackend(ABC):
         name_pattern: str,
         max_results: int = 10,
     ) -> dict[str, Any]:
-        """Execute a graph search and return structured results.
+        """Execute a graph search and return structured results."""
 
-        Returns a dict with keys:
-          - ok: bool
-          - summary: str
-          - data: dict with 'results' (list of {file, symbol, type, confidence})
-          - error: dict or None
-        """
+    @abstractmethod
+    def is_indexed(self) -> bool:
+        """Return True if the backend has an active, queryable index."""
 
     @abstractmethod
     def cleanup(self) -> None:
@@ -154,6 +151,9 @@ class NullCodeIntelligenceBackend(CodeIntelligenceBackend):
                 "message": "Code intelligence backend is not configured.",
             },
         }
+
+    def is_indexed(self) -> bool:
+        return False
 
     def cleanup(self) -> None:
         pass
@@ -668,6 +668,9 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
         if self._shadow_root is not None:
             shutil.rmtree(self._shadow_root, ignore_errors=True)
             self._shadow_root = None
+
+    def is_indexed(self) -> bool:
+        return self._indexed_project is not None and bool(self._cached_binary_path)
 
 
 def build_code_intelligence_backend(policy_config: object) -> CodeIntelligenceBackend:
