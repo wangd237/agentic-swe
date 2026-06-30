@@ -68,3 +68,44 @@ class RunContext:
     llm_missing_usage_count: int = 0
     total_tool_schema_sent: int = 0
     tools_by_phase: dict[str, list[str]] = field(default_factory=dict)
+    llm_config: Any = None  # LLMConfig – avoid circular import
+    client: Any = None
+
+    # --- migrated closures ---
+
+    def already_full_verified_current_generation(self) -> bool:
+        return (
+            self.workspace_generation > 0
+            and self.verified_generation == self.workspace_generation
+            and self.last_full_verified_generation == self.workspace_generation
+            and self.last_full_verified_exit_code == 0
+        )
+
+    def can_auto_finalize_current_generation(self) -> bool:
+        return (
+            self.already_full_verified_current_generation()
+            and self.agent_state.workspace_generation == self.workspace_generation
+            and self.agent_state.diff_observed_generation == self.workspace_generation
+            and not self.pending_auto_verification
+        )
+
+    def record_phase_milestone(self, phase: str, *, summary: str, evidence: dict | None = None) -> None:
+        if phase in self.recorded_phase_milestones:
+            return
+        self.recorded_phase_milestones.add(phase)
+        self.trace.steps.append(
+            {
+                "step_index": len(self.trace.steps) + 1,
+                "action_type": "phase_milestone",
+                "tool_name": None,
+                "tool_input": evidence or {},
+                "tool_output_summary": summary,
+                "observation": summary,
+                "decision": f"Phase evidence satisfied, recording {phase.upper()} milestone.",
+                "phase": phase,
+                "state_snapshot": self.agent_state.snapshot(),
+                "evidence_ids": [f"phase:{phase}"],
+                "verification_strength": self.agent_state.verification_strength,
+                "tool_metrics": {"phase": phase},
+            }
+        )
