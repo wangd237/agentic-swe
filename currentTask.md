@@ -1,9 +1,5 @@
 ## Current Task: v17 改进实施
 
-### 范围（来自架构审查，对照 Claude Code 源码验证）
-
-从原 v17 6 项缩减到 3 项。P1 两项（四层权限、Skills）推迟/不做，P2 一项（子 Agent）推迟到 v18。
-
 ### P0-a: 工具定义统一只读/并发属性
 
 **问题**：is_read_only / is_concurrency_safe 信息分散在三处硬编码集合：
