@@ -148,6 +148,10 @@ def next_phase_after_tool(*, state: AgentState, tool_name: str, tool_result: dic
     if tool_name in {"grep", "search_code", "search_graph", "read_file", "python_repl"}:
         if state.has_reproduction_evidence and state.localization_candidates:
             return "patch"
+        # If the agent has already read enough to find candidates, unblock patch
+        # even without reproduction evidence for real-world repos (not benchmarks).
+        if state.localization_candidates and state.phase == "reproduce":
+            return "patch"
         if state.phase == "understand":
             return "reproduce"
         return state.phase
