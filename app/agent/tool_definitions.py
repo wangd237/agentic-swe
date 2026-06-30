@@ -22,6 +22,25 @@ def build_tool_definitions() -> list[dict]:
             },
         },
         {
+            "name": "search_graph",
+            "description": "【推荐优先使用】查询代码结构图，返回按置信度排序的符号定义位置。当需要定位函数/类/方法的定义位置，或跨文件调用关系时，优先使用 search_graph 而非 grep。",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "name_pattern": {
+                        "type": "string",
+                        "description": "Regex pattern to match symbol names, e.g. '.*hostname.*' or '_bind_to_schema'.",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return.",
+                        "default": 10,
+                    },
+                },
+                "required": ["name_pattern"],
+            },
+        },
+        {
             "name": "search_code",
             "description": "在仓库中搜索代码字符串，用于定位相关函数、测试或错误信息。",
             "input_schema": {
@@ -177,25 +196,6 @@ def build_tool_definitions() -> list[dict]:
             "input_schema": {
                 "type": "object",
                 "properties": {},
-            },
-        },
-        {
-            "name": "search_graph",
-            "description": "Query the codebase graph for symbols matching a name pattern. Returns structured results with file paths, symbol names, and confidence scores. Use this when grep/search_code returns too many results or when you need to understand cross-file call relationships.",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "name_pattern": {
-                        "type": "string",
-                        "description": "Regex pattern to match symbol names, e.g. '.*hostname.*' or '_bind_to_schema'.",
-                    },
-                    "max_results": {
-                        "type": "integer",
-                        "description": "Maximum number of results to return.",
-                        "default": 10,
-                    },
-                },
-                "required": ["name_pattern"],
             },
         },
     ]

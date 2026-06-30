@@ -561,17 +561,6 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
                 base_metrics["graph_result_compact_chars"] = len(compact_hints)
                 base_metrics["graph_compaction_ratio"] = round(len(compact_hints) / raw_chars, 4) if raw_chars else 0.0
                 base_metrics["graph_candidates_count"] = len(candidates)
-                return CodeIntelligenceResult(
-                    backend=self.name,
-                    enabled=True,
-                    available=True,
-                    backend_binary_path=binary_path,
-                    backend_version=version,
-                    fallback_reason="empty_results" if not candidates else "",
-                    candidates=candidates,
-                    compact_hints=compact_hints,
-                    metrics=base_metrics,
-                )
                 # Store indexed state so search_graph_query() can query later.
                 self._cached_binary_path = binary_path
                 self._indexed_project = project_name
@@ -656,10 +645,10 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
                 "tool_name": "search_graph",
                 "summary": f"Graph search for `{name_pattern}` matched {len(results)} results across {len(match_files)} files.",
                 "data": {
-                    "name_pattern": name_pattern,
-                    "result_count": len(results),
-                    "results": results[:max_results],
+                    "query": name_pattern,
+                    "match_count": len(results),
                     "match_files": match_files,
+                    "matches": results[:max_results],
                 },
                 "error": None,
             }

@@ -948,15 +948,15 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     }
     assert output["result"]["tool_stats"]["tool_routing"] == {
         "schema_strategy": "phase_state_filtered",
-        "total_tool_schema_sent": 12,
-        "avg_tool_schema_count": 6.0,
+        "total_tool_schema_sent": 13,
+        "avg_tool_schema_count": 6.5,
         "tools_by_phase": {
-            "understand": ["list_files", "search_code", "grep", "read_file", "run_tests"],
+            "understand": ["list_files", "search_graph", "search_code", "grep", "read_file", "run_tests"],
             "patch": ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
         },
     }
     assert client.received_tool_names_by_call == [
-        ["list_files", "search_code", "grep", "read_file", "run_tests"],
+        ["list_files", "search_graph", "search_code", "grep", "read_file", "run_tests"],
         ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
     ]
     assert output["result"]["tool_stats"]["agent_core_metrics"]["pre_repro_rate"] == 1.0
@@ -979,7 +979,7 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         if step["action_type"] == "llm_response"
     ]
     assert [step["tool_metrics"].get("llm_total_tokens") for step in llm_steps] == [111, 222]
-    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 7]
+    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [6, 7]
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"

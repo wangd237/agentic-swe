@@ -11,7 +11,7 @@ WRITE_TOOLS = {"edit_file", "write_file"}
 MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
-    "understand": {"list_files", "grep", "search_code", "read_file", "run_tests"},
+    "understand": {"list_files", "search_graph", "grep", "search_code", "read_file", "run_tests"},
     "reproduce": {"grep", "search_code", "search_graph", "run_tests", "read_file", "show_diff"},
     "localize": {"grep", "search_code", "search_graph", "read_file", "python_repl", "run_tests"},
     "patch": {"grep", "search_code", "read_file", "edit_file", "write_file", "show_diff", "undo", "run_tests"},
