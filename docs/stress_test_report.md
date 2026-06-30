@@ -8,6 +8,8 @@
 
 本轮使用 `llm_deepseek_minimal` 策略运行 `docs/weekTarget.md` 中列出的 14 条硬任务。早期草稿曾写作 15 条，但实际任务清单为 14 条，现已同步为 14 条口径。
 
+这 14 条任务列表是在运行前已写入 `docs/weekTarget.md` 的 pre-committed 测试集，不是根据运行结果事后 cherry-pick 的样本。
+
 - validation_id: `target1_stress_deepseek_14_002`
 - policy_id: `llm_deepseek_minimal`
 - listed tasks: `14`

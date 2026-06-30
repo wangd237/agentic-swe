@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.runtime.logger import write_json, write_text
@@ -36,7 +36,7 @@ def _load_json(path: str | Path) -> dict:
 
 
 def _utc_timestamp() -> str:
-    return datetime.now(UTC).isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _next_compare_id(summary_dir: Path, run_label: str | None = None) -> str:
