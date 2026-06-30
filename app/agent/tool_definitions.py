@@ -30,17 +30,17 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "name_pattern": {
+                    "symbol_name": {
                         "type": "string",
-                        "description": "Regex pattern to match symbol names, e.g. '.*hostname.*' or '_bind_to_schema'.",
+                        "description": "符号名称，例如 'Option' 或 '_bind_to_schema'。子串匹配即可，不需要前后加 .* 正则包裹。",
                     },
                     "max_results": {
                         "type": "integer",
-                        "description": "Maximum number of results to return.",
+                        "description": "最多返回的结果数。",
                         "default": 10,
                     },
                 },
-                "required": ["name_pattern"],
+                "required": ["symbol_name"],
             },
         },
         {

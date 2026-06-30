@@ -21,8 +21,8 @@ def build_system_prompt() -> str:
         "FINAL 阶段只有存在 patch 且验证通过时才能报告成功。"
         # ====== 定位策略 ======
         "【代码定位规则】"
-        "搜索函数名、类名、变量名时，使用 search_graph(name_pattern=\"函数名\")。"
-        "不要搜索属性名（如 .is_flag、.__init__），因为 search_graph 只索引定义符号。"
+        "搜索函数名、类名、变量名时，使用 search_graph(symbol_name=\"函数名\")。"
+        "直接传符号名称即可，不需要加 .* 或 .*...* 等正则包裹——系统会自动做子串匹配。"
         "search_graph 返回按置信度排序的结果，第一条就是正确文件。"
         "如果 search_graph 返回空结果，再 fallback 到 search_code 或 grep。"
         "字面关键字用 search_code，函数/导入/断言等模式匹配用 grep 正则搜索。"

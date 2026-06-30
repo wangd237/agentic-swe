@@ -651,10 +651,13 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
                         "confidence": candidate_entry.confidence,
                     })
             match_files = [entry["file"] for entry in results[:5]]
+            summary_text = (
+                f"Graph search for `{name_pattern}` matched {len(results)} results."
+            )
             return {
                 "ok": True,
                 "tool_name": "search_graph",
-                "summary": f"Graph search for `{name_pattern}` matched {len(results)} results across {len(match_files)} files.",
+                "summary": summary_text,
                 "data": {
                     "query": name_pattern,
                     "match_count": len(results),
