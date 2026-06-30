@@ -109,3 +109,149 @@ class RunContext:
                 "tool_metrics": {"phase": phase},
             }
         )
+
+    def refresh_localization_candidates(self) -> None:
+        from app.agent.code_locator import rank_candidates
+
+        self.agent_state.set_localization_candidates(
+            rank_candidates(
+                repo_path=self.run_paths.workspace_dir,
+                issue_text=self.agent_state.issue_summary,
+                target_files_hint=self.task.target_files_hint,
+                failure_summary=self.latest_failure_summary,
+                search_match_files=self.search_match_files,
+                existing_candidates=self.agent_state.localization_candidates,
+            )
+        )
+
+    def execute_tool_block_or_skip(self, block: dict[str, Any]) -> dict[str, Any]:
+        tool_name = block["name"]
+        tool_input = block.get("input", {})
+        if (
+            tool_name == "run_tests"
+            and str(tool_input.get("verification_scope", "full")) != "targeted"
+            and self.already_full_verified_current_generation()
+        ):
+            return {
+                "block": block,
+                "tool_name": tool_name,
+                "tool_input": tool_input,
+                "tool_result": self.skipped_duplicate_full_verification_result(tool_input),
+                "tool_duration_sec": 0.0,
+            }
+        return self._execute_tool_block(
+            tool_executor=self.tool_executor,
+            tool_policy=self.tool_policy,
+            state=self.agent_state,
+            block=block,
+        )
+
+    def _execute_tool_block(
+        self,
+        *,
+        tool_executor,
+        tool_policy,
+        state: AgentState,
+        block: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute a single tool block with policy check."""
+        from time import perf_counter
+
+        tool_name = block["name"]
+        tool_input = block.get("input", {})
+        tool_started_at = perf_counter()
+        policy_result = tool_policy.validate(
+            state=state,
+            tool_name=tool_name,
+            tool_input=tool_input,
+        )
+        tool_result = policy_result or tool_executor.execute(tool_name, tool_input)
+        tool_duration_sec = round(perf_counter() - tool_started_at, 4)
+        return {
+            "block": block,
+            "tool_name": tool_name,
+            "tool_input": tool_input,
+            "tool_result": tool_result,
+            "tool_duration_sec": tool_duration_sec,
+        }
+
+    def skipped_duplicate_full_verification_result(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "ok": True,
+            "tool_name": "run_tests",
+            "summary": "Skipping duplicate full run_tests: current generation already verified.",
+            "data": {
+                "exit_code": 0,
+                "duration_sec": 0.0,
+                "verification_scope": "full",
+                "workspace_generation": self.workspace_generation,
+                "verified_generation": self.verified_generation,
+                "deduped": True,
+                "tool_input": tool_input,
+            },
+            "error": None,
+        }
+
+
+        from app.schemas.trace_schema import TraceStep
+
+        self.trace.steps.append(
+            TraceStep(
+                step_index=len(self.trace.steps) + 1,
+                action_type="auto_finalize",
+                tool_name=None,
+                tool_input={
+                    "source": source,
+                    "workspace_generation": self.workspace_generation,
+                    "verified_generation": self.verified_generation,
+                    "diff_observed_generation": self.agent_state.diff_observed_generation,
+                },
+                tool_output_summary="Current patch generation has diff evidence and full verification.",
+                observation="AUTO_FINALIZE: diff observed and full verification passed.",
+                decision="Early exit LLM loop, proceed to final results.",
+                timestamp=self.agent_state.issue_summary[:30],
+                duration_sec=None,
+                phase=self.agent_state.phase,
+                state_snapshot=self.agent_state.snapshot(),
+                evidence_ids=[
+                    f"workspace_generation:{self.workspace_generation}",
+                    "diff:observed",
+                    "verification:full",
+                ],
+                verification_strength=self.agent_state.verification_strength,
+                tool_metrics={
+                    "auto_finalize_reason": "full_verified_current_generation",
+                    "last_full_verified_exit_code": self.last_full_verified_exit_code,
+                },
+            )
+        )
+
+
+        self.messages = ctx._microcompact_messages(
+            self.messages, max_chars=self.llm_config.max_tool_chars
+        )
+        self.messages, compressed, before_chars, after_chars = ctx._compress_messages_if_needed(
+            self.messages,
+            max_context_chars=self.llm_config.max_context_chars,
+        )
+        if not compressed:
+            return
+        self.trace.steps.append(
+            {
+                "step_index": len(self.trace.steps) + 1,
+                "action_type": "context_compression",
+                "tool_name": None,
+                "tool_input": {"reason": reason},
+                "tool_output_summary": f"Context compressed from {before_chars} to {after_chars} chars.",
+                "observation": "Old messages summarized, keeping initial input and recent conversation.",
+                "decision": "Continue LLM loop, avoid exceeding context threshold.",
+                "phase": self.agent_state.phase,
+                "state_snapshot": self.agent_state.snapshot(),
+                "verification_strength": self.agent_state.verification_strength,
+                "tool_metrics": {
+                    "before_chars": before_chars,
+                    "after_chars": after_chars,
+                    "max_context_chars": self.llm_config.max_context_chars,
+                },
+            }
+        )
