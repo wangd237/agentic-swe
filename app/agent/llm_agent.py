@@ -327,6 +327,32 @@ class LLMCodeAgent(BaseAgent):
                 parts.append(f"tool_result id={block.get('tool_use_id', '')} content={result_text[:300]}")
         return f"{role}: " + " | ".join(parts)
 
+    @staticmethod
+    def _microcompact_messages(
+        messages: list[dict[str, Any]],
+        *,
+        max_chars: int,
+    ) -> list[dict[str, Any]]:
+        """Truncate oversized tool results before they bloat the context window."""
+        if not messages:
+            return messages
+        max_chars *= 2
+        last = messages[-1]
+        if last.get("role") != "user":
+            return messages
+        content = last.get("content", [])
+        if not isinstance(content, list):
+            return messages
+        truncated: list[dict[str, Any]] = []
+        for block in content:
+            if block.get("type") == "tool_result" and isinstance(block.get("content"), str):
+                text = str(block["content"])
+                if len(text) > max_chars:
+                    block = {**block, "content": text[:max_chars] + "\n...[truncated]"}
+            truncated.append(block)
+        messages[-1] = {**last, "content": truncated}
+        return messages
+
     @classmethod
     def _compress_messages_if_needed(
         cls,
@@ -1014,6 +1040,7 @@ class LLMCodeAgent(BaseAgent):
 
         def compress_context_if_needed(reason: str) -> None:
             nonlocal messages
+            messages = self._microcompact_messages(messages, max_chars=self.llm_config.max_tool_chars)
             messages, compressed, before_chars, after_chars = self._compress_messages_if_needed(
                 messages,
                 max_context_chars=self.llm_config.max_context_chars,
