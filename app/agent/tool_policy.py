@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from app.agent.memory import AgentState, PhaseName
+from app.agent.tool_definitions import write_tool_names
 
 
-WRITE_TOOLS = {"edit_file", "write_file"}
+WRITE_TOOLS = write_tool_names()
 MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
