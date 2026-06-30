@@ -384,23 +384,22 @@ class CodebaseMemoryCliBackend(CodeIntelligenceBackend):
         lower_path = path.lower()
         score = candidate.confidence
         if CodebaseMemoryCliBackend._is_test_like_path(path):
-            score -= 0.18
+            score -= 0.35
         if lower_path.endswith("/__init__.py"):
             score -= 0.10
         if "." not in Path(path).name:
             score -= 0.14
         if lower_path.endswith(".py") and not CodebaseMemoryCliBackend._is_test_like_path(path):
             score += 0.04
-        # Prefer src/ and lib/ directories (core implementation, not exceptions/tests/docs)
+        # Prefer source directories (core implementation, not exceptions/tests/docs).
         if "/src/" in lower_path or "/lib/" in lower_path:
             score += 0.12
         # Penalize exception/error/type-only modules that are unlikely to be
         # the target of a bug fix even when they contain matching symbols.
-        # Note: this is a heuristic — the real implementation file is usually
-        # not in a file named 'exceptions.py' or 'types.py'.
+        # Large penalty because confidence is graph-relative (not an absolute score).
         filename = lower_path.split("/")[-1] if "/" in lower_path else lower_path
         if filename in {"exceptions.py", "errors.py", "types.py", "compat.py"}:
-            score -= 0.10
+            score -= 0.35
 
         return (round(score, 4), candidate.confidence, path)
 
