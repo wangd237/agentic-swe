@@ -1640,11 +1640,21 @@ class LLMCodeAgent(BaseAgent):
                     write_signature = self._write_signature(tool_name, tool_input)
                     if write_signature and tool_result.get("ok"):
                         write_history.append(write_signature)
+                    old_phase = agent_state.phase
                     agent_state.phase = next_phase_after_tool(
                         state=agent_state,
                         tool_name=tool_name,
                         tool_result=tool_result,
                     )
+                    if agent_state.phase == "patch" and agent_state.phase != old_phase:
+                        # Inject phase transition hint when entering PATCH
+                        phase_hint = (
+                            "【系统提示】当前阶段已切换到 PATCH。"
+                            "你已经定位到目标文件和修复方向。"
+                            "请根据已读代码内容，使用 edit_file 或 write_file 生成最小补丁。"
+                            "如果对 old_string 不确定，先 read_file 确认原文后再 edit_file。"
+                        )
+                        messages.append({"role": "user", "content": phase_hint})
                     if (
                         tool_name == "run_tests"
                         and tool_result.get("ok")

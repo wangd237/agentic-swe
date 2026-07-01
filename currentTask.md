@@ -72,3 +72,37 @@ Claude Code 的 microCompact 做的是更激进的事：直接把工具结果 co
 | P1 四层权限模式 | 无真实用例，当前静态 ALLOWED_TOOLS_BY_PHASE 够用 |
 | P1 Skills 体系 | 三个策略行为已独立模块化，不需要额外注册表 |
 | P2 子 Agent 生命周期 | 推迟到 v18，当前无 multi-agent 用例 |
+
+---
+
+## P3: 模型进入 PATCH 后不写入的诊断与修复
+
+### 背景
+
+两个真实 GitHub issue（Click #2894、#3145）中，模型都能正确定位文件、进入 PATCH 阶段，但 14+ 轮从不调用 write_file/edit_file。架构师审查确认三个根因。
+
+### 根因
+
+| # | 根因 | 类型 | 说明 |
+|---|------|------|------|
+| 1 | **模型不确定改哪里** | issue 难度 | Click #3145 的 bug 不在 `lookup_default`（代码逻辑正确），在 `decorators.py` 的 `make_pass_decorator`。模型搜了指向的函数发现逻辑正确，卡住 |
+| 2 | **无阶段跳转提示** | 代码问题 | 进入 PATCH 时 system prompt 没有任何提醒。模型不知道自己已从"搜索理解"切换到"该动手修改" |
+| 3 | **edit_file 要求"精确原文"放大犹豫** | 代码问题 | description 说"通过精确 old_string/new_string 替换"，模型不确定 old_string 就不敢用。同理 prompt 说"优先使用 edit_file 做精确小范围替换"强化了"不确定就别改"的心理 |
+
+### 修复方案
+
+**2. 阶段跳转提示**：在 `llm_agent.py` 的 `next_phase_after_tool()` 触发 phase 变更时，往 messages 中注入一条 system 消息：
+```
+当前阶段已切换到 PATCH。你已经定位到候选文件，应该开始用 edit_file 或 write_file 生成补丁。
+```
+类似的方式也用于 REPRODUCE -> LOCALIZE 等关键转换。
+
+**3. edit_file 描述优化**（已完成）：
+- `tool_definitions.py` 中 edit_file description 从 "通过精确 old_string/new_string 替换编辑仓库内文件，适合小范围修改" 改为 "替换匹配到的文本，适合小范围修改。系统会返回相近内容的建议。"
+- 同时删除了 write_file description 中 "不要用于创建 debug.py/tmp.py" 等会让模型犹豫的负面指令（已在 `tool_executor.py` 中硬拦截）
+
+### 改动量
+
+- `app/agent/llm_agent.py`：在 phase 变更点注入提示，预计 ~20 行
+- `app/agent/llm_prompts.py`：system prompt 中 edit_file 引导从 "优先使用 edit_file 做精确小范围替换" 改为 "优先使用 edit_file 做小范围替换，如果 old_string 不确定可先用 read_file 确认"
+- `app/agent/tool_definitions.py`：✅ 已完成

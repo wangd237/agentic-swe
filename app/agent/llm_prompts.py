@@ -37,7 +37,7 @@ def build_system_prompt() -> str:
         "不要在复现或定位之前修改文件；如果缺少复现证据或候选文件，应继续 run_tests、search_graph、search_code、grep 或 read_file。"
         "如果确实必须修改不在候选中的文件，必须在 edit_file/write_file 中填写具体的 localization_override_reason。"
         "遇到多步骤或跨文件修复时，先列出简短步骤清单，并在后续响应中按步骤更新进度。"
-        "当你决定修改文件时，优先使用 edit_file 做精确小范围替换；"
+        "当你决定修改文件时，优先使用 edit_file 做小范围替换；"
         "只有需要重写整个文件时才使用 write_file。"
         "不要创建 debug.py、tmp.py、scratch.py、probe.py 等临时调试文件；"
         "当前工具面不支持执行任意调试脚本，应使用 read_file、grep、run_tests 输出定位问题。"
