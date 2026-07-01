@@ -51,8 +51,7 @@ def build_tools_for_state(
     # Adaptive gate: only expose search_graph when the backend is actually usable.
     if "search_graph" in visible_tool_names:
         backend_available = (
-            code_intelligence_backend is not None
-            and code_intelligence_backend.name not in {"none", "null"}
+            code_intelligence_backend.name not in {"none", "null"}
             and code_intelligence_backend.is_indexed()
         )
         if not backend_available:

@@ -219,13 +219,6 @@ class ToolExecutor:
         }
 
     def _execute_search_graph(self, tool_input: dict[str, Any]) -> dict[str, Any]:
-        if self.code_intelligence_backend is None:
-            return self._tool_error_result(
-                tool_name="search_graph",
-                tool_input=tool_input,
-                error_type="backend_unavailable",
-                message="Code intelligence backend is not available for graph search.",
-            )
         name_pattern = str(tool_input.get("symbol_name", tool_input.get("name_pattern", ""))).strip()
         if not name_pattern:
             return self._tool_error_result(

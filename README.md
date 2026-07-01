@@ -18,10 +18,13 @@
 - 构建阶段化 Coding Agent workflow：`UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL`。
 - 实现 phase-aware tool policy，限制不同阶段可调用工具，避免过早改文件、跳过复现或弱验证误报成功。
 - 实现 phase/state-aware tool routing，LLM 每轮只接收当前阶段必要工具 Schema；在 `task_010` 上 token 从 `30,510` 降至 `18,553`，LLM 调用从 `7` 次降至 `5` 次。
-- 实现 post-patch immediate verification：代码修改后由 runtime 自动执行 `show_diff + run_tests`，降低模型遗漏验证步骤的风险。
+- 实现 post-patch immediate auto-verification：代码修改后由 runtime 自动执行 `show_diff + targeted tests + full tests`，根据测试结果自动反思（reflection）并决定是否 undo，无需模型手动发起。
+- 实现 auto-finalize：diff 已观察且 full `run_tests` 通过后自动退出 LLM 循环，避免冗余工具调用。
 - 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
+- 双策略上下文工程：microCompact（单个超大 tool result 前置截断）+ 全量摘要压缩，在爆窗之前就控制上下文。
 - 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints + `search_graph` agent tool（UNDERSTAND/REPRODUCE/LOCALIZE 阶段可用，单次 run 限 3 次调用，无 backend 时自动降级），并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
-- 增加 post-verification auto-finalize：当前 workspace generation 已 `show_diff` 且 full `run_tests` 通过后自动收束，避免模型继续发起多余 `show_diff/read_file/run_tests` 探索。
+- 测试失败信息结构化提取 `failure_summary`（failed tests、断言位置、异常类型、possible symbols）+ 自动引导符号搜索，让模型不看完整日志也能定位根因。
+- 反循环检测：连续 3 次类似写操作时自动注入提醒，避免模型在同方向上空转。
 - 每次 run 落盘 `trace.json`、`result.json`、`summary.md`、`patch.diff`，可复盘 Agent 的工具调用、阶段状态、token 消耗、验证证据和最终验收结论。
 - 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM / Ollama / llama.cpp / LM Studio 等模型；涉及私有代码的真实 A/B 建议使用本地或受信内部 endpoint。
 
@@ -29,14 +32,14 @@
 
 | 指标 | 结果 |
 | --- | --- |
-| 任务规模 | `66` 条 semi-real 真实 issue，覆盖 `16` 个开源生态 + `10` 个 SWE-bench Lite 任务 |
-| LLM Agent 全局成功率 | `91.3%`（`149` runs，`136` success） |
-| Stress subset 成功率 | `85.7%`（`14` hard tasks，`12` success） |
+| 任务规模 | `132` 条 semi-real 真实 issue + `10` 个 SWE-bench Lite 任务，覆盖 `25+` 开源生态 |
+| LLM Agent 评测管道 | 4 级冻结集（15/18/20/40） + `evals/` 聚合/对比/错误分类 + `stability_recheck` flaky 验证 + `analyze_benchmark_maturity` 回归门禁 |
+| 回归测试 | `367` passes |
+| SWE-bench Lite 可运行 | `6 / 10 tasks`（覆盖 marshmallow / pydicom / astroid / pvlib / sqlfluff / pyvista）|
+| Frozen set 稳定性 | `frozen_40` 连续 `72+` 个策略版本无回归 |
 | Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
-| Agent core 回归测试 | `82+ passed`（总 `367` 测试） |
-| SWE-bench Lite 可运行 | `6 / 10 tasks`（覆盖 marshmallow / pydicom / astroid） |
-| Frozen set 稳定性 | `frozen_40` 连续 `8` 个版本无回归 |
-| 重点验证任务 | `task_048 / task_030 / task_089` 均成功 |
+| Auto-verification & reflection | 写入后自动执行 show_diff + targeted tests + full tests；失败时自动 failure-signature 比较 + 可选 undo |
+| Anti-loop 检测 | 连续 3 次相似写操作时注入提醒 |
 | v16 code intelligence | `accepted` — graph-assisted localization 量化验证通过：token `-258` avg, read_file `0`, source top1 `8/8`, fallback `0%`, 无 success/accepted regression |
 | `search_graph` agent tool | 模型主动查询代码结构图；Click #2894 修复后：grep `-67%`，token `-22%`，总调用 `-24%`，稳定进入 PATCH 阶段 |
 
@@ -52,6 +55,7 @@ UNDERSTAND    解析问题、提取失败线索、建立初始状态
         |
         v
 REPRODUCE     运行测试或最小复现，记录 pre-test evidence
+              （自动提取 failure_summary + 引导符号搜索）
         |
         v
 LOCALIZE      搜索、读取文件、结合失败摘要和 AST symbol index 定位候选
@@ -59,6 +63,7 @@ LOCALIZE      搜索、读取文件、结合失败摘要和 AST symbol index 定
         |
         v
 PATCH         生成最小补丁，受 policy 限制写入范围
+        |_______ (写入后自动验证 ←→ 失败时 reflection + undo)
         |
         v
 VERIFY        自动 show_diff + run_tests，记录 post-test evidence
@@ -75,32 +80,27 @@ FINAL         输出 result / trace / patch / verification summary
 
 - 显式维护 `AgentState`：阶段、issue summary、failure signature、localization candidates、modified files、verification strength。
 - `ToolPolicy` 约束工具调用顺序，禁止没有复现或定位证据时直接改文件。
+- RunContext dataclass 封装全部 17 个局部变量 + 11 个闭包迁移为可测试的类方法（`auto_undo_after_reflection`、`run_immediate_auto_verification`、`compress_context_if_needed` 等）。
 - 测试失败、定位低置信、修改过宽或弱验证时记录 reflection，用于后续修复决策。
+- 反循环检测：连续 3 次相似写操作时注入提醒，防止模型在同一方向上空转。
+- 阶段跳转提示：进入 PATCH 阶段时自动注入提示，提醒模型从”搜索理解”切换到”动手修改”。
 
 **2. Tool Use & Routing**
 
-- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo、**代码结构搜索（search_graph）** 等。
+- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo、**代码结构搜索（search_graph）**、**受控 Python REPL（python_repl）**等。
 - 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
 - 工具属性（只读、并发安全、写入）在 `tool_definitions.py` 中单一数据源声明，`llm_agent`、`tool_policy`、`run_metrics` 从此导出，加新工具无需修改多个文件。
 - 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
 
 **3. 上下文工程**
 
-- 多策略上下文压缩：在总字符超限前，对单个超大工具结果做前置截断（microCompact），再 fall through 到现有全量摘要压缩。
+- 双策略上下文压缩：在总字符超限前，对单个超大工具结果做前置截断（microCompact），再 fall through 到现有全量摘要压缩。
 - 测试失败信息内置 `failure_summary` 结构化提取（failed tests、断言位置、异常类型、possible symbols），让模型不看完整日志也能定位失败根因。
 - 自动引导失败搜索：从测试失败输出中提取符号名自动执行补充搜索，无需模型主动发起。
 
-**4. Code Intelligence / Graph-assisted Localization**
-
-- 默认关闭，不影响 baseline agent 行为。
-- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选；同时向 agent 暴露 `search_graph` tool，允许在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段主动查询代码结构图（单次 run 限 3 次调用，无 backend 时自动降级）。
-- graph hints 只作为 localization prior，不替代源码阅读和测试验证。
-- trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
-- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加，定位质量保持 source top1 8/8，无成功退化。
-
 **4. Verification Quality**
 
-项目不会只依赖模型说“修好了”，而是输出结构化验收结论：
+项目不会只依赖模型说”修好了”，而是输出结构化验收结论：
 
 ```text
 final_status: success
@@ -120,7 +120,38 @@ missing_evidence: official_harness
 
 这避免把本地 smoke 误报成 official benchmark resolved，也避免把 weak/static verification 包装成可信成功。
 
-**5. Auditability**
+### Verifier judgment pipeline
+
+- `build_verification_evidence()`：收集 patch、pre-test、post-test、official harness 等维度
+- `assess_evidence_quality()`：分类 evidence_quality 为 strong / partial / weak / missing
+- `build_verifier_report()`：综合 verdict（risk_level + acceptance + caveats）
+- `accepted_final_status_from_report()`：映射为产品可读的最终状态
+
+### Auto-verification loop
+
+写入工具成功后，runtime 自动执行三级验证链：
+
+1. `show_diff` — 立即查看当前改动
+2. `targeted run_tests` — 只跑之前失败过的测试（符号级定位）
+3. `full run_tests` — 跑完整测试套件
+
+验证结果与写入结果在同一轮回喂给模型。如果失败，系统自动比较 failure signature delta：
+
+| delta | 判定 | 行为 |
+|-------|------|------|
+| unchanged | wrong_hypothesis / wrong_file | 自动 undo + 回 LOCALIZE |
+| changed | partial_fix | 保留 patch，继续 PATCH |
+| 新失败 | overfit / low_confidence | 建议缩小范围 |
+
+**5. Code Intelligence / Graph-assisted Localization**
+
+- 默认关闭，不影响 baseline agent 行为。
+- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选；同时向 agent 暴露 `search_graph` tool，允许在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段主动查询代码结构图（单次 run 限 3 次调用，无 backend 时自动降级）。
+- graph hints 只作为 localization prior，不替代源码阅读和测试验证。
+- trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
+- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加，定位质量保持 source top1 8/8，无成功退化。
+
+**6. Auditability**
 
 每次运行都会输出：
 
@@ -278,27 +309,41 @@ result_path:
 
 ## 代表案例
 
+- `task_010` `Textualize/rich#4090`：CRLF 跨平台换行符归一化，ANSI 行解析修复。
 - `task_024` `pallets/jinja#2069`：模板变量在分支赋值场景下的控制流语义分析。
 - `task_036` `python-jsonschema/jsonschema#1121`：从测试失败到异常回落语义修复。
-- `task_048`：从 `max_iterations` 失败到成功，Agent 通过受控 `python_repl` 查询真实行为后生成最小 patch。
+- `task_048` `pypa/packaging#886`：从 `max_iterations` 失败到成功，Agent 通过受控 `python_repl` 查询真实行为后生成最小 patch。
+- `task_093` `pallets/click#3572`：`color=False` 时复用 ANSI 清理逻辑，修复 confirm 输出泄漏控制码。
 - `task_122` `fsspec/filesystem_spec#979`：`unstrip_protocol()` 在前缀保护场景下错误返回原路径。
 - `task_128` `agronholm/anyio#82`：嵌套 task group 场景下 asyncio/curio backend 取消异常泄漏。
+- `task_054` `pydantic/pydantic#9582`：edit_file + 结构化失败摘要帮助模型从中间错误收敛到正确 patch（`incomplete/max_iterations` → `success`）。
+
+完整案例列表见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
 ## 项目结构
 
 ```text
 app/
-  agent/        # LLM agent、state、policy、tool routing、verification、code intelligence
-  runtime/      # workspace 隔离、run paths、日志落盘
+  agent/        # LLM agent、state、policy、tool routing、verification、reflection、code intelligence
+    run_context.py    # 17 个局部变量 + 11 个闭包封装为 dataclass 方法
+    verifier.py       # Verification Quality Layer：evidence / report / assessment
+    run_metrics.py    # 行为指标计算（phase completion、pre-repro、undo recovery 等）
+    summary.py        # CLI 摘要格式化
+  runtime/      # workspace 隔离、run paths、日志落盘、git 工作区管理
   schemas/      # Task / Trace / Result schema
-  tools/        # 文件、搜索、测试、写入、diff 工具
+  tools/        # 文件、搜索、测试、写入、diff、python REPL 工具
 benchmarks/
-  tasks/        # semi-real / SWE-bench Lite task 定义
-  repos/        # benchmark repos
-  manifests/    # frozen set / evaluation manifests
+  tasks/        # 132 条 semi-real + 10 条 SWE-bench Lite task 定义
+  repos/        # benchmark repos（含 swebench_lite 子目录）
+  manifests/    # frozen set / evaluation manifests（9 个）
+optimization/
+  policy_versions/  # 80 个 policy 版本（baseline v1 ~ v72 + LLM 配置模板）
 docs/           # 架构、评测、案例、路线图
-evals/          # metrics、taxonomy、对比脚本
-scripts/        # CLI、单任务运行、批量评测、用户 repo 修复
+evals/          # 批量评测、错误分类、指标计算、对比脚本
+scripts/        # 60+ CLI 脚本：单任务运行、批量评测、本地/GitHub repo 修复、AB 实验、分析
+.tools/         # codebase-memory-mcp binary（可选 code intelligence 后端）
+logs/           # 运行轨迹、结果、patch、agent memory
+third_project/  # 第三方任务源代码
 ```
 
 ## 技术栈
