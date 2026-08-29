@@ -80,7 +80,6 @@ FINAL         输出 result / trace / patch / verification summary
 
 - 显式维护 `AgentState`：阶段、issue summary、failure signature、localization candidates、modified files、verification strength。
 - `ToolPolicy` 约束工具调用顺序，禁止没有复现或定位证据时直接改文件。
-- RunContext dataclass 封装全部 17 个局部变量 + 11 个闭包迁移为可测试的类方法（`auto_undo_after_reflection`、`run_immediate_auto_verification`、`compress_context_if_needed` 等）。
 - 测试失败、定位低置信、修改过宽或弱验证时记录 reflection，用于后续修复决策。
 - 反循环检测：连续 3 次相似写操作时注入提醒，防止模型在同一方向上空转。
 - 阶段跳转提示：进入 PATCH 阶段时自动注入提示，提醒模型从”搜索理解”切换到”动手修改”。
@@ -325,7 +324,6 @@ result_path:
 ```text
 app/
   agent/        # LLM agent、state、policy、tool routing、verification、reflection、code intelligence
-    run_context.py    # 17 个局部变量 + 11 个闭包封装为 dataclass 方法
     verifier.py       # Verification Quality Layer：evidence / report / assessment
     run_metrics.py    # 行为指标计算（phase completion、pre-repro、undo recovery 等）
     summary.py        # CLI 摘要格式化
