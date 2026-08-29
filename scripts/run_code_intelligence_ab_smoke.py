@@ -81,9 +81,6 @@ def _smoke_policy(base_policy: dict[str, Any], *, policy_id: str) -> dict[str, A
     policy["agent_type"] = "llm"
     policy["llm_provider"] = "openai_compatible"
     policy["llm_model"] = "fake-model"
-    policy["llm_api_key_env"] = None
-    policy["llm_base_url_env"] = None
-    policy["llm_model_env"] = None
     policy["llm_base_url"] = None
     return policy
 

@@ -16,7 +16,7 @@
 - `app/agent/llm_agent.py`
 - `optimization/policy_versions/llm_deepseek_minimal.json`
 
-provider 抽象是 OpenAI-compatible Chat Completions。DeepSeek 只是当前 policy 示例；后续切换 Kimi、GLM 或其他兼容服务时，只需要换 policy 中的 `llm_api_key_env / llm_base_url_env / llm_model` 等字段。
+provider 抽象是 OpenAI-compatible Chat Completions。所有提供商共用 `.env` 中的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 三个环境变量；切换 DeepSeek、Kimi、GLM 或其他兼容服务时，只需修改 `.env` 中的值，无需改动 policy 文件。
 
 ## 2. 双轨结构
 

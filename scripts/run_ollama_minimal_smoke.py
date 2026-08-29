@@ -275,8 +275,8 @@ def run_smoke(
     workspace = run_dir / "workspace"
     shutil.copytree(source_repo, workspace)
 
-    base_url = os.environ.get("DEEPSEEK_BASE_URL", "http://127.0.0.1:11434/v1").strip()
-    model = os.environ.get("DEEPSEEK_MODEL", "qwen2.5-coder:7b-instruct-q4_k_m").strip()
+    base_url = os.environ.get("LLM_BASE_URL", "http://127.0.0.1:11434/v1").strip()
+    model = os.environ.get("LLM_MODEL", "qwen2.5-coder:7b-instruct-q4_k_m").strip()
     candidate_files = _candidate_files(task)
     file_texts = _read_hint_files(workspace, task, max_chars_per_file=max_chars_per_file)
     before_candidate_texts = {

@@ -34,3 +34,7 @@ docs/agent_evolution.md
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# local tool artifacts
+.code_intelligence_shadow/
+.wpscomate/

@@ -189,12 +189,11 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - `patch_strategy`
 - `llm_provider`
 - `llm_model`
-- `llm_api_key_env`
-- `llm_base_url_env`
-- `llm_model_env`
 - `llm_base_url`
 - `llm_max_output_tokens`
 - `pytest_additional_flags`
+
+API key 与 base URL 统一从 `.env` 的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 读取，所有 OpenAI-compatible 提供商共用。
 
 当前 LLM 主入口策略是：
 

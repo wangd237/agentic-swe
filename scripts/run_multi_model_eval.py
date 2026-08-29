@@ -63,9 +63,6 @@ def load_policy_specs(policy_paths: list[str | Path]) -> list[dict[str, Any]]:
                 "policy_path": str(resolved_path),
                 "llm_provider": policy.llm_provider,
                 "llm_model": policy.llm_model,
-                "llm_api_key_env": policy.llm_api_key_env,
-                "llm_base_url_env": policy.llm_base_url_env,
-                "llm_model_env": policy.llm_model_env,
                 "llm_base_url": policy.llm_base_url,
             }
         )
@@ -77,15 +74,13 @@ def preflight_policy_env(policy_specs: list[dict[str, Any]]) -> dict[str, Any]:
     ready_policies: list[str] = []
     for policy_spec in policy_specs:
         missing: list[str] = []
-        api_key_env = policy_spec.get("llm_api_key_env")
-        if api_key_env and not os.environ.get(str(api_key_env), "").strip():
-            missing.append(str(api_key_env))
+        if not os.environ.get("LLM_API_KEY", "").strip():
+            missing.append("LLM_API_KEY")
 
-        base_url_env = policy_spec.get("llm_base_url_env")
-        has_base_url_env = bool(base_url_env and os.environ.get(str(base_url_env), "").strip())
+        has_base_url_env = bool(os.environ.get("LLM_BASE_URL", "").strip())
         has_default_base_url = bool(policy_spec.get("llm_base_url"))
-        if base_url_env and not has_base_url_env and not has_default_base_url:
-            missing.append(str(base_url_env))
+        if not has_base_url_env and not has_default_base_url:
+            missing.append("LLM_BASE_URL")
 
         if missing:
             missing_by_policy[policy_spec["policy_id"]] = missing

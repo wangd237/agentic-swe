@@ -9,7 +9,12 @@ from pydantic import BaseModel, ConfigDict
 
 
 class LLMConfig(BaseModel):
-    """描述 LLM agent 运行所需的最小配置。"""
+    """描述 LLM agent 运行所需的最小配置。
+
+    所有 OpenAI-compatible 提供商（DeepSeek / Kimi / GLM / Ollama 等）
+    共用同一组环境变量：LLM_API_KEY / LLM_BASE_URL / LLM_MODEL。
+    切换提供商只需修改 .env 中这三个值，无需改 policy。
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -47,19 +52,18 @@ class LLMConfig(BaseModel):
 
     @classmethod
     def from_policy(cls, policy_config: object) -> "LLMConfig":
-        """从 policy 中抽取 LLM provider / model，其他参数沿用默认值。"""
+        """从 policy 中抽取 LLM 配置。
+
+        model 优先级：LLM_MODEL 环境变量 > policy llm_model 字段 > 默认值。
+        base_url 优先级：LLM_BASE_URL 环境变量 > policy llm_base_url 字段。
+        api key 只从 LLM_API_KEY 读取——所有 provider 共用。
+        """
 
         provider = getattr(policy_config, "llm_provider", None) or cls().provider
-        model_env = getattr(policy_config, "llm_model_env", None) or cls().model_env
-        model = os.environ.get(model_env, "").strip() or getattr(policy_config, "llm_model", None) or cls().model
+        model = os.environ.get(cls().model_env, "").strip() or getattr(policy_config, "llm_model", None) or cls().model
         return cls(
             provider=provider,
             model=model,
-            api_key_env=getattr(policy_config, "llm_api_key_env", None)
-            or cls().api_key_env,
-            base_url_env=getattr(policy_config, "llm_base_url_env", None)
-            or cls().base_url_env,
-            model_env=model_env,
             default_base_url=getattr(policy_config, "llm_base_url", None)
             or cls().default_base_url,
             max_output_tokens=getattr(policy_config, "llm_max_output_tokens", None)
@@ -82,16 +86,18 @@ class LLMConfig(BaseModel):
         if not api_key:
             raise RuntimeError(
                 f"未检测到 `{self.api_key_env}`，无法运行 LLM agent。"
+                "请在 .env 中配置 LLM_API_KEY / LLM_BASE_URL / LLM_MODEL。"
             )
         return api_key
 
     def resolve_base_url(self) -> str:
-        """读取 provider 的 OpenAI-compatible base URL。"""
+        """读取 OpenAI-compatible base URL。"""
 
         base_url = os.environ.get(self.base_url_env, "").strip() or self.default_base_url
         if not base_url:
             raise RuntimeError(
                 f"未检测到 `{self.base_url_env}`，也没有在 policy 中配置 `llm_base_url`。"
+                "请在 .env 中配置 LLM_BASE_URL。"
             )
         return base_url
 

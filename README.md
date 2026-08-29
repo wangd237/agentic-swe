@@ -183,10 +183,12 @@ optimization/policy_versions/llm_deepseek_minimal.json
 本机 Ollama / llama.cpp / LM Studio 示例：
 
 ```env
-DEEPSEEK_BASE_URL=http://127.0.0.1:8000/v1
-DEEPSEEK_MODEL=qwen2.5-coder:7b-instruct
-DEEPSEEK_API_KEY=local
+LLM_BASE_URL=http://127.0.0.1:11434/v1
+LLM_MODEL=qwen2.5-coder:7b-instruct
+LLM_API_KEY=local
 ```
+
+所有 OpenAI-compatible 提供商（DeepSeek / Kimi / GLM / Ollama 等）共用 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 三个环境变量，切换提供商只需修改 `.env` 中的值，无需改动 policy 文件。
 
 当前普通 32GB 内存、无独显机器建议先用 `Qwen2.5-Coder-7B-Instruct` 跑通流程；`14B` 更接近真实修复能力，但 CPU-only 会明显占用电脑资源，适合夜间或低负载时尝试。
 

@@ -157,9 +157,9 @@ def build_preflight_report(
     external_llm_data_consent: bool = False,
     minimum_task_count: int = 8,
 ) -> dict[str, Any]:
-    api_key_env = str(baseline_policy.get("llm_api_key_env") or "LLM_API_KEY")
-    base_url_env = str(baseline_policy.get("llm_base_url_env") or "LLM_BASE_URL")
-    model_env = str(baseline_policy.get("llm_model_env") or "LLM_MODEL")
+    api_key_env = "LLM_API_KEY"
+    base_url_env = "LLM_BASE_URL"
+    model_env = "LLM_MODEL"
     default_base_url = str(baseline_policy.get("llm_base_url") or "")
     binary_path = shutil.which(codebase_memory_binary) or (
         str(Path(codebase_memory_binary).resolve()) if Path(codebase_memory_binary).exists() else ""

@@ -2709,17 +2709,14 @@ def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: 
     )
 
 
-def test_llm_config_uses_policy_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CUSTOM_MODEL_ENV", "custom-model-from-env")
+def test_llm_config_uses_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_MODEL", "custom-model-from-env")
     policy = PolicyConfig(
         policy_id="llm_custom_provider",
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
         llm_model="policy-model",
-        llm_api_key_env="CUSTOM_API_KEY",
-        llm_base_url_env="CUSTOM_BASE_URL",
-        llm_model_env="CUSTOM_MODEL_ENV",
         llm_base_url="https://example.test/v1",
     )
 
@@ -2727,21 +2724,20 @@ def test_llm_config_uses_policy_env_names(monkeypatch: pytest.MonkeyPatch) -> No
 
     assert config.provider == "openai_compatible"
     assert config.model == "custom-model-from-env"
-    assert config.api_key_env == "CUSTOM_API_KEY"
-    assert config.base_url_env == "CUSTOM_BASE_URL"
-    assert config.model_env == "CUSTOM_MODEL_ENV"
+    assert config.api_key_env == "LLM_API_KEY"
+    assert config.base_url_env == "LLM_BASE_URL"
+    assert config.model_env == "LLM_MODEL"
     assert config.default_base_url == "https://example.test/v1"
 
 
 def test_llm_config_uses_policy_model_when_model_env_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("CUSTOM_MODEL_ENV", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
     policy = PolicyConfig(
         policy_id="llm_custom_provider",
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
         llm_model="policy-model",
-        llm_model_env="CUSTOM_MODEL_ENV",
     )
 
     config = LLMConfig.from_policy(policy)
@@ -2779,15 +2775,13 @@ def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) 
     class FakeOpenAIModule:
         OpenAI = FakeOpenAI
 
-    monkeypatch.setenv("CUSTOM_API_KEY", "secret")
-    monkeypatch.setenv("CUSTOM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
     monkeypatch.setitem(sys.modules, "openai", FakeOpenAIModule())
 
     client = OpenAICompatibleChatClient(
         llm_config=LLMConfig(
             model="fake-model",
-            api_key_env="CUSTOM_API_KEY",
-            base_url_env="CUSTOM_BASE_URL",
             timeout_sec=180,
             client_max_retries=0,
         )
@@ -2808,15 +2802,13 @@ def test_llm_config_default_iterations_match_target2_budget() -> None:
 
 
 def test_llm_config_uses_model_env_as_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CUSTOM_MODEL_ENV", "custom-model-from-env")
+    monkeypatch.setenv("LLM_MODEL", "custom-model-from-env")
     policy = PolicyConfig(
         policy_id="llm_custom_provider",
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
-        llm_api_key_env="CUSTOM_API_KEY",
-        llm_base_url_env="CUSTOM_BASE_URL",
-        llm_model_env="CUSTOM_MODEL_ENV",
+        llm_model="policy-model",
         llm_base_url="https://example.test/v1",
     )
 

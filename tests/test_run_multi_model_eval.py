@@ -46,7 +46,7 @@ def make_policy(path: Path, policy_id: str, model: str) -> None:
             "agent_type": "llm",
             "llm_provider": "openai_compatible",
             "llm_model": model,
-            "llm_api_key_env": f"{policy_id.upper()}_API_KEY",
+            "llm_base_url": "https://example.test/v1",
             "llm_max_output_tokens": 8000,
         },
     )
@@ -188,10 +188,10 @@ def test_run_multi_model_eval_loads_env_file_for_preflight(monkeypatch, tmp_path
         },
     )
     (repo_root / ".env").write_text(
-        "LLM_A_API_KEY=secret\n",
+        "LLM_API_KEY=secret\n",
         encoding="utf-8",
     )
-    monkeypatch.delenv("LLM_A_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
 
     output = run_multi_model_eval.run_multi_model_eval(
         repo_root=repo_root,
@@ -201,7 +201,7 @@ def test_run_multi_model_eval_loads_env_file_for_preflight(monkeypatch, tmp_path
         dry_run=True,
     )
 
-    assert os.environ["LLM_A_API_KEY"] == "secret"
+    assert os.environ["LLM_API_KEY"] == "secret"
     assert output["summary"]["preflight"]["ready"] is True
 
 
@@ -212,7 +212,7 @@ def test_run_multi_model_eval_preflight_reports_missing_env(monkeypatch, tmp_pat
     policy_dir = repo_root / "optimization" / "policy_versions"
     make_task(task_dir / "task_001.json", "task_001")
     make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
-    monkeypatch.delenv("LLM_A_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
     write_json(
         manifest_path,
         {
@@ -229,6 +229,6 @@ def test_run_multi_model_eval_preflight_reports_missing_env(monkeypatch, tmp_pat
             output_dir=repo_root / "logs" / "summaries",
         )
     except RuntimeError as error:
-        assert "LLM_A_API_KEY" in str(error)
+        assert "LLM_API_KEY" in str(error)
     else:
         raise AssertionError("expected missing API key preflight failure")

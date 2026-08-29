@@ -135,8 +135,8 @@ def test_run_code_intelligence_ab_preflight_loads_env_file(
     task_path = tasks_dir / "task_001.json"
     binary = tmp_path / "codebase-memory-mcp.exe"
     binary.write_text("", encoding="utf-8")
-    (tmp_path / ".env").write_text("DEMO_API_KEY=from-env-file\n", encoding="utf-8")
-    monkeypatch.delenv("DEMO_API_KEY", raising=False)
+    (tmp_path / ".env").write_text("LLM_API_KEY=from-env-file\n", encoding="utf-8")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
 
     write_json(
@@ -162,7 +162,6 @@ def test_run_code_intelligence_ab_preflight_loads_env_file(
             "description": "demo",
             "agent_type": "llm",
             "llm_model": "fake-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
     )
@@ -211,7 +210,7 @@ def test_build_preflight_report_ready_when_env_and_binary_exist(
         },
     )
 
-    monkeypatch.setenv("DEMO_API_KEY", "secret")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
 
     def fake_run(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -222,7 +221,6 @@ def test_build_preflight_report_ready_when_env_and_binary_exist(
         baseline_policy={
             "llm_provider": "openai_compatible",
             "llm_model": "demo-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
         graph_policy={"codebase_memory_index_mode": "fast", "codebase_memory_always_shadow_copy": True},
@@ -265,7 +263,7 @@ def test_build_preflight_report_blocks_without_external_llm_data_consent(
         },
     )
 
-    monkeypatch.setenv("DEMO_API_KEY", "secret")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
 
     def fake_run(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -276,7 +274,6 @@ def test_build_preflight_report_blocks_without_external_llm_data_consent(
         baseline_policy={
             "llm_provider": "openai_compatible",
             "llm_model": "demo-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
         graph_policy={"codebase_memory_index_mode": "fast", "codebase_memory_always_shadow_copy": True},
@@ -337,6 +334,8 @@ def test_run_code_intelligence_ab_aborts_real_run_on_preflight_blocker(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
     tasks_dir = tmp_path / "benchmarks" / "tasks"
     manifest_path = tmp_path / "benchmarks" / "manifests" / "dev_tasks.json"
     baseline_policy_path = tmp_path / "optimization" / "policy_versions" / "llm_demo.json"
@@ -485,11 +484,10 @@ def test_run_code_intelligence_ab_can_ignore_preflight_blockers(
             "description": "demo",
             "agent_type": "llm",
             "llm_model": "fake-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
     )
-    monkeypatch.setenv("DEMO_API_KEY", "secret")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
     calls: list[str] = []
 
     def fake_run_batch(*, run_label, **kwargs):  # noqa: ANN003
@@ -565,11 +563,10 @@ def test_run_code_intelligence_ab_cannot_ignore_missing_external_llm_data_consen
             "description": "demo",
             "agent_type": "llm",
             "llm_model": "fake-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
     )
-    monkeypatch.setenv("DEMO_API_KEY", "secret")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
 
     def fake_version(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -625,11 +622,10 @@ def test_run_code_intelligence_ab_can_ignore_technical_blockers_with_consent(
             "description": "demo",
             "agent_type": "llm",
             "llm_model": "fake-model",
-            "llm_api_key_env": "DEMO_API_KEY",
             "llm_base_url": "https://example.test",
         },
     )
-    monkeypatch.setenv("DEMO_API_KEY", "secret")
+    monkeypatch.setenv("LLM_API_KEY", "secret")
     calls: list[str] = []
 
     def fake_run_batch(*, run_label, **kwargs):  # noqa: ANN003

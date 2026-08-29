@@ -21,9 +21,6 @@ class PolicyConfig(BaseModel):
     patch_strategy: str = "baseline"
     llm_provider: str | None = None
     llm_model: str | None = None
-    llm_api_key_env: str | None = None
-    llm_base_url_env: str | None = None
-    llm_model_env: str | None = None
     llm_base_url: str | None = None
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None
