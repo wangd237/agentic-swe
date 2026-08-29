@@ -197,7 +197,6 @@ def test_run_repair_bug_smoke_runs_llm_agent_core_with_fake_client(
             "patch_strategy": "baseline",
             "max_steps": 5,
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -267,7 +266,6 @@ def test_run_repair_bug_smoke_reports_weak_fallback_verification(
             "patch_strategy": "baseline",
             "max_steps": 3,
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )

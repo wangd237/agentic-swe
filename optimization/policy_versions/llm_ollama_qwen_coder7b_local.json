@@ -7,8 +7,6 @@
   "agent_type": "llm",
   "patch_strategy": "baseline",
   "llm_provider": "openai_compatible",
-  "llm_model": "qwen2.5-coder:7b-instruct-q4_k_m",
-  "llm_base_url": "http://127.0.0.1:11434/v1",
   "llm_max_output_tokens": 1200,
   "llm_timeout_sec": 180,
   "llm_client_max_retries": 0,

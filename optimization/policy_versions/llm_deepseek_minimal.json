@@ -7,8 +7,6 @@
   "agent_type": "llm",
   "patch_strategy": "baseline",
   "llm_provider": "openai_compatible",
-  "llm_model": "deepseek-chat",
-  "llm_base_url": "https://api.deepseek.com",
   "llm_max_output_tokens": 8000,
   "llm_timeout_sec": 180,
   "pytest_additional_flags": [

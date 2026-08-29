@@ -55,18 +55,21 @@ class LLMConfig(BaseModel):
     def from_policy(cls, policy_config: object) -> "LLMConfig":
         """从 policy 中抽取 LLM 配置。
 
-        model 优先级：LLM_MODEL 环境变量 > policy llm_model 字段 > 默认值。
-        base_url 优先级：LLM_BASE_URL 环境变量 > policy llm_base_url 字段。
-        api key 只从 LLM_API_KEY 读取——所有 provider 共用。
+        模型连接信息（api key / base url / model）只从 .env 的
+        LLM_API_KEY / LLM_BASE_URL / LLM_MODEL 读取，policy 不再提供兑底值。
+        未配置时在运行期报明确错误，而不是静默落到某个预置模型。
         """
 
         provider = getattr(policy_config, "llm_provider", None) or cls().provider
-        model = os.environ.get(cls().model_env, "").strip() or getattr(policy_config, "llm_model", None) or cls().model
+        model = os.environ.get(cls().model_env, "").strip()
+        if not model:
+            raise RuntimeError(
+                "未检测到 `LLM_MODEL`。请在 .env 中配置 LLM_MODEL"
+                "（例如 deepseek-chat / Qzhou/kimi-k2.5 / glm-4.5）。"
+            )
         return cls(
             provider=provider,
             model=model,
-            default_base_url=getattr(policy_config, "llm_base_url", None)
-            or cls().default_base_url,
             max_output_tokens=getattr(policy_config, "llm_max_output_tokens", None)
             or cls().max_output_tokens,
             max_iterations=getattr(policy_config, "max_steps", None)
@@ -94,11 +97,10 @@ class LLMConfig(BaseModel):
     def resolve_base_url(self) -> str:
         """读取 OpenAI-compatible base URL。"""
 
-        base_url = os.environ.get(self.base_url_env, "").strip() or self.default_base_url
+        base_url = os.environ.get(self.base_url_env, "").strip()
         if not base_url:
             raise RuntimeError(
-                f"未检测到 `{self.base_url_env}`，也没有在 policy 中配置 `llm_base_url`。"
-                "请在 .env 中配置 LLM_BASE_URL。"
+                f"未检测到 `{self.base_url_env}`。请在 .env 中配置 LLM_BASE_URL。"
             )
         return base_url
 

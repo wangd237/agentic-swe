@@ -7,8 +7,6 @@
   "agent_type": "llm",
   "patch_strategy": "baseline",
   "llm_provider": "openai_compatible",
-  "llm_model": "replace-with-model-name",
-  "llm_base_url": "https://replace-with-provider-base-url",
   "llm_max_output_tokens": 8000,
   "pytest_additional_flags": [
     "-p no:unraisableexception",

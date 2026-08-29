@@ -178,6 +178,8 @@ cp .env.example .env
 optimization/policy_versions/llm_deepseek_minimal.json
 ```
 
+模型连接信息（`LLM_API_KEY / LLM_BASE_URL / LLM_MODEL`）只从 `.env` 读取，policy 不提供兑底值；未配置时启动即报明确错误。
+
 如果要处理私有代码或运行真实 A/B，建议使用本地或受信内部 OpenAI-compatible endpoint。外部公网 provider 可能会因代码、trace、diff 外发而被安全策略阻断。
 
 本机 Ollama / llama.cpp / LM Studio 示例：

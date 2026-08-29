@@ -854,7 +854,6 @@ def test_llm_agent_executes_recovered_text_json_tool_call(tmp_path: Path) -> Non
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -919,7 +918,6 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1022,7 +1020,6 @@ def test_llm_agent_records_enabled_code_intelligence_in_trace_and_result(tmp_pat
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
             "code_intelligence_backend": "codebase_memory_cli",
             "code_intelligence_max_results": 3,
@@ -1103,7 +1100,6 @@ def test_llm_agent_injects_retrieved_strategy_memory_into_initial_prompt(tmp_pat
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1196,7 +1192,6 @@ def test_llm_agent_parallelizes_same_turn_read_only_tools(tmp_path: Path) -> Non
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1268,7 +1263,6 @@ def test_llm_agent_auto_verifies_after_write_before_success(tmp_path: Path) -> N
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1347,7 +1341,6 @@ def test_llm_agent_auto_verification_runs_targeted_before_full_tests(tmp_path: P
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1442,7 +1435,6 @@ def test_llm_agent_immediate_verification_prevents_tests_before_diff_violation(t
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1517,7 +1509,6 @@ def test_llm_agent_skips_duplicate_full_run_tests_after_verified_generation(tmp_
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1590,7 +1581,6 @@ def test_llm_agent_auto_finalizes_after_full_verification_without_extra_inspecti
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1678,7 +1668,6 @@ def test_llm_agent_downgrades_success_for_weak_fallback_verification(tmp_path: P
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1759,7 +1748,6 @@ def test_llm_agent_auto_verifies_after_edit_before_success(tmp_path: Path) -> No
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1838,7 +1826,6 @@ def test_llm_agent_classifies_failed_tests_after_patch(tmp_path: Path) -> None:
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1917,7 +1904,6 @@ def test_llm_agent_auto_undoes_when_reflection_requests_it(tmp_path: Path) -> No
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -1992,7 +1978,6 @@ def test_llm_agent_blocks_repeated_edits_before_reproduction(tmp_path: Path) -> 
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2066,7 +2051,6 @@ def test_llm_agent_classifies_max_iterations_with_unverified_patch(tmp_path: Pat
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2130,7 +2114,6 @@ def test_llm_agent_final_verifies_last_iteration_write(tmp_path: Path) -> None:
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2210,7 +2193,6 @@ def test_llm_agent_allows_weak_static_patch_but_keeps_weak_status(tmp_path: Path
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2287,7 +2269,6 @@ def test_llm_agent_records_localization_override_candidate(tmp_path: Path) -> No
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2358,7 +2339,6 @@ def test_llm_agent_blocks_premature_write_before_reproduction(tmp_path: Path) ->
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2423,7 +2403,6 @@ def test_llm_agent_prioritizes_max_iterations_without_patch(tmp_path: Path) -> N
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2483,7 +2462,6 @@ def test_llm_agent_ignores_model_supplied_test_command(tmp_path: Path) -> None:
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2550,7 +2528,6 @@ def test_llm_agent_returns_artifacts_after_bad_tool_input(tmp_path: Path) -> Non
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2616,7 +2593,6 @@ def test_llm_agent_injects_edit_recovery_notice_after_missing_old_string(tmp_pat
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2680,7 +2656,6 @@ def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: 
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
             "pytest_additional_flags": [],
         },
     )
@@ -2716,8 +2691,6 @@ def test_llm_config_uses_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> N
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
-        llm_model="policy-model",
-        llm_base_url="https://example.test/v1",
     )
 
     config = LLMConfig.from_policy(policy)
@@ -2727,25 +2700,23 @@ def test_llm_config_uses_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> N
     assert config.api_key_env == "LLM_API_KEY"
     assert config.base_url_env == "LLM_BASE_URL"
     assert config.model_env == "LLM_MODEL"
-    assert config.default_base_url == "https://example.test/v1"
 
 
-def test_llm_config_uses_policy_model_when_model_env_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_llm_config_raises_when_model_env_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LLM_MODEL", raising=False)
     policy = PolicyConfig(
         policy_id="llm_custom_provider",
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
-        llm_model="policy-model",
     )
 
-    config = LLMConfig.from_policy(policy)
+    with pytest.raises(RuntimeError, match="LLM_MODEL"):
+        LLMConfig.from_policy(policy)
 
-    assert config.model == "policy-model"
 
-
-def test_llm_config_uses_policy_max_steps() -> None:
+def test_llm_config_uses_policy_max_steps(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_MODEL", "custom-model-from-env")
     policy = PolicyConfig(
         policy_id="llm_custom_provider",
         description="custom provider",
@@ -2808,8 +2779,6 @@ def test_llm_config_uses_model_env_as_fallback(monkeypatch: pytest.MonkeyPatch) 
         description="custom provider",
         agent_type="llm",
         llm_provider="openai_compatible",
-        llm_model="policy-model",
-        llm_base_url="https://example.test/v1",
     )
 
     config = LLMConfig.from_policy(policy)

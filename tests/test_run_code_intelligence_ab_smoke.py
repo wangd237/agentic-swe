@@ -73,7 +73,6 @@ def test_run_code_intelligence_ab_smoke_with_missing_binary_records_pair(
             "description": "demo",
             "agent_type": "llm",
             "llm_provider": "openai_compatible",
-            "llm_model": "fake-model",
         },
     )
     monkeypatch.setattr(run_code_intelligence_ab_smoke, "REPO_ROOT", tmp_path)

@@ -7,8 +7,6 @@
   "agent_type": "llm",
   "patch_strategy": "baseline",
   "llm_provider": "openai_compatible",
-  "llm_model": "glm-4.5",
-  "llm_base_url": "https://open.bigmodel.cn/api/paas/v4",
   "llm_max_output_tokens": 8000,
   "pytest_additional_flags": [
     "-p no:unraisableexception",

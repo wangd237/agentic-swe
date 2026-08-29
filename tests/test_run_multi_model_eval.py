@@ -37,7 +37,7 @@ def make_task(path: Path, task_id: str) -> None:
     )
 
 
-def make_policy(path: Path, policy_id: str, model: str) -> None:
+def make_policy(path: Path, policy_id: str) -> None:
     write_json(
         path,
         {
@@ -45,8 +45,6 @@ def make_policy(path: Path, policy_id: str, model: str) -> None:
             "description": "test policy",
             "agent_type": "llm",
             "llm_provider": "openai_compatible",
-            "llm_model": model,
-            "llm_base_url": "https://example.test/v1",
             "llm_max_output_tokens": 8000,
         },
     )
@@ -59,8 +57,8 @@ def test_run_multi_model_eval_dry_run_writes_skipped_matrix(tmp_path: Path) -> N
     policy_dir = repo_root / "optimization" / "policy_versions"
     make_task(task_dir / "task_001.json", "task_001")
     make_task(task_dir / "task_002.json", "task_002")
-    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
-    make_policy(policy_dir / "llm_b.json", "llm_b", "model-b")
+    make_policy(policy_dir / "llm_a.json", "llm_a")
+    make_policy(policy_dir / "llm_b.json", "llm_b")
     write_json(
         manifest_path,
         {
@@ -98,7 +96,7 @@ def test_run_multi_model_eval_resumes_completed_pairs(tmp_path: Path) -> None:
     policy_dir = repo_root / "optimization" / "policy_versions"
     make_task(task_dir / "task_001.json", "task_001")
     make_task(task_dir / "task_002.json", "task_002")
-    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
+    make_policy(policy_dir / "llm_a.json", "llm_a")
     write_json(
         manifest_path,
         {
@@ -144,7 +142,6 @@ def test_run_multi_model_eval_resumes_completed_pairs(tmp_path: Path) -> None:
                 "duration_sec": 1.0,
                 "tool_stats": {
                     "policy_id": "llm_a",
-                    "llm_model": "model-a",
                     "total_tool_calls": 3,
                 },
             },
@@ -179,7 +176,7 @@ def test_run_multi_model_eval_loads_env_file_for_preflight(monkeypatch, tmp_path
     task_dir = repo_root / "benchmarks" / "tasks"
     policy_dir = repo_root / "optimization" / "policy_versions"
     make_task(task_dir / "task_001.json", "task_001")
-    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
+    make_policy(policy_dir / "llm_a.json", "llm_a")
     write_json(
         manifest_path,
         {
@@ -188,10 +185,12 @@ def test_run_multi_model_eval_loads_env_file_for_preflight(monkeypatch, tmp_path
         },
     )
     (repo_root / ".env").write_text(
-        "LLM_API_KEY=secret\n",
+        "LLM_API_KEY=secret\nLLM_BASE_URL=https://example.test/v1\nLLM_MODEL=fake-model\n",
         encoding="utf-8",
     )
     monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
 
     output = run_multi_model_eval.run_multi_model_eval(
         repo_root=repo_root,
@@ -211,7 +210,7 @@ def test_run_multi_model_eval_preflight_reports_missing_env(monkeypatch, tmp_pat
     task_dir = repo_root / "benchmarks" / "tasks"
     policy_dir = repo_root / "optimization" / "policy_versions"
     make_task(task_dir / "task_001.json", "task_001")
-    make_policy(policy_dir / "llm_a.json", "llm_a", "model-a")
+    make_policy(policy_dir / "llm_a.json", "llm_a")
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     write_json(
         manifest_path,

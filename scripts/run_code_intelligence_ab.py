@@ -135,7 +135,7 @@ def build_external_data_preview(
             "agent traces needed for reasoning and summaries",
         ],
         "llm_provider": baseline_policy.get("llm_provider", ""),
-        "llm_model": baseline_policy.get("llm_model", ""),
+        "llm_model": os.environ.get("LLM_MODEL", ""),
         "graph_backend": graph_policy.get("code_intelligence_backend", ""),
         "codebase_memory_index_mode": graph_policy.get("codebase_memory_index_mode", ""),
         "task_count": len(task_items),
@@ -160,7 +160,6 @@ def build_preflight_report(
     api_key_env = "LLM_API_KEY"
     base_url_env = "LLM_BASE_URL"
     model_env = "LLM_MODEL"
-    default_base_url = str(baseline_policy.get("llm_base_url") or "")
     binary_path = shutil.which(codebase_memory_binary) or (
         str(Path(codebase_memory_binary).resolve()) if Path(codebase_memory_binary).exists() else ""
     )
@@ -204,7 +203,7 @@ def build_preflight_report(
     warnings: list[str] = []
     if not os.environ.get(api_key_env, "").strip():
         blockers.append(f"missing_llm_api_key:{api_key_env}")
-    if not (os.environ.get(base_url_env, "").strip() or default_base_url):
+    if not os.environ.get(base_url_env, "").strip():
         blockers.append(f"missing_llm_base_url:{base_url_env}")
     if not external_llm_data_consent:
         blockers.append("missing_external_llm_data_consent")
@@ -221,11 +220,11 @@ def build_preflight_report(
         "warnings": warnings,
         "llm": {
             "provider": baseline_policy.get("llm_provider", ""),
-            "model": os.environ.get(model_env, "").strip() or baseline_policy.get("llm_model", ""),
+            "model": os.environ.get(model_env, "").strip(),
             "api_key_env": api_key_env,
             "api_key_present": bool(os.environ.get(api_key_env, "").strip()),
             "base_url_env": base_url_env,
-            "base_url_present": bool(os.environ.get(base_url_env, "").strip() or default_base_url),
+            "base_url_present": bool(os.environ.get(base_url_env, "").strip()),
             "model_env": model_env,
             "external_data_consent": external_llm_data_consent,
             "external_data_notice": (

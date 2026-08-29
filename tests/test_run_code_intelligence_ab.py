@@ -23,7 +23,6 @@ def test_build_graph_policy_preserves_baseline_and_enables_backend() -> None:
         "policy_id": "llm_demo",
         "description": "demo",
         "agent_type": "llm",
-        "llm_model": "fake-model",
     }
 
     graph_policy = run_code_intelligence_ab.build_graph_policy(
@@ -37,7 +36,6 @@ def test_build_graph_policy_preserves_baseline_and_enables_backend() -> None:
 
     assert graph_policy["policy_id"] == "llm_demo_graph"
     assert graph_policy["agent_type"] == "llm"
-    assert graph_policy["llm_model"] == "fake-model"
     assert graph_policy["code_intelligence_backend"] == "codebase_memory_cli"
     assert graph_policy["codebase_memory_binary"] == "codebase-memory-mcp.exe"
     assert graph_policy["codebase_memory_always_shadow_copy"] is True
@@ -51,6 +49,8 @@ def test_run_code_intelligence_ab_dry_run_writes_plan_and_graph_policy(
     monkeypatch,
 ) -> None:
     monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
     repo_root = tmp_path
     tasks_dir = repo_root / "benchmarks" / "tasks"
@@ -87,7 +87,6 @@ def test_run_code_intelligence_ab_dry_run_writes_plan_and_graph_policy(
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
         },
     )
 
@@ -140,8 +139,13 @@ def test_run_code_intelligence_ab_preflight_loads_env_file(
     task_path = tasks_dir / "task_001.json"
     binary = tmp_path / "codebase-memory-mcp.exe"
     binary.write_text("", encoding="utf-8")
-    (tmp_path / ".env").write_text("LLM_API_KEY=from-env-file\n", encoding="utf-8")
+    (tmp_path / ".env").write_text(
+        "LLM_API_KEY=from-env-file\nLLM_BASE_URL=https://example.test/v1\nLLM_MODEL=fake-model\n",
+        encoding="utf-8",
+    )
     monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
 
     write_json(
@@ -166,8 +170,6 @@ def test_run_code_intelligence_ab_preflight_loads_env_file(
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
-            "llm_base_url": "https://example.test",
         },
     )
 
@@ -216,6 +218,8 @@ def test_build_preflight_report_ready_when_env_and_binary_exist(
     )
 
     monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "fake-model")
 
     def fake_run(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -225,8 +229,6 @@ def test_build_preflight_report_ready_when_env_and_binary_exist(
     report = run_code_intelligence_ab.build_preflight_report(
         baseline_policy={
             "llm_provider": "openai_compatible",
-            "llm_model": "demo-model",
-            "llm_base_url": "https://example.test",
         },
         graph_policy={"codebase_memory_index_mode": "fast", "codebase_memory_always_shadow_copy": True},
         codebase_memory_binary=str(binary),
@@ -269,6 +271,8 @@ def test_build_preflight_report_blocks_without_external_llm_data_consent(
     )
 
     monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "fake-model")
 
     def fake_run(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -278,8 +282,6 @@ def test_build_preflight_report_blocks_without_external_llm_data_consent(
     report = run_code_intelligence_ab.build_preflight_report(
         baseline_policy={
             "llm_provider": "openai_compatible",
-            "llm_model": "demo-model",
-            "llm_base_url": "https://example.test",
         },
         graph_policy={"codebase_memory_index_mode": "fast", "codebase_memory_always_shadow_copy": True},
         codebase_memory_binary=str(binary),
@@ -341,6 +343,8 @@ def test_run_code_intelligence_ab_aborts_real_run_on_preflight_blocker(
 ) -> None:
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
     monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
     tasks_dir = tmp_path / "benchmarks" / "tasks"
     manifest_path = tmp_path / "benchmarks" / "manifests" / "dev_tasks.json"
@@ -368,7 +372,6 @@ def test_run_code_intelligence_ab_aborts_real_run_on_preflight_blocker(
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
         },
     )
 
@@ -424,7 +427,6 @@ def test_run_code_intelligence_ab_external_data_preview_only_writes_preview_with
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
         },
     )
 
@@ -489,11 +491,11 @@ def test_run_code_intelligence_ab_can_ignore_preflight_blockers(
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
-            "llm_base_url": "https://example.test",
         },
     )
     monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "fake-model")
     calls: list[str] = []
 
     def fake_run_batch(*, run_label, **kwargs):  # noqa: ANN003
@@ -568,11 +570,11 @@ def test_run_code_intelligence_ab_cannot_ignore_missing_external_llm_data_consen
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
-            "llm_base_url": "https://example.test",
         },
     )
     monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "fake-model")
 
     def fake_version(args, capture_output, text, encoding, errors, timeout, check):
         return subprocess.CompletedProcess(args, 0, stdout="codebase-memory-mcp 0.8.1\n", stderr="")
@@ -627,11 +629,11 @@ def test_run_code_intelligence_ab_can_ignore_technical_blockers_with_consent(
             "policy_id": "llm_demo",
             "description": "demo",
             "agent_type": "llm",
-            "llm_model": "fake-model",
-            "llm_base_url": "https://example.test",
         },
     )
     monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "fake-model")
     calls: list[str] = []
 
     def fake_run_batch(*, run_label, **kwargs):  # noqa: ANN003

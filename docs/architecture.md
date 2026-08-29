@@ -188,12 +188,10 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - `agent_type`
 - `patch_strategy`
 - `llm_provider`
-- `llm_model`
-- `llm_base_url`
 - `llm_max_output_tokens`
 - `pytest_additional_flags`
 
-API key 与 base URL 统一从 `.env` 的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 读取，所有 OpenAI-compatible 提供商共用。
+模型连接信息（api key / base url / model）只从 `.env` 的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 读取，所有 OpenAI-compatible 提供商共用；policy 不再提供兑底值，未配置时直接报错。
 
 当前 LLM 主入口策略是：
 
