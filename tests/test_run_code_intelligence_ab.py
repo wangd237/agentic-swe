@@ -46,7 +46,12 @@ def test_build_graph_policy_preserves_baseline_and_enables_backend() -> None:
     assert graph_policy["codebase_memory_index_mode"] == "fast"
 
 
-def test_run_code_intelligence_ab_dry_run_writes_plan_and_graph_policy(tmp_path: Path) -> None:
+def test_run_code_intelligence_ab_dry_run_writes_plan_and_graph_policy(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
     repo_root = tmp_path
     tasks_dir = repo_root / "benchmarks" / "tasks"
     manifest_path = repo_root / "benchmarks" / "manifests" / "dev_tasks.json"
@@ -336,6 +341,7 @@ def test_run_code_intelligence_ab_aborts_real_run_on_preflight_blocker(
 ) -> None:
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.setattr(run_code_intelligence_ab, "REPO_ROOT", tmp_path)
     tasks_dir = tmp_path / "benchmarks" / "tasks"
     manifest_path = tmp_path / "benchmarks" / "manifests" / "dev_tasks.json"
     baseline_policy_path = tmp_path / "optimization" / "policy_versions" / "llm_demo.json"

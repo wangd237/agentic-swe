@@ -30,6 +30,7 @@ class LLMConfig(BaseModel):
     max_context_chars: int = 80000
     timeout_sec: float = 60.0
     client_max_retries: int = 2
+    max_empty_response_retries: int = 2
     temperature: float = 0.0
 
     @staticmethod

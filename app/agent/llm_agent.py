@@ -888,6 +888,7 @@ class LLMCodeAgent(BaseAgent):
         last_failure_signature_before_patch: FailureSignature | None = None
         recorded_phase_milestones = {"understand"}
         llm_call_count = 0
+        empty_response_retries = 0
         llm_total_tokens = 0
         llm_missing_usage_count = 0
         total_tool_schema_sent = 0
@@ -1978,6 +1979,44 @@ class LLMCodeAgent(BaseAgent):
                     }
                 )
                 compress_context_if_needed("auto_verification")
+                continue
+
+            if not tool_blocks and not assistant_text:
+                # 模型返回空响应（reasoning 模型思考耗尽后可能发生）。
+                # 注入提醒并重试，而不是直接放弃任务。
+                empty_response_retries += 1
+                if empty_response_retries > self.llm_config.max_empty_response_retries:
+                    final_summary = "模型连续返回空响应，任务终止。"
+                    break
+                trace.steps.append(
+                    TraceStep(
+                        step_index=len(trace.steps) + 1,
+                        action_type="empty_response_retry",
+                        tool_name=None,
+                        tool_input={"retry_count": empty_response_retries},
+                        tool_output_summary="模型返回空响应，注入提醒后重试。",
+                        observation=(
+                            "EMPTY_RESPONSE_NOTICE: 上一轮响应为空。"
+                            "请继续任务：调用工具或给出文本结论。"
+                        ),
+                        decision="空响应重试，避免 reasoning 模型思考耗尽导致任务提前终止。",
+                        timestamp=self._utc_timestamp(),
+                        duration_sec=None,
+                        phase=agent_state.phase,
+                        state_snapshot=agent_state.snapshot(),
+                        verification_strength=agent_state.verification_strength,
+                        tool_metrics={"retry_count": empty_response_retries},
+                    )
+                )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "【系统提醒】你上一轮没有返回任何内容或工具调用。"
+                            "任务尚未完成，请继续：调用工具推进修复，或给出明确结论。"
+                        ),
+                    }
+                )
                 continue
 
             final_summary = assistant_text or "模型结束了当前任务。"
