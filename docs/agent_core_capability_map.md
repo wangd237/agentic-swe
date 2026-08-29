@@ -215,7 +215,7 @@ Input
 
 - trace step 记录 phase、state snapshot、evidence ids、verification strength。
 - result 记录 LLM call count、token、tool routing、agent core metrics。
-- `项目1改进记录.md` 记录 v1-v10 的实验与回退理由。
+- v1-v10 的实验与回退理由记录在本地改进记录（未随仓库分发）。
 
 风险：
 
