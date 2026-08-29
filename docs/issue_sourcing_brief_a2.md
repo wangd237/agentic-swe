@@ -17,7 +17,7 @@
 
 ## 当前背景
 
-基于 [defect_coverage_v2_gap_analysis_002.md](/E:/My_Projects/agentic-software-engineering-roadmap/logs/summaries/defect_coverage_v2_gap_analysis_002.md)，当前正式 benchmark 的缺陷家族分布已经比较明确：
+基于 [defect_coverage_v2_gap_analysis_002.md](logs/summaries/defect_coverage_v2_gap_analysis_002.md)，当前正式 benchmark 的缺陷家族分布已经比较明确：
 
 - 覆盖最重的两类：
   - `解析与字符串语义 = 15`

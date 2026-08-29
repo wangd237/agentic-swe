@@ -2,7 +2,7 @@
 
 本文件只保留“当前最值得作为 challenge 题继续推进”的候选。
 
-它和 [docs/candidate_shortlist.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/candidate_shortlist.md) 的区别是：
+它和 [docs/candidate_shortlist.md](docs/candidate_shortlist.md) 的区别是：
 
 - `candidate_shortlist` 更偏正式 benchmark 扩容
 - `challenge_shortlist` 更偏系统边界展示

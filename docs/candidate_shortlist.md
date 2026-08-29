@@ -34,8 +34,8 @@
 - 已顺手增强脚手架自动推断：
   - 当 issue 文本只给 Python 符号名时，现在会尝试把 `from_thread.check_cancelled` 这类符号还原成 `anyio/from_thread.py`
 - 当前扩新来源时，优先使用：
-  - [docs/issue_sourcing_brief_a2.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/issue_sourcing_brief_a2.md)
-  - [docs/issue_sourcing_spec.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/issue_sourcing_spec.md)
+  - [docs/issue_sourcing_brief_a2.md](docs/issue_sourcing_brief_a2.md)
+  - [docs/issue_sourcing_spec.md](docs/issue_sourcing_spec.md)
 
 当前推荐的补位方向已经不是泛泛地“继续找 bug”，而是：
 

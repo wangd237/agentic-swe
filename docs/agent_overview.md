@@ -82,8 +82,8 @@ LLM agent 不只看模型最后一句话。它会跟踪每次 `write_file` 后�
 - final_status：`success`
 - total_tool_calls：`6`
 - modified_files：`rich_ansi_repo/ansi.py`
-- trace：[trace.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/trace.json)
-- result：[result.json](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/result.json)
-- patch：[patch.diff](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/patch.diff)
+- trace：[trace.json](../evidence/task_010/trace.json)
+- result：[result.json](../evidence/task_010/result.json)
+- patch：[patch.diff](../evidence/task_010/patch.diff)
 
 这次 run 已经跑通完整链路：读取文件、写入 patch、运行测试、查看 diff、输出原因分析。

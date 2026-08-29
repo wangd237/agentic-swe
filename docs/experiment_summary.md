@@ -1,6 +1,6 @@
 # 实验摘要
 
-本文档是当前项目的实验导读层。完整历史流水账仍保留在 [docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md) 和 [docs/optimization_log.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/optimization_log.md)，但当前对外叙事以 LLM coding agent 为主。
+本文档是当前项目的实验导读层。完整历史流水账仍保留在 [docs/results.md](docs/results.md) 和 [docs/optimization_log.md](docs/optimization_log.md)，但当前对外叙事以 LLM coding agent 为主。
 
 ## 1. 实验目标
 
@@ -33,7 +33,7 @@ benchmark、frozen set、规则版 baseline 和 stability recheck 都是验证�
 | provider 抽象 | OpenAI-compatible |
 | 关键产物 | `trace.json / result.json / patch.diff` |
 
-完整表格见 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)。
+完整表格见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)。
 
 ## 4. 代表性观察
 
@@ -75,11 +75,11 @@ Agent 的最终状态不依赖模型最后一句自然语言，而是依赖：
 
 ## 7. 推荐阅读路径
 
-1. [README.md](/E:/My_Projects/agentic-software-engineering-roadmap/README.md)
-2. [docs/agent_overview.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_overview.md)
-3. [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md)
-4. [docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)
-5. [docs/architecture.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/architecture.md)
+1. [README.md](README.md)
+2. [docs/agent_overview.md](docs/agent_overview.md)
+3. [docs/agent_eval_summary.md](docs/agent_eval_summary.md)
+4. [docs/agent_case_studies.md](docs/agent_case_studies.md)
+5. [docs/architecture.md](docs/architecture.md)
 
 ## 8. 一句话总结
 

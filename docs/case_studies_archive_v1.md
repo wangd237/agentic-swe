@@ -1,6 +1,6 @@
 # 案例分析归档 v1
 
-以下内容归档自旧版 [docs/case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/case_studies.md)。
+以下内容归档自旧版 [docs/case_studies.md](docs/case_studies.md)。
 
 保留这份归档的目的不是继续把它当作对外展示材料，而是：
 
@@ -274,4 +274,4 @@
 - 结果：
   - `task_042` 在扩容后的真实任务集上完全通过
 
-> 其余旧版条目保持原样归档，后续如果需要逐版本追溯，可继续查阅这份文件以及 [docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md)。
+> 其余旧版条目保持原样归档，后续如果需要逐版本追溯，可继续查阅这份文件以及 [docs/results.md](docs/results.md)。

@@ -14,7 +14,7 @@
 
 ## Case 1：`task_048` 当前未解边界
 
-- latest run: [result](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_048/run_20260615T064450000602Z_7854/result.json), [trace](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_048/run_20260615T064450000602Z_7854/trace.json)
+- latest run: result（历史 run，产物未随仓库分发）, trace（历史 run，产物未随仓库分发）
 - final_status: `incomplete`
 - incomplete_reason: `max_iterations`
 - modified_files: none
@@ -42,7 +42,7 @@ Harness implication:
 
 Before:
 
-- run: [result](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_032/run_20260615T062851496288Z_7250/result.json), [trace](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_032/run_20260615T062851496288Z_7250/trace.json)
+- run: result（历史 run，产物未随仓库分发）, trace（历史 run，产物未随仓库分发）
 - final_status: `incomplete`
 - incomplete_reason: `max_iterations`
 - modified_files: `debug.py`
@@ -50,7 +50,7 @@ Before:
 
 After:
 
-- run: [result](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_032/run_20260615T064258972478Z_5407/result.json), [trace](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_032/run_20260615T064258972478Z_5407/trace.json)
+- run: result（历史 run，产物未随仓库分发）, trace（历史 run，产物未随仓库分发）
 - final_status: `success`
 - modified_files: `packaging_wheel_repo/utils.py`
 - total_tool_calls: `9`
@@ -79,7 +79,7 @@ DeepSeek frozen_40 从 `37/40` 提升到 `39/40`，其中 `task_032` 从稳定�
 
 Before:
 
-- run: [result](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T053708905100Z_0543/result.json), [trace](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T053708905100Z_0543/trace.json)
+- run: result（历史 run，产物未随仓库分发）, trace（历史 run，产物未随仓库分发）
 - final_status: `incomplete`
 - incomplete_reason: `max_iterations`
 - modified_files: `tomlkit_inline_table_repo/formatter.py`
@@ -87,7 +87,7 @@ Before:
 
 After:
 
-- run: [result](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T064231984612Z_4621/result.json), [trace](E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T064231984612Z_4621/trace.json)
+- run: result（历史 run，产物未随仓库分发）, trace（历史 run，产物未随仓库分发）
 - final_status: `success`
 - modified_files: `tomlkit_inline_table_repo/formatter.py`
 - total_tool_calls: `13`

@@ -1,6 +1,6 @@
 # 下一步行动清单
 
-本文件只记录当前真正应该做的下一步。项目目标以 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 为准：把 LLM coding agent 打磨到实习/面试可展示，而不是继续扩 benchmark 数量。
+本文件只记录当前真正应该做的下一步。项目目标以 [docs/weekTarget.md](docs/weekTarget.md) 为准：把 LLM coding agent 打磨到实习/面试可展示，而不是继续扩 benchmark 数量。
 
 ## 1. 当前阶段
 
@@ -8,18 +8,18 @@
 
 已完成：
 
-- Target 1 压力测试：14 条 hard task，12/14 success，产出 [docs/stress_test_report.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/stress_test_report.md)。
+- Target 1 压力测试：14 条 hard task，12/14 success，产出 [docs/stress_test_report.md](docs/stress_test_report.md)。
 - 多模型 runner / aggregator 基础设施。
 - DeepSeek frozen_40 最新基线：`40/40` completed，`39/40` success，success rate `0.975`。
 - 基于 `task_032` trace 落地 scratch-file guard，避免 `debug.py/tmp.py/scratch.py/probe.py` 这类无法执行的临时调试文件污染 patch 或消耗迭代。
-- 当前 interim comparison： [docs/model_comparison.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/model_comparison.md)。
+- 当前 interim comparison： [docs/model_comparison.md](docs/model_comparison.md)。
 
 尚未完成：
 
 - Kimi frozen_40。
 - GLM frozen_40。
 - 三模型正式交集分析。
-- 至少 5 条失败 case 的 trace 级根因分析；当前 [docs/failure_deep_dive.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/failure_deep_dive.md) 已完成 `3/5`，剩余 `2` 条等待 Kimi/GLM 真实结果。
+- 至少 5 条失败 case 的 trace 级根因分析；当前 [docs/failure_deep_dive.md](docs/failure_deep_dive.md) 已完成 `3/5`，剩余 `2` 条等待 Kimi/GLM 真实结果。
 - Target 2 最终版 `docs/model_comparison.md` 和本地 `docs/agent_evolution.md` 收口。
 
 ## 2. 当前事实

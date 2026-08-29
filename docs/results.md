@@ -1,6 +1,6 @@
 # 结果记录
 
-> 这是历史结果流水账，主要用于追溯规则版 baseline、benchmark 扩容和验证底座演进。当前对外主线请优先看 [docs/agent_eval_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_eval_summary.md) 和 [docs/agent_case_studies.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/agent_case_studies.md)。
+> 这是历史结果流水账，主要用于追溯规则版 baseline、benchmark 扩容和验证底座演进。当前对外主线请优先看 [docs/agent_eval_summary.md](docs/agent_eval_summary.md) 和 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
 
 ## 当前状态
 

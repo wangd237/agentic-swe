@@ -210,7 +210,7 @@ LLM agent 还会跟踪每次 `write_file` 后的 workspace generation。只有�
 这里有一个很重要的事实口径：
 
 - 规则继承链不是通过某个 `rule_ids` 配置表驱动
-- 当前真实实现是在 [app/agent/patcher.py](/E:/My_Projects/agentic-software-engineering-roadmap/app/agent/patcher.py) 中维护版本化 patch strategy
+- 当前真实实现是在 [app/agent/patcher.py](app/agent/patcher.py) 中维护版本化 patch strategy
 
 也就是说：
 
@@ -256,7 +256,7 @@ Eval 层现在的定位是 agent 质量门控，而不是项目叙事主角。�
 - `stability recheck`
   - 同策略同 manifest 复跑多次，检查性能波动和功能一致性
 
-当前 [scripts/run_real_issue_eval.py](/E:/My_Projects/agentic-software-engineering-roadmap/scripts/run_real_issue_eval.py) 已经可以把 batch run、batch eval、stability check 和 maturity audit 串在一条流水线里。
+当前 [scripts/run_real_issue_eval.py](scripts/run_real_issue_eval.py) 已经可以把 batch run、batch eval、stability check 和 maturity audit 串在一条流水线里。
 
 ## 8. 数据分层
 
@@ -329,8 +329,8 @@ Eval 层现在的定位是 agent 质量门控，而不是项目叙事主角。�
 
 如果你想快速理解项目，建议按下面顺序阅读：
 
-1. [README.md](/E:/My_Projects/agentic-software-engineering-roadmap/README.md)
-2. [docs/experiment_summary.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/experiment_summary.md)
-3. [docs/harness.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/harness.md)
-4. [docs/benchmark_registry.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/benchmark_registry.md)
-5. [docs/results.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/results.md)
+1. [README.md](README.md)
+2. [docs/experiment_summary.md](docs/experiment_summary.md)
+3. [docs/harness.md](docs/harness.md)
+4. [docs/benchmark_registry.md](docs/benchmark_registry.md)
+5. [docs/results.md](docs/results.md)

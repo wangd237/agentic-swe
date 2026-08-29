@@ -17,9 +17,9 @@
 
 | Task | 验证点 | Before | After |
 | --- | --- | --- | --- |
-| `task_048` | `python_repl` 打破 packaging 领域语义盲区 | `incomplete/max_iterations`, no patch | `success`, 11 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_048/run_20260615T074619354360Z_6882/result.json) |
-| `task_030` | `context_diff` 帮助格式精度修复 | 曾 13 calls hit `max_iterations` | `success`, 12 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_030/run_20260615T081448691235Z_0502/result.json) |
-| `task_089` | 回归基线不退化 | `success`, 7 calls | `success`, 6 calls, [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_089/run_20260615T081624552533Z_0056/result.json) |
+| `task_048` | `python_repl` 打破 packaging 领域语义盲区 | `incomplete/max_iterations`, no patch | `success`, 11 calls, [result](../../evidence/task_048/result.json) |
+| `task_030` | `context_diff` 帮助格式精度修复 | 曾 13 calls hit `max_iterations` | `success`, 12 calls, [result](../../evidence/task_030/result.json) |
+| `task_089` | 回归基线不退化 | `success`, 7 calls | `success`, 6 calls, [result](../../evidence/task_089/result.json) |
 
 关键证据：`task_048` trace 中模型先误解 `Version.base_version`，随后用 `python_repl` 查询真实行为并改用 `Version(... .public)`；`task_030` 第一次测试失败的 `failure_summary` 自动包含 `context_diff`，模型据此修正了换行位置。
 
@@ -33,33 +33,33 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 | Task | Repo / Issue | 缺陷类型 | Status | Tool calls | Modified file | Run |
 | --- | --- | --- | --- | ---: | --- | --- |
-| `task_010` | `Textualize/rich#4090` | CRLF ANSI 行解析 | `success` | 6 | `rich_ansi_repo/ansi.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_010/run_20260614T080459321811Z_6319/result.json) |
-| `task_019` | `dateutil/dateutil#1432` | UTC/GMT 零偏移回落 | `success` | 5 | `dateutil_tz_repo/tz.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_019/run_20260614T113332817562Z_3323/result.json) |
-| `task_024` | `pallets/jinja#2069` | 分支赋值静态分析 | `success` | 6 | `jinja_meta_repo/meta.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_024/run_20260614T113402398598Z_5993/result.json) |
-| `task_016` | `pallets/click#3111` | 负向 boolean flag 默认值 | `success` | 7 | `click_flag_repo/core.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_016/run_20260614T113438108363Z_4434/result.json) |
-| `task_093` | `pallets/click#3572` | confirm 输出 ANSI 清理 | `success` | 6 | `click_confirm_repo/prompts.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_093/run_20260614T113509337696Z_0010/result.json) |
-| `task_026` | `pallets/jinja#2118` | slice fill_with 整除边界 | `success` | 6 | `jinja_slice_repo/filters.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_026/run_20260614T125530440188Z_1570/result.json) |
-| `task_028` | `python-poetry/tomlkit#494` | 数组追加逗号格式保真 | `success` | 6 | `tomlkit_array_repo/formatter.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_028/run_20260614T125722705788Z_9580/result.json) |
-| `task_032` | `pypa/packaging#873` | wheel 版本 normalization | `success` | 7 | `packaging_wheel_repo/utils.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_032/run_20260614T125710781867Z_0410/result.json) |
-| `task_034` | `python-jsonschema/jsonschema#1157` | mixed-type extras 错误消息 | `success` | 7 | `jsonschema_extras_repo/utils.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_034/run_20260614T125702622732Z_3132/result.json) |
-| `task_038` | `python-jsonschema/jsonschema#1159` | integer-valued float multipleOf | `success` | 5 | `jsonschema_multipleof_repo/validator.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_038/run_20260614T125719275442Z_3582/result.json) |
-| `task_040` | `pypa/packaging#885` | 复合 marker extra normalize | `success` | 5 | `packaging_requirement_repo/requirements.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_040/run_20260614T125937221880Z_6575/result.json) |
-| `task_042` | `pallets/click#2958` | alias resolve_command None | `success` | 6 | `click_alias_repo/cli.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_042/run_20260614T125937121740Z_5271/result.json) |
-| `task_044` | `dateutil/dateutil#1448` | MM.YYYY 返回顺序 | `success` | 6 | `dateutil_month_year_repo/parser.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_044/run_20260614T125938286589Z_6723/result.json) |
-| `task_046` | `python-jsonschema/jsonschema#1163` | single-label hostname | `success` | 5 | `jsonschema_single_label_hostname_repo/hostname.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_046/run_20260614T125937737872Z_7122/result.json) |
-| `task_048` | `pypa/packaging#886` | specifier dev+local 比较 | `success` | 11 | `packaging_specifier_repo/specifiers.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_048/run_20260614T125937936166Z_6625/result.json) |
-| `task_050` | `dateutil/dateutil#1450` | attached comma year 解析 | `success` | 5 | `dateutil_attached_comma_repo/parser.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_050/run_20260614T130436831319Z_4726/result.json) |
-| `task_052` | `python-jsonschema/jsonschema#1165` | ErrorTree 缺失索引污染 | `success` | 5 | `jsonschema_error_tree_repo/error_tree.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_052/run_20260614T130436877519Z_1176/result.json) |
-| `task_123` | `agronholm/anyio#1109` | TaskGroup 重复进入 | `success` | 7 | `anyio/_backends/_asyncio.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_123/run_20260614T131623724272Z_2113/result.json) |
-| `task_124` | `agronholm/anyio#1111` | 已完成 task cancellation spin | `success` | 10 | `anyio/_backends/_asyncio.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_124/run_20260614T131624574711Z_3381/result.json) |
-| `task_125` | `agronholm/anyio#1113` | cancel scope 内取消语义 | `success` | 7 | `anyio/from_thread.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_125/run_20260614T131625493948Z_7238/result.json) |
-| `task_128` | `agronholm/anyio#82` | 嵌套 task group 取消异常泄漏 | `success` | 8 | `anyio/module.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_128/run_20260614T131040931880Z_1322/result.json) |
-| `task_129` | `agronholm/anyio#88` | 父任务额外取消 | `success` | 9 | `anyio/module.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_129/run_20260614T131624457541Z_1965/result.json) |
-| `task_126` | `samuelcolvin/watchfiles#266` | ignore_permission_denied OSError 边界 | `success` | 8 | `watchfiles/main.py`, `tests/test_main.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_126/run_20260614T130318816140Z_7458/result.json) |
-| `task_127` | `samuelcolvin/watchfiles#110` | Windows Ctrl+C stop_event | `success` | 8 | `watchfiles/main.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_127/run_20260614T130318467096Z_6062/result.json) |
-| `task_130` | `samuelcolvin/watchfiles#169` | metadata-write reload 过滤 | `success` | 7 | `watchfiles/main.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_130/run_20260614T130318993474Z_8852/result.json) |
-| `task_131` | `samuelcolvin/watchfiles#215` | 原子保存事件序列 | `success` | 7 | `watchfiles/main.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_131/run_20260614T130436617938Z_6416/result.json) |
-| `task_133` | `Textualize/rich#2457` | Windows no_color 优先级 | `success` | 6 | `rich_windows_no_color_repo/console.py` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_133/run_20260614T130436324436Z_0074/result.json) |
+| `task_010` | `Textualize/rich#4090` | CRLF ANSI 行解析 | `success` | 6 | `rich_ansi_repo/ansi.py` | [result](../../evidence/task_010/result.json) |
+| `task_019` | `dateutil/dateutil#1432` | UTC/GMT 零偏移回落 | `success` | 5 | `dateutil_tz_repo/tz.py` | [result](../../evidence/task_019/result.json) |
+| `task_024` | `pallets/jinja#2069` | 分支赋值静态分析 | `success` | 6 | `jinja_meta_repo/meta.py` | [result](../../evidence/task_024/result.json) |
+| `task_016` | `pallets/click#3111` | 负向 boolean flag 默认值 | `success` | 7 | `click_flag_repo/core.py` | [result](../../evidence/task_016/result.json) |
+| `task_093` | `pallets/click#3572` | confirm 输出 ANSI 清理 | `success` | 6 | `click_confirm_repo/prompts.py` | [result](../../evidence/task_093/result.json) |
+| `task_026` | `pallets/jinja#2118` | slice fill_with 整除边界 | `success` | 6 | `jinja_slice_repo/filters.py` | [result](../../evidence/task_026/result.json) |
+| `task_028` | `python-poetry/tomlkit#494` | 数组追加逗号格式保真 | `success` | 6 | `tomlkit_array_repo/formatter.py` | [result](../../evidence/task_028/result.json) |
+| `task_032` | `pypa/packaging#873` | wheel 版本 normalization | `success` | 7 | `packaging_wheel_repo/utils.py` | [result](../../evidence/task_032/result.json) |
+| `task_034` | `python-jsonschema/jsonschema#1157` | mixed-type extras 错误消息 | `success` | 7 | `jsonschema_extras_repo/utils.py` | [result](../../evidence/task_034/result.json) |
+| `task_038` | `python-jsonschema/jsonschema#1159` | integer-valued float multipleOf | `success` | 5 | `jsonschema_multipleof_repo/validator.py` | [result](../../evidence/task_038/result.json) |
+| `task_040` | `pypa/packaging#885` | 复合 marker extra normalize | `success` | 5 | `packaging_requirement_repo/requirements.py` | [result](../../evidence/task_040/result.json) |
+| `task_042` | `pallets/click#2958` | alias resolve_command None | `success` | 6 | `click_alias_repo/cli.py` | [result](../../evidence/task_042/result.json) |
+| `task_044` | `dateutil/dateutil#1448` | MM.YYYY 返回顺序 | `success` | 6 | `dateutil_month_year_repo/parser.py` | [result](../../evidence/task_044/result.json) |
+| `task_046` | `python-jsonschema/jsonschema#1163` | single-label hostname | `success` | 5 | `jsonschema_single_label_hostname_repo/hostname.py` | [result](../../evidence/task_046/result.json) |
+| `task_048` | `pypa/packaging#886` | specifier dev+local 比较 | `success` | 11 | `packaging_specifier_repo/specifiers.py` | [result](../../evidence/task_048/result.json) |
+| `task_050` | `dateutil/dateutil#1450` | attached comma year 解析 | `success` | 5 | `dateutil_attached_comma_repo/parser.py` | [result](../../evidence/task_050/result.json) |
+| `task_052` | `python-jsonschema/jsonschema#1165` | ErrorTree 缺失索引污染 | `success` | 5 | `jsonschema_error_tree_repo/error_tree.py` | [result](../../evidence/task_052/result.json) |
+| `task_123` | `agronholm/anyio#1109` | TaskGroup 重复进入 | `success` | 7 | `anyio/_backends/_asyncio.py` | [result](../../evidence/task_123/result.json) |
+| `task_124` | `agronholm/anyio#1111` | 已完成 task cancellation spin | `success` | 10 | `anyio/_backends/_asyncio.py` | [result](../../evidence/task_124/result.json) |
+| `task_125` | `agronholm/anyio#1113` | cancel scope 内取消语义 | `success` | 7 | `anyio/from_thread.py` | [result](../../evidence/task_125/result.json) |
+| `task_128` | `agronholm/anyio#82` | 嵌套 task group 取消异常泄漏 | `success` | 8 | `anyio/module.py` | [result](../../evidence/task_128/result.json) |
+| `task_129` | `agronholm/anyio#88` | 父任务额外取消 | `success` | 9 | `anyio/module.py` | [result](../../evidence/task_129/result.json) |
+| `task_126` | `samuelcolvin/watchfiles#266` | ignore_permission_denied OSError 边界 | `success` | 8 | `watchfiles/main.py`, `tests/test_main.py` | [result](../../evidence/task_126/result.json) |
+| `task_127` | `samuelcolvin/watchfiles#110` | Windows Ctrl+C stop_event | `success` | 8 | `watchfiles/main.py` | [result](../../evidence/task_127/result.json) |
+| `task_130` | `samuelcolvin/watchfiles#169` | metadata-write reload 过滤 | `success` | 7 | `watchfiles/main.py` | [result](../../evidence/task_130/result.json) |
+| `task_131` | `samuelcolvin/watchfiles#215` | 原子保存事件序列 | `success` | 7 | `watchfiles/main.py` | [result](../../evidence/task_131/result.json) |
+| `task_133` | `Textualize/rich#2457` | Windows no_color 优先级 | `success` | 6 | `rich_windows_no_color_repo/console.py` | [result](../../evidence/task_133/result.json) |
 
 ## 3. 汇总指标
 
@@ -93,11 +93,11 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 | Task | Repo / Issue | 缺陷类型 | Status | Tool calls | Run |
 | --- | --- | --- | --- | ---: | --- |
-| `task_036` | `python-jsonschema/jsonschema#1121` | hostname 格式检查异常回落 | `success` | 5 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_036/run_20260614T115358297399Z_9685/result.json) |
-| `task_099` | `pallets/jinja#2108` | macro include generator repr | `success` | 6 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_099/run_20260614T115439071151Z_9032/result.json) |
-| `task_132` | `Textualize/rich#2411` | Windows-like legacy console 编码边界 | `incomplete` | 14 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260614T115513496398Z_8231/result.json) |
-| `task_132` | `Textualize/rich#2411` | Windows-like legacy console 编码边界 | `incomplete / no_patch` | 14 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260614T130913910002Z_5098/result.json) |
-| `task_054` | `pydantic/pydantic#9582` | 受限轮次 failure taxonomy | `incomplete / max_iterations` | 1 | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_054/run_20260614T131946984622Z_9956/result.json) |
+| `task_036` | `python-jsonschema/jsonschema#1121` | hostname 格式检查异常回落 | `success` | 5 | [result](../../evidence/task_036/result.json) |
+| `task_099` | `pallets/jinja#2108` | macro include generator repr | `success` | 6 | [result](../../evidence/task_099/result.json) |
+| `task_132` | `Textualize/rich#2411` | Windows-like legacy console 编码边界 | `incomplete` | 14 | [result](../../evidence/task_132/result.json) |
+| `task_132` | `Textualize/rich#2411` | Windows-like legacy console 编码边界 | `incomplete / no_patch` | 14 | [result](../../evidence/task_132/result.json) |
+| `task_054` | `pydantic/pydantic#9582` | 受限轮次 failure taxonomy | `incomplete / max_iterations` | 1 | [result](../../evidence/task_054/result.json) |
 
 `task_132` 是当前最有价值的边界案例：测试一开始就已经通过，agent 没有生成 patch，最终状态保持 `incomplete`。这说明当前成功判定不会因为“测试通过”就误报修复成功，而是还要求有实际 patch 和当前 generation 的验证证据。
 
@@ -107,12 +107,12 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 ## 6. 工具链升级 rerun
 
-2026-06-15 按 [docs/weekTarget.md](/E:/My_Projects/agentic-software-engineering-roadmap/docs/weekTarget.md) 完成首轮工具链升级后，使用真实 OpenAI-compatible / DeepSeek API 重跑旧 incomplete run 所属任务。
+2026-06-15 完成首轮工具链升级后，使用真实 OpenAI-compatible / DeepSeek API 重跑旧 incomplete run 所属任务。
 
 | Task | 旧结果 | 新结果 | Tool calls | 关键观察 | Run |
 | --- | --- | --- | ---: | --- | --- |
-| `task_132` | `incomplete/no_patch`，旧 run `14` calls | `incomplete/no_patch` | `5` | 代码与测试已满足目标语义，agent 仍拒绝无 patch 成功；trace 第 2 轮 `read_file` 并行执行并带 `parallel_group_id` | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_132/run_20260615T022726937782Z_5832/result.json) |
-| `task_054` | `incomplete/max_iterations`，旧 run 为 `llm_deepseek_max1` 受限策略 | `success` | `9` | agent 使用 `edit_file` 两次修复 `extend()`，第一次测试失败时 `failure_summary` 暴露 `AttributeError`，第二次修正后 3 tests pass | [result](/E:/My_Projects/agentic-software-engineering-roadmap/logs/trajectories/task_054/run_20260615T022958080689Z_9857/result.json) |
+| `task_132` | `incomplete/no_patch`，旧 run `14` calls | `incomplete/no_patch` | `5` | 代码与测试已满足目标语义，agent 仍拒绝无 patch 成功；trace 第 2 轮 `read_file` 并行执行并带 `parallel_group_id` | [result](../../evidence/task_132/result.json) |
+| `task_054` | `incomplete/max_iterations`，旧 run 为 `llm_deepseek_max1` 受限策略 | `success` | `9` | agent 使用 `edit_file` 两次修复 `extend()`，第一次测试失败时 `failure_summary` 暴露 `AttributeError`，第二次修正后 3 tests pass | [result](../../evidence/task_054/result.json) |
 
 对比摘要：
 
