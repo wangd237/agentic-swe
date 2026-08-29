@@ -1,0 +1,13 @@
+diff --git a/click_confirm_repo/prompts.py b/click_confirm_repo/prompts.py
+index 4d2514e..3a419b8 100644
+--- a/click_confirm_repo/prompts.py
++++ b/click_confirm_repo/prompts.py
+@@ -28,7 +28,5 @@ def render_echo_output(message: str, color: bool) -> str:
+ 
+ def render_confirm_output(message: str, user_input: str, color: bool) -> str:
+     """模拟 confirm 在终端中的提示输出。"""
+-    # 这里故意保留真实 issue 中的缺陷：
+-    # color=False 时 confirm 提示仍直接使用原始消息，导致 ANSI 码泄漏到输出。
+-    rendered = message
++    rendered = message if color else strip_ansi(message)
+     return f"{rendered} [y/N]: {user_input}\n"

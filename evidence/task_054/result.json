@@ -1,0 +1,191 @@
+{
+  "task_id": "task_054",
+  "run_id": "run_20260829T111430545879Z_4314",
+  "final_status": "success",
+  "accepted_final_status": "accepted_success",
+  "incomplete_reason": "",
+  "summary": "自动验证已通过，当前任务完成。",
+  "test_command": "python -m pytest tests/test_validators.py -q",
+  "test_exit_code": 0,
+  "pre_test_exit_code": 1,
+  "post_test_exit_code": 0,
+  "pre_test_summary": "测试失败：tests\\test_validators.py::ExtendValidatorTests::test_extend_preserves_legacy_ref_filtering，失败位置 tests\\test_validators.py:27 (in test_extend_preserves_legacy_ref_filtering)。",
+  "post_test_summary": "测试命令执行成功，目标测试已通过。",
+  "test_summary": "测试命令执行成功，目标测试已通过。",
+  "observed_failure": "",
+  "patch_applied": true,
+  "patch_summary": "共检测到 1 个变更文件。",
+  "modified_files": [
+    "jsonschema_extend_repo/validators.py"
+  ],
+  "duration_sec": 48.6801,
+  "tool_stats": {
+    "policy_id": "llm_deepseek_minimal",
+    "agent_type": "llm",
+    "llm_provider": "openai_compatible",
+    "llm_model": "Qzhou/kimi-k2.5",
+    "total_tool_calls": 10,
+    "max_iterations": 16,
+    "max_iterations_reached": false,
+    "workspace_generation": 1,
+    "verified_generation": 1,
+    "incomplete_reason": "",
+    "accepted_final_status": "accepted_success",
+    "context_compression_count": 0,
+    "final_phase": "final",
+    "verification_strength": "full",
+    "verifier_report": {
+      "verification_level": "full_verification_success",
+      "risk_level": "low",
+      "evidence_quality": "strong",
+      "missing_evidence": [],
+      "accepted": true,
+      "caveats": [],
+      "recommendations": []
+    },
+    "verification_evidence": {
+      "patch_applied": true,
+      "modified_files": [
+        "jsonschema_extend_repo/validators.py"
+      ],
+      "verification_scope": "full",
+      "pre_test": {
+        "command": "python -m pytest tests/test_validators.py -q",
+        "exit_code": 1,
+        "summary": "测试失败：tests\\test_validators.py::ExtendValidatorTests::test_extend_preserves_legacy_ref_filtering，失败位置 tests\\test_validators.py:27 (in test_extend_preserves_legacy_ref_filtering)。",
+        "observed_failure": ""
+      },
+      "post_test": {
+        "command": "python -m pytest tests/test_validators.py -q",
+        "exit_code": 0,
+        "summary": "测试命令执行成功，目标测试已通过。"
+      },
+      "official_harness": {
+        "required": false,
+        "resolved": false,
+        "source_type": "semi_real",
+        "instance_id": ""
+      }
+    },
+    "write_before_repro_count": 0,
+    "localization_candidate_count": 2,
+    "code_intelligence": {
+      "backend": "codebase_memory_cli",
+      "enabled": true,
+      "available": false,
+      "backend_version": "",
+      "backend_binary_path": "",
+      "fallback_reason": "binary_not_found",
+      "candidates": [],
+      "compact_hints": "",
+      "metrics": {
+        "index_attempted": false,
+        "index_success": false,
+        "index_duration_sec": null,
+        "index_repo_path": "E:\\GH_Repositories4Learn\\agentic-swe\\logs\\trajectories\\task_054\\run_20260829T111430545879Z_4314\\workspace",
+        "index_used_shadow_copy": false,
+        "env_home": "",
+        "env_userprofile": "",
+        "env_localappdata": "",
+        "indexed_project": "",
+        "indexed_node_count": null,
+        "indexed_edge_count": null,
+        "indexed_file_count": null,
+        "graph_tool_calls_total": 0,
+        "graph_search_graph_calls": 0,
+        "graph_query_duration_sec_total": 0.0,
+        "graph_result_raw_chars": 0,
+        "graph_result_compact_chars": 0,
+        "graph_candidates_count": 0
+      }
+    },
+    "llm_usage": {
+      "call_count": 6,
+      "total_tokens": 18452,
+      "missing_usage_count": 0
+    },
+    "tool_routing": {
+      "schema_strategy": "phase_state_filtered",
+      "total_tool_schema_sent": 36,
+      "avg_tool_schema_count": 6.0,
+      "tools_by_phase": {
+        "understand": [
+          "list_files",
+          "search_code",
+          "grep",
+          "read_file",
+          "run_tests"
+        ],
+        "patch": [
+          "search_code",
+          "grep",
+          "read_file",
+          "run_tests",
+          "write_file",
+          "edit_file",
+          "show_diff"
+        ]
+      }
+    },
+    "agent_core_metrics": {
+      "phase_completion_rate": 1.0,
+      "pre_repro_rate": 1.0,
+      "write_before_repro_count": 0,
+      "policy_violation_count": 1,
+      "patch_changed_file_count": 1,
+      "unverified_patch_rate": 0.0,
+      "success_full_verify_rate": 1.0,
+      "weak_success_rate": 0.0,
+      "undo_recovery_rate": 0.0,
+      "localization_precision_at_3": 1.0
+    },
+    "strategy_memory_path": "E:\\GH_Repositories4Learn\\agentic-swe\\logs\\agent_memory\\strategy_memory.jsonl",
+    "verification_records": {
+      "pre": {
+        "exit_code": 1,
+        "summary": "测试失败：tests\\test_validators.py::ExtendValidatorTests::test_extend_preserves_legacy_ref_filtering，失败位置 tests\\test_validators.py:27 (in test_extend_preserves_legacy_ref_filtering)。"
+      },
+      "post": {
+        "exit_code": 0,
+        "summary": "测试命令执行成功，目标测试已通过。"
+      }
+    }
+  },
+  "recommended_files": [
+    "jsonschema_extend_repo/validators.py",
+    "tests/test_validators.py"
+  ],
+  "verifier_report": {
+    "verification_level": "full_verification_success",
+    "risk_level": "low",
+    "evidence_quality": "strong",
+    "missing_evidence": [],
+    "accepted": true,
+    "caveats": [],
+    "recommendations": []
+  },
+  "verification_evidence": {
+    "patch_applied": true,
+    "modified_files": [
+      "jsonschema_extend_repo/validators.py"
+    ],
+    "verification_scope": "full",
+    "pre_test": {
+      "command": "python -m pytest tests/test_validators.py -q",
+      "exit_code": 1,
+      "summary": "测试失败：tests\\test_validators.py::ExtendValidatorTests::test_extend_preserves_legacy_ref_filtering，失败位置 tests\\test_validators.py:27 (in test_extend_preserves_legacy_ref_filtering)。",
+      "observed_failure": ""
+    },
+    "post_test": {
+      "command": "python -m pytest tests/test_validators.py -q",
+      "exit_code": 0,
+      "summary": "测试命令执行成功，目标测试已通过。"
+    },
+    "official_harness": {
+      "required": false,
+      "resolved": false,
+      "source_type": "semi_real",
+      "instance_id": ""
+    }
+  }
+}

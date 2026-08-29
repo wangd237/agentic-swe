@@ -1,0 +1,14 @@
+diff --git a/jsonschema_multipleof_repo/validator.py b/jsonschema_multipleof_repo/validator.py
+index 5d9a044..4a2b6be 100644
+--- a/jsonschema_multipleof_repo/validator.py
++++ b/jsonschema_multipleof_repo/validator.py
+@@ -8,5 +8,8 @@ def is_multiple_of(instance: int, divisor: int | float) -> bool:
+     if isinstance(divisor, int):
+         return instance % divisor == 0
+ 
+-    # 这里故意保留真实 issue 中的缺陷：整数值浮点数仍直接走浮点路径。
++    # 修复：整数值浮点数应按数学整数处理
++    if divisor.is_integer():
++        return instance % int(divisor) == 0
++
+     return (instance / divisor).is_integer()

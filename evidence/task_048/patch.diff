@@ -1,0 +1,17 @@
+diff --git a/packaging_specifier_repo/specifiers.py b/packaging_specifier_repo/specifiers.py
+index 4d3204f..522241c 100644
+--- a/packaging_specifier_repo/specifiers.py
++++ b/packaging_specifier_repo/specifiers.py
+@@ -22,9 +22,9 @@ class Specifier:
+             return False
+ 
+         if prospective_version.local is not None:
+-            # 这里故意保留真实 issue 中的缺陷：错误地只比较 base_version，
+-            # 导致 dev 段已经更大时，带 local 的版本仍被提前拒绝。
+-            if Version(prospective_version.base_version) == Version(self.spec_version.base_version):
++            # 只有当 public 版本相同时,带 local 的版本才不满足 > 比较。
++            # 如果 public 版本不同(如 dev 段更大),则应正常比较。
++            if prospective_version.public == self.spec_version.public:
+                 return False
+ 
+         return prospective_version > self.spec_version

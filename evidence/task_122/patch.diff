@@ -1,0 +1,21 @@
+diff --git a/fsspec/spec.py b/fsspec/spec.py
+index 7476d93..e6258d7 100644
+--- a/fsspec/spec.py
++++ b/fsspec/spec.py
+@@ -11,12 +11,12 @@ class AbstractFileSystem:
+     def unstrip_protocol(self, path: str) -> str:
+         """把内部路径还原为带协议前缀的公开路径。
+ 
+-        这里故意保留真实 issue 的核心缺陷：
+-        当前实现只要发现路径“以协议名开头”就直接返回原串，
+-        没有继续检查后面是否真的是 `://` 分隔符。
++        只有当路径以 ``<protocol>://`` 开头时才视为已经带协议前缀；
++        仅以协议名字符开头（例如 ``s3-file``）并不算已带协议，
++        需要继续补上 ``://`` 前缀。
+         """
+ 
+-        if path.startswith(self.protocol):
++        if path.startswith(f"{self.protocol}://"):
+             return path
+         return f"{self.protocol}://{path}"
+ 

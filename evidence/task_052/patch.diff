@@ -1,0 +1,16 @@
+diff --git a/jsonschema_error_tree_repo/error_tree.py b/jsonschema_error_tree_repo/error_tree.py
+index aaf32a2..e537d55 100644
+--- a/jsonschema_error_tree_repo/error_tree.py
++++ b/jsonschema_error_tree_repo/error_tree.py
+@@ -16,6 +16,8 @@ class ErrorTree:
+         return index in self._children
+ 
+     def __getitem__(self, index: int) -> "ErrorTree":
+-        # 这里故意保留真实 issue 中的缺陷：访问不存在的索引时，
+-        # 仍然通过 setdefault 把空节点写回树里，污染后续可见状态。
+-        return self._children.setdefault(index, ErrorTree())
++        # 访问缺失索引时返回空 ErrorTree，但不把空节点写回 children，
++        # 以保证 list(tree) 与 index in tree 不被污染。
++        if index in self._children:
++            return self._children[index]
++        return ErrorTree()

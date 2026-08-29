@@ -1,0 +1,29 @@
+diff --git a/jinja_meta_repo/meta.py b/jinja_meta_repo/meta.py
+index 03abce4..0de77cc 100644
+--- a/jinja_meta_repo/meta.py
++++ b/jinja_meta_repo/meta.py
+@@ -5,13 +5,15 @@ from __future__ import annotations
+ 
+ def find_undeclared_variables(branch_assigned: dict[str, list[str]], used_variables: list[str]) -> set[str]:
+     """返回被使用但未声明的变量集合。"""
+-    assigned_variables: set[str] = set()
+-    for branch_variables in branch_assigned.values():
+-        assigned_variables.update(branch_variables)
+-
+-    # 这里故意保留回归：即便变量在所有分支都被 set，也仍然错误地把它当成 undeclared。
+-    undeclared = {name for name in used_variables if name not in assigned_variables}
+-    for variable_name in used_variables:
+-        if variable_name in assigned_variables:
+-            undeclared.add(variable_name)
++    # 找出在所有分支都被赋值的变量
++    if not branch_assigned:
++        # 如果没有分支，所有被使用的变量都是 undeclared
++        return set(used_variables)
++    
++    # 使用集合交集找出在所有分支都被赋值的变量
++    branch_sets = [set(vars) for vars in branch_assigned.values()]
++    all_branch_assigned = set.intersection(*branch_sets) if branch_sets else set()
++    
++    # 被使用且在所有分支都被赋值的变量，算作已声明，不加入 undeclared
++    undeclared = {name for name in used_variables if name not in all_branch_assigned}
+     return undeclared

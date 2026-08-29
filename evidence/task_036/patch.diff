@@ -1,0 +1,15 @@
+diff --git a/jsonschema_hostname_repo/hostname.py b/jsonschema_hostname_repo/hostname.py
+index 2e9ef1d..5027e49 100644
+--- a/jsonschema_hostname_repo/hostname.py
++++ b/jsonschema_hostname_repo/hostname.py
+@@ -5,7 +5,9 @@ from __future__ import annotations
+ 
+ def is_valid_hostname(value: str) -> bool:
+     """返回给定字符串是否满足最小 hostname 规则。"""
+-    # 这里故意保留真实 issue 中的缺陷：空字符串会在底层检查阶段直接抛出 ValueError。
++    # 空字符串不是有效的 hostname
++    if not value:
++        return False
+     labels = _split_hostname_labels(value)
+     if any(not label or not label.replace("-", "").isalnum() for label in labels):
+         return False

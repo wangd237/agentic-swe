@@ -1,0 +1,20 @@
+diff --git a/anyio/module.py b/anyio/module.py
+index b7380c9..bbedc9e 100644
+--- a/anyio/module.py
++++ b/anyio/module.py
+@@ -35,13 +35,10 @@ def run_nested_failure_flow(backend_name: str) -> RunState:
+ 
+ 
+ def _run_nested_failure_flow(backend_name: str, state: RunState) -> None:
+-    """故意保留 asyncio / curio backend 会泄漏取消异常的 bug。"""
++    """修复：所有 backend 都不应把取消异常泄漏到父流程。"""
+ 
+     _child_task_fails()
+-    if backend_name in {"asyncio", "curio"}:
+-        raise CancelledErrorLeak("cancelled error leaked from nested task groups")
+-
+-    # trio 对照路径：父流程应看到原始业务错误，而不是额外取消。
++    # 已修复：asyncio / curio 不再泄漏取消异常，统一抛出原始业务错误
+     raise NestedTaskGroupError("nested task group surfaced the child failure")
+ 
+ 

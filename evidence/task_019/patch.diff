@@ -1,0 +1,18 @@
+diff --git a/dateutil_tz_repo/tz.py b/dateutil_tz_repo/tz.py
+index d6f4bcd..adae132 100644
+--- a/dateutil_tz_repo/tz.py
++++ b/dateutil_tz_repo/tz.py
+@@ -14,11 +14,10 @@ class FixedOffsetTZ:
+ def tzstr(zone: str) -> FixedOffsetTZ:
+     """解析最小化的时区字符串。"""
+     normalized_zone = zone.strip().upper()
+-    offset = None
++    offset = 0
+ 
+     if normalized_zone not in {"UTC", "GMT"}:
+         raise ValueError(f"Unsupported zone: {zone}")
+ 
+-    # 这里故意保留真实 issue 中的缺陷：没有 offset 时仍对 None 做符号变换。
+-    offset *= -1
++    # UTC/GMT without offset should return zero offset timezone
+     return FixedOffsetTZ(normalized_zone, offset)

@@ -1,0 +1,15 @@
+diff --git a/click_flag_repo/core.py b/click_flag_repo/core.py
+index ed4830e..54effa8 100644
+--- a/click_flag_repo/core.py
++++ b/click_flag_repo/core.py
+@@ -4,9 +4,7 @@ from __future__ import annotations
+ 
+ 
+ def resolve_negative_flag(default: bool, flag_value: bool, provided: bool = False) -> bool:
+-    # 这里故意保留 default=True 被特殊处理导致负向 flag 默认值异常的缺陷。
++    # 修复：负向 flag 在未提供时应返回 default，而非 flag_value
+     if provided:
+         return flag_value
+-    if default is True and flag_value is False:
+-        return flag_value
+     return default

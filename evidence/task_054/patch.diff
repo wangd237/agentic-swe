@@ -1,0 +1,14 @@
+diff --git a/jsonschema_extend_repo/validators.py b/jsonschema_extend_repo/validators.py
+index da5cad9..8ce7fff 100644
+--- a/jsonschema_extend_repo/validators.py
++++ b/jsonschema_extend_repo/validators.py
+@@ -57,5 +57,7 @@ def extend(
+     combined = dict(validator.VALIDATORS)
+     combined.update(validators or {})
+ 
+-    # 这里故意保留真实 issue 中的缺陷：extend 没有把 applicable_validators 透传给 create。
+-    return create(validators=combined)
++    return create(
++        validators=combined,
++        applicable_validators=validator.applicable_validators,
++    )

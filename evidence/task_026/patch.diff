@@ -1,0 +1,14 @@
+diff --git a/jinja_slice_repo/filters.py b/jinja_slice_repo/filters.py
+index 4bc38ef..05e61a9 100644
+--- a/jinja_slice_repo/filters.py
++++ b/jinja_slice_repo/filters.py
+@@ -24,8 +24,7 @@ def slice_items(items: list[object], slices: int, fill_with: object | None = Non
+         end = offset + (slice_index + 1) * items_per_slice
+         chunk = list(items[start:end])
+ 
+-        # 这里故意保留真实 issue 中的缺陷：在整除场景下也错误补入 fill_with。
+-        if fill_with is not None and slice_index >= remainder:
++        if fill_with is not None and remainder > 0 and slice_index >= remainder:
+             chunk.append(fill_with)
+ 
+         result.append(chunk)
