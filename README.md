@@ -359,6 +359,7 @@ Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subproc
 - Agent Core 能力地图：[docs/agent_core_capability_map.md](docs/agent_core_capability_map.md)
 - 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
 - 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
+- 开发踩坑复盘（War Stories）：[docs/war_stories.md](docs/war_stories.md)
 - 架构说明：[docs/architecture.md](docs/architecture.md)
 - Harness 设计：[docs/harness.md](docs/harness.md)
 - 任务注册表：[docs/benchmark_registry.md](docs/benchmark_registry.md)
