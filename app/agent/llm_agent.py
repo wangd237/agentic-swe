@@ -1625,15 +1625,18 @@ class LLMCodeAgent(BaseAgent):
                         tool_name=tool_name,
                         tool_result=tool_result,
                     )
+                    phase_hint_for_model = ""
                     if agent_state.phase == "patch" and agent_state.phase != old_phase:
-                        # Inject phase transition hint when entering PATCH
-                        phase_hint = (
-                            "【系统提示】当前阶段已切换到 PATCH。"
+                        # Inject phase transition hint when entering PATCH.
+                        # 注意：不能作为独立 user 消息插入——那会隔断 assistant(tool_calls)
+                        # 与 tool_result 的配对，违反 OpenAI 协议（DeepSeek 官方 API 严格校验）。
+                        # 改为拼进本轮 tool_result 内容。
+                        phase_hint_for_model = (
+                            "\n\n【系统提示】当前阶段已切换到 PATCH。"
                             "你已经定位到目标文件和修复方向。"
                             "请根据已读代码内容，使用 edit_file 或 write_file 生成最小补丁。"
                             "如果对 old_string 不确定，先 read_file 确认原文后再 edit_file。"
                         )
-                        messages.append({"role": "user", "content": phase_hint})
                     if (
                         tool_name == "run_tests"
                         and tool_result.get("ok")
@@ -1764,6 +1767,7 @@ class LLMCodeAgent(BaseAgent):
                                 tool_result,
                                 max_chars=self.llm_config.max_tool_chars,
                             )
+                            + phase_hint_for_model
                             + immediate_auto_verification_message
                             + reflection_message_for_model
                             + anti_loop_message_for_model
@@ -1772,6 +1776,15 @@ class LLMCodeAgent(BaseAgent):
                     )
 
                     if immediate_auto_verification_message and can_auto_finalize_current_generation():
+                        # 先把本轮 tool_result 补进 messages，再 break。
+                        # 否则 assistant 的 tool_use 没有对应 tool_result，
+                        # 严格校验的 API（如 DeepSeek 官方）会在下一轮报 400。
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": tool_results_for_model,
+                            }
+                        )
                         append_auto_finalize_trace("immediate_auto_verification")
                         final_summary = "自动验证已通过，当前任务完成。"
                         max_iterations_reached = False
