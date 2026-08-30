@@ -1,0 +1,18 @@
+diff --git a/pydicom/valuerep.py b/pydicom/valuerep.py
+index e992f78..cd54092 100644
+--- a/pydicom/valuerep.py
++++ b/pydicom/valuerep.py
+@@ -741,6 +741,14 @@ class PersonName:
+         except IndexError:
+             return ''
+ 
++    def __contains__(self, x):
++        """Return True if `x` is in the string representation of the name."""
++        return x in str(self)
++
++    def __iter__(self):
++        """Return an iterator over the string representation of the name."""
++        return iter(str(self))
++
+     def __eq__(self, other):
+         return str(self) == other

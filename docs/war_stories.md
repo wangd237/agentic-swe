@@ -9,6 +9,8 @@
 3. [token 优化收益被抵消：从"省 schema"转向"省轮次"](#案例-3)
 4. [phase 死锁：真实仓库永远进不了 PATCH](#案例-4)
 5. [tool_router None 崩溃：签名说可选，实现说必填](#案例-5)
+6. [OpenAI 协议双违规：宽松网关掩盖了两个真 bug](#案例-6)
+7. [Windows 上跑官方 harness：三个平台 bug 连环坑](#案例-7)
 
 ---
 
@@ -257,6 +259,93 @@ app/agent/tool_router.py:54: AttributeError: 'NoneType' object has no attribute 
 
 ---
 
+## 案例 6 <a name="案例-6"></a>
+
+## OpenAI 协议双违规：宽松网关掩盖了两个真 bug
+
+**时间**：2026-08-29 ｜ **换模型立刻暴露**
+
+### 现象
+
+从内部网关（kimi-k2.5）切换到 DeepSeek 官方 API 后，agent 第一轮就报 400：
+`An assistant message with 'tool_calls' must be followed by tool messages responding to each 'tool_call_id'`。
+
+之前用 kimi 网关跑了 13 个任务全部成功——**同样的代码，换个 API 就崩**。
+
+### 排查
+
+写最小复现脚本直接调 `_messages_to_openai()`，构造消息序列看转换结果，找到两处违规：
+
+1. **auto_finalize 提前 break**：写入后自动验证通过时，循环在 `messages.append(tool_results)` **之前** break——assistant 的 tool_calls 进了 messages，配对的 tool_result 没进
+2. **phase_hint 插错位置**：阶段切换提示作为独立 user 消息，插在 assistant(tool_calls) 和 tool_result **中间**，隔断了配对
+
+### 根因
+
+两个都是违反 OpenAI 协议的消息构造 bug。**kimi 网关不严格校验配对，默默容忍了它们**；DeepSeek 官方 API 严格校验，直接拒绝。bug 一直都在，只是之前的运行环境把它藏住了。
+
+### 修复与验证
+
+Bug 1：break 前先 append tool_results。Bug 2：phase_hint 改为拼进 tool_result 内容，不再作为独立消息。
+
+验证：marshmallow-1343 从启动即 400 → 跑完 35 次工具调用产出 patch。commit `969c2a6`。
+
+### 面试一句话
+
+> "换了个 LLM 提供商，agent 立刻崩。根因是两个违反 OpenAI 协议的消息构造 bug——之前的网关不严格校验，默默容忍了它们。**宽松环境会掩盖协议违规，换严格环境才暴露**。这也是为什么集成测试要贴近生产环境。"
+
+### 追问预案
+
+- **"为什么之前没发现？"** —— 13 个任务全在宽松网关上跑，行为正确性恰好不依赖被违反的约束。教训：依赖协议细节的代码，要在最严格的实现上测
+- **"怎么防再犯？"** —— 最小复现脚本直接测 `_messages_to_openai` 的输出序列，不依赖真实 API
+
+### 证据
+
+- `git show 969c2a6`
+
+---
+
+## 案例 7 <a name="案例-7"></a>
+
+## Windows 上跑官方 harness：三个平台 bug 连环坑
+
+**时间**：2026-08-30 ｜ **拿到 resolved 3/8 的最后一公里**
+
+### 现象
+
+SWE-bench 官方 harness（swebench 2.1.8）在 Windows 上完全跑不起来：第一轮 8 个 instance **全部 error**，而且错误信息晦涩（`ValueError: No escaped character`）。
+
+### 排查（三轮连环）
+
+**坑 1：Windows 路径渗进容器命令**。`copy_to_container` 里 `Path("/eval.sh")` 在 Windows 上是 `WindowsPath`，f-string 拼出 `tar -xf \eval.sh.tar -C \`——尾随反斜杠被 shlex 当成不完整的转义符。修复：强制 `PurePosixPath`。
+
+**坑 2：eval.sh 写成 CRLF**。Windows 文本模式默认写 CRLF，容器里 bash 把 `\r` 当命令一部分：`conda activate testbed\r` 报 "No such file or directory"。修复：`write_text(..., newline="\n")`。
+
+**坑 3：patch.diff 同样 CRLF**。`git apply` 在容器里报 trailing whitespace + patch does not apply。同上修复。
+
+三个坑的共同模式：**宿主机是 Windows，容器是 Linux，任何“文本/路径”跨边界传递都是雷区**。
+
+### 修复与验证
+
+三个补丁固化成 `patches/swebench/apply_windows_patches.sh`（幂等，可重复运行），换机器可重放。
+
+验证：同一批 prediction 从 **0/8 全 error → resolved 3/8**。
+
+### 面试一句话
+
+> “官方 harness 在 Windows 上全挂，错误信息是 shlex 的 'No escaped character'。根因是三个 Windows/Linux 边界 bug：路径分隔符、两处 CRLF 换行。修复后从 0/8 到 resolved 3/8。**跨平台工具链的坑都在边界上**。”
+
+### 追问预案
+
+- **“为什么不用 WSL/Linux？”** —— 合理选择，但当时环境已就绪；且把补丁固化后 Windows 也能稳定跑，反而成了可复现资产
+- **“补丁打在 site-packages 里，升级 swebench 会丢？”** —— 所以固化成了仓库里的 shell 脚本，幂等可重放；swebench 5.x 已修这些 bug，升级时脚本会自动 skip
+
+### 证据
+
+- `patches/swebench/apply_windows_patches.sh`
+- `evidence/swebench_lite_official/`（官方报告 + 3 个 resolved 的 patch）
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -266,5 +355,7 @@ app/agent/tool_router.py:54: AttributeError: 'NoneType' object has no attribute 
 | token 收益被抵消 | 单任务验证会骗人；优化要抓大头（轮次 > schema） |
 | phase 死锁 | 状态机的隐含假设在真实场景会碎 |
 | None 崩溃 | 仓库可信度 = 每条声明可验证 |
+| Windows harness 三连坑 | 跨平台工具链的坑都在宿主机/容器边界上 |
+| OpenAI 协议双违规 | 宽松网关会掩盖协议违规，换严格 API 全暴露 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**

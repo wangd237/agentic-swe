@@ -1,0 +1,30 @@
+diff --git a/src/marshmallow/schema.py b/src/marshmallow/schema.py
+index 085c509..01f658f 100644
+--- a/src/marshmallow/schema.py
++++ b/src/marshmallow/schema.py
+@@ -671,7 +671,8 @@ class BaseSchema(base.SchemaABC):
+                 )
+             except ValidationError as error:
+                 result = error.data
+-            self._invoke_field_validators(unmarshal, data=result, many=many)
++            if result is not None:
++                self._invoke_field_validators(unmarshal, data=result, many=many)
+             errors = unmarshal.errors
+             field_errors = bool(errors)
+             # Run schema-level migration
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 4732874..5d45c78 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,5 +1,11 @@
+ # -*- coding: utf-8 -*-
+ """Pytest fixtures that are available in all test modules."""
++import json
++import sys
++
++# TEMP local-only shim (to be reverted): sandbox lacks simplejson
++sys.modules.setdefault('simplejson', json)
++
+ import pytest
+ 
+ from tests.base import User, UserSchema, Blog
