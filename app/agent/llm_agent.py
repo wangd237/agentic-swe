@@ -388,15 +388,48 @@ class LLMCodeAgent(BaseAgent):
         return messages
 
     @classmethod
+    def _estimate_context_tokens(
+        cls,
+        messages: list[dict[str, Any]],
+        *,
+        measured_prompt_tokens: int | None,
+    ) -> int:
+        """估算当前上下文 token 数。
+
+        ADR-0002 Step 2：优先用最近一次 API 实测 prompt_tokens 做锚点校准
+        （实测值覆盖了 system prompt + 工具 schema，比纯字符估算准）；
+        无锚点时（首次调用前）退回 chars/2.5 保守估算——实测稳态比值
+        2.45（范围 1.93~3.10），2.5 居中且偏保守（高估 token → 提前压缩，
+        安全方向）。
+        """
+        if measured_prompt_tokens is not None:
+            return measured_prompt_tokens
+        return round(cls._message_char_estimate(messages) / 2.5)
+
+    @classmethod
     def _compress_messages_if_needed(
         cls,
         messages: list[dict[str, Any]],
         *,
         max_context_chars: int,
+        context_window_tokens: int = 1_000_000,
+        reserve_tokens: int = 16_000,
+        measured_prompt_tokens: int | None = None,
         keep_recent: int = 3,
     ) -> tuple[list[dict[str, Any]], bool, int, int]:
         before_chars = cls._message_char_estimate(messages)
-        if before_chars <= max_context_chars or len(messages) <= keep_recent + 1:
+        # ADR-0002 Step 2：token 级判定取代字符阈值。实测（3 任务 46 调用）
+        # 证明 80K chars 仅占 1M 窗口的 3.7%，旧阈值在长任务里人为触发
+        # 过早压缩，丢失 PATCH 阶段上下文。
+        estimated_tokens = cls._estimate_context_tokens(
+            messages,
+            measured_prompt_tokens=measured_prompt_tokens,
+        )
+        token_budget = context_window_tokens - reserve_tokens
+        if (
+            estimated_tokens <= token_budget
+            or len(messages) <= keep_recent + 1
+        ):
             return messages, False, before_chars, before_chars
 
         leading_message = messages[0]
@@ -1106,6 +1139,9 @@ class LLMCodeAgent(BaseAgent):
             messages, compressed, before_chars, after_chars = self._compress_messages_if_needed(
                 messages,
                 max_context_chars=self.llm_config.max_context_chars,
+                context_window_tokens=self.llm_config.context_window_tokens,
+                reserve_tokens=self.llm_config.reserve_tokens,
+                measured_prompt_tokens=last_measured_prompt_tokens,
             )
             if not compressed:
                 return
@@ -1127,8 +1163,13 @@ class LLMCodeAgent(BaseAgent):
                         "before_chars": before_chars,
                         "after_chars": after_chars,
                         "max_context_chars": self.llm_config.max_context_chars,
-                        # ADR-0002 Step 1：压缩时刻的 token 估算对照，供 P0-2b 公式替换决策。
-                        "estimated_tokens_at_compression": round(before_chars / 2.5),
+                        # ADR-0002 Step 2：token 判定依据。
+                        "context_window_tokens": self.llm_config.context_window_tokens,
+                        "reserve_tokens": self.llm_config.reserve_tokens,
+                        "estimated_tokens_at_compression": self._estimate_context_tokens(
+                            messages,
+                            measured_prompt_tokens=last_measured_prompt_tokens,
+                        ),
                         "last_measured_prompt_tokens": last_measured_prompt_tokens,
                     },
                 )

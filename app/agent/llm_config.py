@@ -28,10 +28,17 @@ class LLMConfig(BaseModel):
     max_output_tokens: int = 8000
     max_tool_chars: int = 4000
     max_context_chars: int = 80000
+    # ADR-0002 Step 2：token 级压缩判定。窗口大小是模型属性，随 .env 的
+    # LLM_CONTEXT_WINDOW_TOKENS 切换（deepseek-v4-flash 为 1M）；reserve 是
+    # 行为参数，给最终输出与验证轮留余量，policy 可覆盖。
+    context_window_tokens: int = 1_000_000
+    reserve_tokens: int = 16_000
     timeout_sec: float = 60.0
     client_max_retries: int = 2
     max_empty_response_retries: int = 2
     temperature: float = 0.0
+
+    context_window_env: str = "LLM_CONTEXT_WINDOW_TOKENS"
 
     @staticmethod
     def load_env_file(repo_root: str | Path | None = None) -> None:
@@ -67,9 +74,16 @@ class LLMConfig(BaseModel):
                 "未检测到 `LLM_MODEL`。请在 .env 中配置 LLM_MODEL"
                 "（例如 deepseek-chat / Qzhou/kimi-k2.5 / glm-4.5）。"
             )
+        # 窗口大小是模型属性：优先 .env，policy 可覆盖（如小窗口模型）。
+        context_window_tokens = int(
+            os.environ.get(cls().context_window_env, "") or 0
+        ) or getattr(policy_config, "llm_context_window_tokens", None) or cls().context_window_tokens
         return cls(
             provider=provider,
             model=model,
+            context_window_tokens=context_window_tokens,
+            reserve_tokens=getattr(policy_config, "llm_reserve_tokens", None)
+            or cls().reserve_tokens,
             max_output_tokens=getattr(policy_config, "llm_max_output_tokens", None)
             or cls().max_output_tokens,
             max_iterations=getattr(policy_config, "max_steps", None)

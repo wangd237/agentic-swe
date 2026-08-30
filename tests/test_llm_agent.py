@@ -3030,7 +3030,14 @@ def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: 
     )
     client = FakeLongContextClient()
     agent = LLMCodeAgent(
-        llm_config=LLMConfig(model="fake-model", max_iterations=3, max_context_chars=1000),
+        llm_config=LLMConfig(
+            model="fake-model",
+            max_iterations=3,
+            max_context_chars=1000,
+            # ADR-0002 Step 2：token 判定取代字符阈值，用小窗口触发压缩。
+            context_window_tokens=2000,
+            reserve_tokens=500,
+        ),
         client=client,
     )
 
@@ -3472,6 +3479,64 @@ def test_llm_agent_intercepts_duplicate_search_queries(tmp_path: Path) -> None:
     assert grep_steps[1]["tool_metrics"].get("ok") is True
 
 
+def test_compress_messages_uses_measured_prompt_tokens_as_anchor() -> None:
+    """ADR-0002 Step 2：实测锚点优先于字符估算。
+
+    同一消息序列，无锚点时 chars/2.5 估算低于预算不压缩；
+    有实测锚点且超预算时必须压缩。
+    """
+    messages = [
+        {"role": "user", "content": "task"},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t1", "name": "grep", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": "result " * 50}]},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t2", "name": "read_file", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t2", "content": "result " * 50}]},
+    ]
+
+    # 无锚点：chars/2.5 估算（约 800/2.5=320）低于预算 1000，不压缩。
+    _, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
+        messages,
+        max_context_chars=80000,
+        context_window_tokens=1000,
+        reserve_tokens=0,
+    )
+    assert not did_compress
+
+    # 有实测锚点 1500 > 预算 1000，必须压缩。
+    _, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
+        messages,
+        max_context_chars=80000,
+        context_window_tokens=1000,
+        reserve_tokens=0,
+        measured_prompt_tokens=1500,
+    )
+    assert did_compress
+
+
+def test_compress_messages_skips_compression_under_large_window() -> None:
+    """ADR-0002 Step 2：1M 窗口下，旧阈值会压缩的规模不再触发。
+
+    回归用例：80K chars ≈ 32K tokens，在 1M 窗口 - 16K reserve 下
+    远低于预算，不应压缩（旧逻辑在 80K chars 时会压缩）。
+    """
+    big_content = "x" * 80000
+    messages = [
+        {"role": "user", "content": "task"},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t1", "name": "grep", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": big_content}]},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t2", "name": "read_file", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t2", "content": big_content}]},
+    ]
+
+    _, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
+        messages,
+        max_context_chars=80000,
+        context_window_tokens=1_000_000,
+        reserve_tokens=16_000,
+    )
+    assert not did_compress, "1M 窗口下 160K chars（≈64K tokens）不应触发压缩"
+
+
 def test_compress_messages_never_breaks_tool_calls_pairing() -> None:
     """压缩边界不能切断 assistant(tool_calls) 与 tool_result 的配对。
 
@@ -3494,6 +3559,8 @@ def test_compress_messages_never_breaks_tool_calls_pairing() -> None:
     compressed, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
         messages,
         max_context_chars=500,
+        context_window_tokens=100,
+        reserve_tokens=0,
     )
 
     assert did_compress

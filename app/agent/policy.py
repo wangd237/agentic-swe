@@ -22,6 +22,8 @@ class PolicyConfig(BaseModel):
     llm_provider: str | None = None
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None
+    llm_context_window_tokens: int | None = None
+    llm_reserve_tokens: int | None = None
     llm_timeout_sec: float | None = None
     llm_client_max_retries: int | None = None
     pytest_additional_flags: list[str] = []

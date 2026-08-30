@@ -1,7 +1,7 @@
 # ADR-0002: 上下文预算从字符数切换为 token 数
 
 **日期**: 2026-08-30
-**状态**: Step 1 已完成（观测管道落地）；Step 2 待决策
+**状态**: 已完成（Step 1 观测 + Step 2 token 判定均已落地）
 
 ## 实测数据（2026-08-30，DeepSeek deepseek-v4-flash，3 任务 46 次调用）
 
@@ -23,6 +23,28 @@
 - 阈值可放宽：100K chars ≈ 40K tokens（61% 窗口）；120K chars ≈ 48K tokens（73% 窗口）
 - 或直接切 token 判定：`estimated_tokens > context_window - reserve`，reserve 建议 12K~16K（实测最大 completion 单轮 ~8K + 验证轮余量）
 - 两种方案都可行，token 判定更精确但需维护估算器；放宽字符阈值是零成本止血
+
+## Step 2 落地记录（2026-08-30）
+
+**窗口事实修正**：deepseek-v4-flash 上下文窗口为 **1M tokens**（非此前记忆的 64K）。
+这意味着旧阈值 80K chars ≈ 37K tokens 仅占窗口的 **3.7%**——压缩在 16 轮任务里
+根本不可能“必要”，纯粹是被错误的字符阈值人为触发。
+
+**实施内容**：
+1. `LLMConfig` 新增 `context_window_tokens`（默认 1M，从 `.env` 的
+   `LLM_CONTEXT_WINDOW_TOKENS` 读取，policy 可覆盖）与 `reserve_tokens`
+   （默认 16K，policy 可覆盖）
+2. `_compress_messages_if_needed` 判定改为
+   `estimated_tokens > context_window_tokens - reserve_tokens`，其中估算优先用
+   最近一次 API 实测 `prompt_tokens` 锚点，无锚点时退回 chars/2.5 保守估算
+3. 压缩埋点记录完整判定依据（窗口、reserve、估算值、实测值）
+
+**验证**：重跑 marshmallow_1343（旧逻辑在 80K chars 触发压缩的任务），
+压缩次数 1 → **0**，上下文全程 76K chars / 38.5K tokens（窗口的 3.9%），
+模型保留完整 PATCH 阶段上下文。380 个测试全绿。
+
+**遗留**：`max_context_chars` 参数保留但仅作兼容签名，不再参与判定；
+后续若确认无外部依赖可移除。
 
 ## Problem
 
