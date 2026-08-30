@@ -1353,12 +1353,86 @@ class LLMCodeAgent(BaseAgent):
                 auto_verification_parts.append(auto_reflection_message)
             return "\n\n" + "\n\n".join(auto_verification_parts)
 
+        # 预算升级干预：轮次达 75% 且 0 写入时，注入强制总结+写 patch 指令。
+        # 背景（failure_analysis.md）：click#3449 和 jsonschema#1328 两次 run 中，
+        # 模型在前 25% 预算内就理解了根因，但剩余 75% 烧在重叠读/重复搜索/
+        # 环境探测上，探索到死。写入侧有反循环检测，探索侧此前无任何干预。
+        budget_escalation_injected = False
+
+        def budget_escalation_needed() -> bool:
+            if budget_escalation_injected:
+                return False
+            if workspace_generation > 0:
+                return False
+            threshold = max(1, int(self.llm_config.max_iterations * 0.75))
+            return iteration_index + 1 >= threshold
+
         for iteration_index in range(self.llm_config.max_iterations):
             if can_auto_finalize_current_generation():
                 append_auto_finalize_trace("loop_start")
                 final_summary = "自动验证已通过，当前任务完成。"
                 max_iterations_reached = False
                 break
+
+            if budget_escalation_needed():
+                budget_escalation_injected = True
+                escalation_message = (
+                    "\n\n【系统提示·预算告警】你已用掉 75% 的迭代预算，但尚未写入任何补丁。"
+                    "请立即：1) 用一句话总结你已确认的根因；"
+                    "2) 直接用 edit_file 写出最小补丁（基于你已读过的代码）；"
+                    "3) 不要再读新文件或搜索——系统会在写入后自动验证。"
+                    "如果确实无法定位，写出你当前最佳假设的补丁并说明不确定性。"
+                )
+                # 拼进最后一条 user 消息尾部，不新增独立消息——
+                # 避免改变消息序列结构（user->user 连续消息部分 API 不容忍），
+                # 也避免隔断 assistant(tool_calls) 与 tool_result 的配对。
+                if messages and messages[-1].get("role") == "user":
+                    last_content = messages[-1].get("content")
+                    if isinstance(last_content, str):
+                        messages[-1] = {
+                            "role": "user",
+                            "content": last_content + escalation_message,
+                        }
+                    elif isinstance(last_content, list):
+                        # tool_result 列表：追加一个文本块，不影响 tool_use_id 配对
+                        messages[-1] = {
+                            "role": "user",
+                            "content": [
+                                *last_content,
+                                {"type": "text", "text": escalation_message.strip()},
+                            ],
+                        }
+                else:
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": escalation_message.strip(),
+                        }
+                    )
+                trace.steps.append(
+                    TraceStep(
+                        step_index=len(trace.steps) + 1,
+                        action_type="budget_escalation",
+                        tool_name=None,
+                        tool_input={
+                            "iteration_index": iteration_index + 1,
+                            "max_iterations": self.llm_config.max_iterations,
+                            "workspace_generation": workspace_generation,
+                        },
+                        tool_output_summary="轮次达 75% 且 0 写入，注入预算升级干预。",
+                        observation=escalation_message,
+                        decision="强制模型从探索切换到写入，避免探索到死。",
+                        timestamp=self._utc_timestamp(),
+                        duration_sec=None,
+                        phase=agent_state.phase,
+                        state_snapshot=agent_state.snapshot(),
+                        verification_strength=agent_state.verification_strength,
+                        tool_metrics={
+                            "iteration_index": iteration_index + 1,
+                            "threshold": max(1, int(self.llm_config.max_iterations * 0.75)),
+                        },
+                    )
+                )
 
             tools = build_tools_for_state(
                 agent_state,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -194,6 +195,78 @@ def discover_test_command(repo_path: str | Path, explicit_test: str | None = Non
     return "python -m pytest -q", "pytest_fallback"
 
 
+def preflight_test_command(repo_path: str | Path, test_command: str, timeout_sec: int = 60) -> dict[str, Any]:
+    """在进入 agent 循环前验证测试命令能否收集。
+
+    背景（failure_analysis.md）：jsonschema#1328 第三次 run 烧了 29.7 万 token
+    才发现 attrs 未安装——环境问题本应在第 0 轮就拦截，而不是让 agent
+    花 16 轮去探测一个注定失败的验证环境。
+
+    返回 {"ok": bool, "reason": str}。ok=False 时调用方应直接报错退出，
+    不启动 agent。仅对 pytest 命令做收集检查；非 pytest 命令跳过预检。
+    """
+    if "pytest" not in test_command:
+        return {"ok": True, "reason": "non-pytest command, preflight skipped"}
+
+    resolved_repo_path = Path(repo_path).resolve()
+    collect_command = f"{test_command} --collect-only -q"
+    env = dict(os.environ)
+    env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    pythonpath_entries = [str(resolved_repo_path)]
+    src_path = resolved_repo_path / "src"
+    if src_path.exists():
+        pythonpath_entries.append(str(src_path))
+    if env.get("PYTHONPATH"):
+        pythonpath_entries.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
+
+    try:
+        completed = subprocess.run(
+            collect_command,
+            cwd=resolved_repo_path,
+            shell=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout_sec,
+            env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "reason": f"测试收集超时（>{timeout_sec}s）：{collect_command}"}
+
+    if completed.returncode == 0:
+        return {"ok": True, "reason": "test collection passed"}
+
+    # exit=5 是 pytest 的 "no tests collected"——不是环境问题，
+    # 是 weak fallback 验证的合法场景（无测试目录的仓库），不拦截。
+    if completed.returncode == 5:
+        return {"ok": True, "reason": "no tests collected, weak fallback path"}
+
+    # 提取最关键的错误行（ModuleNotFoundError / ImportError / 路径不存在）
+    output = (completed.stderr or "") + (completed.stdout or "")
+    error_lines = [
+        line.strip()
+        for line in output.splitlines()
+        if "ModuleNotFoundError" in line
+        or "ImportError" in line
+        or "No module named" in line
+        or "ERROR" in line
+        or "error" in line.lower()
+    ]
+    key_error = error_lines[0] if error_lines else output.strip().splitlines()[-1] if output.strip() else "unknown error"
+    return {
+        "ok": False,
+        "reason": (
+            f"测试命令无法收集（exit={completed.returncode}）：{key_error}。"
+            "请先在目标仓库环境中安装缺失依赖，或修正 --test 指向的测试路径，"
+            "再重新运行。环境问题不应交给 agent 探测。"
+        ),
+    }
+
+
 def build_task_id(repo_path: Path, issue: str, requested_task_id: str | None = None) -> str:
     if requested_task_id:
         return requested_task_id
@@ -354,6 +427,16 @@ def run_repair_bug(
         )
 
     test_command, test_source = discover_test_command(resolved_repo, explicit_test=test)
+
+    # 环境预检：测试命令无法收集时直接失败，不进入 agent 循环。
+    # 避免把环境问题（缺依赖/路径错误）交给 agent 用 16 轮去探测。
+    preflight = preflight_test_command(resolved_repo, test_command)
+    if not preflight["ok"]:
+        raise RuntimeError(
+            f"环境预检失败：{preflight['reason']}\n"
+            f"repo: {resolved_repo}\n"
+            f"test_command: {test_command}"
+        )
     task = build_user_task(
         repo_path=resolved_repo,
         issue=effective_issue,

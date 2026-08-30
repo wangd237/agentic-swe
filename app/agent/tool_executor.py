@@ -43,9 +43,65 @@ class ToolExecutor:
         self.policy_config = policy_config
         self.test_command = test_command
         self.code_intelligence_backend = code_intelligence_backend
+        # 搜索去重缓存：同一 (pattern/query, glob) 的重复搜索直接返回提醒，
+        # 不再消耗 token 重跑。背景：jsonschema#1328 run3 中同一 pattern
+        # `ErrorTree|_contents` 在相同 glob 下搜了 2 次、不同 glob 下共 4 次。
+        self._search_cache: dict[tuple[str, str, str], dict[str, Any]] = {}
+
+    def _search_cache_key(self, tool_name: str, tool_input: dict[str, Any]) -> tuple[str, str, str] | None:
+        """搜索类工具的缓存键；非搜索工具返回 None。"""
+        if tool_name not in {"search_code", "grep", "search_graph"}:
+            return None
+        query = str(tool_input.get("query") or tool_input.get("pattern") or "").strip().casefold()
+        if not query:
+            return None
+        glob = str(tool_input.get("glob") or "").strip()
+        return (tool_name, query, glob)
+
+    def _remember_search_result(
+        self,
+        cache_key: tuple[str, str, str] | None,
+        result: dict[str, Any],
+    ) -> None:
+        """成功的搜索结果进缓存，供重复调用拦截。"""
+        if cache_key is None or not result.get("ok", False):
+            return
+        self._search_cache[cache_key] = result
+
+    def _duplicate_search_result(
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        cached_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        """重复搜索的返回结果：携带上次命中文件，提醒模型换策略。"""
+        match_files = cached_result.get("data", {}).get("match_files", [])
+        return {
+            "ok": True,
+            "tool_name": tool_name,
+            "summary": (
+                f"重复搜索被拦截：完全相同的 {tool_name} 查询已执行过。"
+                f"上次命中 {len(match_files)} 个文件。"
+                "请换关键词、换 glob 范围，或直接 read_file 已命中的文件。"
+            ),
+            "data": {
+                "duplicate_search": True,
+                "previous_match_files": match_files[:10],
+                "previous_match_count": cached_result.get("data", {}).get("match_count", len(match_files)),
+                "tool_input": tool_input,
+            },
+            "error": None,
+        }
 
     def execute(self, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any]:
         """执行单次工具调用。"""
+
+        # 搜索去重：完全相同的 (工具, pattern, glob) 直接拦截，不重跑。
+        cache_key = self._search_cache_key(tool_name, tool_input)
+        if cache_key is not None:
+            cached = self._search_cache.get(cache_key)
+            if cached is not None:
+                return self._duplicate_search_result(tool_name, tool_input, cached)
 
         try:
             if tool_name == "list_files":
@@ -54,17 +110,21 @@ class ToolExecutor:
                     recursive=bool(tool_input.get("recursive", True)),
                 )
             if tool_name == "search_code":
-                return search_code(
+                result = search_code(
                     self.repo_path,
                     query=str(tool_input.get("query", "")),
                 )
+                self._remember_search_result(cache_key, result)
+                return result
             if tool_name == "grep":
-                return grep(
+                result = grep(
                     self.repo_path,
                     pattern=str(tool_input.get("pattern", "")),
                     glob=tool_input.get("glob"),
                     max_results=int(tool_input.get("max_results", 20)),
                 )
+                self._remember_search_result(cache_key, result)
+                return result
             if tool_name == "read_file":
                 return read_file(
                     self.repo_path,
@@ -138,7 +198,9 @@ class ToolExecutor:
             if tool_name == "undo":
                 return self._undo_last_write()
             if tool_name == "search_graph":
-                return self._execute_search_graph(tool_input)
+                result = self._execute_search_graph(tool_input)
+                self._remember_search_result(cache_key, result)
+                return result
         except Exception as error:
             return self._tool_error_result(
                 tool_name=tool_name,

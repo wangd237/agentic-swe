@@ -2892,3 +2892,212 @@ def test_system_prompt_requires_phase_workflow_and_diff_before_verify() -> None:
     assert "localization_override_reason" in prompt
     assert "任何 write_file/edit_file 后" in prompt
     assert "必须先 show_diff，再运行 run_tests 验证" in prompt
+
+
+class FakeExploreForeverClient:
+    """只读不写，模拟探索到死的模型（click#3449 模式）。"""
+
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.received_messages: list[list[dict]] = []
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        self.received_messages.append([dict(m) for m in messages])
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_grep_1", "name": "grep", "input": {"pattern": "value", "glob": "*.py"}},
+                ]
+            }
+        if self._call_count == 2:
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_test_1", "name": "run_tests", "input": {"timeout_sec": 30}},
+                ]
+            }
+        # 第 3 轮起：预算升级已注入（max_iterations=4, threshold=3），模型开始写
+        return {
+            "content": [
+                {"type": "text", "text": "根因：value() 返回 0。"},
+                {"type": "tool_use", "id": "tool_edit_1", "name": "edit_file", "input": {
+                    "relative_path": "demo_pkg/app.py",
+                    "old_string": "return 0",
+                    "new_string": "return 1",
+                }},
+            ]
+        }
+
+
+def test_llm_agent_injects_budget_escalation_at_75_percent_without_writes(tmp_path: Path) -> None:
+    """预算升级：75% 轮次 + 0 写入时注入强制写 patch 指令。
+
+    回归背景：click#3449 和 jsonschema#1328 两次 run 中，模型在前 25%
+    预算内理解了根因，但剩余 75% 烧在无效探索上，探索到死。
+    """
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "value() should return 1",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeExploreForeverClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=4),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    # 预算升级 trace step 存在
+    escalation_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "budget_escalation"
+    ]
+    assert len(escalation_steps) == 1
+    assert escalation_steps[0]["tool_metrics"]["iteration_index"] == 3  # 75% of 4
+
+    # 模型在第 3 轮收到了预算告警（第 3 次调用的 messages 含告警文本）
+    third_call_messages = client.received_messages[2]
+    escalation_found = any(
+        "预算告警" in str(message.get("content", ""))
+        for message in third_call_messages
+    )
+    assert escalation_found, "第 3 轮调用应包含预算告警消息"
+
+    # 模型最终写入了 patch（预算升级生效）
+    assert output["result"]["patch_applied"] is True
+
+
+class FakeRepeatSearchClient:
+    """重复搜索同一 pattern 的模型（jsonschema#1328 run3 模式）。"""
+
+    def __init__(self) -> None:
+        self._call_count = 0
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_grep_1", "name": "grep", "input": {"pattern": "value", "glob": "*.py"}},
+                ]
+            }
+        if self._call_count == 2:
+            # 完全相同的重复搜索——应被拦截
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_grep_2", "name": "grep", "input": {"pattern": "value", "glob": "*.py"}},
+                ]
+            }
+        return {
+            "content": [
+                {"type": "text", "text": "搜索已完成，任务结束。"},
+            ]
+        }
+
+
+def test_llm_agent_intercepts_duplicate_search_queries(tmp_path: Path) -> None:
+    """重复搜索拦截：完全相同的 (pattern, glob) 直接返回提醒，不重跑。
+
+    回归背景：jsonschema#1328 run3 中同一 pattern `ErrorTree|_contents`
+    在相同 glob 下搜了 2 次、不同 glob 下共 4 次，浪费 token。
+    """
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 1\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeRepeatSearchClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=5),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    grep_steps = [
+        step for step in output["trace"]["steps"]
+        if step["tool_name"] == "grep"
+    ]
+    assert len(grep_steps) == 2
+
+    # 第二次 grep 的结果应是拦截提醒
+    second_grep_summary = grep_steps[1]["tool_output_summary"]
+    assert "重复搜索被拦截" in second_grep_summary
+    assert grep_steps[1]["tool_metrics"].get("ok") is True

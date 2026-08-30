@@ -309,14 +309,22 @@ def test_run_repair_bug_clones_github_repo_and_points_task_at_clone(tmp_path: Pa
     calls: dict[str, object] = {}
 
     def fake_run(
-        command: list[str],
+        command: list[str] | str,
         *,
-        capture_output: bool,
-        text: bool,
-        encoding: str,
-        errors: str,
-        check: bool,
+        capture_output: bool = True,
+        text: bool = True,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+        check: bool = False,
+        cwd: object = None,
+        timeout: object = None,
+        env: object = None,
+        shell: bool = False,
     ) -> subprocess.CompletedProcess[str]:
+        # clone 调用（list 命令）与预检调用（shell 字符串命令）都定在这里。
+        # 预检对已 clone 的仓库跑 pytest --collect-only：直接模拟收集成功。
+        if isinstance(command, str):
+            return subprocess.CompletedProcess(command, 0, stdout="collected", stderr="")
         calls["clone_command"] = command
         destination = Path(command[-1])
         write_text(destination / "tests" / "test_demo.py", "def test_demo():\n    assert True\n")
@@ -486,3 +494,52 @@ def test_main_returns_success_and_prints_summary(tmp_path: Path, monkeypatch, ca
     assert "summary_path:" in captured.out
     assert "trace_path:" in captured.out
     assert "result_path:" in captured.out
+
+
+def test_preflight_test_command_blocks_missing_dependency(tmp_path: Path, monkeypatch) -> None:
+    """环境预检：依赖缺失时应在第 0 轮拦截，不进 agent 循环。
+
+    回归背景：jsonschema#1328 第三次 run 烧了 29.7 万 token 才发现
+    attrs 未安装。环境问题不应交给 agent 探测。
+    """
+    repo = tmp_path / "repo"
+    write_text(repo / "tests" / "test_demo.py", "import attrs\n\n\ndef test_demo():\n    assert True\n")
+
+    def fake_run(command: object, **_: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            command,
+            2,
+            stdout="",
+            stderr="E   ModuleNotFoundError: No module named 'attrs'",
+        )
+
+    monkeypatch.setattr(repair_bug.subprocess, "run", fake_run)
+
+    result = repair_bug.preflight_test_command(repo, "python -m pytest -q tests/test_demo.py")
+
+    assert result["ok"] is False
+    assert "ModuleNotFoundError" in result["reason"]
+    assert "attrs" in result["reason"]
+
+
+def test_preflight_test_command_allows_no_tests_collected(tmp_path: Path, monkeypatch) -> None:
+    """exit=5（no tests collected）是 weak fallback 合法路径，不拦截。"""
+    repo = tmp_path / "repo"
+    write_text(repo / "README.md", "no tests here")
+
+    def fake_run(command: object, **_: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 5, stdout="no tests ran", stderr="")
+
+    monkeypatch.setattr(repair_bug.subprocess, "run", fake_run)
+
+    result = repair_bug.preflight_test_command(repo, "python -m pytest -q")
+
+    assert result["ok"] is True
+    assert "weak fallback" in result["reason"]
+
+
+def test_preflight_test_command_skips_non_pytest(tmp_path: Path) -> None:
+    """非 pytest 命令跳过预检。"""
+    result = repair_bug.preflight_test_command(tmp_path, "make test")
+    assert result["ok"] is True
+    assert "skipped" in result["reason"]

@@ -76,3 +76,21 @@
 4. **reason 前缀修复**：`code_locator.py:200` 改为不重复包裹，1 行。
 
 改进前提：先在更多真实 issue 上验证"探索预算耗尽"模式的稳定性（当前 2 个独立实例），避免单例驱动开发。
+
+## 5. 已实施的改进（2026-08-30）
+
+基于三次真实 issue 失败的 trace 级归因，实施三个改进（commit 见 git log）：
+
+| 改进 | 背景 | 实现 | 回归测试 |
+| --- | --- | --- | --- |
+| **环境预检** | jsonschema#1328 run3 烧 29.7 万 token 才发现 attrs 缺失 | `repair_bug.py` 启动时跑 `pytest --collect-only`，失败直接报错退出；exit=5（no tests）不拦截（weak fallback 合法路径） | `test_preflight_test_command_*` ×3 |
+| **重复搜索拦截** | run3 中同一 pattern 在相同 glob 下搜 2 次、不同 glob 共 4 次 | `ToolExecutor` 维护 `(工具, pattern, glob)` 缓存，重复调用返回拦截提醒 + 上次命中文件 | `test_llm_agent_intercepts_duplicate_search_queries` |
+| **预算升级干预** | click#3449 与 run3 共同模式：前 25% 预算理解根因，剩余 75% 探索到死 | 轮次 ≥75% 且 0 写入时，拼入最后一条 user 消息：强制总结根因 + 立即写 patch | `test_llm_agent_injects_budget_escalation_at_75_percent_without_writes` |
+
+设计决策记录：
+
+- 预算升级消息拼进最后一条 user 消息尾部而非新增独立消息——避免 user→user 连续消息（部分 API 不容忍），也避免隔断 assistant(tool_calls) 与 tool_result 配对（war story 6 教训）。
+- 重复搜索拦截在 ToolExecutor 层而非 policy 层——它是性能优化不是行为约束，且需要携带上次结果。
+- 环境预检对非 pytest 命令跳过——无法通用判断"命令能否跑"，只拦截可确定的失败。
+
+待验证：在 jsonschema#1328（装完 attrs 后）和 click#3449 上重跑，对比改进前后的 token 消耗与 patch 产出。
