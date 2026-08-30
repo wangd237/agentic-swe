@@ -11,6 +11,7 @@
 5. [tool_router None 崩溃：签名说可选，实现说必填](#案例-5)
 6. [OpenAI 协议双违规：宽松网关掩盖了两个真 bug](#案例-6)
 7. [Windows 上跑官方 harness：三个平台 bug 连环坑](#案例-7)
+8. [三个潜伏的协议违规：真实 issue 如何连环暴露低频路径 bug](#案例-8)
 
 ---
 
@@ -346,6 +347,71 @@ SWE-bench 官方 harness（swebench 2.1.8）在 Windows 上完全跑不起来：
 
 ---
 
+## 案例 8 <a name="案例-8"></a>
+
+## 三个潜伏的协议违规：真实 issue 如何连环暴露低频路径 bug
+
+**时间**：2026-08-30 ｜ **一天内三个 400，全部来自同一类根因**
+
+### 现象
+
+拿真实 GitHub issue 验证 agent 能力，一天内连续撞上三个不同的 400 错误：
+
+```text
+400 #1: An assistant message with 'tool_calls' must be followed by tool messages...
+400 #2: Invalid assistant message: content or tool_calls must be set
+400 #3: Messages with role 'tool' must be a response to a preceding message with 'tool_calls'
+```
+
+三个错误信息不同，但都在说同一件事：**发给 API 的消息序列违反了 OpenAI 协议**。
+
+### 排查（三个 bug，三条路径）
+
+**Bug 1（重试路径从未被真实触发）**：reasoning 模型偶发返回 content/tool_calls 双空。空响应重试机制（案例 2 的修复）本身是对的，但它把空 assistant 消息留在了历史里——重试注定失败。**修复机制自己制造了下一个 bug**。上次 13 个任务全跑在宽松网关上，重试路径从未在严格 API 上被真实执行过。
+
+**Bug 2（压缩边界切断配对）**：上下文压缩的 `keep_recent=3` 边界恰好落在 `assistant(tool_calls)` 和它的 `tool_result` 之间——assistant 进了摘要区被替换成 system 消息，tool_result 留在 recent 区。下一个请求直接被拒。**压缩功能上线以来从未在"测试输出大到触发压缩"的场景下跑过**。
+
+**Bug 3（预检自身的报错提取 bug）**：环境预检第一次实战拦截了依赖缺失，但报错显示的是 pytest 的 `=== ERRORS ===` 分隔线而不是真正的 `ModuleNotFoundError`——关键词匹配顺序问题，分隔线抢先匹配。
+
+### 根因
+
+三个 bug 的共同点：**都在低频路径上，都被之前的运行环境掩盖**。
+
+| Bug | 触发条件 | 潜伏时长 |
+|---|---|---|
+| 空 assistant 消息 | reasoning 模型偶发空响应 | 重试机制上线以来 |
+| 压缩切断配对 | 首次触发上下文压缩 | 压缩功能上线以来 |
+| 预检报错提取 | 首次真实拦截 | 预检上线当天 |
+
+### 修复与验证
+
+每个修复都带回归测试（374 全绿）：
+
+- Bug 1：主循环不 append 空 assistant_blocks + `_messages_to_openai` 协议兑底填充（两层防御）
+- Bug 2：压缩切分前边界向后回退，配对完整性成为压缩不变量
+- Bug 3：两级优先级提取，ModuleNotFoundError 优先于 pytest 包装行
+
+验证：同一 issue（jsonschema#1328）从三次失败到第四次完整成功——`success / accepted_success / full_verification_success`，7881 测试零回归。
+
+### 一句话总结
+
+> "我拿真实 issue 验证 agent，一天撞了三个 400。归因发现三个 bug 全在低频路径上：重试路径从未被真实触发过、压缩从未在大输出下跑过、预检从未实战过。**低频路径的 bug 只能靠真实负载暴露——单测覆盖的是"调用后返回什么"，覆盖不了"真实序列下会发生什么"**。"
+
+### 常见疑问
+
+- **"为什么单测没拦住？"** —— 单测构造的消息序列都是"正常"的。协议违规发生在特定时序（空响应后重试、压缩边界落点）下，这些时序在单测里从未被构造过
+- **"怎么防再犯？"** —— 三个修复都加了回归测试，但更根本的教训是：**依赖协议细节的代码，要在最严格的实现上测，且要用真实负载测**
+- **"和案例 6 什么关系？"** —— 同一模式的三个新实例。案例 6 是"宽松网关掩盖 bug"，这次是"低频路径掩盖 bug"——掩盖的形式不同，本质相同
+
+### 证据
+
+- `git show 191f27f`（空 assistant 消息修复）
+- `git show 5b7a52e`（压缩配对保护）
+- `git show 8a8d70c`（预检报错提取）
+- `docs/failure_analysis.md` 第 6 节（四次 run 对比）
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -357,5 +423,6 @@ SWE-bench 官方 harness（swebench 2.1.8）在 Windows 上完全跑不起来：
 | None 崩溃 | 仓库可信度 = 每条声明可验证 |
 | Windows harness 三连坑 | 跨平台工具链的坑都在宿主机/容器边界上 |
 | OpenAI 协议双违规 | 宽松网关会掩盖协议违规，换严格 API 全暴露 |
+| 三个潜伏的协议违规 | 低频路径的 bug 只能靠真实负载暴露 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**

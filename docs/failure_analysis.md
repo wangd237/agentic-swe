@@ -94,3 +94,57 @@
 - 环境预检对非 pytest 命令跳过——无法通用判断"命令能否跑"，只拦截可确定的失败。
 
 待验证：在 jsonschema#1328（装完 attrs 后）和 click#3449 上重跑，对比改进前后的 token 消耗与 patch 产出。
+
+## 6. 验证闭环：jsonschema#1328 四次 run 对比（2026-08-30）
+
+同一 issue、同一测试命令，四次 run 完整记录了"失败→归因→修复→验证"的全过程：
+
+| Run | 状态 | 根因 | 责任层 | 结果 |
+| --- | --- | --- | --- | --- |
+| 1 | 测试命令指向不存在的文件（exit 4） | 用户输入错误 | 用户 | incomplete，reflection 在无效验证下误判 wrong_file 回滚 |
+| 2 | API 400：空 assistant 消息 | 代码 bug（协议违规） | 系统 | 崩溃，trace 未落盘 |
+| 3 | attrs 未安装（exit 2） | 环境依赖缺失 | 环境 | incomplete，模型 16 轮探测注定失败的验证环境 |
+| 4 | **全部修复就位** | — | — | **success / accepted_success / full_verification_success** |
+
+### Run 4 详情（首个完整成功）
+
+- token：301,850；工具调用 22 次（grep ×8，read_file ×7，edit_file ×2，run_tests ×2）
+- phase 轨迹：understand → reproduce → patch → verify → final
+- patch：`ErrorTree._contents` 从 `defaultdict(self.__class__)` 改为普通 `dict`，构造循环显式创建子树——正是 issue 根因
+- 语义验证（人工跑 issue 复现代码）：`list(tree)=[0]` ✓、`1 in tree=False` ✓、访问后不再污染 ✓
+- 全量回归：7881 passed, 631 skipped，零回归
+- 已知瑕疵：`tree[1]`（访问无错误但 instance 存在的索引）从"返回空子树"变为抛 `KeyError`——核心 bug 修对，访问语义有行为变化；官方 main 至今未修此 issue，无对照标准
+
+### 三个机制在成功 run 中的表现
+
+1. **预算升级生效**：iter 12 注入告警，iter 13 模型立即响应"我已经完全理解了问题"+根因总结+修复方案，iter 14-16 完成写入→验证→success。对比 #1257（告警被无视）：**预算升级对有明确答案的任务有效，对开放设计任务无效**——边界发现。
+2. **PATCH gate 正确拦截**：iter 14 模型直接 edit_file 被挡（无复现证据），模型正确应对：先跑 run_tests 建基线 → 基线通过（bug 无回归测试覆盖）→ 说明静态复现证据 → 重新写入。约束引导了正确流程而非阻碍修复。
+3. **自动验证闭环**：edit_file → show_diff → full run_tests → auto_finalize，最后 5 步零额外轮次。
+
+### token 消耗说明
+
+Run 4（30.2 万）略高于 Run 3（29.8 万）——改进目标不是省 token，是**把注定失败的 run 变成能成功的 run**。token 经济性是下一阶段优化目标（重叠读检测仍未实施，#1257 中 55% 读取冗余）。
+
+## 7. 补充失败样本：jsonschema#1257（设计讨论类 issue）
+
+**验证深度：trace 级**
+
+- 状态：incomplete/max_iterations，25.5 万 token，0 写入，0 run_tests
+- 预算升级在 iter 12 注入但被无视（模型继续读代码 4 轮）
+- 重叠读：`test_exceptions.py` 8 段共 1149 行，去重 519 行，**55% 冗余**
+- **根因：issue 选错**。标题 "Mitigate undesired side effect ... with alternative proposal"——这是设计讨论类 issue，不是 bug fix：无失败断言、无 FAIL_TO_PASS、正确答案开放（作者提出"替代方案"）。模型 16 轮试图理解需要设计决策的问题，预算根本不够"理解+设计+实现"。
+
+### 失败模式三层分类（更新）
+
+| 层 | 失败 | 实例 | 状态 |
+| --- | --- | --- | --- |
+| 基础设施层 | 协议违规、环境依赖 | 400×3、attrs 缺失 | ✅ 全部修复 |
+| 系统行为层 | 探索无节流、重叠读、告警强度不足 | click#3449、#1257 | ⚠️ 部分（搜索拦截✓，读侧✗） |
+| 任务适配层 | issue 类型与 agent 能力错配 | #1257（设计讨论） | ❌ 无防御 |
+
+### 待改进（更新后优先级）
+
+1. **换对 issue 重跑建立基线**（零代码）：找真正的 bug fix 类 issue（有 traceback、失败断言、明确预期），验证现有改进在正确任务上的效果。
+2. **预算告警升级为硬约束**（~40 行）：75% 后收窄工具列表只留 edit_file/write_file/run_tests——符合"约束优于提示"的项目哲学，与 phase gate 对称。
+3. **重叠读检测**（~40 行）：数据已两次确认（click#3449 57%、#1257 55%）。
+4. **任务预分类**（可选，~30 行）：issue 文本含 proposal/design/RFC 信号时警告用户，不阻断。启发式可能误伤，优先级最低。
