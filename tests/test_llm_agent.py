@@ -2736,6 +2736,37 @@ def test_llm_config_uses_policy_max_steps(monkeypatch: pytest.MonkeyPatch) -> No
     assert config.client_max_retries == 0
 
 
+def test_messages_to_openai_never_emits_assistant_without_content_or_tool_calls() -> None:
+    """空 assistant 消息必须被兑底填充，否则严格校验的 API 会 400。
+
+    回归背景：deepseek-v4-flash 偶发 content/tool_calls 双空响应，
+    空 assistant 消息进入历史后，下一轮请求直接被 DeepSeek 拒绝：
+    'Invalid assistant message: content or tool_calls must be set'。
+    """
+    messages = [
+        {"role": "user", "content": "question"},
+        # 场景 A：空 text block，无 tool_use
+        {"role": "assistant", "content": [{"type": "text", "text": ""}]},
+        # 场景 B：空 block 列表
+        {"role": "assistant", "content": []},
+        # 场景 C：只有非 text/tool_use 类型
+        {"role": "assistant", "content": [{"type": "thinking", "thinking": "..."}]},
+        {"role": "user", "content": "next"},
+    ]
+
+    converted = OpenAICompatibleChatClient._messages_to_openai(
+        system_prompt="system",
+        messages=messages,
+    )
+
+    assistant_messages = [m for m in converted if m.get("role") == "assistant"]
+    assert len(assistant_messages) == 3
+    for message in assistant_messages:
+        assert message.get("content") is not None or message.get("tool_calls"), (
+            "assistant 消息必须至少有 content 或 tool_calls 之一"
+        )
+
+
 def test_openai_client_uses_configured_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     observed: dict[str, object] = {}
 

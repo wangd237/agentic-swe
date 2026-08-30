@@ -162,6 +162,11 @@ class OpenAICompatibleChatClient:
                         **({"tool_calls": tool_calls} if tool_calls else {}),
                     }
                 )
+                # 协议兑底：content=None 且无 tool_calls 的 assistant 消息
+                # 违反 OpenAI 协议（'content or tool_calls must be set'）。
+                # 无论上游如何构造，这里保证不发出非法消息。
+                if converted[-1]["content"] is None and "tool_calls" not in converted[-1]:
+                    converted[-1]["content"] = "(empty assistant response)"
                 continue
 
             for block in content:
@@ -1438,12 +1443,16 @@ class LLMCodeAgent(BaseAgent):
                     )
                 )
 
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": assistant_blocks,
-                }
-            )
+            if assistant_blocks:
+                # 空 assistant 消息（reasoning 模型偶发 content/tool_calls 双空）
+                # 不能进 messages：转换成 OpenAI 协议后是 content=None 且无
+                # tool_calls，严格校验的 API（DeepSeek 官方）会直接 400。
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_blocks,
+                    }
+                )
             compress_context_if_needed("assistant_response")
 
             tool_results_for_model: list[dict[str, Any]] = []
