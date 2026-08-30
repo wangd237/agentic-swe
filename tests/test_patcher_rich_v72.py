@@ -61,8 +61,11 @@ def test_improved_v72_repairs_legacy_windows_no_color_branch(tmp_path: Path) -> 
     )
     policy = PolicyConfig.model_validate(
         json.loads(
-            Path(
-                "E:/My_Projects/agentic-software-engineering-roadmap/optimization/policy_versions/improved_v72.json"
+            (
+                Path(__file__).resolve().parent.parent
+                / "optimization"
+                / "policy_versions"
+                / "improved_v72.json"
             ).read_text(encoding="utf-8")
         )
     )

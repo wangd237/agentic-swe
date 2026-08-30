@@ -66,7 +66,13 @@ def test_improved_v70_repairs_anyio_parent_task_cancel_bug(tmp_path: Path) -> No
             "metadata": {"candidate_id": "agronholm_anyio_issue_88"},
         }
     )
-    policy = PolicyConfig.model_validate(json.loads((Path("E:/My_Projects/agentic-software-engineering-roadmap/optimization/policy_versions/improved_v70.json")).read_text(encoding="utf-8")))
+    policy = PolicyConfig.model_validate(
+        json.loads(
+            (Path(__file__).resolve().parent.parent / "optimization" / "policy_versions" / "improved_v70.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
 
     result = apply_rule_based_patch(
         task=task,

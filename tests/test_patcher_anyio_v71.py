@@ -76,9 +76,10 @@ def test_improved_v71_repairs_anyio_nested_cancelled_error_leak(tmp_path: Path) 
     policy = PolicyConfig.model_validate(
         json.loads(
             (
-                Path(
-                    "E:/My_Projects/agentic-software-engineering-roadmap/optimization/policy_versions/improved_v71.json"
-                )
+                Path(__file__).resolve().parent.parent
+                / "optimization"
+                / "policy_versions"
+                / "improved_v71.json"
             ).read_text(encoding="utf-8")
         )
     )
