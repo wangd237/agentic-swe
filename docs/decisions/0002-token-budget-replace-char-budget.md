@@ -80,6 +80,10 @@
 - 历史 run 的 `result.json` 中 `llm_usage` 均为 null/空（该字段刚在 commit `2a30e94` 加入），需重新跑任务才能拿到对照数据。
 - DeepSeek 的 `usage.prompt_tokens` 是否包含 cache hit 部分需实测确认（影响 P1-2 缓存观测）。
 - 不同 provider（Kimi/GLM）的 usage 返回格式不一，需容错。
+- **锚点滞后一轮**（Step 2 落地后新增）：`last_measured_prompt_tokens` 是上一轮调用的实测值，
+  而压缩判断发生在新消息 append 之后——估算基于"上一轮上下文 + 本轮新增"，会略低估。
+  在 1M 窗口 + 16K reserve 下误差无害；但换小窗口模型（如 64K 的 deepseek-chat）时，
+  滞后一轮的增量可能就是几 K token，**reserve 需把滞后量计入**。
 
 ## Files Changed
 

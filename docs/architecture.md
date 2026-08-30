@@ -189,9 +189,10 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 - `patch_strategy`
 - `llm_provider`
 - `llm_max_output_tokens`
+- `llm_reserve_tokens`（上下文压缩的预留空间，行为参数）
 - `pytest_additional_flags`
 
-模型连接信息（api key / base url / model）只从 `.env` 的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 读取，所有 OpenAI-compatible 提供商共用；policy 不再提供兑底值，未配置时直接报错。
+模型连接信息（api key / base url / model）只从 `.env` 的 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 读取，所有 OpenAI-compatible 提供商共用；policy 不再提供兑底值，未配置时直接报错。上下文窗口大小（`LLM_CONTEXT_WINDOW_TOKENS`）同为模型属性，也走 `.env`，policy 可覆盖。
 
 当前 LLM 主入口策略是：
 

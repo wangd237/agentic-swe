@@ -21,7 +21,7 @@
 - 实现 post-patch immediate auto-verification：代码修改后由 runtime 自动执行 `show_diff + targeted tests + full tests`，根据测试结果自动反思（reflection）并决定是否 undo，无需模型手动发起。
 - 实现 auto-finalize：diff 已观察且 full `run_tests` 通过后自动退出 LLM 循环，避免冗余工具调用。
 - 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
-- 双策略上下文工程：microCompact（单个超大 tool result 前置截断）+ 全量摘要压缩，在爆窗之前就控制上下文。
+- token 预算驱动的上下文工程：以 API 实测 prompt\_tokens 为锚点估算上下文占用，超过窗口减 reserve 才触发摘要压缩；配合 microCompact（单个超大 tool result 前置截断）与超大输出落盘，实测校准后同等任务零过早压缩。
 - 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints + `search_graph` agent tool（UNDERSTAND/REPRODUCE/LOCALIZE 阶段可用，单次 run 限 3 次调用，无 backend 时自动降级），并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
 - 测试失败信息结构化提取 `failure_summary`（failed tests、断言位置、异常类型、possible symbols）+ 自动引导符号搜索，让模型不看完整日志也能定位根因。
 - 反循环检测：连续 3 次类似写操作时自动注入提醒，避免模型在同方向上空转。
@@ -92,7 +92,9 @@ FINAL         输出 result / trace / patch / verification summary
 
 **3. 上下文工程**
 
-- 双策略上下文压缩：在总字符超限前，对单个超大工具结果做前置截断（microCompact），再 fall through 到现有全量摘要压缩。
+- **token 预算驱动的上下文压缩**：压缩触发判定基于 `estimated_tokens > context_window_tokens - reserve_tokens`，估算优先用最近一次 API 实测 `prompt_tokens` 做锚点（天然覆盖 system prompt 与工具 schema 开销），无锚点时退回 chars/2.5 保守估算。实测校准（3 任务 46 调用）发现旧字符阈值仅占实际窗口 3.7%，在长任务里人为触发过早压缩、丢失 PATCH 阶段上下文；替换后同等任务零压缩、上下文完整保留。
+- microCompact：单个超大工具结果在进入上下文前前置截断，与全量摘要压缩配合。
+- 工具大输出落盘：超过 12K 字符的完整结果写入 `tool_outputs/`，计入 trace `evidence_ids`，审计链不因截断而断裂。
 - 测试失败信息内置 `failure_summary` 结构化提取（failed tests、断言位置、异常类型、possible symbols），让模型不看完整日志也能定位失败根因。
 - 自动引导失败搜索：从测试失败输出中提取符号名自动执行补充搜索，无需模型主动发起。
 
