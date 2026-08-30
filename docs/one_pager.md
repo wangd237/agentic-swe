@@ -28,13 +28,13 @@ Result artifacts
 
 | Signal | Current Evidence |
 | --- | --- |
+| **SWE-bench Lite official harness** | **resolved 3/8 submitted**（官方 Docker harness 判定，[证据](../evidence/swebench_lite_official/)）|
 | Tool surface | 11 tools, including safe `python_repl` |
-| Target 1 pressure test | 14 hard tasks, 12 success, 85.7% |
-| Target 2 validation | 3/3 success: `task_048`, `task_030`, `task_089` |
-| Key breakthrough | `task_048` went from `max_iterations` to success |
-| Regression signal | `task_089` stayed success with fewer tool calls |
-| Test suite | Full pytest passed in latest verification |
-| Provider design | OpenAI-compatible, not tied to DeepSeek |
+| Semi-real benchmark | 132 tasks; 13 representative runs all `accepted_success` with `evidence_quality: strong`（[证据](../evidence/)）|
+| Regression suite | 367 pytest passes |
+| Frozen-set discipline | `frozen_40` stable across 72+ policy versions |
+| Token optimization | `task_010`: 30,510 → 18,553 tokens, 7 → 5 LLM calls |
+| Provider design | OpenAI-compatible, not tied to any vendor |
 
 ## Best Case In One Minute
 

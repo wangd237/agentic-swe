@@ -32,18 +32,17 @@
 
 | 指标 | 结果 |
 | --- | --- |
-| 任务规模 | `132` 条 semi-real 真实 issue + `10` 个 SWE-bench Lite 任务，覆盖 `25+` 开源生态 |
+| **SWE-bench Lite 官方 harness** | **resolved `3 / 8` submitted**（10 任务中 2 条未产出 patch；官方 Docker harness 判定，证据见 [evidence/swebench_lite_official/](evidence/swebench_lite_official/)）|
+| 任务规模 | `132` 条 semi-real 任务（真实 GitHub issue 提炼的最小复现场景）+ `10` 个 SWE-bench Lite 任务 |
 | LLM Agent 评测管道 | 4 级冻结集（15/18/20/40） + `evals/` 聚合/对比/错误分类 + `stability_recheck` flaky 验证 + `analyze_benchmark_maturity` 回归门禁 |
 | 回归测试 | `367` passes |
-| SWE-bench Lite 官方 harness | **resolved `3 / 8` submitted**（10 任务中 2 条未产出 patch；官方 Docker harness 判定，证据见 [evidence/swebench_lite_official/](evidence/swebench_lite_official/)）|
 | Frozen set 稳定性 | `frozen_40` 连续 `72+` 个策略版本无回归 |
 | Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
 | Auto-verification & reflection | 写入后自动执行 show_diff + targeted tests + full tests；失败时自动 failure-signature 比较 + 可选 undo |
-| Anti-loop 检测 | 连续 3 次相似写操作时注入提醒 |
-| v16 code intelligence | `accepted` — graph-assisted localization 量化验证通过：token `-258` avg, read_file `0`, source top1 `8/8`, fallback `0%`, 无 success/accepted regression |
-| `search_graph` agent tool | 模型主动查询代码结构图；Click #2894 修复后：grep `-67%`，token `-22%`，总调用 `-24%`，稳定进入 PATCH 阶段 |
+| v16 code intelligence | graph-assisted localization 量化验证通过：token `-258` avg, source top1 `8/8`, fallback `0%` |
+| `search_graph` agent tool | 修复后：grep `-67%`，token `-22%`，总调用 `-24%` |
 
-完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
+完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)，开发踩坑复盘见 [docs/war_stories.md](docs/war_stories.md)。
 
 ## Agent Workflow
 
@@ -340,12 +339,12 @@ benchmarks/
   manifests/    # frozen set / evaluation manifests（9 个）
 optimization/
   policy_versions/  # 80 个 policy 版本（baseline v1 ~ v72 + LLM 配置模板）
-docs/           # 架构、评测、案例、路线图
+evidence/       # 可审计运行证据：13 条代表 run + SWE-bench 官方评测报告
+patches/        # 第三方库兼容补丁（swebench Windows 修复）
+docs/           # 架构、评测、案例、踩坑复盘（历史文档在 docs/archive/）
 evals/          # 批量评测、错误分类、指标计算、对比脚本
 scripts/        # 60+ CLI 脚本：单任务运行、批量评测、本地/GitHub repo 修复、AB 实验、分析
-.tools/         # codebase-memory-mcp binary（可选 code intelligence 后端）
-logs/           # 运行轨迹、结果、patch、agent memory
-third_project/  # 第三方任务源代码
+.logs/          # 运行轨迹、结果、patch、agent memory（gitignore）
 ```
 
 ## 技术栈
@@ -354,16 +353,22 @@ Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subproc
 
 ## 文档导航
 
-- 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
+**面试官/访客建议阅读顺序**：
+
+1. 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
+2. 开发踩坑复盘（War Stories，最能体现工程能力）：[docs/war_stories.md](docs/war_stories.md)
+3. 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
+4. 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
+
+**深入阅读**：
+
+- 架构说明：[docs/architecture.md](docs/architecture.md)
 - Agent 概览：[docs/agent_overview.md](docs/agent_overview.md)
 - Agent Core 能力地图：[docs/agent_core_capability_map.md](docs/agent_core_capability_map.md)
-- 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
-- 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
-- 开发踩坑复盘（War Stories）：[docs/war_stories.md](docs/war_stories.md)
-- 架构说明：[docs/architecture.md](docs/architecture.md)
 - Harness 设计：[docs/harness.md](docs/harness.md)
 - 任务注册表：[docs/benchmark_registry.md](docs/benchmark_registry.md)
 - 当前任务状态：[currentTask.md](currentTask.md)
+- 历史过程文档（18 篇，已归档）：[docs/archive/](docs/archive/)
 
 ## License
 

@@ -156,8 +156,8 @@
   - `benchmarks/manifests/real_issue_tasks.json`
 - 当前 challenge manifest：
   - `benchmarks/manifests/real_issue_tasks_challenge_v1.json`
-- challenge 说明文档：
-  - `docs/challenge_set.md`
+- challenge 说明文档（已归档）：
+  - `docs/archive/challenge_set.md`
 - 当前冻结 manifest：
   - `benchmarks/manifests/real_issue_tasks_frozen_15_v1.json`
   - `benchmarks/manifests/real_issue_tasks_frozen_18_v1.json`

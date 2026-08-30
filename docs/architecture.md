@@ -327,8 +327,9 @@ Eval 层现在的定位是 agent 质量门控，而不是项目叙事主角。�
 
 如果你想快速理解项目，建议按下面顺序阅读：
 
-1. [README.md](README.md)
-2. [docs/experiment_summary.md](docs/experiment_summary.md)
-3. [docs/harness.md](docs/harness.md)
-4. [docs/benchmark_registry.md](docs/benchmark_registry.md)
-5. [docs/results.md](docs/results.md)
+1. [README.md](../README.md)
+2. [docs/one_pager.md](one_pager.md)
+3. [docs/architecture.md](architecture.md)
+4. [docs/harness.md](harness.md)
+5. [docs/agent_eval_summary.md](agent_eval_summary.md)
+6. [docs/war_stories.md](war_stories.md)
