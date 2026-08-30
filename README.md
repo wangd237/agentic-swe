@@ -353,7 +353,7 @@ Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subproc
 
 ## 文档导航
 
-**面试官/访客建议阅读顺序**：
+**推荐阅读顺序**：
 
 1. 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
 2. 开发踩坑复盘（War Stories，最能体现工程能力）：[docs/war_stories.md](docs/war_stories.md)

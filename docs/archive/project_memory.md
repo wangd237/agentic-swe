@@ -7,7 +7,7 @@
 ## 当前阶段
 
 - 当前阶段：`LLM coding agent 展示收口`
-- 当前求职目标：把项目讲成“面向真实 GitHub issue 的 coding agent”，用于 AI Agent 实习投递
+- 当前主线：把项目做成"面向真实 GitHub issue 的 coding agent"
 - 当前主角：OpenAI-compatible LLM coding agent
 - 当前 agent 证据：
   - 当前已记录 `33` 条 LLM run
@@ -15,7 +15,7 @@
   - challenge / boundary run 已达到 `7` 条
   - 已覆盖 `incomplete_reason = no_patch / max_iterations`
   - 每条代表 run 都有 `trace.json / result.json / patch.diff`
-- 当前 week target：把项目推到“可以放进简历 + 面试中打开给人看”的状态
+- 当前 week target：把项目推到“可对外展示、经得起审视”的状态
 - 当前下一步：
   - 已完成：样本扩到 `>=25` 条、case study 扩到 `>=4` 条、README 指标真实化、`.env.example`、至少 `2` 种 `incomplete_reason`
 - 当前验证底座：

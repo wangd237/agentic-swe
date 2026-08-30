@@ -19,7 +19,7 @@ benchmark、frozen set、规则版 baseline 和 stability recheck 都是验证�
 - 扩展样本中还有 `2` 条 success 和 `1` 条有价值的 `incomplete` 边界案例。
 - 当前成功判定要求有实际 patch，并且当前 workspace generation 已通过测试验证。
 - `incomplete_reason` 已进入结果 schema，可区分无 patch、测试失败、达到迭代上限等边界类型。
-- 规则版 baseline 继续保留为稳定参照，而不是求职展示主角。
+- 规则版 baseline 继续保留为稳定参照。
 
 ## 3. LLM Agent 小样本快照
 
@@ -49,11 +49,11 @@ Agent 的最终状态不依赖模型最后一句自然语言，而是依赖：
 
 ### 边界案例有展示价值
 
-`task_132` 的测试在修改前已经通过，agent 没有生成 patch，因此结果保持 `incomplete`。这类案例很适合面试时说明：系统不会把“无实际修复”包装成成功。
+`task_132` 的测试在修改前已经通过，agent 没有生成 patch，因此结果保持 `incomplete`。这类案例很适合说明：系统不会把“无实际修复”包装成成功。
 
 ### Baseline 是参照，不是主角
 
-规则版 baseline 在正式任务集上很稳定，说明验证底座扎实。但当前求职目标需要展示的是 LLM agent 的工具调用、决策轨迹和失败恢复能力。
+规则版 baseline 在正式任务集上很稳定，说明验证底座扎实。但当前主线是 LLM agent 的工具调用、决策轨迹和失败恢复能力。
 
 ## 5. 验证底座快照
 

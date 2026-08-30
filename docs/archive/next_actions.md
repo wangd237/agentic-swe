@@ -1,6 +1,6 @@
 # 下一步行动清单
 
-本文件只记录当前真正应该做的下一步。项目目标以 [docs/weekTarget.md](docs/weekTarget.md) 为准：把 LLM coding agent 打磨到实习/面试可展示，而不是继续扩 benchmark 数量。
+本文件只记录当前真正应该做的下一步。项目目标以 [docs/weekTarget.md](docs/weekTarget.md) 为准：把 LLM coding agent 打磨到可展示状态，而不是继续扩 benchmark 数量。
 
 ## 1. 当前阶段
 

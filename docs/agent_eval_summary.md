@@ -1,6 +1,6 @@
 # Agent Eval Summary
 
-本文档记录当前 LLM coding agent 的小样本真实运行结果。目标不是替代完整 benchmark，而是为求职展示提供一个清晰、可审计的 agent 能力快照。
+本文档记录当前 LLM coding agent 的小样本真实运行结果。目标不是替代完整 benchmark，而是提供一个清晰、可审计的 agent 能力快照。
 
 ## 1. Run 设置
 

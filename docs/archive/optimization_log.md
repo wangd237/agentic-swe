@@ -1,6 +1,6 @@
 # 优化迭代记录
 
-> 这是历史优化流水账，主要保留规则版 baseline、benchmark 验证底座和策略版本演进证据。当前项目目标已经切到 LLM coding agent 求职展示；下一步行动以 [docs/next_actions.md](docs/next_actions.md) 为准。
+> 这是历史优化流水账，主要保留规则版 baseline、benchmark 验证底座和策略版本演进证据。当前项目主线已经切到 LLM coding agent；下一步行动以 [docs/next_actions.md](docs/next_actions.md) 为准。
 
 本文件专门记录：
 
@@ -13,7 +13,7 @@
 这样做的目的有两个：
 
 - 方便项目内部持续迭代时追踪因果链
-- 方便求职展示时清楚说明“你到底优化了什么，为什么有效”
+- 方便清楚说明“你到底优化了什么，为什么有效”
 
 ## 记录模板
 

@@ -1,6 +1,6 @@
 # Agent Case Studies
 
-本文档只保留 4 条最适合面试讲述的 LLM agent 案例。每条都对应真实运行产物：`trace.json`、`result.json`、`patch.diff`。
+本文档保留 4 条代表性 LLM agent 案例。每条都对应真实运行产物：`trace.json`、`result.json`、`patch.diff`。
 
 ## Case 1: `task_010` Rich ANSI CRLF Parsing
 
@@ -100,7 +100,7 @@ return fallback_text.encode(encoding, errors="replace").decode(encoding)
 
 ### 为什么值得讲
 
-这个案例同时展示了两件面试官会关心的事：agent 能突破历史 hard case；系统也足够保守，不会把“没有 patch 的测试通过”包装成成功。
+这个案例同时展示了两件事：agent 能突破历史 hard case；系统也足够保守，不会把“没有 patch 的测试通过”包装成成功。
 
 ## Case 4: `task_048` Packaging Version Semantics
 

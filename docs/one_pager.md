@@ -62,7 +62,7 @@ Result: `task_048` success, 11 tool calls, target tests passed.
 - The agent does not self-report success; success requires patch + tests + verified workspace generation.
 - The trace shows decision quality, not just final diff.
 - Harness improvements are measured on hard tasks, then turned into case studies.
-- The project is interview-readable: a reviewer can open README, this one-pager, one case study, and a trace.
+- The project is auditable by design: anyone can open README, this one-pager, a case study, and a raw trace.
 
 ## Clone To Run
 
