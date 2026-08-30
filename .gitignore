@@ -38,3 +38,8 @@ Thumbs.db
 # local tool artifacts
 .code_intelligence_shadow/
 .wpscomate/
+
+# swebench harness local artifacts
+logs/run_evaluation/
+logs/build_images/
+logs/swebench_eval*.log

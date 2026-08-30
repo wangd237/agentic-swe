@@ -1,0 +1,48 @@
+{
+    "total_instances": 10,
+    "submitted_instances": 8,
+    "completed_instances": 7,
+    "resolved_instances": 3,
+    "unresolved_instances": 4,
+    "empty_patch_instances": 0,
+    "error_instances": 1,
+    "completed_ids": [
+        "marshmallow-code__marshmallow-1343",
+        "marshmallow-code__marshmallow-1359",
+        "pvlib__pvlib-python-1072",
+        "pydicom__pydicom-1139",
+        "pydicom__pydicom-1694",
+        "pylint-dev__astroid-1196",
+        "pylint-dev__astroid-1268"
+    ],
+    "incomplete_ids": [
+        "pyvista__pyvista-4315",
+        "sqlfluff__sqlfluff-1625"
+    ],
+    "empty_patch_ids": [],
+    "submitted_ids": [
+        "marshmallow-code__marshmallow-1343",
+        "marshmallow-code__marshmallow-1359",
+        "pvlib__pvlib-python-1072",
+        "pydicom__pydicom-1139",
+        "pydicom__pydicom-1694",
+        "pylint-dev__astroid-1196",
+        "pylint-dev__astroid-1268",
+        "pylint-dev__astroid-1866"
+    ],
+    "resolved_ids": [
+        "marshmallow-code__marshmallow-1343",
+        "marshmallow-code__marshmallow-1359",
+        "pydicom__pydicom-1694"
+    ],
+    "unresolved_ids": [
+        "pvlib__pvlib-python-1072",
+        "pydicom__pydicom-1139",
+        "pylint-dev__astroid-1196",
+        "pylint-dev__astroid-1268"
+    ],
+    "error_ids": [
+        "pylint-dev__astroid-1866"
+    ],
+    "schema_version": 2
+}
