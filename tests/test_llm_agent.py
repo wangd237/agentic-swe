@@ -3101,3 +3101,45 @@ def test_llm_agent_intercepts_duplicate_search_queries(tmp_path: Path) -> None:
     second_grep_summary = grep_steps[1]["tool_output_summary"]
     assert "重复搜索被拦截" in second_grep_summary
     assert grep_steps[1]["tool_metrics"].get("ok") is True
+
+
+def test_compress_messages_never_breaks_tool_calls_pairing() -> None:
+    """压缩边界不能切断 assistant(tool_calls) 与 tool_result 的配对。
+
+    回归背景：jsonschema#1257 真实 run 中，上下文压缩的 keep_recent=3
+    边界恰好切在配对中间——assistant(tool_calls) 进了摘要区被替换成
+    system 消息，但其 tool_result 保留在 recent 区。下一轮请求被
+    DeepSeek 拒绝：'Messages with role tool must be a response to a
+    preceding message with tool_calls'。
+    """
+    messages = [
+        {"role": "user", "content": "initial task " * 50},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t1", "name": "grep", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": "result " * 30}]},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t2", "name": "read_file", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t2", "content": "result " * 30}]},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t3", "name": "grep", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t3", "content": "result " * 30}]},
+    ]
+
+    compressed, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
+        messages,
+        max_context_chars=500,
+    )
+
+    assert did_compress
+
+    # 转换后校验：每条 tool 消息的前一条必须是带 tool_calls 的 assistant
+    converted = OpenAICompatibleChatClient._messages_to_openai(
+        system_prompt="system",
+        messages=compressed,
+    )
+    prev_role = None
+    prev_has_tool_calls = False
+    for message in converted:
+        if message.get("role") == "tool":
+            assert prev_role == "assistant" and prev_has_tool_calls, (
+                f"tool 消息前面是 {prev_role}（tool_calls={prev_has_tool_calls}），配对被切断"
+            )
+        prev_role = message.get("role")
+        prev_has_tool_calls = "tool_calls" in message

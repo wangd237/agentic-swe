@@ -371,8 +371,21 @@ class LLMCodeAgent(BaseAgent):
             return messages, False, before_chars, before_chars
 
         leading_message = messages[0]
-        recent_messages = messages[-keep_recent:]
-        middle_messages = messages[1:-keep_recent]
+        # 配对保护：recent 边界不能切在 assistant(tool_calls) 与其 tool_result 之间。
+        # 否则摘要掉 assistant 后，保留的 tool_result 前面没有 tool_calls，
+        # 严格校验的 API（DeepSeek 官方）会报 400：
+        # "Messages with role 'tool' must be a response to a preceding message
+        # with 'tool_calls'"。
+        # 若 recent 首条是含 tool_result 的 user 消息，则把紧邻其前的 assistant
+        # 一并保留（不进摘要）。
+        split_index = max(1, len(messages) - keep_recent)
+        while (
+            split_index > 1
+            and cls._message_starts_with_tool_result(messages[split_index])
+        ):
+            split_index -= 1
+        recent_messages = messages[split_index:]
+        middle_messages = messages[1:split_index]
         summary_lines = [
             cls._summarize_message_for_context(message)
             for message in middle_messages
@@ -387,6 +400,16 @@ class LLMCodeAgent(BaseAgent):
         compressed_messages = [leading_message, summary_message, *recent_messages]
         after_chars = cls._message_char_estimate(compressed_messages)
         return compressed_messages, True, before_chars, after_chars
+
+    @staticmethod
+    def _message_starts_with_tool_result(message: dict[str, Any]) -> bool:
+        """消息是否以 tool_result 开头（即它是某轮工具调用的结果消息）。"""
+        if message.get("role") != "user":
+            return False
+        content = message.get("content")
+        if not isinstance(content, list) or not content:
+            return False
+        return content[0].get("type") == "tool_result"
 
     def _append_tool_trace_step(
         self,
