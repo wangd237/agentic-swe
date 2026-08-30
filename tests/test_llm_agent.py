@@ -945,7 +945,9 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert output["result"]["tool_stats"]["llm_usage"] == {
         "call_count": 2,
         "total_tokens": 333,
+        "prompt_tokens": 0,
         "missing_usage_count": 0,
+        "missing_prompt_usage_count": 2,
     }
     assert output["result"]["tool_stats"]["tool_routing"] == {
         "schema_strategy": "phase_state_filtered",
@@ -984,6 +986,130 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
+
+
+def test_llm_agent_aggregates_prompt_token_usage_in_result(tmp_path: Path) -> None:
+    """ADR-0002 Step 1：prompt_tokens/cache 字段应流入 llm_usage 聚合与 trace 埋点。"""
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "__init__.py",
+        "",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo",
+            "issue_text": "demo",
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["tests/test_app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    class PromptUsageClient:
+        """返回带 prompt/cache 细分字段的 usage，验证观测管道透传。"""
+
+        def __init__(self) -> None:
+            self._call_count = 0
+
+        def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+            self._call_count += 1
+            if self._call_count == 1:
+                return {
+                    "usage": {
+                        "total_tokens": 100,
+                        "prompt_tokens": 80,
+                        "completion_tokens": 20,
+                        "prompt_cache_hit_tokens": 50,
+                        "prompt_cache_miss_tokens": 30,
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "我会先运行测试确认当前状态。",
+                        },
+                        {
+                            "type": "tool_use",
+                            "id": "tool_1",
+                            "name": "run_tests",
+                            "input": {
+                                "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+                                "timeout_sec": 30,
+                            },
+                        }
+                    ]
+                }
+            return {
+                "usage": {
+                    "total_tokens": 200,
+                    "prompt_tokens": 160,
+                    "completion_tokens": 40,
+                    "prompt_cache_hit_tokens": 100,
+                    "prompt_cache_miss_tokens": 60,
+                },
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "测试已经通过，当前任务完成。",
+                    }
+                ],
+            }
+
+    client = PromptUsageClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=3),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    llm_usage = output["result"]["tool_stats"]["llm_usage"]
+    assert llm_usage["call_count"] == 2
+    assert llm_usage["total_tokens"] == 300
+    assert llm_usage["prompt_tokens"] == 240
+    assert llm_usage["missing_usage_count"] == 0
+    assert llm_usage["missing_prompt_usage_count"] == 0
+
+    # trace 埋点：llm_response step 应携带 prompt_tokens 与字符/token 比值。
+    trace = output["trace"]
+    llm_response_steps = [
+        step for step in trace["steps"] if step["action_type"] == "llm_response"
+    ]
+    assert len(llm_response_steps) == 2
+    first_metrics = llm_response_steps[0]["tool_metrics"]
+    assert first_metrics["llm_prompt_tokens"] == 80
+    assert first_metrics["context_char_estimate"] > 0
+    assert first_metrics["char_to_prompt_token_ratio"] > 0
 
 
 def test_llm_agent_records_enabled_code_intelligence_in_trace_and_result(tmp_path: Path, monkeypatch) -> None:

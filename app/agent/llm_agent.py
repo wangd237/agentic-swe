@@ -198,13 +198,28 @@ class OpenAICompatibleChatClient:
 
     @classmethod
     def _normalize_usage(cls, usage: Any) -> dict[str, int]:
+        # ADR-0002 Step 1：保留 prompt/cache 细分字段，供 token 偏差观测与缓存命中率统计。
+        # total_tokens 缺失时用 prompt+completion 兑底；细分字段缺失时省略，不臆造 0。
         total_tokens = cls._usage_value(usage, "total_tokens")
-        if total_tokens is None:
-            prompt_tokens = cls._usage_value(usage, "prompt_tokens")
-            completion_tokens = cls._usage_value(usage, "completion_tokens")
-            if prompt_tokens is not None and completion_tokens is not None:
-                total_tokens = prompt_tokens + completion_tokens
-        return {"total_tokens": total_tokens} if total_tokens is not None else {}
+        prompt_tokens = cls._usage_value(usage, "prompt_tokens")
+        completion_tokens = cls._usage_value(usage, "completion_tokens")
+        if total_tokens is None and prompt_tokens is not None and completion_tokens is not None:
+            total_tokens = prompt_tokens + completion_tokens
+        normalized: dict[str, int] = {}
+        if total_tokens is not None:
+            normalized["total_tokens"] = total_tokens
+        if prompt_tokens is not None:
+            normalized["prompt_tokens"] = prompt_tokens
+        if completion_tokens is not None:
+            normalized["completion_tokens"] = completion_tokens
+        # DeepSeek 扩展字段：命中缓存的输入 token 与未命中的输入 token。
+        cache_hit = cls._usage_value(usage, "prompt_cache_hit_tokens")
+        cache_miss = cls._usage_value(usage, "prompt_cache_miss_tokens")
+        if cache_hit is not None:
+            normalized["prompt_cache_hit_tokens"] = cache_hit
+        if cache_miss is not None:
+            normalized["prompt_cache_miss_tokens"] = cache_miss
+        return normalized
 
     @staticmethod
     def _normalize_openai_response(response: Any) -> dict[str, Any]:
@@ -293,6 +308,20 @@ class LLMCodeAgent(BaseAgent):
         if not isinstance(usage, dict):
             return None
         value = usage.get("total_tokens")
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _response_prompt_tokens(response: dict[str, Any]) -> int | None:
+        """API 返回的 prompt_tokens，作为上下文 token 估算的实测锚点。"""
+        usage = response.get("usage")
+        if not isinstance(usage, dict):
+            return None
+        value = usage.get("prompt_tokens")
         if value is None:
             return None
         try:
@@ -919,7 +948,10 @@ class LLMCodeAgent(BaseAgent):
         llm_call_count = 0
         empty_response_retries = 0
         llm_total_tokens = 0
+        llm_prompt_tokens = 0
         llm_missing_usage_count = 0
+        llm_missing_prompt_usage_count = 0
+        last_measured_prompt_tokens: int | None = None
         total_tool_schema_sent = 0
         tools_by_phase: dict[str, list[str]] = {}
 
@@ -1095,6 +1127,9 @@ class LLMCodeAgent(BaseAgent):
                         "before_chars": before_chars,
                         "after_chars": after_chars,
                         "max_context_chars": self.llm_config.max_context_chars,
+                        # ADR-0002 Step 1：压缩时刻的 token 估算对照，供 P0-2b 公式替换决策。
+                        "estimated_tokens_at_compression": round(before_chars / 2.5),
+                        "last_measured_prompt_tokens": last_measured_prompt_tokens,
                     },
                 )
             )
@@ -1497,6 +1532,12 @@ class LLMCodeAgent(BaseAgent):
                 llm_missing_usage_count += 1
             else:
                 llm_total_tokens += response_total_tokens
+            response_prompt_tokens = self._response_prompt_tokens(response)
+            if response_prompt_tokens is None:
+                llm_missing_prompt_usage_count += 1
+            else:
+                llm_prompt_tokens += response_prompt_tokens
+                last_measured_prompt_tokens = response_prompt_tokens
             assistant_blocks = self._normalize_assistant_blocks(response)
             assistant_text = self._extract_text(assistant_blocks)
             tool_blocks = self._tool_use_blocks(assistant_blocks)
@@ -1517,6 +1558,14 @@ class LLMCodeAgent(BaseAgent):
             }
             if response_total_tokens is not None:
                 llm_response_metrics["llm_total_tokens"] = response_total_tokens
+            if response_prompt_tokens is not None:
+                llm_response_metrics["llm_prompt_tokens"] = response_prompt_tokens
+                # ADR-0002 Step 1：字符估算 vs 实测 prompt_tokens 对照，量化压缩触发时机的偏差。
+                llm_response_metrics["context_char_estimate"] = self._message_char_estimate(messages)
+                llm_response_metrics["char_to_prompt_token_ratio"] = round(
+                    self._message_char_estimate(messages) / response_prompt_tokens,
+                    3,
+                )
             if recovered_text_tool_blocks:
                 llm_response_metrics["recovered_text_tool_call_count"] = len(recovered_text_tool_blocks)
                 llm_response_metrics["recovered_text_tool_names"] = [
@@ -2483,7 +2532,9 @@ class LLMCodeAgent(BaseAgent):
                 "llm_usage": {
                     "call_count": llm_call_count,
                     "total_tokens": llm_total_tokens,
+                    "prompt_tokens": llm_prompt_tokens,
                     "missing_usage_count": llm_missing_usage_count,
+                    "missing_prompt_usage_count": llm_missing_prompt_usage_count,
                 },
                 "tool_routing": {
                     "schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
