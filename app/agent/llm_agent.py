@@ -741,6 +741,7 @@ class LLMCodeAgent(BaseAgent):
         run_id = next_run_id(task_runs_dir)
         run_paths = build_run_paths(repository_root / "logs" / "trajectories", task.task_id, run_id)
         run_paths.run_dir.mkdir(parents=True, exist_ok=True)
+        run_paths.tool_outputs_dir.mkdir(parents=True, exist_ok=True)
 
         workspace_copy_started_at = perf_counter()
         _test_patch_path = _resolve_test_patch_path(
@@ -1097,6 +1098,25 @@ class LLMCodeAgent(BaseAgent):
                     },
                 )
             )
+
+        SPILL_TO_DISK_THRESHOLD_CHARS = 12000
+
+        def _spill_large_tool_result(
+            tool_result: dict[str, Any],
+            tool_name: str,
+            step_index: int,
+        ) -> str | None:
+            """工具结果超过阈值时落盘，返回落盘路径；否则返回 None。"""
+            # run_tests 的完整 stdout/stderr 就在 data 里，且 LLM agent 路径
+            # 没有其他落盘渠道（task_runner 的 pre/post_test_stdout 只在
+            # rule-based 路径写入）——因此 run_tests 恰恰最需要 spill。
+            result_text = json.dumps(tool_result, ensure_ascii=False)
+            if len(result_text) <= SPILL_TO_DISK_THRESHOLD_CHARS:
+                return None
+            file_name = f"step_{step_index:03d}_{tool_name}.json"
+            spill_path = run_paths.tool_outputs_dir / file_name
+            spill_path.write_text(result_text, encoding="utf-8")
+            return str(spill_path.relative_to(run_paths.run_dir))
 
         def already_full_verified_current_generation() -> bool:
             return (
@@ -1590,6 +1610,12 @@ class LLMCodeAgent(BaseAgent):
                     tool_result = executed["tool_result"]
                     tool_duration_sec = executed["tool_duration_sec"]
 
+                    spill_path = _spill_large_tool_result(
+                        tool_result,
+                        tool_name,
+                        len(trace.steps) + 1,
+                    )
+
                     if tool_name == "read_file" and tool_result.get("ok"):
                         relative_path = tool_result["data"].get("relative_path", "")
                         if relative_path and relative_path not in trace.read_files:
@@ -1767,6 +1793,8 @@ class LLMCodeAgent(BaseAgent):
                         decision="将工具结果回喂给模型继续决策。",
                         parallel_group_id=parallel_group_id,
                     )
+                    if spill_path:
+                        trace.steps[-1].evidence_ids.append(f"spill:{spill_path}")
 
                     reflection_message_for_model = ""
                     if (
@@ -1865,6 +1893,13 @@ class LLMCodeAgent(BaseAgent):
                     ):
                         immediate_auto_verification_message = run_immediate_auto_verification()
 
+                    spill_hint_for_model = ""
+                    if spill_path:
+                        result_chars = len(json.dumps(tool_result, ensure_ascii=False))
+                        spill_hint_for_model = (
+                            f"\n\n[完整输出({result_chars}字符)已落盘至 {spill_path}。"
+                            "以上为摘要预览。如需查看更多匹配行，请用 grep 重新搜索并缩小范围。]"
+                        )
                     tool_results_for_model.append(
                         {
                             "type": "tool_result",
@@ -1877,7 +1912,8 @@ class LLMCodeAgent(BaseAgent):
                             + immediate_auto_verification_message
                             + reflection_message_for_model
                             + anti_loop_message_for_model
-                            + edit_recovery_message_for_model,
+                            + edit_recovery_message_for_model
+                            + spill_hint_for_model,
                         }
                     )
 

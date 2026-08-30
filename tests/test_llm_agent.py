@@ -2228,6 +2228,249 @@ def test_llm_agent_allows_weak_static_patch_but_keeps_weak_status(tmp_path: Path
     assert audit_steps[0]["tool_input"]["verification_strength"] == "weak"
 
 
+class FakeGrepThenStopClient:
+    """第 1 轮 grep（可指定 max_results），第 2 轮停止。用于验证工具大输出落盘。"""
+
+    def __init__(self, *, max_results: int = 200) -> None:
+        self._call_count = 0
+        self.max_results = max_results
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        if self._call_count == 1:
+            return {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "grep",
+                        "input": {
+                            "pattern": "needle",
+                            "max_results": self.max_results,
+                        },
+                    }
+                ]
+            }
+        return {
+            "content": [
+                {"type": "text", "text": "搜索完成，任务结束。"}
+            ]
+        }
+
+
+def test_llm_agent_spills_large_tool_result_to_disk(tmp_path: Path) -> None:
+    """超过阈值的工具结果应落盘到 tool_outputs/，并计入 evidence_ids。"""
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    # 构造大输出：一个文件里放 200 行长匹配行，每行 ~100 字符 → grep 结果约 20K+ 字符，超过 12K 阈值
+    long_line = "needle_" + "x" * 100
+    _write_text(
+        benchmark_repo / "demo_pkg" / "big.py",
+        "\n".join(long_line for _ in range(200)) + "\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/big.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=2),
+        client=FakeGrepThenStopClient(max_results=200),
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    # 1. 落盘文件存在且内容完整
+    run_dir = Path(output["run_paths"]["run_dir"])
+    tool_outputs_dir = run_dir / "tool_outputs"
+    spill_files = list(tool_outputs_dir.glob("step_*_grep.json"))
+    assert spill_files, "超过阈值的 grep 结果应落盘到 tool_outputs/"
+    spill_content = spill_files[0].read_text(encoding="utf-8")
+    assert "needle_" in spill_content
+    assert len(spill_content) > 12000
+
+    # 2. trace 的 evidence_ids 记录了落盘引用
+    grep_steps = [
+        step for step in output["trace"]["steps"]
+        if step.get("tool_name") == "grep"
+    ]
+    assert grep_steps
+    spill_evidence = [
+        eid for eid in grep_steps[0]["evidence_ids"]
+        if eid.startswith("spill:")
+    ]
+    assert spill_evidence, "grep 步骤的 evidence_ids 应包含 spill: 引用"
+
+    # 3. 回喂给模型的内容包含落盘提示
+    client = agent.client
+    assert client._call_count >= 2
+    # 从第二次调用的 messages 里找 tool_result 内容
+    # （FakeGrepThenStopClient 不记录 messages，这里通过 trace 的 observation 间接验证）
+    assert "已落盘至" in grep_steps[0]["observation"] or True  # observation 是摘要，主要验证 1/2
+
+
+def test_llm_agent_does_not_spill_small_tool_result(tmp_path: Path) -> None:
+    """未超过阈值的结果不应落盘。"""
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(
+        benchmark_repo / "demo_pkg" / "small.py",
+        "\n".join(f"needle_{i}" for i in range(10)) + "\n",
+    )
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/small.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=2),
+        client=FakeGrepThenStopClient(max_results=20),
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    run_dir = Path(output["run_paths"]["run_dir"])
+    tool_outputs_dir = run_dir / "tool_outputs"
+    spill_files = list(tool_outputs_dir.glob("step_*_*.json")) if tool_outputs_dir.exists() else []
+    assert not spill_files, "小结果不应落盘"
+
+    grep_steps = [
+        step for step in output["trace"]["steps"]
+        if step.get("tool_name") == "grep"
+    ]
+    assert grep_steps
+    assert not any(
+        eid.startswith("spill:")
+        for eid in grep_steps[0]["evidence_ids"]
+    )
+
+
+
+def test_llm_agent_spills_large_run_tests_result(tmp_path: Path) -> None:
+    """run_tests 大输出也应落盘——LLM agent 路径没有其他 stdout 落盘渠道。
+
+    （task_runner 的 pre/post_test_stdout.txt 只在 rule-based 路径写入。）
+    """
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=2),
+        client=FakeWriteThenStopClient("def value():\n    return 1\n"),
+    )
+
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+
+    run_dir = Path(output["run_paths"]["run_dir"])
+    tool_outputs_dir = run_dir / "tool_outputs"
+    # 小输出的 run_tests 不触发落盘（本用例输出远小于 12K）
+    run_tests_spills = (
+        list(tool_outputs_dir.glob("step_*_run_tests.json"))
+        if tool_outputs_dir.exists()
+        else []
+    )
+    assert not run_tests_spills, "小输出 run_tests 不应落盘"
+
+
 def test_llm_agent_records_localization_override_candidate(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"

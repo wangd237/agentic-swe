@@ -57,6 +57,7 @@ class RunPaths:
     pre_test_stderr_path: Path
     post_test_stdout_path: Path
     post_test_stderr_path: Path
+    tool_outputs_dir: Path
 
     def to_dict(self) -> dict[str, str]:
         # 统一把路径结构转成可序列化字典，便于日志和调试输出。
@@ -95,6 +96,7 @@ def build_run_paths(log_root: str | Path, task_id: str, run_id: str) -> RunPaths
         pre_test_stderr_path=base_dir / "pre_test_stderr.txt",
         post_test_stdout_path=base_dir / "post_test_stdout.txt",
         post_test_stderr_path=base_dir / "post_test_stderr.txt",
+        tool_outputs_dir=base_dir / "tool_outputs",
     )
 
 
