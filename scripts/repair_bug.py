@@ -245,18 +245,35 @@ def preflight_test_command(repo_path: str | Path, test_command: str, timeout_sec
     if completed.returncode == 5:
         return {"ok": True, "reason": "no tests collected, weak fallback path"}
 
-    # 提取最关键的错误行（ModuleNotFoundError / ImportError / 路径不存在）
+    # 提取最关键的错误行：ModuleNotFoundError 是根因，优先于 pytest 的包装行
+    # （'ImportError while importing test module' 是包装，'=== ERRORS ===' 是分隔线）。
     output = (completed.stderr or "") + (completed.stdout or "")
-    error_lines = [
+    root_cause_keywords = ("ModuleNotFoundError", "No module named")
+    wrapper_keywords = ("ImportError", "cannot import")
+    root_cause_lines = [
         line.strip()
         for line in output.splitlines()
-        if "ModuleNotFoundError" in line
-        or "ImportError" in line
-        or "No module named" in line
-        or "ERROR" in line
-        or "error" in line.lower()
+        if any(keyword in line for keyword in root_cause_keywords)
     ]
-    key_error = error_lines[0] if error_lines else output.strip().splitlines()[-1] if output.strip() else "unknown error"
+    if root_cause_lines:
+        key_error = root_cause_lines[0]
+    else:
+        wrapper_lines = [
+            line.strip()
+            for line in output.splitlines()
+            if any(keyword in line for keyword in wrapper_keywords)
+        ]
+        if wrapper_lines:
+            key_error = wrapper_lines[0]
+        else:
+            fallback_lines = [
+                line.strip()
+                for line in output.splitlines()
+                if line.strip()
+                and "===" not in line
+                and ("error" in line.lower() or "Error" in line)
+            ]
+            key_error = fallback_lines[0] if fallback_lines else (output.strip().splitlines()[-1] if output.strip() else "unknown error")
     return {
         "ok": False,
         "reason": (
