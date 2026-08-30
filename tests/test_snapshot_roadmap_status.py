@@ -4,13 +4,12 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tests.test_analyze_benchmark_maturity import make_eval_summary, make_task, write_json
 from scripts import snapshot_roadmap_status
+from tests.test_analyze_benchmark_maturity import make_eval_summary, make_task, write_json
 
 
 def test_build_roadmap_status_summary_collects_maturity_and_pipeline_signals(tmp_path: Path) -> None:

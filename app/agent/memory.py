@@ -8,7 +8,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 PhaseName = Literal["understand", "reproduce", "localize", "patch", "verify", "final"]
 VerificationStrength = Literal["none", "weak", "targeted", "full"]
 ReproductionEvidenceKind = Literal["none", "test", "weak_static"]

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from app.runtime.logger import write_json, write_text
 
-
 HIGHER_IS_BETTER_METRICS = {
     "success_count",
     "success_rate",

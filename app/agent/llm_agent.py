@@ -25,27 +25,26 @@ from app.agent.strategy_memory import (
     format_strategy_memory_hints,
     retrieve_strategy_memories,
 )
-from app.agent.tool_definitions import concurrency_safe_tool_names, read_only_tool_names
+from app.agent.tool_definitions import read_only_tool_names
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
 from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
-from app.agent.verifier import (
-    accepted_final_status_from_report,
-    build_verification_evidence,
-    build_verifier_report,
-)
 from app.agent.verification import (
     adjust_final_status_for_verification,
     build_targeted_pytest_command,
     initial_verification_strength,
     strength_after_test,
 )
+from app.agent.verifier import (
+    accepted_final_status_from_report,
+    build_verification_evidence,
+    build_verifier_report,
+)
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json, write_text
 from app.schemas.result_schema import Result
 from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
-
 
 READ_ONLY_TOOL_NAMES = read_only_tool_names()
 WRITE_TOOL_NAMES = {"write_file", "edit_file"}

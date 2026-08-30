@@ -7,7 +7,6 @@ from app.agent.memory import AgentState, PhaseName
 from app.agent.tool_definitions import build_tool_definitions
 from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy
 
-
 SCHEMA_STRATEGY_PHASE_FILTERED = "phase_filtered"
 SCHEMA_STRATEGY_PHASE_STATE_FILTERED = "phase_state_filtered"
 SCHEMA_STRATEGY_ADAPTIVE = "adaptive_code_intelligence"

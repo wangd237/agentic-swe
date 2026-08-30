@@ -1,7 +1,5 @@
 """列出仓库文件工具实现。"""
 
-from pathlib import Path
-
 from app.tools.common import resolve_repo_path, should_skip_path
 
 

@@ -14,7 +14,6 @@ from app.agent.memory import AgentState
 from app.schemas.result_schema import Result
 from app.schemas.trace_schema import Trace
 
-
 TOKEN_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
 
 

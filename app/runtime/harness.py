@@ -2,13 +2,12 @@
 
 import shutil
 import subprocess
-from datetime import datetime, timezone
-from random import randint
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from random import randint
 
 from app.runtime.git_workspace import initialize_git_workspace
-
 
 COPY_IGNORE_DIR_NAMES = {
     ".git",

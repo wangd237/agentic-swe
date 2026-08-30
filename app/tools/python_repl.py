@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-
 MAX_EXPRESSION_LENGTH = 500
 MAX_RESULT_CHARS = 1200
 
@@ -29,7 +28,8 @@ SAFE_GLOBALS: dict[str, Any] = {
 }
 
 try:
-    from packaging.version import Version, parse as parse_version
+    from packaging.version import Version
+    from packaging.version import parse as parse_version
 except Exception:  # pragma: no cover - depends on optional local environment
     Version = None
     parse_version = None

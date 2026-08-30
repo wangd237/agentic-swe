@@ -11,7 +11,6 @@ from typing import Any
 from app.agent.memory import LocalizationCandidate
 from app.tools.common import resolve_repo_path, should_skip_path
 
-
 PYTHON_SUFFIX = ".py"
 TEST_DIR_PARTS = {"test", "tests", "testing"}
 TOKEN_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")

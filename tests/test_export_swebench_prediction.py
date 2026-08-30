@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.export_swebench_prediction import build_prediction_row
-from scripts.export_swebench_prediction import write_prediction_jsonl
+from scripts.export_swebench_prediction import build_prediction_row, write_prediction_jsonl
 
 
 def write_json(path: Path, payload: object) -> None:

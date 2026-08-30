@@ -2,7 +2,7 @@
 
 import shutil
 
-from app.tools.common import resolve_repo_relative_path, resolve_repo_path
+from app.tools.common import resolve_repo_path, resolve_repo_relative_path
 
 
 def _remove_parent_pycache_dirs(resolved_repo_path, target_path) -> int:

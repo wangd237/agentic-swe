@@ -6,7 +6,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 VerificationLevel = Literal[
     "none",
     "local_smoke_success",

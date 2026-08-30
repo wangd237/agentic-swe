@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-
 DEFAULT_IGNORED_DIRS = {
     ".git",
     "__pycache__",

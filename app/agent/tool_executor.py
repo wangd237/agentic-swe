@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from app.agent.policy import PolicyConfig
 from app.runtime.git_workspace import commit_workspace_path, undo_last_workspace_commit
+from app.tools.edit_file import edit_file
 from app.tools.grep import grep
 from app.tools.list_files import list_files
-from app.tools.read_file import read_file
-from app.tools.edit_file import edit_file
 from app.tools.python_repl import python_repl
+from app.tools.read_file import read_file
 from app.tools.run_tests import run_tests
 from app.tools.search_code import search_code
 from app.tools.show_diff import show_diff
 from app.tools.write_file import write_file
-
 
 SCRATCH_FILE_NAMES = {"debug.py", "tmp.py", "scratch.py", "probe.py"}
 SCRATCH_FILE_REJECTION_MESSAGE = (

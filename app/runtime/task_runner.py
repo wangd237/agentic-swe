@@ -7,8 +7,8 @@ from pathlib import Path
 from time import perf_counter
 
 from app.agent.patcher import apply_rule_based_patch
-from app.agent.policy import load_policy_config
 from app.agent.planner import create_initial_plan, derive_search_queries
+from app.agent.policy import load_policy_config
 from app.runtime.git_workspace import commit_workspace_path
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json, write_text

@@ -8,7 +8,6 @@ from typing import Any
 
 from app.agent.memory import VerificationStrength
 
-
 WEAK_VERIFICATION_METADATA_VALUES = {"weak", "none"}
 FAILED_TEST_DETAIL_SEPARATOR = " - "
 PYTEST_NODE_PATTERN = re.compile(r"(?P<node>[^\s]+\.py(?:::[^\s]+)+)")

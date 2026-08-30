@@ -5,8 +5,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from app.agent.policy import DEFAULT_POLICY
-from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_definitions import build_tool_definitions
+from app.agent.tool_executor import ToolExecutor
 from app.runtime.git_workspace import initialize_git_workspace, run_git
 
 

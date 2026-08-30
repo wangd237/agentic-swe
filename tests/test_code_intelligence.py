@@ -6,9 +6,9 @@ import subprocess
 from pathlib import Path
 
 from app.agent.code_intelligence import (
+    SHADOW_COPY_PATH_LENGTH_THRESHOLD,
     CodebaseMemoryCliBackend,
     NullCodeIntelligenceBackend,
-    SHADOW_COPY_PATH_LENGTH_THRESHOLD,
     build_code_intelligence_backend,
 )
 from app.agent.memory import LocalizationCandidate

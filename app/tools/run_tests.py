@@ -11,7 +11,6 @@ from time import perf_counter
 
 from app.tools.common import resolve_repo_path
 
-
 FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)
 ASSERTION_LINE_PATTERN = re.compile(r"^\s*(?:E\s+|>\s*)?(?P<assertion>assert .+)$", re.MULTILINE)

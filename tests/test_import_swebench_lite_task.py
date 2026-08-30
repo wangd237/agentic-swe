@@ -4,8 +4,7 @@ import json
 from pathlib import Path
 
 from app.schemas.task_schema import load_task
-from scripts.import_swebench_lite_task import import_swebench_lite_task
-from scripts.import_swebench_lite_task import REPO_ROOT
+from scripts.import_swebench_lite_task import REPO_ROOT, import_swebench_lite_task
 
 
 def write_json(path: Path, payload: object) -> None:

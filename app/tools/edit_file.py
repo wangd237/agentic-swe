@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from difflib import SequenceMatcher
 
-from app.tools.common import resolve_repo_relative_path, resolve_repo_path
+from app.tools.common import resolve_repo_path, resolve_repo_relative_path
 from app.tools.write_file import _remove_parent_pycache_dirs
 
 

@@ -4,7 +4,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -421,7 +420,20 @@ def test_refresh_roadmap_tracking_records_delta_against_previous_latest(tmp_path
     }
     assert output["summary"]["refresh_outcome"] == {
         "category": "progress",
-        "summary": "检测到正向推进：formal_task_count +1, ecosystem_count +1, candidate_count +1, accepted_candidate_count +65, screened_candidate_count +1, screened_with_task_count +1, imported_candidate_count +2, frozen_40_streak +1, challenge_shortlist_candidate_count +1, challenge_next_action updated, challenge_auth_env_token_present updated, challenge_auth_env_token_looks_valid updated, challenge_auth_gh_logged_in updated, challenge_auth_token_exportable updated, challenge_auth_preferred_search_mode updated, performance_env_baseline_snapshot_id updated, performance_env_baseline_mean_of_means_sec updated, performance_duration_compare_id updated, performance_duration_compare_common_average_delta_sec updated, performance_duration_compare_env_adjusted_common_average_delta_sec updated。",
+        "summary": (
+            "检测到正向推进：formal_task_count +1, ecosystem_count +1, candidate_count +1, "
+            "accepted_candidate_count +65, screened_candidate_count +1, "
+            "screened_with_task_count +1, imported_candidate_count +2, frozen_40_streak +1, "
+            "challenge_shortlist_candidate_count +1, challenge_next_action updated, "
+            "challenge_auth_env_token_present updated, challenge_auth_env_token_looks_valid "
+            "updated, challenge_auth_gh_logged_in updated, challenge_auth_token_exportable "
+            "updated, challenge_auth_preferred_search_mode updated, "
+            "performance_env_baseline_snapshot_id updated, "
+            "performance_env_baseline_mean_of_means_sec updated, "
+            "performance_duration_compare_id updated, "
+            "performance_duration_compare_common_average_delta_sec updated, "
+            "performance_duration_compare_env_adjusted_common_average_delta_sec updated。"
+        ),
     }
     assert output["summary"]["history_overview"] == {
         "total_refresh_count": 1,
@@ -1120,7 +1132,10 @@ def test_build_action_board_prioritizes_formal_expansion_when_tracking_is_stalle
             ],
             "commands": [
                 "python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_baselines",
-                "python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json --run-label frozen40_v68_v69",
+                "python scripts/analyze_duration_regressions.py"
+                " --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json"
+                " --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json"
+                " --run-label frozen40_v68_v69",
                 "python scripts/refresh_roadmap_tracking.py --run-label refresh",
             ],
             "docs": [
@@ -1371,7 +1386,10 @@ def test_build_action_board_prioritizes_real_performance_diagnostics_for_monitor
         ],
         "commands": [
             "python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_baselines",
-            "python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json --run-label frozen40_v68_v69",
+            "python scripts/analyze_duration_regressions.py"
+            " --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json"
+            " --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json"
+            " --run-label frozen40_v68_v69",
             "python scripts/refresh_roadmap_tracking.py --run-label refresh",
         ],
         "docs": [
@@ -1533,7 +1551,10 @@ def test_build_action_board_keeps_performance_track_when_progress_came_from_perf
         ],
         "commands": [
             "python scripts/snapshot_env_baseline.py --repetitions 10 --output-dir logs/env_baselines",
-            "python scripts/analyze_duration_regressions.py --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json --run-label frozen40_v68_v69",
+            "python scripts/analyze_duration_regressions.py"
+            " --baseline-batch-summary logs/summaries/batch_run_frozen40v68r1_001.json"
+            " --improved-batch-summary logs/summaries/batch_run_frozen40v69r1_001.json"
+            " --run-label frozen40_v68_v69",
             "python scripts/refresh_roadmap_tracking.py --run-label refresh",
         ],
         "docs": [

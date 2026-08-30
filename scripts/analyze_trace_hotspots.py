@@ -59,7 +59,7 @@ def _parse_run_id_timestamp(run_id: str) -> datetime | None:
         parsed = datetime.strptime(raw, "%Y%m%dT%H%M%S%fZ")
     except ValueError:
         return None
-    return parsed.replace(tzinfo=UTC)
+    return parsed.replace(tzinfo=timezone.utc)
 
 
 def infer_step_duration_sec(

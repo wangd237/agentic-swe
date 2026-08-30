@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         {
             "name": "list_files",

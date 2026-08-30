@@ -7,7 +7,6 @@ from pathlib import Path
 
 from app.tools.common import resolve_repo_path
 
-
 GIT_IDENTITY_ARGS = [
     "-c",
     "user.name=Agent Workspace",
