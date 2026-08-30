@@ -357,8 +357,9 @@ Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subproc
 
 1. 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
 2. 开发踩坑复盘（War Stories，最能体现工程能力）：[docs/war_stories.md](docs/war_stories.md)
-3. 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
-4. 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
+3. 失败归因：[docs/failure_analysis.md](docs/failure_analysis.md)
+4. 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
+5. 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
 
 **深入阅读**：
 
