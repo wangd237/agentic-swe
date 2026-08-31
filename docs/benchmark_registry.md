@@ -2,6 +2,8 @@
 
 本文件用于把当前 agent 验证集任务压缩成可快速检索的目录。这里保留 benchmark 这个历史命名，但当前定位是服务 LLM coding agent 的任务池和 baseline 参照。
 
+> **注**：「首个通过版本」列记录的是历史事实（rule-based 时代各任务首次通过的 improved_v* 策略）。2026-08-31 patcher 瘦身后，这些策略版本已从 `optimization/policy_versions/` 移除（保留 baseline/improved/improved_v2/v70/v71/v72 作对照基线），完整历史见 git log。当前主路径为 LLM agent（`llm_*.json` 策略）。
+
 建议用途：
 
 - 快速确认当前已经覆盖了哪些缺陷类型

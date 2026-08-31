@@ -174,11 +174,13 @@ runtime 是这个项目的核心基础设施，重点在 `app/runtime`。
 
 ## 6. 策略版本化机制
 
-策略版本保存在 `optimization/policy_versions/` 下，例如：
+策略版本保存在 `optimization/policy_versions/` 下。2026-08-31 瘦身后保留代表性基线：
 
-- `improved_v32.json`
-- `improved_v50.json`
-- `improved_v64.json`
+- `baseline.json` / `improved.json` / `improved_v2.json`（空输入保护链）
+- `improved_v70.json` / `improved_v71.json` / `improved_v72.json`（anyio 并发与 rich Windows 分支，作为 rule-based 路径的对照基线）
+- `llm_*.json`（LLM agent 策略）
+
+完整演进历史（68 个 improved_v* 版本）见 git log；`app/agent/patcher.py` 同步瘦身（4736 → 231 行），保留代表性策略作对照基线。
 
 ### policy JSON 当前承载的配置
 
