@@ -32,7 +32,7 @@
 
 | 指标 | 结果 |
 | --- | --- |
-| **SWE-bench Lite 官方 harness** | **resolved `3 / 8` submitted**（10 任务中 2 条未产出 patch；官方 Docker harness 判定，证据见 [evidence/swebench_lite_official/](evidence/swebench_lite_official/)）|
+| **SWE-bench Lite 官方 harness** | **resolved `4 / 8` submitted**（10 任务中 2 条未产出 patch；官方 Docker harness 判定，含 2026-08-31 pydicom-1139 翻盘重跑，证据见 [evidence/swebench_lite_official/](evidence/swebench_lite_official/)）|
 | 任务规模 | `132` 条 semi-real 任务（真实 GitHub issue 提炼的最小复现场景）+ `10` 个 SWE-bench Lite 任务 |
 | LLM Agent 评测管道 | 4 级冻结集（15/18/20/40） + `evals/` 聚合/对比/错误分类 + `stability_recheck` flaky 验证 + `analyze_benchmark_maturity` 回归门禁 |
 | 回归测试 | `374` passes |

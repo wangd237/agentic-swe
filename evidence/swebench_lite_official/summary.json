@@ -2,8 +2,8 @@
     "total_instances": 10,
     "submitted_instances": 8,
     "completed_instances": 7,
-    "resolved_instances": 3,
-    "unresolved_instances": 4,
+    "resolved_instances": 4,
+    "unresolved_instances": 3,
     "empty_patch_instances": 0,
     "error_instances": 1,
     "completed_ids": [
@@ -33,11 +33,11 @@
     "resolved_ids": [
         "marshmallow-code__marshmallow-1343",
         "marshmallow-code__marshmallow-1359",
-        "pydicom__pydicom-1694"
+        "pydicom__pydicom-1694",
+        "pydicom__pydicom-1139"
     ],
     "unresolved_ids": [
         "pvlib__pvlib-python-1072",
-        "pydicom__pydicom-1139",
         "pylint-dev__astroid-1196",
         "pylint-dev__astroid-1268"
     ],

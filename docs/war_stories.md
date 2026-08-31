@@ -462,6 +462,51 @@ SWE-bench 官方 harness（swebench 2.1.8）在 Windows 上完全跑不起来：
 
 ---
 
+## 案例 10 <a name="案例-10"></a>
+
+## pydicom-1139 翻盘：一个 unresolved 背后的两个独立根因
+
+**时间**：2026-08-31 ｜ **从 3/8 到 4/8 的最后一公里**
+
+### 现象
+
+官方 harness 判 pydicom-1139 unresolved：F2P 3 个测试里 `test_next` 挂，P2P 里 `TestBadValueRead` 两个测试挂。表面看是“修复引入回归”，但本地容器里同批测试全过——本地与官方判定矛盾。
+
+### 排查（先归因，不先改）
+
+读官方 `test_output.txt` 逐条对照，发现两个失败属于**两个独立根因**：
+
+1. **`test_next` 是 patch 真实缺陷**：我们的 `__iter__` 返回 `iter(str(self))` 代理迭代器，`next(pn4)` 隐式调 `__iter__` 成功返回字符，不抛测试期望的 `AttributeError`。gold patch 用的是 self 迭代器协议（`__iter__` 返回 self + `__next__` 依赖 `__iter__` 初始化的 `_i`），语义不同
+2. **`TestBadValueRead` 是环境问题**：测试类用 nose-style `setup()`，pytest 8 已移除 nose 支持。`setup_env_script` 里 `pip install pytest` 未锁版本，镜像重建时装了新版——与 patch 零因果
+
+决定性验证：容器内不打 patch 跑 nose-style 测试 → 同样 `AttributeError`，证明 BadValueRead 失败与 patch 无关。
+
+### 修复与验证
+
+patch 改为 gold 风格 self 迭代器协议；镜像内 pytest 降级 7.4.4 + repo 还原 base\_commit；`docker commit` 修正 env 镜像后重跑官方 harness。
+
+中间还踩了一个坑：commit 的容器里 `/testbed` 已有 repo，harness 的 `setup_repo.sh` 要重新 `git clone` 到该目录，非空导致 exit 128。修复：清空 `/testbed` 再 commit（conda 环境不受影响）。
+
+验证：官方重跑 **F2P 3/3 + P2P 38/38 零回归，resolved = True**。总成绩 3/8 → **4/8**。
+
+### 一句话总结
+
+> “官方判 unresolved，本地却全过。逐条归因发现是两个独立根因：patch 真缺陷（迭代器协议语义与 gold 不同）+ 环境漂移（pytest 8 移除 nose 支持）。修 patch + 锁环境后重跑，F2P 3/3 + P2P 38/38。**本地通过 ≠ 官方 resolved，每个失败都要拆到根因，不能笼统归为“修复不完整”**。”
+
+### 常见疑问
+
+- **“为什么不直接把 nose-style 测试改掉？”** —— 那是官方 harness 的 P2P 集合，改测试等于改考卷。正确做法是让环境回到官方预期状态（pytest 7.x 支持 nose）
+- **“镜像重建为什么能装错 pytest？”** —— `setup_env_script` 里 `pip install pytest` 未锁版本，镜像重建时拉最新版。教训：**可复现环境必须锁版本**
+- **“docker commit 覆盖 env 镜像会不会影响其他任务？”** —— 该 env 镜像 hash（e10d4704…）只对应 pydicom-1139 的环境规格，其他任务用各自的 env 镜像，互不影响
+
+### 证据
+
+- `evidence/swebench_lite_official/pydicom__pydicom-1139/`（翻盘后的官方 report/patch/test\_output）
+- `evidence/swebench_lite_official/official_report_pydicom1139_rerun.json`（重跑汇总）
+- `logs/new_patch_pydicom1139.diff`（修正后的 patch）
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -475,5 +520,6 @@ SWE-bench 官方 harness（swebench 2.1.8）在 Windows 上完全跑不起来：
 | OpenAI 协议双违规 | 宽松网关会掩盖协议违规，换严格 API 全暴露 |
 | 三个潜伏的协议违规 | 低频路径的 bug 只能靠真实负载暴露 |
 | 从未校准的阈值 | 拍脑袋的阈值不会自己变对，观测才会告诉你真相 |
+| pydicom-1139 翻盘 | 本地通过 ≠ 官方 resolved；每个失败拆到根因，环境漂移与代码缺陷要分开归因 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**

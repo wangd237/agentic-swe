@@ -202,20 +202,32 @@ index ff53d6fd8c..aec199d2a6 100644
          return self._dict.keys()
 + git diff b9fb05c177b685bf683f7f57b2d57374eb7d882d
 diff --git a/pydicom/valuerep.py b/pydicom/valuerep.py
-index e992f78722..cd5409260c 100644
+index e992f78722..fa4353fffc 100644
 --- a/pydicom/valuerep.py
 +++ b/pydicom/valuerep.py
-@@ -741,6 +741,14 @@ class PersonName:
+@@ -741,6 +741,26 @@ class PersonName:
          except IndexError:
              return ''
  
 +    def __contains__(self, x):
-+        """Return True if `x` is in the string representation of the name."""
++        """Return True if x is in the string representation of the name."""
 +        return x in str(self)
 +
++    def __next__(self):
++        # Get next character or stop iteration
++        if self._i < self._rep_len:
++            c = self._str_rep[self._i]
++            self._i += 1
++            return c
++        else:
++            raise StopIteration
++
 +    def __iter__(self):
-+        """Return an iterator over the string representation of the name."""
-+        return iter(str(self))
++        # Get string rep. and length, initialize index counter
++        self._str_rep = self.__str__()
++        self._rep_len = len(self._str_rep)
++        self._i = 0
++        return self
 +
      def __eq__(self, other):
          return str(self) == other
@@ -367,78 +379,131 @@ Applied patch pydicom/tests/test_valuerep.py cleanly.
 warning: 1 line adds whitespace errors.
 + pytest -rA pydicom/tests/test_valuerep.py
 ============================= test session starts ==============================
-platform linux -- Python 3.8.20, pytest-8.3.5, pluggy-1.5.0
+platform linux -- Python 3.8.20, pytest-7.4.4, pluggy-1.5.0
 rootdir: /testbed
 collected 41 items
 
-pydicom/tests/test_valuerep.py ..................FF...............F..... [100%]
+pydicom/tests/test_valuerep.py ......................................... [100%]
 
-=================================== FAILURES ===================================
-______________ TestBadValueRead.test_read_bad_value_in_VR_default ______________
+=============================== warnings summary ===============================
+pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
 
-self = <pydicom.tests.test_valuerep.TestBadValueRead object at 0x7400f3e9c220>
+pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
 
-    def test_read_bad_value_in_VR_default(self):
-        # found a conversion
->       assert "1A" == convert_value("SH", self.tag)
-E       AttributeError: 'TestBadValueRead' object has no attribute 'tag'
+pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
 
-pydicom/tests/test_valuerep.py:228: AttributeError
-________ TestBadValueRead.test_read_bad_value_in_VR_enforce_valid_value ________
+pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
 
-self = <pydicom.tests.test_valuerep.TestBadValueRead object at 0x7400f3e9c400>
+pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
 
-    def test_read_bad_value_in_VR_enforce_valid_value(self):
-        pydicom.config.enforce_valid_values = True
-        # found a conversion
->       assert "1A" == convert_value("SH", self.tag)
-E       AttributeError: 'TestBadValueRead' object has no attribute 'tag'
+pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
 
-pydicom/tests/test_valuerep.py:239: AttributeError
-___________________________ TestPersonName.test_next ___________________________
+pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
 
-self = <pydicom.tests.test_valuerep.TestPersonName object at 0x7400f3e9c100>
+pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
 
-    def test_next(self):
-        """Test that the next function works on it's own"""
-        # Test getting the first character
-        pn1 = PersonName("John^Doe^^Dr", encodings=default_encoding)
-        pn1_itr = iter(pn1)
-        assert next(pn1_itr) == "J"
-    
-        # Test getting multiple characters
-        pn2 = PersonName(
-            "Yamada^Tarou=山田^太郎=やまだ^たろう", [default_encoding, "iso2022_jp"]
-        )
-        pn2_itr = iter(pn2)
-        assert next(pn2_itr) == "Y"
-        assert next(pn2_itr) == "a"
-    
-        # Test getting all characters
-        pn3 = PersonName("SomeName")
-        pn3_itr = iter(pn3)
-        assert next(pn3_itr) == "S"
-        assert next(pn3_itr) == "o"
-        assert next(pn3_itr) == "m"
-        assert next(pn3_itr) == "e"
-        assert next(pn3_itr) == "N"
-        assert next(pn3_itr) == "a"
-        assert next(pn3_itr) == "m"
-        assert next(pn3_itr) == "e"
-    
-        # Attempting to get next characeter should stop the iteration
-        # I.e. next can only start once
-        with pytest.raises(StopIteration):
-            next(pn3_itr)
-    
-        # Test that next() doesn't work without instantiating an iterator
-        pn4 = PersonName("SomeName")
-        with pytest.raises(AttributeError):
->           next(pn4)
-E           TypeError: 'PersonName' object is not an iterator
+pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
 
-pydicom/tests/test_valuerep.py:465: TypeError
+pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_date
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_date is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_date
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_date is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_date_time
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_date_time is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_date_time
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_date_time is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_time
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:895: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_time is using nose-specific method: `setup(self)`
+  To remove this warning, rename it to `setup_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    fixture_result = next(generator)
+
+pydicom/tests/test_valuerep.py::TestDateTime::test_time
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/fixtures.py:911: PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.
+  pydicom/tests/test_valuerep.py::TestDateTime::test_time is using nose-specific method: `teardown(self)`
+  To remove this warning, rename it to `teardown_method(self)`
+  See docs: https://docs.pytest.org/en/stable/deprecations.html#support-for-tests-written-for-nose
+    next(it)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ==================================== PASSES ====================================
+______________ TestBadValueRead.test_read_bad_value_in_VR_default ______________
+------------------------------ Captured log call -------------------------------
+WARNING  pydicom:values.py:333 Expected length to be even multiple of number size
+WARNING  pydicom:values.py:333 Expected length to be even multiple of number size
 =========================== short test summary info ============================
 PASSED pydicom/tests/test_valuerep.py::TestTM::test_pickling
 PASSED pydicom/tests/test_valuerep.py::TestDT::test_pickling
@@ -458,6 +523,8 @@ PASSED pydicom/tests/test_valuerep.py::TestIS::test_longint
 PASSED pydicom/tests/test_valuerep.py::TestIS::test_overflow
 PASSED pydicom/tests/test_valuerep.py::TestIS::test_str
 PASSED pydicom/tests/test_valuerep.py::TestIS::test_repr
+PASSED pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default
+PASSED pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value
 PASSED pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set
 PASSED pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings
 PASSED pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings
@@ -473,14 +540,12 @@ PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_jp_from_unic
 PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_not_equal
 PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_encoding_carried
 PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_hash
+PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_next
 PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_iterator
 PASSED pydicom/tests/test_valuerep.py::TestPersonName::test_contains
 PASSED pydicom/tests/test_valuerep.py::TestDateTime::test_date
 PASSED pydicom/tests/test_valuerep.py::TestDateTime::test_date_time
 PASSED pydicom/tests/test_valuerep.py::TestDateTime::test_time
-FAILED pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default
-FAILED pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value
-FAILED pydicom/tests/test_valuerep.py::TestPersonName::test_next - TypeError:...
-========================= 3 failed, 38 passed in 0.26s =========================
+======================= 41 passed, 16 warnings in 0.24s ========================
 + git checkout b9fb05c177b685bf683f7f57b2d57374eb7d882d pydicom/tests/test_valuerep.py
 Updated 1 path from 5569920b83

@@ -1,17 +1,17 @@
 # SWE-bench Lite 官方 Harness 评测证据
 
-本目录存放 2026-08-30 官方 SWE-bench Docker harness 评测的完整产物。
+本目录存放 2026-08-30 官方 SWE-bench Docker harness 评测的完整产物，及 2026-08-31 pydicom-1139 翻盘重跑。
 
 ## 结果
 
-**resolved 3 / 8 submitted**（10 条任务中 2 条 agent 未产出 patch，未提交）
+**resolved 4 / 8 submitted**（10 条任务中 2 条 agent 未产出 patch，未提交）
 
 | Instance | 结果 | 备注 |
 |---|---|---|
 | marshmallow-code__marshmallow-1343 | ✅ RESOLVED | |
 | marshmallow-code__marshmallow-1359 | ✅ RESOLVED | |
 | pydicom__pydicom-1694 | ✅ RESOLVED | |
-| pydicom__pydicom-1139 | ❌ | 修复引入 pass_to_pass 回归（`test_next` 挂） |
+| pydicom__pydicom-1139 | ✅ RESOLVED（2026-08-31 翻盘） | 首跑引入 P2P 回归；归因后修复，重跑 F2P 3/3 + P2P 38/38 零回归 |
 | pvlib__pvlib-python-1072 | ❌ | 修复不完整 |
 | pylint-dev__astroid-1196 | ❌ | 修复不完整 |
 | pylint-dev__astroid-1268 | ❌ | 修复不完整 |
@@ -49,7 +49,8 @@ python -m swebench.harness.run_evaluation \
 
 ## 目录结构
 
-- `summary.json`：官方总报告（resolved/unresolved/error 统计）
+- `summary.json`：官方总报告（resolved/unresolved/error 统计，已含 2026-08-31 翻盘重跑）
+- `official_report_pydicom1139_rerun.json`：2026-08-31 pydicom-1139 翻盘重跑的官方汇总报告
 - `<instance_id>/report.json`：单实例官方判定（patch 是否应用成功、是否 resolved）
 - `<instance_id>/patch.diff`：提交给官方 harness 的 patch
 - `<instance_id>/test_output.txt`：容器内完整测试输出
