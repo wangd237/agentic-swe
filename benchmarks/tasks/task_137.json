@@ -1,0 +1,36 @@
+{
+  "task_id": "task_137",
+  "repo_name": "packaging_marker_extra_repo",
+  "repo_path": "benchmarks/repos/packaging_marker_extra_repo",
+  "issue_title": "Invalid version error with evaluating markers",
+  "issue_text": "Evaluating an environment marker whose `extra` value looks like a version number raises InvalidVersion.\n\n```python\nfrom packaging.markers import Marker\n\nm = Marker(\"extra == 'v2'\")\nm.evaluate()  # raises packaging.version.InvalidVersion: Invalid version: ''\n```\n\nFull traceback ends in:\n```\npackaging/version.py in __init__\n    raise InvalidVersion(f\"Invalid version: {version!r}\")\n```\n\nRoot cause: `_eval_op` unconditionally tries to interpret the operator+rhs as a `Specifier` and compare lhs as a version. For the `extra` key the environment value is an empty string (extras not active), which is not a valid version. Per the environment markers spec, only version-valued keys (python_version, python_full_version, implementation_version, etc.) should use version comparison; `extra` must be compared as a plain string. This breaks real-world installs of packages whose extras are named like versions (e.g. pact-python 3.0.1 with `Provides-Extra: v2`).",
+  "test_command": "python -c \"import sys; sys.path.insert(0, 'src'); from packaging.markers import Marker; m = Marker(\\\"extra == 'v2'\\\"); r = m.evaluate(); assert r is False, f'expected False, got {r}'; assert Marker(\\\"extra == 'v2'\\\").evaluate({'extra': 'v2'}) is True; print('OK')\"",
+  "success_criteria": "Marker.evaluate() with extra values that look like versions must not raise InvalidVersion; extra comparisons use string equality (evaluate() returns False with no extra active, True when the matching extra is provided).",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "packaging",
+    "markers",
+    "pep685"
+  ],
+  "target_files_hint": [
+    "src/packaging/markers.py"
+  ],
+  "expected_failure_test": "test_extra_marker_with_version_like_value",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 938,
+    "issue_url": "https://github.com/pypa/packaging/issues/938",
+    "candidate_id": "pypa_packaging_issue_938",
+    "fix_commit": "b002be54d39b675840ebbe725345a28195492bd4",
+    "fix_pr": 939,
+    "repo_version": "25.0",
+    "draft_status": "completed",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "task_id": "task_135",
+  "repo_name": "tomlkit_nested_dump_repo",
+  "repo_path": "benchmarks/repos/tomlkit_nested_dump_repo",
+  "issue_title": "Empty table dumped when number of subtables > 1",
+  "issue_text": "When building a document programmatically, adding a single sub-table works fine, but adding a second sub-table under the same parent causes an empty parent table header to be dumped.\n\n```python\nimport tomlkit\n\ndoc = tomlkit.document()\n\ndef add_table(parent, name):\n    parent.add(name, tomlkit.table())\n    return parent[name]\n\nroot = add_table(doc, 'root')\nfirst = add_table(root, 'first')\nprint(tomlkit.dumps(doc))  # -> [root.first]   (correct)\n\nsecond = add_table(root, 'second')\nprint(tomlkit.dumps(doc))\n```\n\nOutput after adding the second table:\n```\n[root]\n[root.first]\n\n[root.second]\n```\n\nThe empty `[root]` header should not be emitted; expected output is just `[root.first]` and `[root.second]` (a super table with only sub-tables and no direct key-value items should not render its own header).",
+  "test_command": "python -c \"import tomlkit; doc = tomlkit.document(); doc.add('root', tomlkit.table()); root = doc['root']; root.add('first', tomlkit.table()); root.add('second', tomlkit.table()); out = tomlkit.dumps(doc); assert '[root]\\n' not in out, f'unexpected empty parent header: {out!r}'; assert '[root.first]' in out and '[root.second]' in out; print('OK')\"",
+  "success_criteria": "A super table containing only sub-tables (no direct key-value pairs) must not dump its own header; output contains only [root.first] and [root.second].",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "tomlkit",
+    "serialization",
+    "super-table"
+  ],
+  "target_files_hint": [
+    "tomlkit/items.py"
+  ],
+  "expected_failure_test": "test_not_showing_parent_header_for_super_table",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 377,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/377",
+    "candidate_id": "python_poetry_tomlkit_issue_377",
+    "fix_commit": "28fe6ec7386e3923a3e87efae8ab580138f6fcbc",
+    "fix_pr": 378,
+    "repo_version": "0.13.0",
+    "draft_status": "completed",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

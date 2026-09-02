@@ -1,0 +1,36 @@
+{
+  "task_id": "task_136",
+  "repo_name": "tomlkit_nested_dump_repo",
+  "repo_path": "benchmarks/repos/tomlkit_nested_dump_repo",
+  "issue_title": "Missing newline at end of file with multiple array of tables can corrupt during dumping",
+  "issue_text": "Parsing a TOML document whose last array-of-tables entry has no trailing newline, with other tables defined in between, produces corrupted output when dumped: the output cannot be re-parsed.\n\n```python\nimport tomlkit\n\ncontent = '''[[products]]\nname = \"Hammer\"\n\n[foo]\n\n[bar]\n\n[[products]]\nname = \"Nail\"'''  # note: no trailing newline\n\ndoc = tomlkit.parse(content)\nprint(doc.as_string())\n```\n\nActual output:\n```\n[[products]]\nname = \"Hammer\"\n\n[[products]]\nname = \"Nail\"[foo]\n\n[bar]\n\n```\n\nThe second `[[products]]` entry is glued to `[foo]` without a newline, so re-parsing the dumped output raises `tomlkit.exceptions.UnexpectedCharError: Unexpected character: '[' at line 5 col 13`. The dump must be valid TOML that round-trips to the same data.",
+  "test_command": "python -c \"import tomlkit; content = '[[products]]\\nname = \\\"Hammer\\\"\\n\\n[foo]\\n\\n[bar]\\n\\n[[products]]\\nname = \\\"Nail\\\"'; doc = tomlkit.parse(content); out = doc.as_string(); re = tomlkit.parse(out); assert re == doc, 'round-trip data changed'; print('OK')\"",
+  "success_criteria": "Dumped output of a document with multiple array-of-tables and no trailing newline must be valid TOML and round-trip to identical data.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "tomlkit",
+    "serialization",
+    "round-trip"
+  ],
+  "target_files_hint": [
+    "tomlkit/container.py"
+  ],
+  "expected_failure_test": "test_parse_aot_without_ending_newline",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 381,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/381",
+    "candidate_id": "python_poetry_tomlkit_issue_381",
+    "fix_commit": "fcb82ae1d9bd531e6c7c4a1f7fd6ddea5e41cf7b",
+    "fix_pr": 422,
+    "repo_version": "0.13.0",
+    "draft_status": "completed",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

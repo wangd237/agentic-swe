@@ -1,0 +1,35 @@
+{
+  "task_id": "task_134",
+  "repo_name": "tomlkit_nested_dump_repo",
+  "repo_path": "benchmarks/repos/tomlkit_nested_dump_repo",
+  "issue_title": "Dumping a subelement of a parsed toml fails starting on 4rd level of nesting",
+  "issue_text": "When parsing a TOML document with nested dotted keys and dumping a sub-table, the output loses one nesting level.\n\n```python\nimport tomlkit\nfrom tomlkit import dumps\n\na = tomlkit.parse(\"a.b.c.d='e'\")[\"a\"]\nassert a == {\"b\": {\"c\": {\"d\": \"e\"}}}\nprint(dumps(a))\n```\n\nExpected: `b.c.d='e'`\nActual: `c.d='e'` (the `b` level is lost; re-parsing the output yields `{\"c\": {\"d\": \"e\"}}` which no longer equals `a`)\n\nThe bug appears when dumping a sub-element (Table) that was parsed from a document with 4 levels of nesting. dumps() should preserve the full structure of the sub-table.",
+  "test_command": "python -c \"import tomlkit; from tomlkit import dumps; a = tomlkit.parse(\\\"a.b.c.d='e'\\\")[\\\"a\\\"]; assert a == {'b': {'c': {'d': 'e'}}}; out = dumps(a); assert out == \\\"b.c.d='e'\\\", f'got {out!r}'; re = tomlkit.parse(out); assert re == {'b': {'c': {'d': 'e'}}}, f'round-trip broken: {dict(re)}'; print('OK')\"",
+  "success_criteria": "dumps() of a parsed sub-table preserves all nesting levels; output round-trips to the same data structure.",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue",
+    "tomlkit",
+    "serialization"
+  ],
+  "target_files_hint": [
+    "tomlkit/api.py"
+  ],
+  "expected_failure_test": "test_dump_nested_dotted_table",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 411,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/411",
+    "candidate_id": "python_poetry_tomlkit_issue_411",
+    "fix_commit": "bd31dbd8e2762c88af534ac72cb5c48644d3b4af",
+    "fix_pr": 419,
+    "repo_version": "0.13.0",
+    "draft_status": "completed",
+    "imported_from": "scripts/import_github_issue.py"
+  }
+}

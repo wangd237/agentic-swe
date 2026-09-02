@@ -30,6 +30,7 @@ benchmarks/repos/swebench_lite/
 # 系统文件
 # 面试准备（不上传 GitHub）
 docs/agent_evolution.md
+docs/core_modules_deep_dive.md
 
 # 系统文件
 .DS_Store
@@ -43,3 +44,9 @@ Thumbs.db
 logs/run_evaluation/
 logs/build_images/
 logs/swebench_eval*.log
+
+# 本地导入的真实 issue repo 工作副本（含嵌套 .git，不入库；任务定义引用 benchmarks/repos/ 下已跟踪副本）
+benchmarks/repos/real_issue_repos/
+benchmarks/repos/tomlkit_nested_dump_repo/
+benchmarks/repos/packaging_marker_extra_repo/
+benchmarks/tasks/real_issue_repos/
