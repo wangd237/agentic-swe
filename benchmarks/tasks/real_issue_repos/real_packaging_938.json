@@ -1,0 +1,25 @@
+{
+  "task_id": "real_packaging_938",
+  "repo_name": "packaging",
+  "repo_path": "benchmarks/repos/real_issue_repos/packaging_938_repo",
+  "issue_title": "Invalid version error with evaluating markers",
+  "issue_text": "Invalid version error with evaluating markers\n\nThere is an issue with version-like strings when used in `Provides-Extra` and subsequently in `Requires-Dist` markers. Users could not install pact-python 3.0.1 with pip (but uv worked).\n\nMinimal replication:\n\n```python\nfrom packaging.metadata import parse_email, Metadata\n\nraw_metadata, data = parse_email(\"\"\"\\\nMetadata-Version: 2.4\nName: pact-python\nVersion: 3.0.1\nProvides-Extra: v2\nRequires-Dist: click~=8.0; extra == 'v2'\n\"\"\")\nmetadata = Metadata.from_raw(raw_metadata)\nreq = metadata.requires_dist[0]\nreq.marker.evaluate()\n```\n\nThis raises `packaging.version.InvalidVersion: Invalid version: ''`.\n\nRoot cause: when evaluating a marker like `extra == 'v2'`, the right-hand side `'v2'` looks like a version, so the evaluator builds a `Specifier('==v2')` and tries to coerce the left-hand side (the current environment's `extra` value, e.g. `''`) into a `Version`, which raises. Per the environment markers spec, `extra` must be compared as a plain string, not parsed as a version.\n\nRepo version: packaging 25.0. Reproduction test file: tests/test_issue_938.py",
+  "test_command": "python -m pytest -q tests/test_issue_938.py",
+  "success_criteria": "All tests in tests/test_issue_938.py pass; extra markers with version-like names compare as strings and never raise InvalidVersion, while version-ish marker keys keep version comparison semantics.",
+  "difficulty": "medium",
+  "tags": ["bugfix", "python", "real-issue", "packaging", "markers", "pep685"],
+  "target_files_hint": [],
+  "expected_failure_test": "test_issue_938_extra_marker_with_version_like_name",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "pypa/packaging",
+    "repo_url": "https://github.com/pypa/packaging",
+    "issue_number": 938,
+    "issue_url": "https://github.com/pypa/packaging/issues/938",
+    "base_version": "25.0",
+    "fix_pr": 939,
+    "fix_commit": "b002be54d39b675840ebbe725345a28195492bd4",
+    "imported_from": "manual import 2026-09-02"
+  }
+}

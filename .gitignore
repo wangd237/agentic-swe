@@ -49,4 +49,5 @@ logs/swebench_eval*.log
 benchmarks/repos/real_issue_repos/
 benchmarks/repos/tomlkit_nested_dump_repo/
 benchmarks/repos/packaging_marker_extra_repo/
-benchmarks/tasks/real_issue_repos/
+!benchmarks/tasks/real_issue_repos/
+logs/run_*.log

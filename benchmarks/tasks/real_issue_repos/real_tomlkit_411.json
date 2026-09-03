@@ -1,0 +1,25 @@
+{
+  "task_id": "real_tomlkit_411",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repos/tomlkit_0_13_0_repo",
+  "issue_title": "Dumping a subelement of a parsed toml fails starting on 4rd level of nesting",
+  "issue_text": "Dumping a subelement of a parsed toml fails starting on 4rd level of nesting\n\nThe shortest way to expose the issue:\n\n```python\nfrom tomlkit import dumps, parse\n\n\ndef test_reproducer():\n    a = parse(\"a.b.c.d='e'\")[\"a\"]\n    assert a == {\"b\": {\"c\": {\"d\": \"e\"}}}  # ok\n    assert dumps(a) == \"b.c.d='e'\"\n```\n\nActual result: `dumps(a)` returns `\"c.d='e'\"` — one nesting level (`b`) is silently dropped. The dumped output re-parses to a different data structure (`{'c': {'d': 'e'}}` instead of `{'b': {'c': {'d': 'e'}}}`), so the round-trip is lossy.\n\nRepo version: tomlkit 0.13.0. Reproduction test file: tests/test_real_issues_411_377_381.py::test_issue_411_dump_nested_dotted_table",
+  "test_command": "python -m pytest -q tests/test_real_issues_411_377_381.py::test_issue_411_dump_nested_dotted_table tests/test_real_issues_411_377_381.py::test_issue_411_dump_nested_dotted_table_two_levels tests/test_real_issues_411_377_381.py::test_issue_411_dumps_accepts_table_instance",
+  "success_criteria": "All selected tests pass; dumps() of a nested dotted-key sub-table preserves every nesting level and round-trips losslessly.",
+  "difficulty": "medium",
+  "tags": ["bugfix", "python", "real-issue", "tomlkit", "serialization"],
+  "target_files_hint": [],
+  "expected_failure_test": "test_issue_411_dump_nested_dotted_table",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 411,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/411",
+    "base_version": "0.13.0",
+    "fix_pr": 419,
+    "fix_commit": "bd31dbd8e2762c88af534ac72cb5c48644d3b4af",
+    "imported_from": "manual import 2026-09-02"
+  }
+}

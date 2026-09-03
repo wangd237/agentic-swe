@@ -1,0 +1,25 @@
+{
+  "task_id": "real_tomlkit_377",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_repos/tomlkit_0_13_0_repo",
+  "issue_title": "Empty table dumped when number of subtables > 1",
+  "issue_text": "Empty table dumped when number of subtables > 1\n\nWith the following code and `tomlkit 0.13`:\n\n```python\nimport tomlkit\n\ndoc = tomlkit.document()\n\ndef add_table(parent, name):\n    parent.add(name, tomlkit.table())\n    return parent[name]\n\n\nroot = add_table(doc, 'root')\nfirst = add_table(root, \"first\")\nprint(tomlkit.dumps(doc))  # -> [root.first]   (correct)\n\nsecond = add_table(root, \"second\")\nprint(tomlkit.dumps(doc))  # -> [root]\\n[root.first]\\n\\n[root.second]\\n  (wrong: empty [root] header appears)\n```\n\nWhen a super table has more than one sub-table, dumping produces an empty `[root]` header that should not be shown. With a single sub-table the output is correct.\n\nRepo version: tomlkit 0.13.0. Reproduction test file: tests/test_real_issues_411_377_381.py::test_issue_377_no_empty_parent_header_for_super_table",
+  "test_command": "python -m pytest -q tests/test_real_issues_411_377_381.py::test_issue_377_no_empty_parent_header_for_super_table",
+  "success_criteria": "The selected test passes; dumping a super table with multiple sub-tables does not emit an empty parent header.",
+  "difficulty": "medium",
+  "tags": ["bugfix", "python", "real-issue", "tomlkit", "serialization"],
+  "target_files_hint": [],
+  "expected_failure_test": "test_issue_377_no_empty_parent_header_for_super_table",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "repo_full_name": "python-poetry/tomlkit",
+    "repo_url": "https://github.com/python-poetry/tomlkit",
+    "issue_number": 377,
+    "issue_url": "https://github.com/python-poetry/tomlkit/issues/377",
+    "base_version": "0.13.0",
+    "fix_pr": 378,
+    "fix_commit": "28fe6ec7386e3923a3e87efae8ab580138f6fcbc",
+    "imported_from": "manual import 2026-09-02"
+  }
+}
