@@ -43,6 +43,28 @@ python scripts/run_issue_agent.py \
 
 13/13 `accepted_success`，全部 `evidence_quality: strong`（pre-test 失败 → patch → full test 通过）。
 
+## 真实 GitHub Issue 运行（2026-09-02）
+
+- 模型：`kimi-k3`（#411）/ `glm-5.2`（#377、#938）（OpenAI-compatible，阿里云 MaaS）
+- policy：`optimization/policy_versions/llm_real_issue_32steps.json`（32 步）
+- 任务来源：真实 GitHub issue + 官方 fix commit 已知，agent 仅拿到 issue 文本与失败测试
+
+| Task | 来源 Issue | 状态 | LLM 调用 | Token | 修改文件 |
+|---|---|---|---:|---:|---|
+| real_tomlkit_411 | python-poetry/tomlkit#411 | success / accepted_success | 25 | 388,925 | `tomlkit/api.py` |
+| real_tomlkit_377 | python-poetry/tomlkit#377 | success / accepted_success | 32 | 496,715 | `tomlkit/items.py` |
+| real_tomlkit_381_failed | python-poetry/tomlkit#381 | incomplete（max_iterations ×2，32/48 步） | 80 | 760,720 | —（定位失败，非预算不足） |
+| real_packaging_938 | pypa/packaging#938 | success / accepted_success | 9 | 73,381 | `src/packaging/markers.py` |
+
+3/4 success。修复语义均与官方 fix commit 一致（diff 形状不同，评分看行为不看形状）：
+
+- **#411**：`dumps()` 的 isinstance 判断从 `Container` 扩为 `(Container, _Item)`（官方为 `(Table, InlineTable, Container)`，`_Item` 基类覆盖更广）
+- **#377**：`is_super_table` 从“单 child 判断”改为“所有 child 均为 Table/AoT”（与官方重构方向一致）
+- **#938**：`_eval_op` 对 `extra` marker 按纯字符串比较，跳过版本解析
+- **#381**（失败）：agent 两次均在 parser 侧探索，官方修复在渲染侧 `container.py`（4 处渲染点补换行）。后段重复 grep 同一符号——定位策略缺陷，加步数无用。详见 `real_tomlkit_381_failed/`
+
+回归验证：tomlkit 858 passed（其余两个独立任务的测试失败符合预期）；packaging 全量 26,952 passed, 1 skipped，零回归。
+
 ## 说明
 
 - 这些任务是 semi-real benchmark（从真实 GitHub issue 提炼的最小复现场景），

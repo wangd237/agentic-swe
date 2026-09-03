@@ -61,6 +61,19 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 | `task_131` | `samuelcolvin/watchfiles#215` | 原子保存事件序列 | `success` | 7 | `watchfiles/main.py` | [result](../../evidence/task_131/result.json) |
 | `task_133` | `Textualize/rich#2457` | Windows no_color 优先级 | `success` | 6 | `rich_windows_no_color_repo/console.py` | [result](../../evidence/task_133/result.json) |
 
+### 2.1 真实 GitHub Issue（2026-09-02）
+
+与 semi-real 任务不同：完整真实仓库（tomlkit 0.13.0 / packaging）、真实 issue 文本、官方 fix commit 已知但 agent 不可见。policy 为 `llm_real_issue_32steps`（#381 加测 48 步版）。
+
+| Task | Repo / Issue | 缺陷类型 | Status | LLM calls | Modified file | Run |
+| --- | --- | --- | --- | ---: | --- | --- |
+| `real_tomlkit_411` | `python-poetry/tomlkit#411` | dumps 嵌套 dotted table | `success` | 25 | `tomlkit/api.py` | [result](../../evidence/real_tomlkit_411/result.json) |
+| `real_tomlkit_377` | `python-poetry/tomlkit#377` | super table 空父头 | `success` | 32 | `tomlkit/items.py` | [result](../../evidence/real_tomlkit_377/result.json) |
+| `real_tomlkit_381` | `python-poetry/tomlkit#381` | AoT 缺尾换行 roundtrip | `incomplete` ×2 | 32+48 | —（定位失败） | [result](../../evidence/real_tomlkit_381_failed/result.json) |
+| `real_packaging_938` | `pypa/packaging#938` | extra marker 版本误解析 | `success` | 9 | `src/packaging/markers.py` | [result](../../evidence/real_packaging_938/result.json) |
+
+3/4 success，修复语义均与官方 fix commit 一致。#381 两次均在 parser 侧探索而官方修复在渲染侧，属定位策略缺陷而非预算不足（48 步版后段重复 grep 同一符号）。回归验证：tomlkit 858 passed、packaging 全量 26,952 passed 零回归。
+
 ## 3. 汇总指标
 
 | 指标 | 当前结果 |

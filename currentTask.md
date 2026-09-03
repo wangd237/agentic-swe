@@ -59,6 +59,13 @@ Claude Code 的 microCompact 做的是更激进的事：直接把工具结果 co
 | **P0-a** | 工具定义统一只读/并发属性 | ~30 行，低风险 | 已完成 |
 | **P0-b** | 工具结果前置截断（microCompact） | ~30 行，低风险 | 已完成 |
 | **P2** | RunContext + 闭包重构 | — | 已放弃（死代码已清除） |
+| **P3** | 阶段跳转提示 + edit_file 描述优化 | ~20 行 | 已完成（dc0fd42） |
+
+### 真实 GitHub Issue 灰度测试（2026-09-02 收官）
+
+4 任务 3 成功（tomlkit #411/#377、packaging #938），修复语义均与官方 fix commit 一致；#381 定位失败（parser 侧兜圈子，官方修复在渲染侧）。
+关键结论：16 步不够，32 步是真实 issue 合理基准；#381 属定位策略缺陷，加步数无用。
+产物已归档至 `evidence/real_*`，详见 `evidence/README.md`。新增 policy：`llm_real_issue_32steps` / `llm_real_issue_48steps`。
 
 ### 不做的（审查后排除）
 

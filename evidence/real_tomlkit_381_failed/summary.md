@@ -1,0 +1,24 @@
+# LLM Agent Run Summary
+
+- task_id: `real_tomlkit_381`
+- run_id: `run_20260902T070804809545Z_3058`
+- final_status: `incomplete`
+- accepted_final_status: `not_accepted`
+- agent_type: `llm`
+- policy_id: `llm_real_issue_48steps`
+- llm_provider: `openai_compatible`
+- llm_model: `glm-5.2`
+- total_tool_calls: `51`
+- incomplete_reason: `max_iterations`
+- final_phase: `final`
+- verification_strength: `targeted`
+- verification_level: `none`
+- evidence_quality: `missing`
+- missing_evidence: `patch, post_test, full_verification`
+- verifier_accepted: `False`
+- risk_level: `high`
+- evidence_scope: `targeted`
+- evidence_pre_exit_code: `1`
+- evidence_post_exit_code: `None`
+- evidence_official_harness_required: `False`
+- summary: 无

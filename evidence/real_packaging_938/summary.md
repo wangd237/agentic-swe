@@ -1,0 +1,24 @@
+# LLM Agent Run Summary
+
+- task_id: `real_packaging_938`
+- run_id: `run_20260902T071438204049Z_3855`
+- final_status: `success`
+- accepted_final_status: `accepted_success`
+- agent_type: `llm`
+- policy_id: `llm_real_issue_32steps`
+- llm_provider: `openai_compatible`
+- llm_model: `glm-5.2`
+- total_tool_calls: `18`
+- incomplete_reason: `none`
+- final_phase: `final`
+- verification_strength: `full`
+- verification_level: `full_verification_success`
+- evidence_quality: `strong`
+- missing_evidence: `none`
+- verifier_accepted: `True`
+- risk_level: `low`
+- evidence_scope: `full`
+- evidence_pre_exit_code: `1`
+- evidence_post_exit_code: `0`
+- evidence_official_harness_required: `False`
+- summary: 自动验证已通过，当前任务完成。

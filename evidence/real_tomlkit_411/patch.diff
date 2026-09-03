@@ -1,0 +1,13 @@
+diff --git a/tomlkit/api.py b/tomlkit/api.py
+index e2ea634..45cfc11 100644
+--- a/tomlkit/api.py
++++ b/tomlkit/api.py
+@@ -50,7 +50,7 @@ def dumps(data: Mapping, sort_keys: bool = False) -> str:
+     """
+     Dumps a TOMLDocument into a string.
+     """
+-    if not isinstance(data, Container) and isinstance(data, Mapping):
++    if not isinstance(data, (Container, _Item)) and isinstance(data, Mapping):
+         data = item(dict(data), _sort_keys=sort_keys)
+ 
+     try:
