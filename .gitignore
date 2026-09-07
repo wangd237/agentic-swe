@@ -51,3 +51,6 @@ benchmarks/repos/tomlkit_nested_dump_repo/
 benchmarks/repos/packaging_marker_extra_repo/
 !benchmarks/tasks/real_issue_repos/
 logs/run_*.log
+
+# 面试准备私有文档（不上传）
+docs/core_modules_deep_dive.md
