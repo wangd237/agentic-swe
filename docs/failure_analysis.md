@@ -197,13 +197,29 @@ Run 4（30.2 万）略高于 Run 3（29.8 万）——改进目标不是省 toke
 2. **模型侧**：deepseek-v4-flash 在被约束后选择空响应而非邨守“写最佳假设”指令。这是模型行为边界，不是系统能修的。
 3. **系统侧**：三次 run 系统行为全部正确——诚实失败、无虚假成功、约束机制按设计工作。Run 3 相比 Run 1/2 多了一次 run_tests（verification_strength 从 none 升到 targeted），说明模型在约束下至少开始验证了。
 
-### 结论与下一步
+### 第四次 run：python_repl 加入后（af35a01）
 
-硬约束把“探索到死”变成了“被迫决策”，但读模型在决策点选择罢工。可选改进（按性价比排序）：
+escalation 集合加入 `python_repl`（修复了交集 bug：patch phase 默认集合不含它，交集会静默挡掉）后重跑：
 
-1. **escalation 工具集加入 `python_repl`**（1 行）：reproducer 验证不是探索是验证——issue 自带复现代码时这是最短修复路径，且 python_repl 在 localize phase 本就可用。
-2. **接受边界**：无失败测试锚点的任务对当前模型+16 轮预算本就超限，记录为任务透型边界，不再投入。
-3. ~~增加预算~~：否决——Run 1/2 证明模型不足“理解慢”而是“不收敛”，加预算只会在更高 token 处重复同样模式。
+| 指标 | Run 3 硬约束 | Run 4 +python_repl |
+| --- | --- | --- |
+| 工具调用 | 22 | 22 |
+| token | 208,041 | 204,743 |
+| patch | 0 | 0 |
+| 告警后行为 | 3 轮空响应 | 配合 1 轮（run_tests）→ 2 次读被拦 → 2 轮空响应 |
+
+行为变化：模型这次**理解并配合了约束**（planning："Exploration tools are now budget-limited, so I'll base the patch on the code I've already read plus run tests"），escalation 后主动跑了 run_tests。但它随后两次试图读 `_nullpager` 函数体（它判断需要这个函数体才能写 patch）被拦截，之后空响应。`python_repl` 在 schema 里可用，但模型没有用它跑 issue 自带的 reproducer。
+
+### 四次 run 终局归因（2026-09-08）
+
+| Run | 干预 | 结果 | 模型告警后行为 |
+| --- | --- | --- | --- |
+| 1 | 无 | incomplete，0 patch | — |
+| 2 | 提示式告警 | incomplete，0 patch | 无视，继续读 |
+| 3 | 硬约束（4 工具） | incomplete，0 patch | 被拦后罢工（3 轮空响应） |
+| 4 | 硬约束（5 工具，+python_repl） | incomplete，0 patch | 配合 1 轮→读被拦→罢工（2 轮空响应） |
+
+**结论：系统侧已无低成本改进空间。** 硬约束机制（schema 收窄、policy 拦截、gate 升序）四 run 全部按设计工作；模型侧的边界清晰：deepseek-v4-flash 在“无失败测试锚点 + 需跨文件流语义理解 + 16 轮预算”的任务上不收敛，被约束后选择空响应而非写最佳假设。click#3449 定性为**任务透型边界样本**，不再投入。后续验证应换有失败测试锚点的 issue（第 7 节待改进 #1）。
 
 
 **验证深度：trace 级**。同模型（deepseek-v4-flash）、同 policy、同 repo、同测试命令，对第 5 节三个改进做对照重跑。
