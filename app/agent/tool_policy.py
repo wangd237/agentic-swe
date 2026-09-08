@@ -13,7 +13,9 @@ MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 # 预算硬约束：75% 轮次 + 0 写入后，只保留写入与验证工具。
 # 背景（failure_analysis.md §8）：提示式预算告警在 click#3449 重跑中被无视，
 # 与 phase gate 同构的物理约束才能改变模型行为。
-BUDGET_ESCALATION_TOOLS = {"edit_file", "write_file", "run_tests", "show_diff"}
+# python_repl 属于验证而非探索（failure_analysis.md §9）：issue 自带 reproducer 时
+# 它是最短修复路径（task_048 先例），且受控单表达式无法用于无限探索。
+BUDGET_ESCALATION_TOOLS = {"edit_file", "write_file", "run_tests", "show_diff", "python_repl"}
 
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
     "understand": {"list_files", "search_graph", "grep", "search_code", "read_file", "run_tests"},

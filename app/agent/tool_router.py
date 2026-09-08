@@ -48,8 +48,10 @@ def build_tools_for_state(
         visible_tool_names.discard("run_tests")
 
     # 预算硬约束：探索工具从 schema 层物理移除，模型只能写入或验证。
+    # 直接替换而非求交集：escalation 集合含 python_repl（验证现实），
+    # 但 patch phase 的默认集合不含它，交集会把最短修复路径一并挡掉。
     if state.budget_escalation_active:
-        visible_tool_names &= BUDGET_ESCALATION_TOOLS
+        visible_tool_names = set(BUDGET_ESCALATION_TOOLS)
 
     # Adaptive gate: only expose search_graph when the backend is actually usable.
     if "search_graph" in visible_tool_names:

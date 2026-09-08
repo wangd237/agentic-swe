@@ -1499,7 +1499,7 @@ class LLMCodeAgent(BaseAgent):
                 agent_state.budget_escalation_active = True
                 escalation_message = (
                     "\n\n【系统提示·预算告警】你已用掉 75% 的迭代预算，但尚未写入任何补丁。"
-                    "探索工具（读文件/搜索）已被禁用，当前可用工具只剩 edit_file/write_file/run_tests/show_diff。"
+                    "探索工具（读文件/搜索）已被禁用，当前可用工具：edit_file/write_file/run_tests/show_diff/python_repl。"
                     "请立即：1) 用一句话总结你已确认的根因；"
                     "2) 直接用 edit_file 写出最小补丁（基于你已读过的代码）；"
                     "3) 系统会在写入后自动验证。"

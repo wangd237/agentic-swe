@@ -953,16 +953,16 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     # 第 2 轮 0 写入触发 escalation，patch phase 工具收窄为写入+验证四件套。
     assert output["result"]["tool_stats"]["tool_routing"] == {
         "schema_strategy": "phase_state_filtered",
-        "total_tool_schema_sent": 9,
-        "avg_tool_schema_count": 4.5,
+        "total_tool_schema_sent": 10,
+        "avg_tool_schema_count": 5.0,
         "tools_by_phase": {
             "understand": ["list_files", "search_code", "grep", "read_file", "run_tests"],
-            "patch": ["run_tests", "write_file", "edit_file", "show_diff"],
+            "patch": ["run_tests", "python_repl", "write_file", "edit_file", "show_diff"],
         },
     }
     assert client.received_tool_names_by_call == [
         ["list_files", "search_code", "grep", "read_file", "run_tests"],
-        ["run_tests", "write_file", "edit_file", "show_diff"],
+        ["run_tests", "python_repl", "write_file", "edit_file", "show_diff"],
     ]
     assert output["result"]["tool_stats"]["agent_core_metrics"]["pre_repro_rate"] == 1.0
     assert output["result"]["tool_stats"]["agent_core_metrics"]["write_before_repro_count"] == 0
@@ -984,8 +984,8 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         if step["action_type"] == "llm_response"
     ]
     assert [step["tool_metrics"].get("llm_total_tokens") for step in llm_steps] == [111, 222]
-    # 第 2 轮 schema 从 7 收窄到 4：预算硬约束生效（见上文 tool_routing 断言注释）
-    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 4]
+    # 第 2 轮 schema 从 7 收窄到 5：预算硬约束生效（见上文 tool_routing 断言注释）
+    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 5]
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
@@ -3502,7 +3502,7 @@ def test_llm_agent_budget_escalation_hard_constraint_blocks_exploration(tmp_path
 
     # 2. schema 层：第 3 轮起工具列表收窄到写入+验证
     third_call_tools = client.received_tools[2]
-    assert set(third_call_tools) == {"edit_file", "write_file", "run_tests", "show_diff"}, (
+    assert set(third_call_tools) == {"edit_file", "write_file", "run_tests", "show_diff", "python_repl"}, (
         f"escalation 后工具应收窄，实际: {third_call_tools}"
     )
     # 前两轮不受影响
