@@ -10,6 +10,11 @@ from app.agent.tool_definitions import write_tool_names
 WRITE_TOOLS = write_tool_names()
 MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20
 
+# 预算硬约束：75% 轮次 + 0 写入后，只保留写入与验证工具。
+# 背景（failure_analysis.md §8）：提示式预算告警在 click#3449 重跑中被无视，
+# 与 phase gate 同构的物理约束才能改变模型行为。
+BUDGET_ESCALATION_TOOLS = {"edit_file", "write_file", "run_tests", "show_diff"}
+
 ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
     "understand": {"list_files", "search_graph", "grep", "search_code", "read_file", "run_tests"},
     "reproduce": {"grep", "search_code", "search_graph", "run_tests", "read_file", "show_diff"},
@@ -43,6 +48,16 @@ class ToolPolicy:
         allowed_tools = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
         if self.is_patch_recovery_state(state):
             allowed_tools.update(WRITE_TOOLS)
+        if state.budget_escalation_active and tool_name not in BUDGET_ESCALATION_TOOLS:
+            return tool_policy_error(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                message=(
+                    "Budget escalation is active: exploration tools are disabled. "
+                    "Summarize the root cause and write the patch now with edit_file/write_file, "
+                    "or run tests to verify. Reading and searching are no longer available."
+                ),
+            )
         if tool_name not in allowed_tools:
             return tool_policy_error(
                 tool_name=tool_name,

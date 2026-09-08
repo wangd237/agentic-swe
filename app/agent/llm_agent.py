@@ -1482,7 +1482,9 @@ class LLMCodeAgent(BaseAgent):
                 return False
             if workspace_generation > 0:
                 return False
-            threshold = max(1, int(self.llm_config.max_iterations * 0.75))
+            # threshold 下限为 2：保证第 1 轮永不收窄（至少 1 轮完整探索机会）。
+            # max_iterations=1 时不触发（单轮 run 无探索→写入可言）。
+            threshold = max(2, int(self.llm_config.max_iterations * 0.75))
             return iteration_index + 1 >= threshold
 
         for iteration_index in range(self.llm_config.max_iterations):
@@ -1494,11 +1496,13 @@ class LLMCodeAgent(BaseAgent):
 
             if budget_escalation_needed():
                 budget_escalation_injected = True
+                agent_state.budget_escalation_active = True
                 escalation_message = (
                     "\n\n【系统提示·预算告警】你已用掉 75% 的迭代预算，但尚未写入任何补丁。"
+                    "探索工具（读文件/搜索）已被禁用，当前可用工具只剩 edit_file/write_file/run_tests/show_diff。"
                     "请立即：1) 用一句话总结你已确认的根因；"
                     "2) 直接用 edit_file 写出最小补丁（基于你已读过的代码）；"
-                    "3) 不要再读新文件或搜索——系统会在写入后自动验证。"
+                    "3) 系统会在写入后自动验证。"
                     "如果确实无法定位，写出你当前最佳假设的补丁并说明不确定性。"
                 )
                 # 拼进最后一条 user 消息尾部，不新增独立消息——

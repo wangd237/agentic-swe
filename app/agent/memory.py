@@ -92,6 +92,7 @@ class AgentState(BaseModel):
     workspace_generation: int = 0
     diff_observed_generation: int | None = None
     search_graph_calls: int = 0
+    budget_escalation_active: bool = False
 
     def snapshot(self) -> dict[str, Any]:
         return self.model_dump(mode="json")

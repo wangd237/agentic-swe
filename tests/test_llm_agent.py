@@ -949,18 +949,20 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         "missing_usage_count": 0,
         "missing_prompt_usage_count": 2,
     }
+    # 预算硬约束生效：max_iterations=3，threshold=max(2, int(3*0.75))=2，
+    # 第 2 轮 0 写入触发 escalation，patch phase 工具收窄为写入+验证四件套。
     assert output["result"]["tool_stats"]["tool_routing"] == {
         "schema_strategy": "phase_state_filtered",
-        "total_tool_schema_sent": 12,
-        "avg_tool_schema_count": 6.0,
+        "total_tool_schema_sent": 9,
+        "avg_tool_schema_count": 4.5,
         "tools_by_phase": {
             "understand": ["list_files", "search_code", "grep", "read_file", "run_tests"],
-            "patch": ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+            "patch": ["run_tests", "write_file", "edit_file", "show_diff"],
         },
     }
     assert client.received_tool_names_by_call == [
         ["list_files", "search_code", "grep", "read_file", "run_tests"],
-        ["search_code", "grep", "read_file", "run_tests", "write_file", "edit_file", "show_diff"],
+        ["run_tests", "write_file", "edit_file", "show_diff"],
     ]
     assert output["result"]["tool_stats"]["agent_core_metrics"]["pre_repro_rate"] == 1.0
     assert output["result"]["tool_stats"]["agent_core_metrics"]["write_before_repro_count"] == 0
@@ -982,7 +984,8 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
         if step["action_type"] == "llm_response"
     ]
     assert [step["tool_metrics"].get("llm_total_tokens") for step in llm_steps] == [111, 222]
-    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 7]
+    # 第 2 轮 schema 从 7 收窄到 4：预算硬约束生效（见上文 tool_routing 断言注释）
+    assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 4]
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
@@ -3379,6 +3382,142 @@ def test_llm_agent_injects_budget_escalation_at_75_percent_without_writes(tmp_pa
     assert escalation_found, "第 3 轮调用应包含预算告警消息"
 
     # 模型最终写入了 patch（预算升级生效）
+    assert output["result"]["patch_applied"] is True
+
+
+class FakeIgnoreEscalationClient:
+    """无视预算告警继续探索的模型（click#3449 重跑模式）。
+
+    第 1-2 轮正常探索；第 3 轮（escalation 已注入）仍试图 read_file；
+    被硬约束拦截后，第 4 轮跑测试建基线（PATCH gate 要求复现证据），
+    第 5 轮被迫写入。
+    """
+
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.received_tools: list[list[str]] = []
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        self.received_tools.append([t["name"] for t in tools])
+        if self._call_count <= 2:
+            return {
+                "content": [
+                    {"type": "tool_use", "id": f"tool_read_{self._call_count}", "name": "read_file",
+                     "input": {"relative_path": "demo_pkg/app.py"}},
+                ]
+            }
+        if self._call_count == 3:
+            # 无视告警，继续读——应被硬约束拦截
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_read_3", "name": "read_file",
+                     "input": {"relative_path": "demo_pkg/app.py"}},
+                ]
+            }
+        if self._call_count == 4:
+            # 被拦截后：跑测试建基线（PATCH gate 要求复现证据）
+            return {
+                "content": [
+                    {"type": "tool_use", "id": "tool_test_1", "name": "run_tests", "input": {"timeout_sec": 30}},
+                ]
+            }
+        # 第 5 轮：被迫写入
+        return {
+            "content": [
+                {"type": "text", "text": "根因：value() 返回 0。"},
+                {"type": "tool_use", "id": "tool_edit_1", "name": "edit_file", "input": {
+                    "relative_path": "demo_pkg/app.py",
+                    "old_string": "return 0",
+                    "new_string": "return 1",
+                }},
+            ]
+        }
+
+
+def test_llm_agent_budget_escalation_hard_constraint_blocks_exploration(tmp_path: Path) -> None:
+    """预算硬约束：告警后探索工具从 schema 物理移除，仍调用则被 policy 拦截。
+
+    回归背景（failure_analysis.md §8）：click#3449 重跑中提示式告警被无视，
+    模型继续 grep×3、read_file×3 直到耗尽。硬约束与 phase gate 同构：
+    schema 层收窄 + policy 层拦截，物理阻止探索到死。
+    """
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "from demo_pkg.app import value\n\n\ndef test_value():\n    assert value() == 1\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "value() should return 1",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["demo_pkg/app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeIgnoreEscalationClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=5),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    # 1. escalation 已注入（iter 3 = 60% of 5，threshold=max(2, int(5*0.75))=3）
+    escalation_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "budget_escalation"
+    ]
+    assert len(escalation_steps) == 1
+
+    # 2. schema 层：第 3 轮起工具列表收窄到写入+验证
+    third_call_tools = client.received_tools[2]
+    assert set(third_call_tools) == {"edit_file", "write_file", "run_tests", "show_diff"}, (
+        f"escalation 后工具应收窄，实际: {third_call_tools}"
+    )
+    # 前两轮不受影响
+    assert "read_file" in client.received_tools[0]
+    assert "read_file" in client.received_tools[1]
+
+    # 3. policy 层：第 3 轮的 read_file 被拦截（trace 中有 policy_blocked）
+    blocked_steps = [
+        step for step in output["trace"]["steps"]
+        if step.get("tool_name") == "read_file"
+        and "Budget escalation" in str(step.get("observation", ""))
+    ]
+    assert blocked_steps, "escalation 后的 read_file 应被 policy 拦截"
+
+    # 4. 模型最终被迫写入 patch
     assert output["result"]["patch_applied"] is True
 
 

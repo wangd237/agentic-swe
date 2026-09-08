@@ -5,7 +5,7 @@ from __future__ import annotations
 from app.agent.code_intelligence import CodeIntelligenceBackend
 from app.agent.memory import AgentState, PhaseName
 from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy
+from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, BUDGET_ESCALATION_TOOLS, ToolPolicy
 
 SCHEMA_STRATEGY_PHASE_FILTERED = "phase_filtered"
 SCHEMA_STRATEGY_PHASE_STATE_FILTERED = "phase_state_filtered"
@@ -46,6 +46,10 @@ def build_tools_for_state(
         visible_tool_names.discard("undo")
     if state.phase == "verify" and ToolPolicy.requires_diff_before_tests(state):
         visible_tool_names.discard("run_tests")
+
+    # 预算硬约束：探索工具从 schema 层物理移除，模型只能写入或验证。
+    if state.budget_escalation_active:
+        visible_tool_names &= BUDGET_ESCALATION_TOOLS
 
     # Adaptive gate: only expose search_graph when the backend is actually usable.
     if "search_graph" in visible_tool_names:
