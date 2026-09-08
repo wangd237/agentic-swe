@@ -224,7 +224,23 @@ escalation 集合加入 `python_repl`（修复了交集 bug：patch phase 默认
 
 行为变化：模型这次**理解并配合了约束**（planning："Exploration tools are now budget-limited, so I'll base the patch on the code I've already read plus run tests"），escalation 后主动跑了 run_tests。但它随后两次试图读 `_nullpager` 函数体（它判断需要这个函数体才能写 patch）被拦截，之后空响应。`python_repl` 在 schema 里可用，但模型没有用它跑 issue 自带的 reproducer。
 
-### 四次 run 终局归因（2026-09-08，含根因修正）
+### 第五次 run：修复后硬约束引导成功（2026-09-08，09876e3）
+
+max_output_tokens 8000→32000 + finish_reason 可观测性修复后重跑：**success / accepted_success / full_verification_success**。
+
+| 指标 | Run 4（截断 bug 下） | Run 5（修复后） |
+| --- | --- | --- |
+| final_status | incomplete | **success** |
+| patch | 0 | **1（testing.py）** |
+| post_test | — | exit 0 |
+| 告警后行为 | 思考被截断×2 | 4 次读被拦→run_tests→edit→验证→auto_finalize |
+
+**告警后轨迹（trace 证据）**：escalation 注入 → 模型 4 次 read_file 被 policy 拦截（ok=False）→ **零空响应**（修复前 Run3/4 在此处即截断罢工）→ 转向 run_tests（合法工具，建基线）→ edit_file 一次成功 → show_diff → run_tests 通过 → auto_finalize。全程 finish_reason 可观测（tool_calls/stop，无 length）。
+
+**修复语义与官方一致**：patch 对 `CliRunner.invoke` 的 `finally` 块中 `sys.stdout.flush()/sys.stderr.flush()` 加 try/except ValueError 保护——与 click 8.4.1 官方修复同构。
+
+**四次“失败”重新定性**：Run 1/2 是真实探索不收敛（硬约束的靶子）；Run 3/4 的“罢工”是截断 bug 表象；Run 5 证明硬约束 + 正确的输出预算下，模型在被拦截后能自主切换到合法路径完成修复。**硬约束有效，且其效果此前被截断 bug 完全掩盖。**
+
 
 | Run | 干预 | 结果 | 告警后行为（修正后解读） |
 | --- | --- | --- | --- |
@@ -232,15 +248,14 @@ escalation 集合加入 `python_repl`（修复了交集 bug：patch phase 默认
 | 2 | 提示式告警 | incomplete，0 patch | 无视，继续读 |
 | 3 | 硬约束（4 工具） | incomplete，0 patch | 思考被 8000 上限截断×3（误判为罢工） |
 | 4 | 硬约束（5 工具，+python_repl） | incomplete，0 patch | 配合 1 轮→读被拦→思考被截断×2 |
+| 5 | 硬约束 + max_tokens 修复 | **success，1 patch** | 4 次读被拦→run_tests→edit→验证→auto_finalize |
 
-**结论（修正）：存在一个系统配置 bug——`llm_max_output_tokens: 8000` 对 reasoning 模型不足（官方默认 32K）。** 硬约束机制（schema 收窄、policy 拦截、gate 升序）四 run 全部按设计工作；Run 4 中模型配合约束、主动跑测试的行为说明它一直在正常工作，空响应是思考链被截断的表象而非主动放弃。修复 max_tokens 后需重跑验证硬约束的真实效果——当前四 run 均无法证明“硬约束无效”，只能证明“截断 bug 掩盖了硬约束的效果”。
+**终局结论：硬约束有效，其效果此前被截断 bug 完全掩盖。** Run 1/2 是真实探索不收敛（硬约束的靶子）；Run 3/4 的“罢工”是截断 bug 表象；Run 5 证明硬约束 + 正确输出预算下，模型被拦截后能自主切换到合法路径完成修复（修复语义与 click 8.4.1 官方修复同构）。
 
 ### 待改进（更新后优先级）
 
-> 2026-09-08 根因修正后：#0（max_tokens 修复）成为最优先——它可能解锁硬约束的真实效果。
+> 2026-09-08 Run 5 后：#0/#1 已完成并验证（见第五次 run 节）；click#3449 从“边界样本”转为“硬约束成功案例”。
 
-0. **修复 max_output_tokens + finish_reason 可观测性**：policy 的 `llm_max_output_tokens` 提升到 32K（reasoning 模型官方默认）；`_normalize_openai_response` 保留 `finish_reason`，`length` 截断与主动停止区分处理，截断时注入针对性提示（“思考被截断，请直接给出结论”）。
-1. **修复后重跑 click#3449**：验证硬约束在无截断干扰下的真实效果。
-2. **换对 issue 重跑建立基线**（零代码）：找有失败测试锚点的 bug fix issue。
-3. **重叠读检测**（~40 行）：数据已三次确认（click#3449 57%/38%、#1257 55%）。
-4. **任务预分类**（可选，~30 行）：issue 文本含 proposal/design/RFC 信号时警告用户，不阻断。启发式可能误伤，优先级最低。
+1. **换 issue 重跑建立基线**（零代码）：找有失败测试锚点的 bug fix issue，验证硬约束在更多任务上的效果。
+2. **重叠读检测**（~40 行）：数据已三次确认（click#3449 57%/38%、#1257 55%）。Run 5 中 escalation 前仍有 16 次 read_file，此优化可降低触发硬约束前的 token 消耗。
+3. **任务预分类**（可选，~30 行）：issue 文本含 proposal/design/RFC 信号时警告用户，不阻断。启发式可能误伤，优先级最低。
