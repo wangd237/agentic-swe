@@ -7,7 +7,7 @@
   "agent_type": "llm",
   "patch_strategy": "baseline",
   "llm_provider": "openai_compatible",
-  "llm_max_output_tokens": 8000,
+  "llm_max_output_tokens": 32000,
   "pytest_additional_flags": [
     "-p no:unraisableexception",
     "-p no:threadexception"

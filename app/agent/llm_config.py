@@ -25,7 +25,10 @@ class LLMConfig(BaseModel):
     model_env: str = "LLM_MODEL"
     default_base_url: str = ""
     max_iterations: int = 16
-    max_output_tokens: int = 8000
+    # reasoning 模型思考链计入 max_tokens（deepseek-reasoner 官方默认 32K）。
+    # 8000 会导致思考被截断、content 为空，表象与“模型罢工”不可区分
+    # （failure_analysis.md §9 根因修正）。
+    max_output_tokens: int = 32000
     max_tool_chars: int = 4000
     max_context_chars: int = 80000
     # ADR-0002 Step 2：token 级压缩判定。窗口大小是模型属性，随 .env 的

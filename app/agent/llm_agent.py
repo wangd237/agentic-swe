@@ -240,6 +240,13 @@ class OpenAICompatibleChatClient:
                 }
             )
         normalized = {"content": content}
+        # finish_reason 可观测性（failure_analysis.md §9 根因修正）：
+        # "length" = 输出被 max_tokens 截断（reasoning 模型思考链烧完上限时
+        # content 为空，表象与主动停止不可区分）；"stop" = 正常结束。
+        # 丢弃该字段曾导致把截断误判为“模型罢工”。
+        finish_reason = getattr(response.choices[0], "finish_reason", None)
+        if finish_reason:
+            normalized["finish_reason"] = str(finish_reason)
         usage = OpenAICompatibleChatClient._normalize_usage(getattr(response, "usage", None))
         if usage:
             normalized["usage"] = usage
@@ -1600,6 +1607,10 @@ class LLMCodeAgent(BaseAgent):
                 "tool_schema_count": len(tools),
                 "tool_schema_names": current_tool_names,
             }
+            # finish_reason 落 trace（failure_analysis.md §9）：截断与主动停止必须可区分。
+            response_finish_reason = response.get("finish_reason")
+            if response_finish_reason:
+                llm_response_metrics["finish_reason"] = response_finish_reason
             if response_total_tokens is not None:
                 llm_response_metrics["llm_total_tokens"] = response_total_tokens
             if response_prompt_tokens is not None:
@@ -2230,39 +2241,73 @@ class LLMCodeAgent(BaseAgent):
                 continue
 
             if not tool_blocks and not assistant_text:
-                # 模型返回空响应（reasoning 模型思考耗尽后可能发生）。
-                # 注入提醒并重试，而不是直接放弃任务。
+                # 模型返回空响应。两种成因必须区分（failure_analysis.md §9 根因修正）：
+                # 1. finish_reason=length：reasoning 思考链烧完 max_tokens 被截断，
+                #    content 为空——提示“直接给结论”而非“继续任务”；
+                # 2. 真空响应（reasoning 模型思考耗尽）：注入提醒重试。
+                is_length_truncated = response.get("finish_reason") == "length"
                 empty_response_retries += 1
                 if empty_response_retries > self.llm_config.max_empty_response_retries:
-                    final_summary = "模型连续返回空响应，任务终止。"
+                    final_summary = (
+                        "模型输出连续被 max_tokens 截断，任务终止。"
+                        if is_length_truncated
+                        else "模型连续返回空响应，任务终止。"
+                    )
                     break
+                if is_length_truncated:
+                    retry_notice = (
+                        "【系统提醒】你上一轮的思考过程被输出长度上限截断，没有产生任何可见输出。"
+                        "请不要再展开长推理，直接给出结论：调用工具，或用一句话给出最终答案。"
+                    )
+                    retry_observation = (
+                        "LENGTH_TRUNCATION_NOTICE: 上一轮思考链被 max_tokens 截断，"
+                        "注入“直接给结论”提示后重试。"
+                    )
+                else:
+                    retry_notice = (
+                        "【系统提醒】你上一轮没有返回任何内容或工具调用。"
+                        "任务尚未完成，请继续：调用工具推进修复，或给出明确结论。"
+                    )
+                    retry_observation = (
+                        "EMPTY_RESPONSE_NOTICE: 上一轮响应为空。"
+                        "请继续任务：调用工具或给出文本结论。"
+                    )
                 trace.steps.append(
                     TraceStep(
                         step_index=len(trace.steps) + 1,
-                        action_type="empty_response_retry",
+                        action_type=(
+                            "length_truncation_retry"
+                            if is_length_truncated
+                            else "empty_response_retry"
+                        ),
                         tool_name=None,
                         tool_input={"retry_count": empty_response_retries},
-                        tool_output_summary="模型返回空响应，注入提醒后重试。",
-                        observation=(
-                            "EMPTY_RESPONSE_NOTICE: 上一轮响应为空。"
-                            "请继续任务：调用工具或给出文本结论。"
+                        tool_output_summary=(
+                            "思考链被 max_tokens 截断，注入直接给结论提示后重试。"
+                            if is_length_truncated
+                            else "模型返回空响应，注入提醒后重试。"
                         ),
-                        decision="空响应重试，避免 reasoning 模型思考耗尽导致任务提前终止。",
+                        observation=retry_observation,
+                        decision=(
+                            "截断重试：引导模型跳过长推理直接输出，避免思考链反复撞上限。"
+                            if is_length_truncated
+                            else "空响应重试，避免 reasoning 模型思考耗尽导致任务提前终止。"
+                        ),
                         timestamp=self._utc_timestamp(),
                         duration_sec=None,
                         phase=agent_state.phase,
                         state_snapshot=agent_state.snapshot(),
                         verification_strength=agent_state.verification_strength,
-                        tool_metrics={"retry_count": empty_response_retries},
+                        tool_metrics={
+                            "retry_count": empty_response_retries,
+                            "finish_reason": response.get("finish_reason"),
+                        },
                     )
                 )
                 messages.append(
                     {
                         "role": "user",
-                        "content": (
-                            "【系统提醒】你上一轮没有返回任何内容或工具调用。"
-                            "任务尚未完成，请继续：调用工具推进修复，或给出明确结论。"
-                        ),
+                        "content": retry_notice,
                     }
                 )
                 continue

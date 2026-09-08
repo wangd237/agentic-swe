@@ -3521,6 +3521,120 @@ def test_llm_agent_budget_escalation_hard_constraint_blocks_exploration(tmp_path
     assert output["result"]["patch_applied"] is True
 
 
+class FakeTruncatedThenStopClient:
+    """思考链被 max_tokens 截断的模型（Run3/Run4 空响应真相）。
+
+    第 1 轮返回 finish_reason=length 的空响应（思考烧完上限）；
+    第 2 轮收到“直接给结论”提示后正常停止。
+    """
+
+    def __init__(self) -> None:
+        self._call_count = 0
+        self.received_messages: list[list[dict]] = []
+
+    def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+        self._call_count += 1
+        self.received_messages.append([dict(m) for m in messages])
+        if self._call_count == 1:
+            return {
+                "finish_reason": "length",
+                "content": [],
+                "usage": {"total_tokens": 8012, "prompt_tokens": 12, "completion_tokens": 8000},
+            }
+        return {
+            "finish_reason": "stop",
+            "content": [
+                {"type": "text", "text": "无法定位根因，任务结束。"},
+            ],
+            "usage": {"total_tokens": 50, "prompt_tokens": 40, "completion_tokens": 10},
+        }
+
+
+def test_llm_agent_distinguishes_length_truncation_from_empty_response(tmp_path: Path) -> None:
+    """finish_reason=length 的空响应是截断，不是模型罢工。
+
+    回归背景（failure_analysis.md §9 根因修正）：Run3/Run4 中空响应轮
+    completion 恰为 8000（max_output_tokens），实为 reasoning 思考链
+    被截断。系统此前把截断当空响应处理，提示词不对症，重试同样截断。
+    """
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(
+        benchmark_repo / "tests" / "test_app.py",
+        "def test_ok():\n    assert True\n",
+    )
+    _write_json(
+        task_path,
+        {
+            "task_id": "task_demo",
+            "repo_name": "demo_repo",
+            "repo_path": "benchmarks/repos/demo_repo",
+            "issue_title": "demo issue",
+            "issue_text": "demo body",
+            "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+            "success_criteria": "tests pass",
+            "difficulty": "easy",
+            "tags": ["demo"],
+            "target_files_hint": ["tests/test_app.py"],
+            "source_type": "semi_real",
+            "metadata": {},
+        },
+    )
+    _write_json(
+        policy_path,
+        {
+            "policy_id": "llm_demo",
+            "description": "demo",
+            "agent_type": "llm",
+            "patch_strategy": "baseline",
+            "llm_provider": "openai_compatible",
+            "pytest_additional_flags": [],
+        },
+    )
+    client = FakeTruncatedThenStopClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=4),
+        client=client,
+    )
+
+    output = agent.run(
+        task_path=task_path,
+        repo_root=repo_root,
+        policy_path=policy_path,
+    )
+
+    # 1. 截断被识别为 length_truncation_retry（而非 empty_response_retry）
+    truncation_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "length_truncation_retry"
+    ]
+    assert len(truncation_steps) == 1
+    assert truncation_steps[0]["tool_metrics"]["finish_reason"] == "length"
+
+    # 2. 重试提示针对截断对症下药（引导直接给结论，而非继续任务）
+    second_call_messages = client.received_messages[1]
+    notice_found = any(
+        "被输出长度上限截断" in str(message.get("content", ""))
+        for message in second_call_messages
+    )
+    assert notice_found, "截断重试应注入“直接给结论”提示"
+
+    # 3. llm_response metrics 记录了 finish_reason（可观测性）
+    llm_steps = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "llm_response"
+    ]
+    assert llm_steps[0]["tool_metrics"].get("finish_reason") == "length"
+    assert llm_steps[1]["tool_metrics"].get("finish_reason") == "stop"
+
+    # 4. 第二轮模型正常停止（文本结论，非空响应终止）
+    assert output["result"]["final_status"] == "stopped_without_verification"
+
+
 class FakeRepeatSearchClient:
     """重复搜索同一 pattern 的模型（jsonschema#1328 run3 模式）。"""
 
