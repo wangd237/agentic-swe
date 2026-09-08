@@ -14,6 +14,7 @@ venv/
 # 本地运行日志与工作副本
 logs/trajectories/
 logs/summaries/
+logs/local_smoke/
 logs/env_baselines/
 logs/user_tasks/
 logs/github_repos/
