@@ -197,7 +197,21 @@ Run 4（30.2 万）略高于 Run 3（29.8 万）——改进目标不是省 toke
 2. **模型侧**：deepseek-v4-flash 在被约束后选择空响应而非邨守“写最佳假设”指令。这是模型行为边界，不是系统能修的。
 3. **系统侧**：三次 run 系统行为全部正确——诚实失败、无虚假成功、约束机制按设计工作。Run 3 相比 Run 1/2 多了一次 run_tests（verification_strength 从 none 升到 targeted），说明模型在约束下至少开始验证了。
 
-### 第四次 run：python_repl 加入后（af35a01）
+### 根因修正（2026-09-08 深挖）：不是“罢工”，是 reasoning 思考被 max_tokens 截断
+
+初判“模型选择空响应而非写最佳假设”是**错误归因**。逐轮 token 分解发现：空响应轮的 completion tokens **精确等于 8000**（`max_output_tokens` 上限），而正常轮仅 87-4624。用真实 API 最小复现确认：
+
+```text
+finish_reason: length
+content: 空（0 字符）
+reasoning_tokens: 8000（思考链恰好烧完上限）
+```
+
+**完整因果链**：硬约束拦截探索 → 模型进入深度思考（综合已读代码推演 patch）→ deepseek-v4-flash 是 reasoning 模型，思考 token 计入 `max_tokens=8000`（官方默认 32K）→ 思考链超限被截断，content 为空 → 系统误判为“空响应/罢工” → 重试同样截断 → 终止。
+
+**责任层修正**：这不是模型行为边界，是**系统配置 bug**——`llm_max_output_tokens: 8000` 对 reasoning 模型不足。Run 3/4 的“罢工”现象实为“思考被截断”。Run 4 中模型配合约束、主动跑测试、试图读 `_nullpager` 的行为说明它一直在正常工作。
+
+**可观测性缺口**：`_normalize_openai_response` 丢弃了 `finish_reason`，导致截断与主动停止不可区分。这是本次误判的直接原因。
 
 escalation 集合加入 `python_repl`（修复了交集 bug：patch phase 默认集合不含它，交集会静默挡掉）后重跑：
 
@@ -210,22 +224,23 @@ escalation 集合加入 `python_repl`（修复了交集 bug：patch phase 默认
 
 行为变化：模型这次**理解并配合了约束**（planning："Exploration tools are now budget-limited, so I'll base the patch on the code I've already read plus run tests"），escalation 后主动跑了 run_tests。但它随后两次试图读 `_nullpager` 函数体（它判断需要这个函数体才能写 patch）被拦截，之后空响应。`python_repl` 在 schema 里可用，但模型没有用它跑 issue 自带的 reproducer。
 
-### 四次 run 终局归因（2026-09-08）
+### 四次 run 终局归因（2026-09-08，含根因修正）
 
-| Run | 干预 | 结果 | 模型告警后行为 |
+| Run | 干预 | 结果 | 告警后行为（修正后解读） |
 | --- | --- | --- | --- |
 | 1 | 无 | incomplete，0 patch | — |
 | 2 | 提示式告警 | incomplete，0 patch | 无视，继续读 |
-| 3 | 硬约束（4 工具） | incomplete，0 patch | 被拦后罢工（3 轮空响应） |
-| 4 | 硬约束（5 工具，+python_repl） | incomplete，0 patch | 配合 1 轮→读被拦→罢工（2 轮空响应） |
+| 3 | 硬约束（4 工具） | incomplete，0 patch | 思考被 8000 上限截断×3（误判为罢工） |
+| 4 | 硬约束（5 工具，+python_repl） | incomplete，0 patch | 配合 1 轮→读被拦→思考被截断×2 |
 
-**结论：系统侧已无低成本改进空间。** 硬约束机制（schema 收窄、policy 拦截、gate 升序）四 run 全部按设计工作；模型侧的边界清晰：deepseek-v4-flash 在“无失败测试锚点 + 需跨文件流语义理解 + 16 轮预算”的任务上不收敛，被约束后选择空响应而非写最佳假设。click#3449 定性为**任务透型边界样本**，不再投入。后续验证应换有失败测试锚点的 issue（第 7 节待改进 #1）。
+**结论（修正）：存在一个系统配置 bug——`llm_max_output_tokens: 8000` 对 reasoning 模型不足（官方默认 32K）。** 硬约束机制（schema 收窄、policy 拦截、gate 升序）四 run 全部按设计工作；Run 4 中模型配合约束、主动跑测试的行为说明它一直在正常工作，空响应是思考链被截断的表象而非主动放弃。修复 max_tokens 后需重跑验证硬约束的真实效果——当前四 run 均无法证明“硬约束无效”，只能证明“截断 bug 掩盖了硬约束的效果”。
 
 ### 待改进（更新后优先级）
 
-> 2026-09-08 更新：#2 已实施并验证（见第 9 节）；#1 仍是最优先——click#3449 三次 run 已充分归因，继续投入性价比低。
+> 2026-09-08 根因修正后：#0（max_tokens 修复）成为最优先——它可能解锁硬约束的真实效果。
 
-1. **换对 issue 重跑建立基线**（零代码）：找真正的 bug fix 类 issue（有 traceback、失败断言、明确预期），验证现有改进在正确任务上的效果。
-2. ~~**预算告警升级为硬约束**~~（已完成，见第 9 节：机制生效，但暴露模型空响应罢工边界）。
+0. **修复 max_output_tokens + finish_reason 可观测性**：policy 的 `llm_max_output_tokens` 提升到 32K（reasoning 模型官方默认）；`_normalize_openai_response` 保留 `finish_reason`，`length` 截断与主动停止区分处理，截断时注入针对性提示（“思考被截断，请直接给出结论”）。
+1. **修复后重跑 click#3449**：验证硬约束在无截断干扰下的真实效果。
+2. **换对 issue 重跑建立基线**（零代码）：找有失败测试锚点的 bug fix issue。
 3. **重叠读检测**（~40 行）：数据已三次确认（click#3449 57%/38%、#1257 55%）。
 4. **任务预分类**（可选，~30 行）：issue 文本含 proposal/design/RFC 信号时警告用户，不阻断。启发式可能误伤，优先级最低。
