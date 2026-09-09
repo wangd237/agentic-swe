@@ -14,7 +14,9 @@
 8. [三个潜伏的协议违规：真实 issue 如何连环暴露低频路径 bug](#案例-8)
 9. [从未校准的阈值：字符估算在 1M 窗口下浪费了 96% 的余量](#案例-9)
 10. [pydicom-1139 翻盘：一个 unresolved 背后的两个独立根因](#案例-10)
-11. [max_tokens 的语义变了：reasoning 思考链烧完上限，零输出被误判为“模型罢工”](#案例-11)
+11. [max_tokens 的语义变了：reasoning 思考链烧完上限，零输出被误判为"模型罢工"](#案例-11)
+12. [tree-sitter 断言崩溃：codebase-memory-mcp 在 751 文件 repo 上崩溃](#案例-12)
+13. [read_file 死循环：模型被正确 graph hints 引导后反而反复读同一段代码](#案例-13)
 
 ---
 
@@ -601,6 +603,120 @@ Run5 告警后轨迹：4 次 read_file 被 policy 拦截 → **零空响应** �
 
 ---
 
+## 案例 12 <a name="案例-12"></a>
+
+## tree-sitter 断言崩溃：codebase-memory-mcp 在 751 文件 repo 上崩溃
+
+**时间**：2026-09-09 ｜ **首次 search_graph A/B 实验暴露** ｜ **待修复**
+
+### 现象
+
+search_graph A/B 实验 pilot（n=3）中，tomlkit_377（751 个 Python 文件）在 graph arm 上报 `fallback_reason: backend_error`，索引失败。基线 arm 同样 `incomplete/max_iterations`（任务本身有难度），但 graph arm 多浪费了 6 步探索（22 vs 16 tool calls）和 +12,694 tokens——因为模型在 graph 失败后 fallback 到文本搜索。
+
+### 排查
+
+运行 `diagnose_codebase_memory_backend.py` 直接调 codebase-memory-mcp v0.8.1 CLI：
+
+```
+pipeline.discover files=789 elapsed_ms=17
+pipeline.route path=full
+pass.start pass=structure files=789
+pass.done pass=structure nodes=598 edges=594
+parallel.extract.start files=789 workers=20
+parallel.extract.progress done=10 total=789
+Assertion failed: length <= 1024
+  file: internal/cbm/vendored/ts_runtime/src/./parser.c, line 409
+```
+
+structure pass 成功（598 节点、594 边），parallel extract 阶段处理第 10+ 个文件时崩溃。returncode 3221226505（Windows STATUS_ASSERTION_FAILURE）。
+
+### 根因
+
+tree-sitter 解析器硬编码字段长度上限 1024 字节。触发文件：`tests/toml-spec-tests/values/qa-table-inline-nested-1000.yaml`——983KB 的 YAML 测试夹具，含超长内联表定义。tree-sitter 解析时某字段内容超过 1024 字节，触发断言崩溃。
+
+**这是 codebase-memory-mcp v0.8.1 的上游 bug，不是 agent 代码问题。** 任何包含超大单行/单字段文本文件的 repo 都会被触发。
+
+### 修复方向
+
+1. 在 shadow copy 阶段排除已知的 tree-sitter 炸弹文件（`qa-table-inline-nested-1000.yaml`、`*-40kb.yaml` 等）
+2. 升级 codebase-memory-mcp 到修复此 bug 的新版本
+3. 在 `_ignore_shadow_copy_artifacts` 增加文件级 glob 过滤
+
+### 一句话总结
+
+> "首次 search_graph A/B 实验中，1/3 任务因 codebase-memory-mcp tree-sitter parser 断言崩溃未能索引。根因是 983KB YAML 测试夹具触发 parser 1024 字节字段上限。**外部工具的上游 bug 会让 A/B 实验丢失数据点——先 diagnose 再跑，不要默认'没装上就是后端不可用'。**"
+
+### 证据
+
+- `logs/summaries/codebase_memory_backend_diagnostic_001.json`（崩溃现场：returncode 3221226505）
+- `logs/summaries/code_intelligence_runs_pilot_3_ab_001.json`（A/B 对比：graph arm 22 vs baseline 16 tool calls）
+- agent trace：`real_tomlkit_377/run_20260909T035021293071Z_2516/trace.json`
+
+---
+
+## 案例 13 <a name="案例-13"></a>
+
+## read_file 死循环：模型被正确 graph hints 引导后反而反复读同一段代码
+
+**时间**：2026-09-09 ｜ **首次 search_graph A/B 实验暴露** ｜ **待修复**
+
+### 现象
+
+同一 A/B 实验中，packaging_938 的 graph arm tokens **+170%**（64,441 → 174,452），LLM 调用 +6、工具调用 +6。但 graph 后端正常工作——索引 974 节点 3519 边，目标文件 `markers.py` 排候选第 2（Top-3 命中），graph hints 被模型使用，最终 patch 与 graph 提示一致。
+
+graph 给了正确信息，模型却更差了——不是工具失效，是模型行为退化。
+
+### 排查（trace 级逐轮对比）
+
+```
+BASELINE (38 steps, 10 LLM calls):
+  list_files → read test → read markers.py (3次分段) → run_tests → edit → fix → pass
+
+GRAPH (49 steps, 16 LLM calls):
+  code_intelligence (6 candidates, markers.py 排第2)
+  → list_files → read test → read markers.py (完整362行)
+  → markers.py 第200-362行 重复读取 ×7  ← 死循环！
+  → budget escalation 触发 ("exploration tools disabled")
+  → PATCH gate 拦截 ("gate is closed")
+  → 被迫 run_tests → edit → pass
+```
+
+关键差异：graph arm 第一次读 `markers.py` 完整 362 行后，又对 200-362 行**重复 7 次**。每次返回相同内容——模型在零信息增量的确认性读取，不是探索。
+
+**但确定性约束层救了场**：budget escalation 在第 8 次读前触发，PATCH gate 拦截了过早 edit。模型被强制转向 run_tests → 拿到失败信息 → edit 一次成功。无这两层约束，死循环会持续到 max_iterations。
+
+### 根因（三因素叠加）
+
+1. **graph Top-1 是语义相关但错误的候选**：`metadata.py` 排第 1（conf=0.99），含 `_process_provides_extra` 方法——语义高度相关但**不是修复目标**。模型先被引导到错误文件，消耗探索预算
+2. **缺乏复现证据时的"焦虑探索"**：进入 markers.py 后，没跑测试直接尝试定位修复点。无失败输出引导，模型反复读同一段代码——零信息增量的确认行为
+3. **候选过多**：6 个候选分散注意力，compact_hints 给了 top-3 但模型在 metadata.py 之后又浏览了其他文件
+
+### 修复方向
+
+- **graph 层**：compact_hints 只给 top-3，标注置信度衰减
+- **policy 层**：read_file 重复读检测——同一文件同一行范围连续读 N 次时拦截（类似 `_search_cache` 对 grep/search_code 的去重）
+- **prompt 层**：强调 graph hints 的置信度语义，引导按排名顺序探索
+
+### 一句话总结
+
+> "graph 工具给了正确候选（目标文件排第 2），模型却对同一段代码重复读 7 次——tokens +170%。trace 分析发现三因素：Top-1 是语义相关但错误文件、无复现证据时的焦虑探索、候选过多。**确定性约束层（budget escalation + PATCH gate）把死循环从'永远跑不完'压缩成'浪费 6 步'——证明'用确定性组件包裹概率性组件'架构价值。问题提示新方向：read_file 也需要像 grep/search_code 的重复调用拦截。**"
+
+### 与案例 1 对照
+
+| 维度 | 案例 1（search_graph 三连 bug） | 本案例（read_file 死循环） |
+|---|---|---|
+| 表象 | 模型从不调用 search_graph | 模型反复调用 read_file |
+| 根因方向 | 基础设施 bug | 模型行为退化 |
+| 修复层 | 修代码 bug | 加确定性约束 |
+
+### 证据
+
+- `logs/summaries/code_intelligence_runs_pilot_3_ab_001.json`（A/B 对比）
+- `logs/trajectories/real_packaging_938/run_20260909T035058576553Z_6059/trace.json`（graph arm steps 11-25 为 7 次重复读）
+- `logs/trajectories/real_packaging_938/run_20260909T034943587960Z_5264/trace.json`（baseline 对照）
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -614,7 +730,9 @@ Run5 告警后轨迹：4 次 read_file 被 policy 拦截 → **零空响应** �
 | OpenAI 协议双违规 | 宽松网关会掩盖协议违规，换严格 API 全暴露 |
 | 三个潜伏的协议违规 | 低频路径的 bug 只能靠真实负载暴露 |
 | 从未校准的阈值 | 拍脑袋的阈值不会自己变对，观测才会告诉你真相 |
-| pydicom-1139 翻盘 | 本地通过 ≠ 官方 resolved；每个失败拆到根因，环境漂移与代码缺陷要分开归因 |
-| max_tokens 语义变化 | reasoning 思考计入上限，零输出 ≠ 模型罢工；token 计数是截断的数学指纹 |
+| pydicom-1139 翻盘 | 本地通过 ≠ 官方 resolved；环境漂移与代码缺陷分开归因 |
+| max_tokens 语义变化 | reasoning 思考计入上限，零输出 ≠ 模型罢工 |
+| tree-sitter 断言崩溃 | 外部工具的上游 bug 会丢失实验数据点——先 diagnose |
+| read_file 死循环 | 确定性约束层能缩短模型行为退化的破坏半径 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**

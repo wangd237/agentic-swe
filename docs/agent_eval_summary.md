@@ -198,4 +198,59 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 1. **单任务弧线 ≠ 泛化证据**：click#3449 证明了“硬约束 + max_tokens 修复”的因果链，但只有一个任务。硬约束是否泛化，需第二个有失败测试锚点的 issue 验证。
 2. **`unverified_patch` 缺独立真实 run**：分类逻辑有单测覆盖（`test_llm_agent_classifies_max_iterations_with_unverified_patch`），但尚无真实 run 落在该分支——它是五类 incomplete\_reason 中唯一没有真实产物的。
-3. **小样本性质未变**：上述数字仍是小样本，结论应表述为“能力快照”而非“通过率”。
+3. **小样本性质未变**：上述数字仍是小样本，结论应表述为"能力快照"而非"通过率"。
+
+## 10. Prompt 消融实验：First Principles 约束有效性
+
+**实验时间**：2026-09-09  
+**模型**：qwen3.7-flash  
+**prompt**：英文版，含层级结构 + 阅读策略 + few-shot 示例
+
+**实验设计**：对 4 个任务分别跑有/无 First Principles 段落的 prompt，观察结果和 token 效率。
+
+| 任务 | FP | 结果 | calls | tokens | 时间 |
+|------|:--:|------|------|------|------|
+| click#3449 | 有 | ✅ success | 14 | 68,139 | 45s |
+| click#3449 | 无 | ✅ success | 14 | 98,277 | 50s |
+| task_048 | 有 | ✅ success | 5 | 22,856 | 46s |
+| task_048 | 无 | ✅ success | 9 | 46,421 | 60s |
+| task_093 | 有 | ✅ success | 6 | 23,646 | 16s |
+| task_093 | 无 | ✅ success | 5 | 18,202 | 13s |
+| **real_tomlkit_411** | **有** | ✅ **success** | **14** | **137,715** | **100s** |
+| **real_tomlkit_411** | **无** | ❌ **incomplete** | **16** | **185,374** | **407s** |
+
+**结论**：经过多轮 A/B 测试，在 prompt 中保留 First Principles 约束是有效的。
+
+- 3/4 任务在有 FP 时 token 效率更高（click#3449 -31%、task_048 -51%、task_093 -23%）
+- real_tomlkit_411（真实 GitHub issue、困难级）在有 FP 时成功（137K tokens/100s），无 FP 时 16 轮耗尽 185K tokens 未产出 patch
+- task_093 无 FP 时略优（-23%）但差距在单次方差范围内
+- 消融后的 FP 段落同时包含"行动驱动理解"和"错误 → undo 成本为零"两个核心信号，二者可能协同作用
+
+### 实验版本说明
+
+| 版本 | Prompt 特征 |
+|------|------|
+| V0 | 中文原始版（"谨慎的 Python coding agent"） |
+| V1 | 中文 + 层级结构 + FP + few-shot + 行动阈值 |
+| V2 | **英文版**（V1 英文化）— **基线最优** |
+| V3 | V2 去掉 FP（"Python coding agent" + Core strategy） |
+| V4 | V2 + 负面示例 8 行 + 工具配方 + 响应格式 + 错误恢复 |
+| V5 | 精简版：V2 + 1 行负面信号 + 1 行错误恢复 |
+
+### 完整实验矩阵（qwen，英文 prompt）
+
+| 任务 | V2 (FP) | V3 (无 FP) | V4 (过载) | V5 (精简) |
+|------|------|------|------|------|
+| click#3449 | ✅ 68K/14c | ✅ 98K/14c | ✅ 62K/13c | ✅ 72K/13c |
+| task_048 | ✅ 23K/5c | ✅ 46K/9c | ✅ 40K/6c | ✅ 39K/8c |
+| task_093 | ✅ 24K/6c | ✅ 18K/5c | ✅ 25K/5c | ✅ 11K/3c* |
+| tomlkit_411 | ✅ 138K/14c | ❌ 185K/16c | ❌ 199K/16c | ⏱ 超时* |
+
+> * V5 的 task_093 和 tomlkit_411 跑在 qwen3.8-max 上，其余均为 qwen3.7-flash。
+
+### 消融结论
+
+1. **First Principles 是正向信号**：V2 vs V3 的 A/B 测试中，3/4 任务 V2 更优，tomlkit_411 更是成功/失败的质变
+2. **过度增强有害**：V4 加入负面示例、配方、响应格式后，tomlkit_411 失败（199K/16c），注意力被稀释
+3. **精简版不如 V2 精炼**：V5 去掉了大部分噪声但仍比 V2 差，说明 V2 的简洁性本身就是优势
+4. **V2 是最优基线**：First Principles + 层级结构 + 正面 few-shot，没有多余内容

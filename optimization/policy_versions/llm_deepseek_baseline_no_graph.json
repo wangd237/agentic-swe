@@ -1,0 +1,22 @@
+{
+  "policy_id": "llm_deepseek_baseline_no_graph",
+  "description": "baseline without code intelligence graph backend",
+  "max_steps": 16,
+  "max_retries": 2,
+  "max_patch_files": 1,
+  "agent_type": "llm",
+  "patch_strategy": "baseline",
+  "llm_provider": "openai_compatible",
+  "llm_max_output_tokens": 32000,
+  "llm_timeout_sec": 180,
+  "pytest_additional_flags": [
+    "-p no:unraisableexception",
+    "-p no:threadexception"
+  ],
+  "code_intelligence_backend": "none",
+  "codebase_memory_binary": ".tools/codebase-memory-mcp/codebase-memory-mcp.exe",
+  "codebase_memory_index_mode": "fast",
+  "codebase_memory_always_shadow_copy": true,
+  "code_intelligence_timeout_sec": 30.0,
+  "code_intelligence_max_results": 5
+}

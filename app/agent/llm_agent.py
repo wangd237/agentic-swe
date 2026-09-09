@@ -66,14 +66,15 @@ def _resolve_test_patch_path(
 
 
 ANTI_LOOP_MESSAGE = (
-    "你似乎在同一个修复方向上循环：最近连续多次修改同一个文件，"
-    "且编辑模式高度相似。请退一步重新读取相关代码或测试，验证你的核心假设；"
-    "如果涉及第三方库行为，优先用 python_repl 查询实际行为，然后再修改。"
+    "You appear to be looping on the same fix direction: you have recently edited the same file "
+    "multiple times with highly similar edit patterns. Step back and re-read the relevant code or tests; "
+    "verify your core hypothesis. If third-party library behavior is involved, use python_repl first to "
+    "query the actual behavior, then edit."
 )
 EDIT_RECOVERY_MESSAGE = (
-    "EDIT_RECOVERY_NOTICE: edit_file 没有找到 old_string。请优先使用工具结果里的 "
-    "similar_contexts[].suggested_old_string 作为下一次 edit_file 的 old_string；"
-    "如果仍不确定，请 read_file 读取该建议行号附近的最新内容后再编辑。"
+    "EDIT_RECOVERY_NOTICE: edit_file did not find old_string. Prefer using "
+    "similar_contexts[].suggested_old_string from the tool result as the old_string for your next edit_file. "
+    "If still uncertain, read_file around the suggested line numbers first, then edit."
 )
 
 
@@ -982,6 +983,8 @@ class LLMCodeAgent(BaseAgent):
         write_history: list[dict[str, str]] = []
         anti_loop_injected = False
         successful_write_before_repro_count = 0
+        consecutive_reads = 0
+        read_throttle_injected = False
         last_failure_signature_before_patch: FailureSignature | None = None
         recorded_phase_milestones = {"understand"}
         llm_call_count = 0
@@ -1505,12 +1508,13 @@ class LLMCodeAgent(BaseAgent):
                 budget_escalation_injected = True
                 agent_state.budget_escalation_active = True
                 escalation_message = (
-                    "\n\n【系统提示·预算告警】你已用掉 75% 的迭代预算，但尚未写入任何补丁。"
-                    "探索工具（读文件/搜索）已被禁用，当前可用工具：edit_file/write_file/run_tests/show_diff/python_repl。"
-                    "请立即：1) 用一句话总结你已确认的根因；"
-                    "2) 直接用 edit_file 写出最小补丁（基于你已读过的代码）；"
-                    "3) 系统会在写入后自动验证。"
-                    "如果确实无法定位，写出你当前最佳假设的补丁并说明不确定性。"
+                    "\n\n[SYSTEM · BUDGET ESCALATION] You have used 75% of the iteration budget "
+                    "but have not written any patch. Exploration tools (read/search) are now disabled. "
+                    "Available tools: edit_file/write_file/run_tests/show_diff/python_repl. "
+                    "Immediately: 1) Summarize the root cause you have confirmed in one sentence. "
+                    "2) Write the minimal patch with edit_file based on the code you have already read. "
+                    "3) The system will auto-verify after writing. "
+                    "If you truly cannot localize, write your best-hypothesis patch and note the uncertainty."
                 )
                 # 拼进最后一条 user 消息尾部，不新增独立消息——
                 # 避免改变消息序列结构（user->user 连续消息部分 API 不容忍），
@@ -1721,6 +1725,7 @@ class LLMCodeAgent(BaseAgent):
                     )
 
                     if tool_name == "read_file" and tool_result.get("ok"):
+                        consecutive_reads += 1
                         relative_path = tool_result["data"].get("relative_path", "")
                         if relative_path and relative_path not in trace.read_files:
                             trace.read_files.append(relative_path)
@@ -1825,6 +1830,8 @@ class LLMCodeAgent(BaseAgent):
                                 max_chars=self.llm_config.max_tool_chars,
                             )
                     if tool_name in {"write_file", "edit_file", "undo"} and tool_result.get("ok"):
+                        consecutive_reads = 0
+                        read_throttle_injected = False
                         if tool_name in {"write_file", "edit_file"} and not agent_state.has_reproduction_evidence:
                             successful_write_before_repro_count += 1
                         if tool_name in {"write_file", "edit_file"}:
@@ -2051,6 +2058,67 @@ class LLMCodeAgent(BaseAgent):
                     }
                 )
                 compress_context_if_needed("tool_results")
+
+                # 读操作节流：连续 5 次读取后注入提醒，打断「读惯性」。
+                # 与写入侧反循环检测对称：探索侧也需要干预机制。
+                # 背景：click#3449 Run 6 在 kimi 下 5 次读被拦后仍不写——
+                # 在硬约束兜底之前，软打断可以更早推动模型从「读」切换到「写」。
+                READ_THROTTLE_THRESHOLD = 5
+                if consecutive_reads >= READ_THROTTLE_THRESHOLD and not read_throttle_injected:
+                    read_throttle_injected = True
+                    throttle_message = (
+                        "\n\n[SYSTEM · READ THROTTLE] You have read more than 5 consecutive code segments. "
+                        "If the traceback already points to the error location, write the minimal fix with edit_file NOW — "
+                        "do not keep reading. Editing mistakes can be undone with undo, the cost is near zero. "
+                        "If you need more information, use run_tests or python_repl to verify your hypothesis "
+                        "instead of reading more files."
+                    )
+                    if messages and messages[-1].get("role") == "user":
+                        last_content = messages[-1].get("content")
+                        if isinstance(last_content, str):
+                            messages[-1] = {
+                                "role": "user",
+                                "content": last_content + throttle_message,
+                            }
+                        elif isinstance(last_content, list):
+                            messages[-1] = {
+                                "role": "user",
+                                "content": [
+                                    *last_content,
+                                    {"type": "text", "text": throttle_message.strip()},
+                                ],
+                            }
+                    else:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": throttle_message.strip(),
+                            }
+                        )
+                    trace.steps.append(
+                        TraceStep(
+                            step_index=len(trace.steps) + 1,
+                            action_type="read_throttle",
+                            tool_name=None,
+                            tool_input={
+                                "consecutive_reads": consecutive_reads,
+                                "threshold": READ_THROTTLE_THRESHOLD,
+                            },
+                            tool_output_summary=f"连续读取 {consecutive_reads} 次，注入节流提醒。",
+                            observation=throttle_message,
+                            decision="打断模型的读惯性，推动从探索切换到行动。",
+                            timestamp=self._utc_timestamp(),
+                            duration_sec=None,
+                            phase=agent_state.phase,
+                            state_snapshot=agent_state.snapshot(),
+                            verification_strength=agent_state.verification_strength,
+                            tool_metrics={
+                                "consecutive_reads": consecutive_reads,
+                                "threshold": READ_THROTTLE_THRESHOLD,
+                            },
+                        )
+                    )
+
                 continue
 
             if pending_auto_verification and verified_generation != workspace_generation:
@@ -2265,12 +2333,12 @@ class LLMCodeAgent(BaseAgent):
                     )
                 else:
                     retry_notice = (
-                        "【系统提醒】你上一轮没有返回任何内容或工具调用。"
-                        "任务尚未完成，请继续：调用工具推进修复，或给出明确结论。"
+                        "[SYSTEM] Your last response was empty with no tool calls. "
+                        "The task is not yet complete. Continue: call tools to advance the fix, or give a clear conclusion."
                     )
                     retry_observation = (
-                        "EMPTY_RESPONSE_NOTICE: 上一轮响应为空。"
-                        "请继续任务：调用工具或给出文本结论。"
+                        "EMPTY_RESPONSE_NOTICE: last response was empty. "
+                        "Continue the task: call tools or provide a text conclusion."
                     )
                 trace.steps.append(
                     TraceStep(

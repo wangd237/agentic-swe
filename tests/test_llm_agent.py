@@ -3231,46 +3231,46 @@ def test_llm_agent_classifies_verified_weak_static_patch_as_success_candidate() 
 def test_system_prompt_guides_subtask_decomposition() -> None:
     prompt = build_system_prompt()
 
-    assert "步骤清单" in prompt
-    assert "更新进度" in prompt
+    assert "step plan" in prompt.lower()
+    assert "update progress" in prompt.lower()
 
 
 def test_system_prompt_discourages_leaking_scratch_files() -> None:
     prompt = build_system_prompt()
 
     assert "debug.py" in prompt
-    assert "不要创建" in prompt
-    assert "不支持执行任意调试脚本" in prompt
-    assert "不要反复写调试脚本" in prompt
-    assert "edit_file 修复" in prompt
+    assert "temporary debug files" in prompt
+    assert "debug files" in prompt
+    assert "re-read" in prompt
+    assert "run_tests" in prompt
 
 
 def test_system_prompt_describes_python_repl_boundaries() -> None:
     prompt = build_system_prompt()
 
     assert "python_repl" in prompt
-    assert "第三方库" in prompt
-    assert "不能 import" in prompt
-    assert "不能使用分号" in prompt
+    assert "third-party" in prompt
+    assert "no imports" in prompt.lower()
+    assert "no semicolons" in prompt.lower()
     assert "dunder" in prompt
 
 
 def test_system_prompt_requires_reflection_after_failed_tests() -> None:
     prompt = build_system_prompt()
 
-    assert "run_tests 返回失败" in prompt
-    assert "先用文本解释失败原因" in prompt
-    assert "不要跳过分析直接修改" in prompt
+    assert "run_tests fails" in prompt.lower() or "run_tests returns failure" in prompt
+    assert "explain" in prompt.lower() and "cause" in prompt.lower()
+    assert "skip analysis" in prompt.lower()
 
 
 def test_system_prompt_requires_phase_workflow_and_diff_before_verify() -> None:
     prompt = build_system_prompt()
 
-    assert "UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL" in prompt
-    assert "不要在复现或定位之前修改文件" in prompt
+    assert "UNDERSTAND" in prompt and "REPRODUCE" in prompt and "PATCH" in prompt and "VERIFY" in prompt and "FINAL" in prompt
+    assert "edit files before reproducing" in prompt.lower()
     assert "localization_override_reason" in prompt
-    assert "任何 write_file/edit_file 后" in prompt
-    assert "必须先 show_diff，再运行 run_tests 验证" in prompt
+    assert "write_file/edit_file" in prompt
+    assert "show_diff" in prompt and "run_tests" in prompt and "both are required" in prompt.lower()
 
 
 class FakeExploreForeverClient:
@@ -3376,10 +3376,10 @@ def test_llm_agent_injects_budget_escalation_at_75_percent_without_writes(tmp_pa
     # 模型在第 3 轮收到了预算告警（第 3 次调用的 messages 含告警文本）
     third_call_messages = client.received_messages[2]
     escalation_found = any(
-        "预算告警" in str(message.get("content", ""))
+        "BUDGET ESCALATION" in str(message.get("content", ""))
         for message in third_call_messages
     )
-    assert escalation_found, "第 3 轮调用应包含预算告警消息"
+    assert escalation_found, "3rd call should contain budget escalation message"
 
     # 模型最终写入了 patch（预算升级生效）
     assert output["result"]["patch_applied"] is True

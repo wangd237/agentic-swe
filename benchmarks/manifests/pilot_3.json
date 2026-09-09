@@ -1,0 +1,7 @@
+{
+  "tasks": [
+    "benchmarks/tasks/task_010.json",
+    "benchmarks/tasks/real_issue_repos/real_tomlkit_377.json",
+    "benchmarks/tasks/real_issue_repos/real_packaging_938.json"
+  ]
+}
