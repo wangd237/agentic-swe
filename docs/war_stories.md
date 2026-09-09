@@ -13,6 +13,8 @@
 7. [Windows 上跑官方 harness：三个平台 bug 连环坑](#案例-7)
 8. [三个潜伏的协议违规：真实 issue 如何连环暴露低频路径 bug](#案例-8)
 9. [从未校准的阈值：字符估算在 1M 窗口下浪费了 96% 的余量](#案例-9)
+10. [pydicom-1139 翻盘：一个 unresolved 背后的两个独立根因](#案例-10)
+11. [max_tokens 的语义变了：reasoning 思考链烧完上限，零输出被误判为“模型罢工”](#案例-11)
 
 ---
 
@@ -507,6 +509,98 @@ patch 改为 gold 风格 self 迭代器协议；镜像内 pytest 降级 7.4.4 + 
 
 ---
 
+## 案例 11 <a name="案例-11"></a>
+
+## max_tokens 的语义变了：reasoning 思考链烧完上限，零输出被误判为“模型罢工”
+
+**时间**：2026-09-08 ｜ **click#3449 五次 run 弧线（Run3/4 误判 → Run5 成功）**
+
+### 现象
+
+预算硬约束实施后重跑 click#3449：模型被拦截探索后**连续多轮零输出**（`content_block_count: 0`），两次重试均无效，run 终止。当时归因为“模型被剥夺探索工具后罢工”——选择放弃而非写最佳假设 patch。
+
+同一表象的另一个独立实例：此前的爬虫项目中，LLM 解析 PDF 环节持续报错“无法正确解析内容”，排查很久才发现是思考模型的 reasoning 计入 max_tokens，复杂 PDF 的思考链烧完上限，输出被截断（甚至没开始输出就被截断）。
+
+### 排查（三层，按成本递增）
+
+**第一层：token 计数指纹（零成本）**。逐轮分解 Run3/Run4 的 usage：
+
+```
+空响应轮: completion = 8000, 8000, 8000   ← 精确等于 max_output_tokens
+正常轮:   completion = 87 ~ 4624          ← 泾渭分明
+```
+
+精确等于不是巧合——生成在撞上限时被强制停止，计数恰好停在上限。这是截断的**数学指纹**。
+
+**第二层：finish_reason（一字千金）**。用真实 API 最小复现（模拟“被约束后写 patch”的单轮请求）：
+
+```
+finish_reason: length
+content: 空（0 字符）
+reasoning_tokens: 8000（思考链恰好烧完上限）
+```
+
+`length` = 截断；`stop` + 空 content = 模型主动行为。而 agent 的 `_normalize_openai_response` **丢弃了 finish_reason**——截断与主动停止在系统里不可区分，这是误判的直接原因。
+
+**第三层：reasoning_tokens 分解**。`usage.completion_tokens_details.reasoning_tokens` 量化思考消耗，也是后续配置 max_tokens 的依据。
+
+### 根因
+
+**max_tokens 的语义在 reasoning 模型时代变了，接口契约没变。**
+
+- instruct 模型：max_tokens 约束可见输出，截断表现为“输出到一半戛然而止”——显性
+- reasoning 模型：max_tokens 约束**思考链 + 可见输出总和**。当 reasoning_tokens ≥ max_tokens 时 text_tokens = 0——输出不是被截断一半，是**根本没开始**。截断从显性变成隐性
+
+参数名没变、调用方式没变，但按旧习惯配置的值（4096/8000）全部变成潜伏 bug。deepseek-reasoner 官方默认 32K，但官方改默认值不会通知你的旧配置。
+
+**为什么特别隐蔽（三个特性）**：
+1. **条件性触发**：简单输入思考短、正常；复杂输入思考长、截断。表现为“时好时坏”——把配置 bug 伪装成能力问题（爬虫项目：简单 PDF 正常、复杂 PDF 失败）
+2. **表象与根因距离远**：零输出的解释空间太大（拒绝？抽风？解析失败？截断？），没有 finish_reason 时四者不可区分
+3. **默认值陷阱**：换模型时所有按旧语义调的参数都需要重新审视，配置迁移有隐性成本
+
+### 修复与验证（四层防御）
+
+| 层 | 措施 | 本次实施 |
+|---|---|---|
+| 配置层 | max_tokens 按“最大预期思考 + 最大预期输出”配置，官方默认值做锚点 | 8000 → 32000（全部 policy + LLMConfig 默认） |
+| 观测层 | finish_reason + token 分解必须落 trace | `_normalize_openai_response` 保留字段，llm_response metrics 记录 |
+| 处理层 | `length` 截断与真空响应**区分处理**，提示不能混用 | 截断→“跳过长推理直接给结论”；空响应→“请继续”（原提示对截断不对症，重试只会同样截断） |
+| 验证层 | 修复后同输入重跑对照 | Run4（incomplete/0 patch）→ Run5（**success/accepted_success**，patch 与 click 8.4.1 官方修复同构） |
+
+Run5 告警后轨迹：4 次 read_file 被 policy 拦截 → **零空响应** → 自主转向 run_tests → edit_file 一次成功 → 测试通过 → auto_finalize。硬约束的真实效果此前被截断 bug 完全掩盖。
+
+### 与案例 2 的对照：同一表象，两种根因
+
+| 维度 | 案例 2（kimi-k2.5） | 本案例（deepseek-v4-flash） |
+| --- | --- | --- |
+| 表象 | 有 token 消耗、零输出 | 有 token 消耗、零输出（完全相同） |
+| finish_reason | `stop` | `length` |
+| completion vs 上限 | 1795 < 上限 | 8000 = 上限（精确撞线） |
+| 根因 | 模型偶发“思考完就停”（1/3 概率） | 思考链被 max_tokens 截断 |
+| 修复层 | agent 层韧性重试 | 配置层 max_tokens + 观测层 finish_reason |
+
+**区分两者的全部信号就是 finish_reason 和 token 计数**——丢掉这两个字段，两种根因相反的故障在系统里长得一模一样。
+
+### 一句话总结
+
+> “模型零输出被当成‘罢工’，逐轮 token 分解发现 completion 精确等于 8000——不是模型拒绝工作，是 reasoning 思考链烧完了 max_tokens 上限，输出根本没开始。修复 max_tokens + 保留 finish_reason 后，同一任务从 0 patch 变成官方同构修复。**表象（零输出）≠ 根因；token 计数是客观证据，先看数字，再下结论。**”
+
+### 常见疑问
+
+- **“为什么 8000 用了这么久没出事？”** —— 正常轮 completion 只有几百到几千，8000 够用；只有逼模型深度思考的场景（硬约束后写 patch、复杂 PDF 解析）才触发。条件性触发让它潜伏了很久
+- **“截断时为什么不能重试解决？”** —— 重试提示“请继续任务”会让模型再次展开长思考、再次撞上限（Run3 重试 3 次全截断）。必须提示“跳过推理直接给结论”
+- **“max_tokens 应该设多大？”** —— 锚点：官方默认（deepseek-reasoner 32K）。再按实测 reasoning_tokens 分布校准，不是拍脑袋
+- **“怎么第一时间发现这类问题？”** —— finish_reason 落日志 + 监控 completion_tokens 是否精确等于 max_tokens（撞线即告警）
+
+### 证据
+
+- `docs/failure_analysis.md` §9（五次 run 完整弧线 + 根因修正记录）
+- commit `09876e3`（finish_reason 保留 + 截断区分处理 + 32K）
+- commit `b1e468f`（Run5 成功验证）
+- Run3/4 trace：空响应轮 completion=8000 × 5；Run5 trace：全程 finish_reason 可观测、零截断
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -521,5 +615,6 @@ patch 改为 gold 风格 self 迭代器协议；镜像内 pytest 降级 7.4.4 + 
 | 三个潜伏的协议违规 | 低频路径的 bug 只能靠真实负载暴露 |
 | 从未校准的阈值 | 拍脑袋的阈值不会自己变对，观测才会告诉你真相 |
 | pydicom-1139 翻盘 | 本地通过 ≠ 官方 resolved；每个失败拆到根因，环境漂移与代码缺陷要分开归因 |
+| max_tokens 语义变化 | reasoning 思考计入上限，零输出 ≠ 模型罢工；token 计数是截断的数学指纹 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**
