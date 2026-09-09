@@ -29,7 +29,7 @@ Result artifacts
 | Signal | Current Evidence |
 | --- | --- |
 | **SWE-bench Lite official harness** | **resolved 4/8 submitted**（官方 Docker harness 判定，含 2026-08-31 pydicom-1139 翻盘重跑，[证据](../evidence/swebench_lite_official/)）|
-| **Real GitHub issues** | **3/4 resolved**（tomlkit #411/#377、packaging #938；修复语义与官方 fix commit 一致，[证据](../evidence/README.md#真实-github-issue-运行2026-09-02)）|
+| **Real GitHub issues** | **4/5 resolved**（tomlkit #411/#377、packaging #938、click #3449；修复语义与官方 fix commit 一致，[证据](../evidence/README.md#真实-github-issue-运行2026-09-02)）|
 | Tool surface | 11 tools, including safe `python_repl` |
 | Semi-real benchmark | 132 tasks; 13 representative runs all `accepted_success` with `evidence_quality: strong`（[证据](../evidence/)）|
 | Regression suite | 380 pytest passes |

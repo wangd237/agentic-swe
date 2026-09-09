@@ -1,0 +1,24 @@
+# LLM Agent Run Summary
+
+- task_id: `user_repo_i_o_operation_on_closed_file_err_20260830T065747Z`
+- run_id: `run_20260908T142128800589Z_8936`
+- final_status: `success`
+- accepted_final_status: `accepted_success`
+- agent_type: `llm`
+- policy_id: `llm_deepseek_minimal`
+- llm_provider: `openai_compatible`
+- llm_model: `deepseek-v4-flash`
+- total_tool_calls: `29`
+- incomplete_reason: `none`
+- final_phase: `final`
+- verification_strength: `full`
+- verification_level: `full_verification_success`
+- evidence_quality: `partial`
+- missing_evidence: `pre_test_failure`
+- verifier_accepted: `True`
+- risk_level: `medium`
+- evidence_scope: `full`
+- evidence_pre_exit_code: `0`
+- evidence_post_exit_code: `0`
+- evidence_official_harness_required: `False`
+- summary: 自动验证已通过，当前任务完成。

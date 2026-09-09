@@ -55,12 +55,14 @@ python scripts/run_issue_agent.py \
 | real_tomlkit_377 | python-poetry/tomlkit#377 | success / accepted_success | 32 | 496,715 | `tomlkit/items.py` |
 | real_tomlkit_381_failed | python-poetry/tomlkit#381 | incomplete（max_iterations ×2，32/48 步） | 80 | 760,720 | —（定位失败，非预算不足） |
 | real_packaging_938 | pypa/packaging#938 | success / accepted_success | 9 | 73,381 | `src/packaging/markers.py` |
+| real_click_3449 | pallets/click#3449 | success / accepted_success / full_verification | 15 | 269,155 | `src/click/testing.py` |
 
-3/4 success。修复语义均与官方 fix commit 一致（diff 形状不同，评分看行为不看形状）：
+4/5 success。修复语义均与官方 fix commit 一致（diff 形状不同，评分看行为不看形状）：
 
 - **#411**：`dumps()` 的 isinstance 判断从 `Container` 扩为 `(Container, _Item)`（官方为 `(Table, InlineTable, Container)`，`_Item` 基类覆盖更广）
 - **#377**：`is_super_table` 从“单 child 判断”改为“所有 child 均为 Table/AoT”（与官方重构方向一致）
 - **#938**：`_eval_op` 对 `extra` marker 按纯字符串比较，跳过版本解析
+- **#3449**：`CliRunner.invoke` finally 块的 `sys.stdout/stderr.flush()` 加 try/except ValueError 保护（与 click 8.4.1 官方修复同构）。此任务经历了五次 run 弧线：基线/提示式告警均探索到死 → 硬约束下发现 max_tokens 截断 bug（reasoning 思考链烧完 8000 上限被误判为“模型罢工”）→ 修复后硬约束引导模型在被拦截后自主切换到 run_tests→edit 路径完成修复。详见 `real_click_3449/` 与 [failure_analysis.md §9](../docs/failure_analysis.md)
 - **#381**（失败）：agent 两次均在 parser 侧探索，官方修复在渲染侧 `container.py`（4 处渲染点补换行）。后段重复 grep 同一符号——定位策略缺陷，加步数无用。详见 `real_tomlkit_381_failed/`
 
 回归验证：tomlkit 858 passed（其余两个独立任务的测试失败符合预期）；packaging 全量 26,952 passed, 1 skipped，零回归。

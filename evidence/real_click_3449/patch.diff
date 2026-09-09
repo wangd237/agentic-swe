@@ -1,0 +1,27 @@
+diff --git a/src/click/testing.py b/src/click/testing.py
+index cc123d4..4996f53 100644
+--- a/src/click/testing.py
++++ b/src/click/testing.py
+@@ -709,8 +709,20 @@ class CliRunner:
+                 exit_code = 1
+                 exc_info = sys.exc_info()
+             finally:
+-                sys.stdout.flush()
+-                sys.stderr.flush()
++                # A command may have closed the isolated standard streams,
++                # for example ``echo_via_pager`` when it falls back to
++                # writing through a borrowed stdout stream.  Don't let
++                # flushing the closed stream abort the invocation; captured
++                # output is still recovered from the fd capture below.
++                try:
++                    sys.stdout.flush()
++                except ValueError:
++                    pass
++
++                try:
++                    sys.stderr.flush()
++                except ValueError:
++                    pass
+ 
+                 # Stop fd capture and merge the captured bytes into
+                 # the stdout/stderr BytesIO streams. BytesIOCopy mirrors

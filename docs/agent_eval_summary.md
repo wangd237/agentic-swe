@@ -74,8 +74,9 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 | `real_tomlkit_377` | `python-poetry/tomlkit#377` | super table 空父头 | `success` | 32 | `tomlkit/items.py` | [result](../evidence/real_tomlkit_377/result.json) |
 | `real_tomlkit_381` | `python-poetry/tomlkit#381` | AoT 缺尾换行 roundtrip | `incomplete` ×2 | 32+48 | —（定位失败） | [result](../evidence/real_tomlkit_381_failed/result.json) |
 | `real_packaging_938` | `pypa/packaging#938` | extra marker 版本误解析 | `success` | 9 | `src/packaging/markers.py` | [result](../evidence/real_packaging_938/result.json) |
+| `real_click_3449` | `pallets/click#3449` | CliRunner closed file flush | `success` | 15 | `src/click/testing.py` | [result](../evidence/real_click_3449/result.json) |
 
-3/4 success，修复语义均与官方 fix commit 一致。#381 两次均在 parser 侧探索而官方修复在渲染侧，属定位策略缺陷而非预算不足（48 步版后段重复 grep 同一符号）。回归验证：tomlkit 858 passed、packaging 全量 26,952 passed 零回归。
+4/5 success，修复语义均与官方 fix commit 一致。#381 两次均在 parser 侧探索而官方修复在渲染侧，属定位策略缺陷而非预算不足（48 步版后段重复 grep 同一符号）。#3449 经历五次 run 弧线（基线/提示告警探索到死 → 硬约束暴露 max_tokens 截断 bug → 修复后硬约束引导成功），详见 [failure_analysis.md §9](failure_analysis.md#9-硬约束验证机制生效但模型以空响应罢工2026-09-08)。回归验证：tomlkit 858 passed、packaging 全量 26,952 passed 零回归、click tests/test_testing.py 全过。
 
 ## 3. 汇总指标
 

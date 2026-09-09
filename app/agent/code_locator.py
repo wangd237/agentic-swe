@@ -193,10 +193,15 @@ def rank_candidates(
         score_path(path, score=3.0, reason="task_hint", evidence="Task listed this file as a hint.")
 
     for candidate in existing_candidates or []:
+        # 不重复包裹 existing: 前缀——每次刷新都会重走这里，叠加前缀会让
+        # reason 字符串互不相同，既污染 trace 可读性也让 add() 的去重失效
+        # （failure_analysis.md §1 附带小 bug，24 次叠加实测）。
+        base_reason = candidate.reason or "candidate"
+        reason = base_reason if base_reason.startswith("existing:") else f"existing:{base_reason}"
         score_path(
             candidate.relative_path,
             score=max(candidate.confidence * 3.0, 0.5),
-            reason=f"existing:{candidate.reason or 'candidate'}",
+            reason=reason,
             evidence="Existing agent state already tracked this candidate.",
         )
 
