@@ -192,7 +192,10 @@ python scripts/run_issue_agent.py --task benchmarks/tasks/<task_id>.json --polic
 
 ## 9. 当前边界
 
-这仍然是小样本结果，不应夸大成完整 benchmark 通过率。下一步应该补：
+这仍然是小样本结果，不应夸大成完整 benchmark 通过率（4/5 real issues + 4/8 SWE-bench Lite）。
 
-- 当前尚未覆盖 `failed_tests` 和 `unverified_patch` 两类 reason；
-- 后续如果继续补 failure taxonomy，应优先设计真实失败验证，而不是继续刷成功样本。
+> 2026-09-09 更新：本节原列出的“尚未覆盖 `failed_tests` / `unverified_patch`”缺口已过时——`failed_tests` 已有单测覆盖（`test_llm_agent_classifies_failed_tests_after_patch`）与真实 run 证据；click#3449 五次 run 弧线（4 次真实失败 + 1 次成功，见 [failure_analysis.md](failure_analysis.md)）正是“真实失败验证优先于刷成功样本”的实践。当前真实边界：
+
+1. **单任务弧线 ≠ 泛化证据**：click#3449 证明了“硬约束 + max_tokens 修复”的因果链，但只有一个任务。硬约束是否泛化，需第二个有失败测试锚点的 issue 验证。
+2. **`unverified_patch` 缺独立真实 run**：分类逻辑有单测覆盖（`test_llm_agent_classifies_max_iterations_with_unverified_patch`），但尚无真实 run 落在该分支——它是五类 incomplete\_reason 中唯一没有真实产物的。
+3. **小样本性质未变**：上述数字仍是小样本，结论应表述为“能力快照”而非“通过率”。
