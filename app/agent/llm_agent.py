@@ -15,36 +15,21 @@ from app.agent.code_locator import rank_candidates
 from app.agent.llm_client import OpenAICompatibleChatClient
 from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.agent.llm_context import AgentContextMixin
+from app.agent.llm_finalization import AgentFinalizationMixin
 from app.agent.llm_prompts import build_system_prompt, build_user_prompt
 from app.agent.llm_tool_helpers import AgentToolMixin
+from app.agent.llm_verification import execute_auto_verification
 from app.agent.memory import AgentState, FailureSignature
 from app.agent.policy import load_policy_config
 from app.agent.reflector import build_reflection_message, reflect_after_failed_verification
-from app.agent.run_metrics import compute_agent_run_metrics
-from app.agent.strategy_memory import (
-    append_strategy_memory,
-    distill_strategy_memory_entry,
-    format_strategy_memory_hints,
-    retrieve_strategy_memories,
-)
+from app.agent.strategy_memory import format_strategy_memory_hints, retrieve_strategy_memories
 from app.agent.tool_definitions import read_only_tool_names
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
 from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
-from app.agent.verification import (
-    adjust_final_status_for_verification,
-    build_targeted_pytest_command,
-    initial_verification_strength,
-    strength_after_test,
-)
-from app.agent.verifier import (
-    accepted_final_status_from_report,
-    build_verification_evidence,
-    build_verifier_report,
-)
+from app.agent.verification import initial_verification_strength, strength_after_test
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
-from app.runtime.logger import write_json, write_text
-from app.schemas.result_schema import Result
+from app.runtime.logger import write_json
 from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
 
@@ -78,7 +63,7 @@ EDIT_RECOVERY_MESSAGE = (
 )
 
 
-class LLMCodeAgent(AgentContextMixin, AgentToolMixin, BaseAgent):
+class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, BaseAgent):
     """基于工具调用循环的最小 coding agent。"""
 
     def __init__(
@@ -385,7 +370,6 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, BaseAgent):
         ]
 
         final_summary = ""
-        final_status = "incomplete"
         last_test_exit_code: int | None = None
         last_test_summary = ""
         pre_test_exit_code: int | None = None
@@ -710,193 +694,43 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, BaseAgent):
                 block=block,
             )
 
-        def run_immediate_auto_verification() -> str:
+        def apply_auto_verification(source: str) -> str:
             nonlocal latest_failure_summary
             nonlocal last_test_exit_code, last_test_summary
             nonlocal post_test_exit_code, post_test_summary
             nonlocal verified_generation, pending_auto_verification
             nonlocal last_full_verified_generation, last_full_verified_exit_code
 
-            diff_input = {"source": "immediate_auto_verification"}
-            diff_started_at = perf_counter()
-            diff_result_for_model = tool_executor.execute("show_diff", diff_input)
-            diff_duration_sec = round(perf_counter() - diff_started_at, 4)
-            if diff_result_for_model.get("ok"):
-                agent_state.remember_diff_observed()
-            self._append_tool_trace_step(
+            outcome = execute_auto_verification(
+                agent=self,
+                source=source,
+                tool_executor=tool_executor,
+                task=task,
                 trace=trace,
-                state=agent_state,
-                tool_name="show_diff",
-                tool_input=diff_input,
-                tool_result=diff_result_for_model,
-                duration_sec=diff_duration_sec,
-                decision="写入成功后立即查看 diff，减少模型单独决策验证步骤。",
-            )
-
-            targeted_result_for_model: dict[str, Any] | None = None
-            targeted_command = build_targeted_pytest_command(
-                base_command=task.test_command,
-                failure_summary=latest_failure_summary,
-            )
-            if targeted_command:
-                targeted_input = {
-                    "timeout_sec": 120,
-                    "command": targeted_command,
-                    "verification_scope": "targeted",
-                    "source": "immediate_auto_verification",
-                }
-                targeted_started_at = perf_counter()
-                previous_test_command = tool_executor.test_command
-                tool_executor.test_command = targeted_command
-                try:
-                    targeted_result_for_model = tool_executor.execute("run_tests", targeted_input)
-                finally:
-                    tool_executor.test_command = previous_test_command
-                targeted_duration_sec = round(perf_counter() - targeted_started_at, 4)
-                self._append_tool_trace_step(
-                    trace=trace,
-                    state=agent_state,
-                    tool_name="run_tests",
-                    tool_input=targeted_input,
-                    tool_result=targeted_result_for_model,
-                    duration_sec=targeted_duration_sec,
-                    decision="写入成功后立即运行失败节点的 targeted test。",
-                )
-                agent_state.verification_strength = strength_after_test(
-                    current=agent_state.verification_strength,
-                    exit_code=targeted_result_for_model.get("data", {}).get("exit_code"),
-                    workspace_generation=0,
-                    command_source=str(task.metadata.get("test_command_source", "")),
-                )
-
-            tool_input = {
-                "timeout_sec": 120,
-                "verification_scope": "full",
-                "source": "immediate_auto_verification",
-            }
-            tool_started_at = perf_counter()
-            tool_result = tool_executor.execute("run_tests", tool_input)
-            tool_duration_sec = round(perf_counter() - tool_started_at, 4)
-            last_test_exit_code = tool_result.get("data", {}).get("exit_code")
-            last_test_summary = tool_result.get("summary", "")
-            post_test_exit_code = last_test_exit_code
-            post_test_summary = last_test_summary
-            verified_generation = workspace_generation
-            last_full_verified_generation = workspace_generation
-            last_full_verified_exit_code = last_test_exit_code
-            pending_auto_verification = False
-            agent_state.has_reproduction_evidence = True
-            if agent_state.reproduction_evidence_kind != "weak_static":
-                agent_state.reproduction_evidence_kind = "test"
-            record_phase_milestone(
-                "reproduce",
-                summary="立即自动 run_tests 已提供复现或验证证据。",
-                evidence={
-                    "exit_code": last_test_exit_code,
-                    "workspace_generation": workspace_generation,
-                    "source": "immediate_auto_verification",
-                },
-            )
-            agent_state.verification_strength = strength_after_test(
-                current=agent_state.verification_strength,
-                exit_code=last_test_exit_code,
+                agent_state=agent_state,
+                policy_config=policy_config,
                 workspace_generation=workspace_generation,
-                command_source=str(task.metadata.get("test_command_source", "")),
+                latest_failure_summary=latest_failure_summary,
+                last_failure_signature_before_patch=last_failure_signature_before_patch,
+                record_phase_milestone=record_phase_milestone,
+                refresh_localization_candidates=refresh_localization_candidates,
+                run_guided_failure_search=run_guided_failure_search,
+                auto_undo_after_reflection=auto_undo_after_reflection,
             )
-            failure_summary = tool_result.get("data", {}).get("failure_summary")
-            if failure_summary:
-                if last_test_exit_code not in {0, None}:
-                    run_guided_failure_search(failure_summary, source="immediate_auto_verification")
-                latest_failure_summary = failure_summary
-                agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
-                refresh_localization_candidates()
-            if last_test_exit_code not in {0, None}:
-                self._inject_context_diff_into_failure(
-                    tool_result=tool_result,
-                    diff_result=diff_result_for_model,
-                    max_chars=self.llm_config.max_tool_chars,
-                )
-            if last_test_exit_code == 0 and workspace_generation > 0:
-                record_phase_milestone(
-                    "verify",
-                    summary="立即自动 full run_tests 已通过，具备验证证据。",
-                    evidence={
-                        "exit_code": last_test_exit_code,
-                        "workspace_generation": workspace_generation,
-                        "source": "immediate_auto_verification",
-                    },
-                )
-            self._append_tool_trace_step(
-                trace=trace,
-                state=agent_state,
-                tool_name="run_tests",
-                tool_input=tool_input,
-                tool_result=tool_result,
-                duration_sec=tool_duration_sec,
-                decision="写入成功后立即运行测试，并把验证结果与写入结果同轮回喂给模型。",
-            )
+            latest_failure_summary = outcome.latest_failure_summary
+            last_test_exit_code = outcome.test_exit_code
+            last_test_summary = outcome.test_summary
+            post_test_exit_code = outcome.test_exit_code
+            post_test_summary = outcome.test_summary
+            verified_generation = outcome.verified_generation
+            pending_auto_verification = False
+            if source == "immediate_auto_verification":
+                last_full_verified_generation = outcome.verified_generation
+                last_full_verified_exit_code = outcome.test_exit_code
+            return outcome.message
 
-            auto_reflection_message = ""
-            if last_test_exit_code not in {0, None}:
-                changed_files = diff_result_for_model.get("data", {}).get("changed_files", [])
-                reflection_decision = reflect_after_failed_verification(
-                    state=agent_state,
-                    previous_failure_signature=last_failure_signature_before_patch,
-                    current_failure_signature=agent_state.failure_signature,
-                    changed_files=changed_files,
-                    max_patch_files=policy_config.max_patch_files,
-                )
-                agent_state.phase = reflection_decision.next_phase
-                auto_reflection_message = build_reflection_message(reflection_decision)
-                trace.steps.append(
-                    TraceStep(
-                        step_index=len(trace.steps) + 1,
-                        action_type="reflection",
-                        tool_name=None,
-                        tool_input={"changed_files": changed_files, "source": "immediate_auto_verification"},
-                        tool_output_summary=reflection_decision.likely_cause,
-                        observation=auto_reflection_message,
-                        decision=f"立即自动验证失败后反思，转入 {reflection_decision.next_phase} 阶段。",
-                        timestamp=self._utc_timestamp(),
-                        duration_sec=None,
-                        phase=agent_state.phase,
-                        state_snapshot=agent_state.snapshot(),
-                        evidence_ids=[
-                            f"reflection:{reflection_decision.likely_cause}",
-                            *(f"diff:{path}" for path in changed_files[:5]),
-                        ],
-                        reflection_type=reflection_decision.likely_cause,
-                        verification_strength=agent_state.verification_strength,
-                        tool_metrics=reflection_decision.model_dump(mode="json"),
-                    )
-                )
-                if reflection_decision.should_undo:
-                    undo_result = auto_undo_after_reflection(reflection_decision.likely_cause)
-                    auto_reflection_message += (
-                        "\n\nAUTO_UNDO_RESULT:\n"
-                        f"{ToolExecutor.summarize_for_model(undo_result, max_chars=self.llm_config.max_tool_chars)}"
-                    )
-
-            auto_verification_parts = [
-                (
-                    "IMMEDIATE_AUTO_VERIFICATION: 写入工具成功后，系统已立即执行 show_diff "
-                    "和 run_tests，以减少模型单独决策验证步骤。"
-                ),
-                "show_diff:\n"
-                f"{ToolExecutor.summarize_for_model(diff_result_for_model, max_chars=self.llm_config.max_tool_chars)}",
-            ]
-            if targeted_result_for_model:
-                auto_verification_parts.append(
-                    "targeted_run_tests:\n"
-                    f"{ToolExecutor.summarize_for_model(targeted_result_for_model, max_chars=self.llm_config.max_tool_chars)}"
-                )
-            auto_verification_parts.append(
-                "run_tests:\n"
-                f"{ToolExecutor.summarize_for_model(tool_result, max_chars=self.llm_config.max_tool_chars)}"
-            )
-            if auto_reflection_message:
-                auto_verification_parts.append(auto_reflection_message)
-            return "\n\n" + "\n\n".join(auto_verification_parts)
+        def run_immediate_auto_verification() -> str:
+            return apply_auto_verification("immediate_auto_verification")
 
         # 预算升级干预：轮次达 75% 且 0 写入时，注入强制总结+写 patch 指令。
         # 背景（failure_analysis.md）：click#3449 和 jsonschema#1328 两次 run 中，
@@ -1466,189 +1300,13 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, BaseAgent):
                 continue
 
             if pending_auto_verification and verified_generation != workspace_generation:
-                diff_input: dict[str, Any] = {}
-                diff_started_at = perf_counter()
-                diff_result_for_model = tool_executor.execute("show_diff", diff_input)
-                diff_duration_sec = round(perf_counter() - diff_started_at, 4)
-                if diff_result_for_model.get("ok"):
-                    agent_state.remember_diff_observed()
-                self._append_tool_trace_step(
-                    trace=trace,
-                    state=agent_state,
-                    tool_name="show_diff",
-                    tool_input=diff_input,
-                    tool_result=diff_result_for_model,
-                    duration_sec=diff_duration_sec,
-                    decision="模型停止前存在未验证改动，先查看 diff 再自动运行测试。",
-                )
-
-                targeted_result_for_model: dict[str, Any] | None = None
-                targeted_command = build_targeted_pytest_command(
-                    base_command=task.test_command,
-                    failure_summary=latest_failure_summary,
-                )
-                if targeted_command:
-                    targeted_input = {
-                        "timeout_sec": 120,
-                        "command": targeted_command,
-                        "verification_scope": "targeted",
-                    }
-                    targeted_started_at = perf_counter()
-                    previous_test_command = tool_executor.test_command
-                    tool_executor.test_command = targeted_command
-                    try:
-                        targeted_result_for_model = tool_executor.execute("run_tests", targeted_input)
-                    finally:
-                        tool_executor.test_command = previous_test_command
-                    targeted_duration_sec = round(perf_counter() - targeted_started_at, 4)
-                    self._append_tool_trace_step(
-                        trace=trace,
-                        state=agent_state,
-                        tool_name="run_tests",
-                        tool_input=targeted_input,
-                        tool_result=targeted_result_for_model,
-                        duration_sec=targeted_duration_sec,
-                        decision="模型停止前存在未验证改动，先运行失败节点的 targeted test。",
-                    )
-                    agent_state.verification_strength = strength_after_test(
-                        current=agent_state.verification_strength,
-                        exit_code=targeted_result_for_model.get("data", {}).get("exit_code"),
-                        workspace_generation=0,
-                        command_source=str(task.metadata.get("test_command_source", "")),
-                    )
-
-                tool_input = {
-                    "timeout_sec": 120,
-                    "verification_scope": "full",
-                }
-                tool_started_at = perf_counter()
-                tool_result = tool_executor.execute("run_tests", tool_input)
-                tool_duration_sec = round(perf_counter() - tool_started_at, 4)
-                last_test_exit_code = tool_result.get("data", {}).get("exit_code")
-                last_test_summary = tool_result.get("summary", "")
-                post_test_exit_code = last_test_exit_code
-                post_test_summary = last_test_summary
-                verified_generation = workspace_generation
-                pending_auto_verification = False
-                agent_state.has_reproduction_evidence = True
-                if agent_state.reproduction_evidence_kind != "weak_static":
-                    agent_state.reproduction_evidence_kind = "test"
-                record_phase_milestone(
-                    "reproduce",
-                    summary="自动 run_tests 已提供复现或验证证据。",
-                    evidence={
-                        "exit_code": last_test_exit_code,
-                        "workspace_generation": workspace_generation,
-                        "source": "auto_verification",
-                    },
-                )
-                agent_state.verification_strength = strength_after_test(
-                    current=agent_state.verification_strength,
-                    exit_code=last_test_exit_code,
-                    workspace_generation=workspace_generation,
-                    command_source=str(task.metadata.get("test_command_source", "")),
-                )
-                failure_summary = tool_result.get("data", {}).get("failure_summary")
-                if failure_summary:
-                    latest_failure_summary = failure_summary
-                    agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
-                    refresh_localization_candidates()
-                if last_test_exit_code not in {0, None}:
-                    self._inject_context_diff_into_failure(
-                        tool_result=tool_result,
-                        diff_result=diff_result_for_model,
-                        max_chars=self.llm_config.max_tool_chars,
-                    )
-                if last_test_exit_code == 0 and workspace_generation > 0:
-                    record_phase_milestone(
-                        "verify",
-                        summary="自动 full run_tests 已通过，具备验证证据。",
-                        evidence={
-                            "exit_code": last_test_exit_code,
-                            "workspace_generation": workspace_generation,
-                            "source": "auto_verification",
-                        },
-                    )
-                self._append_tool_trace_step(
-                    trace=trace,
-                    state=agent_state,
-                    tool_name="run_tests",
-                    tool_input=tool_input,
-                    tool_result=tool_result,
-                    duration_sec=tool_duration_sec,
-                    decision="模型停止前存在未验证改动，自动运行测试并把结果回喂给模型。",
-                )
-                auto_reflection_message = ""
-                if last_test_exit_code not in {0, None}:
-                    changed_files = diff_result_for_model.get("data", {}).get("changed_files", [])
-                    reflection_decision = reflect_after_failed_verification(
-                        state=agent_state,
-                        previous_failure_signature=last_failure_signature_before_patch,
-                        current_failure_signature=agent_state.failure_signature,
-                        changed_files=changed_files,
-                        max_patch_files=policy_config.max_patch_files,
-                    )
-                    agent_state.phase = reflection_decision.next_phase
-                    auto_reflection_message = build_reflection_message(reflection_decision)
-                    trace.steps.append(
-                        TraceStep(
-                            step_index=len(trace.steps) + 1,
-                            action_type="reflection",
-                            tool_name=None,
-                            tool_input={"changed_files": changed_files, "source": "auto_verification"},
-                            tool_output_summary=reflection_decision.likely_cause,
-                            observation=auto_reflection_message,
-                            decision=f"自动验证失败后反思，转入 {reflection_decision.next_phase} 阶段。",
-                            timestamp=self._utc_timestamp(),
-                            duration_sec=None,
-                            phase=agent_state.phase,
-                            state_snapshot=agent_state.snapshot(),
-                            evidence_ids=[
-                                f"reflection:{reflection_decision.likely_cause}",
-                                *(f"diff:{path}" for path in changed_files[:5]),
-                            ],
-                            reflection_type=reflection_decision.likely_cause,
-                            verification_strength=agent_state.verification_strength,
-                            tool_metrics=reflection_decision.model_dump(mode="json"),
-                        )
-                    )
-                    if reflection_decision.should_undo:
-                        undo_result = auto_undo_after_reflection(reflection_decision.likely_cause)
-                        auto_reflection_message += (
-                            "\n\nAUTO_UNDO_RESULT:\n"
-                            f"{ToolExecutor.summarize_for_model(undo_result, max_chars=self.llm_config.max_tool_chars)}"
-                        )
-                auto_verification_parts = [
-                    (
-                        "你刚才停止了，但当前 workspace 存在尚未由模型确认的改动。"
-                        "系统已自动执行 show_diff 和 run_tests。请根据下面结果继续修正，"
-                        "或者在测试通过时给出最终结论。"
-                    ),
-                    "show_diff:\n"
-                    f"{ToolExecutor.summarize_for_model(diff_result_for_model, max_chars=self.llm_config.max_tool_chars)}",
-                ]
-                if targeted_result_for_model:
-                    auto_verification_parts.append(
-                        "targeted_run_tests:\n"
-                        f"{ToolExecutor.summarize_for_model(targeted_result_for_model, max_chars=self.llm_config.max_tool_chars)}"
-                    )
-                auto_verification_parts.append(
-                    "run_tests:\n"
-                    f"{ToolExecutor.summarize_for_model(tool_result, max_chars=self.llm_config.max_tool_chars)}"
-                )
-                if auto_reflection_message:
-                    auto_verification_parts.append(auto_reflection_message)
+                verification_message = apply_auto_verification("auto_verification")
                 if can_auto_finalize_current_generation():
                     append_auto_finalize_trace("auto_verification_after_model_stop")
                     final_summary = "自动验证已通过，当前任务完成。"
                     max_iterations_reached = False
                     break
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": "\n\n".join(auto_verification_parts),
-                    }
-                )
+                messages.append({"role": "user", "content": verification_message})
                 compress_context_if_needed("auto_verification")
                 continue
 
@@ -1695,387 +1353,38 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, BaseAgent):
             break
 
         if pending_auto_verification and verified_generation != workspace_generation:
-            diff_input = {"source": "final_pending_verification"}
-            diff_started_at = perf_counter()
-            diff_result_for_model = tool_executor.execute("show_diff", {})
-            diff_duration_sec = round(perf_counter() - diff_started_at, 4)
-            if diff_result_for_model.get("ok"):
-                agent_state.remember_diff_observed()
-            self._append_tool_trace_step(
-                trace=trace,
-                state=agent_state,
-                tool_name="show_diff",
-                tool_input=diff_input,
-                tool_result=diff_result_for_model,
-                duration_sec=diff_duration_sec,
-                decision="达到最大迭代次数但仍存在未验证改动，最终兜底先查看 diff。",
-            )
+            apply_auto_verification("final_pending_verification")
 
-            tool_input = {
-                "timeout_sec": 120,
-                "verification_scope": "full",
-                "source": "final_pending_verification",
-            }
-            tool_started_at = perf_counter()
-            tool_result = tool_executor.execute("run_tests", tool_input)
-            tool_duration_sec = round(perf_counter() - tool_started_at, 4)
-            last_test_exit_code = tool_result.get("data", {}).get("exit_code")
-            last_test_summary = tool_result.get("summary", "")
-            post_test_exit_code = last_test_exit_code
-            post_test_summary = last_test_summary
-            verified_generation = workspace_generation
-            pending_auto_verification = False
-            agent_state.has_reproduction_evidence = True
-            if agent_state.reproduction_evidence_kind != "weak_static":
-                agent_state.reproduction_evidence_kind = "test"
-            record_phase_milestone(
-                "reproduce",
-                summary="最终兜底 run_tests 已提供验证证据。",
-                evidence={
-                    "exit_code": last_test_exit_code,
-                    "workspace_generation": workspace_generation,
-                    "source": "final_pending_verification",
-                },
-            )
-            agent_state.verification_strength = strength_after_test(
-                current=agent_state.verification_strength,
-                exit_code=last_test_exit_code,
-                workspace_generation=workspace_generation,
-                command_source=str(task.metadata.get("test_command_source", "")),
-            )
-            failure_summary = tool_result.get("data", {}).get("failure_summary")
-            if failure_summary:
-                latest_failure_summary = failure_summary
-                agent_state.failure_signature = FailureSignature.from_failure_summary(failure_summary)
-                refresh_localization_candidates()
-            if last_test_exit_code not in {0, None}:
-                self._inject_context_diff_into_failure(
-                    tool_result=tool_result,
-                    diff_result=diff_result_for_model,
-                    max_chars=self.llm_config.max_tool_chars,
-                )
-            if last_test_exit_code == 0 and workspace_generation > 0:
-                record_phase_milestone(
-                    "verify",
-                    summary="最终兜底 full run_tests 已通过，具备验证证据。",
-                    evidence={
-                        "exit_code": last_test_exit_code,
-                        "workspace_generation": workspace_generation,
-                        "source": "final_pending_verification",
-                    },
-                )
-            self._append_tool_trace_step(
-                trace=trace,
-                state=agent_state,
-                tool_name="run_tests",
-                tool_input=tool_input,
-                tool_result=tool_result,
-                duration_sec=tool_duration_sec,
-                decision="达到最大迭代次数但仍存在未验证改动，最终兜底运行 full tests。",
-            )
-            if last_test_exit_code not in {0, None}:
-                changed_files = diff_result_for_model.get("data", {}).get("changed_files", [])
-                reflection_decision = reflect_after_failed_verification(
-                    state=agent_state,
-                    previous_failure_signature=last_failure_signature_before_patch,
-                    current_failure_signature=agent_state.failure_signature,
-                    changed_files=changed_files,
-                    max_patch_files=policy_config.max_patch_files,
-                )
-                agent_state.phase = reflection_decision.next_phase
-                trace.steps.append(
-                    TraceStep(
-                        step_index=len(trace.steps) + 1,
-                        action_type="reflection",
-                        tool_name=None,
-                        tool_input={"changed_files": changed_files, "source": "final_pending_verification"},
-                        tool_output_summary=reflection_decision.likely_cause,
-                        observation=build_reflection_message(reflection_decision),
-                        decision=f"最终兜底验证失败后反思，转入 {reflection_decision.next_phase} 阶段。",
-                        timestamp=self._utc_timestamp(),
-                        duration_sec=None,
-                        phase=agent_state.phase,
-                        state_snapshot=agent_state.snapshot(),
-                        evidence_ids=[
-                            f"reflection:{reflection_decision.likely_cause}",
-                            *(f"diff:{path}" for path in changed_files[:5]),
-                        ],
-                        reflection_type=reflection_decision.likely_cause,
-                        verification_strength=agent_state.verification_strength,
-                        tool_metrics=reflection_decision.model_dump(mode="json"),
-                    )
-                )
-                if reflection_decision.should_undo:
-                    auto_undo_after_reflection(reflection_decision.likely_cause)
-
-        diff_result = tool_executor.execute("show_diff", {})
-        if diff_result.get("ok"):
-            agent_state.remember_diff_observed()
-        patch_text = diff_result.get("data", {}).get("diff_text", "")
-        write_text(run_paths.patch_diff_path, patch_text)
-        patch_applied = bool(diff_result.get("data", {}).get("changed_files"))
-        final_status, incomplete_reason = self._classify_final_state(
-            patch_applied=patch_applied,
+        return self._finalize_run(
+            tool_executor=tool_executor,
+            run_paths=run_paths,
+            agent_state=agent_state,
+            task=task,
+            trace=trace,
+            policy_config=policy_config,
+            started_at=started_at,
             last_test_exit_code=last_test_exit_code,
+            pre_test_exit_code=pre_test_exit_code,
+            post_test_exit_code=post_test_exit_code,
+            pre_test_summary=pre_test_summary,
+            post_test_summary=post_test_summary,
+            last_test_summary=last_test_summary,
             verified_generation=verified_generation,
             workspace_generation=workspace_generation,
             ever_used_tool=ever_used_tool,
             max_iterations_reached=max_iterations_reached,
-            model_reported_incomplete=self._model_reported_incomplete(final_summary),
-            reproduction_evidence_kind=agent_state.reproduction_evidence_kind,
-            verification_strength=agent_state.verification_strength,
-        )
-        final_status, incomplete_reason = adjust_final_status_for_verification(
-            final_status=final_status,
-            incomplete_reason=incomplete_reason,
-            verification_strength=agent_state.verification_strength,
-            patch_applied=patch_applied,
-        )
-        modified_files = diff_result.get("data", {}).get("changed_files", [])
-        observed_failure = ""
-        if latest_failure_summary:
-            failure_type = str(latest_failure_summary.get("type", "")).strip()
-            failure_message = str(latest_failure_summary.get("message", "")).strip()
-            observed_failure = ": ".join(
-                part for part in [failure_type, failure_message] if part
-            )
-        verification_evidence = build_verification_evidence(
-            patch_applied=patch_applied,
-            modified_files=modified_files,
-            verification_strength=agent_state.verification_strength,
-            test_command=task.test_command,
-            pre_test_exit_code=pre_test_exit_code,
-            post_test_exit_code=post_test_exit_code,
-            pre_test_summary=pre_test_summary,
-            post_test_summary=post_test_summary,
-            observed_failure=observed_failure,
-            source_type=task.source_type,
-            task_metadata=task.metadata,
-        )
-        verifier_report = build_verifier_report(
-            final_status=final_status,
-            verification_strength=agent_state.verification_strength,
-            patch_applied=patch_applied,
-            modified_files=modified_files,
-            pre_test_exit_code=pre_test_exit_code,
-            post_test_exit_code=post_test_exit_code,
-            source_type=task.source_type,
-            task_metadata=task.metadata,
-            verification_evidence=verification_evidence,
-        )
-        accepted_final_status = accepted_final_status_from_report(verifier_report)
-
-        duration_sec = round(perf_counter() - started_at, 4)
-        if incomplete_reason == "weak_verification":
-            trace.steps.append(
-                TraceStep(
-                    step_index=len(trace.steps) + 1,
-                    action_type="verification_audit",
-                    tool_name=None,
-                    tool_input={
-                        "final_status": final_status,
-                        "verification_strength": agent_state.verification_strength,
-                        "patch_applied": patch_applied,
-                        "verified_generation": verified_generation,
-                        "workspace_generation": workspace_generation,
-                    },
-                    tool_output_summary="最终结果缺少 full verification，已记录弱验证审计。",
-                    observation=(
-                        "VERIFICATION_AUDIT: final result is downgraded because verification "
-                        f"strength is `{agent_state.verification_strength}`, not `full`."
-                    ),
-                    decision="保留补丁结果，但禁止把弱验证报告为普通成功。",
-                    timestamp=self._utc_timestamp(),
-                    duration_sec=None,
-                    phase=agent_state.phase,
-                    state_snapshot=agent_state.snapshot(),
-                    evidence_ids=[
-                        f"verification:{agent_state.verification_strength}",
-                        "audit:weak_verification",
-                    ],
-                    reflection_type="weak_verification",
-                    verification_strength=agent_state.verification_strength,
-                    tool_metrics={
-                        "final_status": final_status,
-                        "incomplete_reason": incomplete_reason,
-                        "requires_full_verification": True,
-                    },
-                )
-            )
-        agent_state.phase = "final"
-        trace.steps.append(
-            TraceStep(
-                step_index=len(trace.steps) + 1,
-                action_type="finalize",
-                tool_name=None,
-                tool_input={},
-                tool_output_summary=final_status,
-                observation=final_summary or "LLM agent 运行结束。",
-                decision=(
-                    "根据补丁、验证强度和最终测试结果生成可审计的运行结论。"
-                ),
-                timestamp=self._utc_timestamp(),
-                duration_sec=None,
-                phase=agent_state.phase,
-                state_snapshot=agent_state.snapshot(),
-                evidence_ids=[
-                    f"final:{final_status}",
-                    f"accepted:{accepted_final_status}",
-                    f"verification:{agent_state.verification_strength}",
-                    f"verifier:{verifier_report.verification_level}",
-                ],
-                verification_strength=agent_state.verification_strength,
-                tool_metrics={
-                    "final_status": final_status,
-                    "accepted_final_status": accepted_final_status,
-                    "incomplete_reason": incomplete_reason,
-                    "patch_applied": patch_applied,
-                    "verified_generation": verified_generation,
-                    "workspace_generation": workspace_generation,
-                    "verifier_report": verifier_report.to_dict(),
-                    "verification_evidence": verification_evidence.to_dict(),
-                },
-            )
-        )
-        trace.final_status = final_status
-        trace.finished_at = self._utc_timestamp()
-        context_compression_steps = [
-            step for step in trace.steps
-            if step.action_type == "context_compression"
-        ]
-        run_metrics = compute_agent_run_metrics(
-            trace=trace,
-            final_status=final_status,
-            verification_strength=agent_state.verification_strength,
-            patch_applied=patch_applied,
-            workspace_generation=workspace_generation,
-            verified_generation=verified_generation,
-            write_before_repro_count=successful_write_before_repro_count,
-            modified_files=modified_files,
-            localization_candidate_paths=[
-                candidate.relative_path
-                for candidate in agent_state.localization_candidates
-            ],
-        )
-
-        result = Result(
-            task_id=task.task_id,
+            final_summary=final_summary,
+            latest_failure_summary=latest_failure_summary,
+            successful_write_before_repro_count=successful_write_before_repro_count,
+            code_intelligence_result=code_intelligence_result,
+            code_intelligence_backend=code_intelligence_backend,
+            llm_call_count=llm_call_count,
+            llm_total_tokens=llm_total_tokens,
+            llm_prompt_tokens=llm_prompt_tokens,
+            llm_missing_usage_count=llm_missing_usage_count,
+            llm_missing_prompt_usage_count=llm_missing_prompt_usage_count,
+            total_tool_schema_sent=total_tool_schema_sent,
+            tools_by_phase=tools_by_phase,
+            strategy_memory_path=strategy_memory_path,
             run_id=run_id,
-            final_status=final_status,
-            accepted_final_status=accepted_final_status,
-            incomplete_reason=incomplete_reason,
-            summary=final_summary or "LLM agent 运行结束。",
-            test_command=task.test_command,
-            test_exit_code=last_test_exit_code,
-            pre_test_exit_code=pre_test_exit_code,
-            post_test_exit_code=post_test_exit_code,
-            pre_test_summary=pre_test_summary,
-            post_test_summary=post_test_summary,
-            test_summary=last_test_summary or final_summary or "",
-            patch_applied=patch_applied,
-            patch_summary=diff_result.get("summary", ""),
-            modified_files=modified_files,
-            duration_sec=duration_sec,
-            tool_stats={
-                "policy_id": policy_config.policy_id,
-                "agent_type": policy_config.agent_type,
-                "llm_provider": self.llm_config.provider,
-                "llm_model": self.llm_config.model,
-                "total_tool_calls": trace.total_tool_calls,
-                "max_iterations": self.llm_config.max_iterations,
-                "max_iterations_reached": max_iterations_reached,
-                "workspace_generation": workspace_generation,
-                "verified_generation": verified_generation,
-                "incomplete_reason": incomplete_reason,
-                "accepted_final_status": accepted_final_status,
-                "context_compression_count": len(context_compression_steps),
-                "final_phase": agent_state.phase,
-                "verification_strength": agent_state.verification_strength,
-                "verifier_report": verifier_report.to_dict(),
-                "verification_evidence": verification_evidence.to_dict(),
-                "write_before_repro_count": successful_write_before_repro_count,
-                "localization_candidate_count": len(agent_state.localization_candidates),
-                "code_intelligence": code_intelligence_result.to_dict(),
-                "llm_usage": {
-                    "call_count": llm_call_count,
-                    "total_tokens": llm_total_tokens,
-                    "prompt_tokens": llm_prompt_tokens,
-                    "missing_usage_count": llm_missing_usage_count,
-                    "missing_prompt_usage_count": llm_missing_prompt_usage_count,
-                },
-                "tool_routing": {
-                    "schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
-                    "total_tool_schema_sent": total_tool_schema_sent,
-                    "avg_tool_schema_count": round(
-                        total_tool_schema_sent / llm_call_count,
-                        2,
-                    ) if llm_call_count else 0.0,
-                    "tools_by_phase": tools_by_phase,
-                },
-                "agent_core_metrics": run_metrics.to_dict(),
-                "strategy_memory_path": str(strategy_memory_path),
-                "verification_records": {
-                    "pre": {
-                        "exit_code": pre_test_exit_code,
-                        "summary": pre_test_summary,
-                    },
-                    "post": {
-                        "exit_code": post_test_exit_code,
-                        "summary": post_test_summary,
-                    },
-                },
-            },
-            recommended_files=trace.read_files[:],
-            verifier_report=verifier_report.to_dict(),
-            verification_evidence=verification_evidence.to_dict(),
         )
-
-        memory_entry = distill_strategy_memory_entry(
-            state=agent_state,
-            trace=trace,
-            result=result,
-            trace_path=run_paths.trace_json_path,
-            result_path=run_paths.result_json_path,
-        )
-        append_strategy_memory(strategy_memory_path, memory_entry)
-
-        code_intelligence_backend.cleanup()
-
-        write_json(run_paths.trace_json_path, trace)
-        write_json(run_paths.result_json_path, result)
-        write_text(
-            run_paths.summary_md_path,
-            (
-                "# LLM Agent Run Summary\n\n"
-                f"- task_id: `{task.task_id}`\n"
-                f"- run_id: `{run_id}`\n"
-                f"- final_status: `{final_status}`\n"
-                f"- accepted_final_status: `{accepted_final_status}`\n"
-                f"- agent_type: `{policy_config.agent_type}`\n"
-                f"- policy_id: `{policy_config.policy_id}`\n"
-                f"- llm_provider: `{self.llm_config.provider}`\n"
-                f"- llm_model: `{self.llm_config.model}`\n"
-                f"- total_tool_calls: `{trace.total_tool_calls}`\n"
-                f"- incomplete_reason: `{incomplete_reason or 'none'}`\n"
-                f"- final_phase: `{agent_state.phase}`\n"
-                f"- verification_strength: `{agent_state.verification_strength}`\n"
-                f"- verification_level: `{verifier_report.verification_level}`\n"
-                f"- evidence_quality: `{verifier_report.evidence_quality}`\n"
-                f"- missing_evidence: `{', '.join(verifier_report.missing_evidence) or 'none'}`\n"
-                f"- verifier_accepted: `{verifier_report.accepted}`\n"
-                f"- risk_level: `{verifier_report.risk_level}`\n"
-                f"- evidence_scope: `{verification_evidence.verification_scope}`\n"
-                f"- evidence_pre_exit_code: `{verification_evidence.pre_test.get('exit_code')}`\n"
-                f"- evidence_post_exit_code: `{verification_evidence.post_test.get('exit_code')}`\n"
-                f"- evidence_official_harness_required: `{verification_evidence.official_harness.get('required')}`\n"
-                f"- summary: {final_summary or '无'}\n"
-            ),
-        )
-
-        return {
-            "task": task.to_dict(),
-            "result": result.to_dict(),
-            "trace": trace.to_dict(),
-            "run_paths": run_paths.to_dict(),
-        }
-
