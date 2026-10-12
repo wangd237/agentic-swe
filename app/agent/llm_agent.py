@@ -15,8 +15,13 @@ from app.agent.code_locator import rank_candidates
 from app.agent.llm_client import OpenAICompatibleChatClient
 from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.agent.llm_context import AgentContextMixin
+from app.agent.exploration import ExplorationMonitor
 from app.agent.llm_finalization import AgentFinalizationMixin
-from app.agent.llm_prompts import build_system_prompt, build_user_prompt
+from app.agent.llm_prompts import (
+    EXPLORATION_CHECKPOINT_MESSAGE,
+    build_system_prompt,
+    build_user_prompt,
+)
 from app.agent.llm_tool_helpers import AgentToolMixin
 from app.agent.llm_verification import execute_auto_verification
 from app.agent.memory import AgentState, FailureSignature
@@ -64,207 +69,7 @@ EDIT_RECOVERY_MESSAGE = (
 )
 
 
-<<<<<<< HEAD
-class OpenAICompatibleChatClient:
-    """OpenAI-compatible Chat Completions 轻量适配器。"""
-
-    def __init__(self, llm_config: LLMConfig | None = None) -> None:
-        self.llm_config = llm_config or DEFAULT_LLM_CONFIG
-        self._client: Any | None = None
-
-    def _ensure_client(self) -> Any:
-        if self._client is not None:
-            return self._client
-
-        api_key = self.llm_config.require_api_key()
-        try:
-            from openai import OpenAI
-        except ImportError as error:
-            raise RuntimeError(
-                "未安装 `openai` 依赖，无法运行 OpenAI-compatible LLM agent。"
-            ) from error
-
-        self._client = OpenAI(
-            api_key=api_key,
-            base_url=self.llm_config.resolve_base_url(),
-            timeout=self.llm_config.timeout_sec,
-            max_retries=self.llm_config.client_max_retries,
-        )
-        return self._client
-
-    @staticmethod
-    def _tools_to_openai(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [
-            {
-                "type": "function",
-                "function": {
-                    "name": tool["name"],
-                    "description": tool.get("description", ""),
-                    "parameters": tool.get("input_schema", {"type": "object"}),
-                },
-            }
-            for tool in tools
-        ]
-
-    @staticmethod
-    def _messages_to_openai(
-        *,
-        system_prompt: str,
-        messages: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        converted: list[dict[str, Any]] = [
-            {"role": "system", "content": system_prompt},
-        ]
-        for message in messages:
-            role = message.get("role", "user")
-            content = message.get("content", "")
-            if isinstance(content, str):
-                converted.append({"role": role, "content": content})
-                continue
-
-            if role == "assistant":
-                text_parts: list[str] = []
-                tool_calls: list[dict[str, Any]] = []
-                for block in content:
-                    if block.get("type") == "text" and block.get("text"):
-                        text_parts.append(block["text"])
-                    if block.get("type") == "tool_use":
-                        tool_calls.append(
-                            {
-                                "id": block.get("id", ""),
-                                "type": "function",
-                                "function": {
-                                    "name": block.get("name", ""),
-                                    "arguments": json.dumps(
-                                        block.get("input", {}),
-                                        ensure_ascii=False,
-                                    ),
-                                },
-                            }
-                        )
-                converted.append(
-                    {
-                        "role": "assistant",
-                        "content": "\n".join(text_parts) or None,
-                        **({"tool_calls": tool_calls} if tool_calls else {}),
-                    }
-                )
-                # 协议兑底：content=None 且无 tool_calls 的 assistant 消息
-                # 违反 OpenAI 协议（'content or tool_calls must be set'）。
-                # 无论上游如何构造，这里保证不发出非法消息。
-                if converted[-1]["content"] is None and "tool_calls" not in converted[-1]:
-                    converted[-1]["content"] = "(empty assistant response)"
-                continue
-
-            for block in content:
-                if block.get("type") != "tool_result":
-                    continue
-                converted.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": block.get("tool_use_id", ""),
-                        "content": block.get("content", ""),
-                    }
-                )
-        return converted
-
-    @staticmethod
-    def _usage_value(usage: Any, key: str) -> int | None:
-        if usage is None:
-            return None
-        if isinstance(usage, dict):
-            value = usage.get(key)
-        else:
-            value = getattr(usage, key, None)
-        if value is None:
-            return None
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
-
-    @classmethod
-    def _normalize_usage(cls, usage: Any) -> dict[str, int]:
-        # ADR-0002 Step 1：保留 prompt/cache 细分字段，供 token 偏差观测与缓存命中率统计。
-        # total_tokens 缺失时用 prompt+completion 兑底；细分字段缺失时省略，不臆造 0。
-        total_tokens = cls._usage_value(usage, "total_tokens")
-        prompt_tokens = cls._usage_value(usage, "prompt_tokens")
-        completion_tokens = cls._usage_value(usage, "completion_tokens")
-        if total_tokens is None and prompt_tokens is not None and completion_tokens is not None:
-            total_tokens = prompt_tokens + completion_tokens
-        normalized: dict[str, int] = {}
-        if total_tokens is not None:
-            normalized["total_tokens"] = total_tokens
-        if prompt_tokens is not None:
-            normalized["prompt_tokens"] = prompt_tokens
-        if completion_tokens is not None:
-            normalized["completion_tokens"] = completion_tokens
-        # DeepSeek 扩展字段：命中缓存的输入 token 与未命中的输入 token。
-        cache_hit = cls._usage_value(usage, "prompt_cache_hit_tokens")
-        cache_miss = cls._usage_value(usage, "prompt_cache_miss_tokens")
-        if cache_hit is not None:
-            normalized["prompt_cache_hit_tokens"] = cache_hit
-        if cache_miss is not None:
-            normalized["prompt_cache_miss_tokens"] = cache_miss
-        return normalized
-
-    @staticmethod
-    def _normalize_openai_response(response: Any) -> dict[str, Any]:
-        message = response.choices[0].message
-        content: list[dict[str, Any]] = []
-        if message.content:
-            content.append({"type": "text", "text": message.content})
-        for tool_call in message.tool_calls or []:
-            try:
-                tool_input = json.loads(tool_call.function.arguments or "{}")
-            except json.JSONDecodeError:
-                tool_input = {}
-            content.append(
-                {
-                    "type": "tool_use",
-                    "id": tool_call.id,
-                    "name": tool_call.function.name,
-                    "input": tool_input,
-                }
-            )
-        normalized = {"content": content}
-        # finish_reason 可观测性（failure_analysis.md §9 根因修正）：
-        # "length" = 输出被 max_tokens 截断（reasoning 模型思考链烧完上限时
-        # content 为空，表象与主动停止不可区分）；"stop" = 正常结束。
-        # 丢弃该字段曾导致把截断误判为“模型罢工”。
-        finish_reason = getattr(response.choices[0], "finish_reason", None)
-        if finish_reason:
-            normalized["finish_reason"] = str(finish_reason)
-        usage = OpenAICompatibleChatClient._normalize_usage(getattr(response, "usage", None))
-        if usage:
-            normalized["usage"] = usage
-        return normalized
-
-    def create_message(
-        self,
-        *,
-        system_prompt: str,
-        messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        client = self._ensure_client()
-        response = client.chat.completions.create(
-            model=self.llm_config.model,
-            temperature=self.llm_config.temperature,
-            max_tokens=self.llm_config.max_output_tokens,
-            messages=self._messages_to_openai(
-                system_prompt=system_prompt,
-                messages=messages,
-            ),
-            tools=self._tools_to_openai(tools),
-        )
-        return self._normalize_openai_response(response)
-
-
-class LLMCodeAgent(BaseAgent):
-=======
 class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, BaseAgent):
->>>>>>> 0513501deb5b0cf2d74acac9e7634e39e3d408b0
     """基于工具调用循环的最小 coding agent。"""
 
     def __init__(
@@ -587,8 +392,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         write_history: list[dict[str, str]] = []
         anti_loop_injected = False
         successful_write_before_repro_count = 0
-        consecutive_reads = 0
-        read_throttle_injected = False
+        exploration_monitor = ExplorationMonitor()
         last_failure_signature_before_patch: FailureSignature | None = None
         recorded_phase_milestones = {"understand"}
         llm_call_count = 0
@@ -1171,6 +975,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                     tool_input = executed["tool_input"]
                     tool_result = executed["tool_result"]
                     tool_duration_sec = executed["tool_duration_sec"]
+                    exploration_monitor.observe(tool_name, tool_input, tool_result)
 
                     spill_path = _spill_large_tool_result(
                         tool_result,
@@ -1179,7 +984,6 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                     )
 
                     if tool_name == "read_file" and tool_result.get("ok"):
-                        consecutive_reads += 1
                         relative_path = tool_result["data"].get("relative_path", "")
                         if relative_path and relative_path not in trace.read_files:
                             trace.read_files.append(relative_path)
@@ -1284,8 +1088,6 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                                 max_chars=self.llm_config.max_tool_chars,
                             )
                     if tool_name in {"write_file", "edit_file", "undo"} and tool_result.get("ok"):
-                        consecutive_reads = 0
-                        read_throttle_injected = False
                         if tool_name in {"write_file", "edit_file"} and not agent_state.has_reproduction_evidence:
                             successful_write_before_repro_count += 1
                         if tool_name in {"write_file", "edit_file"}:
@@ -1513,62 +1315,41 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 )
                 compress_context_if_needed("tool_results")
 
-                # 读操作节流：连续 5 次读取后注入提醒，打断「读惯性」。
-                # 与写入侧反循环检测对称：探索侧也需要干预机制。
-                # 背景：click#3449 Run 6 在 kimi 下 5 次读被拦后仍不写——
-                # 在硬约束兜底之前，软打断可以更早推动模型从「读」切换到「写」。
-                READ_THROTTLE_THRESHOLD = 5
-                if consecutive_reads >= READ_THROTTLE_THRESHOLD and not read_throttle_injected:
-                    read_throttle_injected = True
-                    throttle_message = (
-                        "\n\n[SYSTEM · READ THROTTLE] You have read more than 5 consecutive code segments. "
-                        "If the traceback already points to the error location, write the minimal fix with edit_file NOW — "
-                        "do not keep reading. Editing mistakes can be undone with undo, the cost is near zero. "
-                        "If you need more information, use run_tests or python_repl to verify your hypothesis "
-                        "instead of reading more files."
-                    )
-                    if messages and messages[-1].get("role") == "user":
-                        last_content = messages[-1].get("content")
-                        if isinstance(last_content, str):
-                            messages[-1] = {
-                                "role": "user",
-                                "content": last_content + throttle_message,
-                            }
-                        elif isinstance(last_content, list):
-                            messages[-1] = {
-                                "role": "user",
-                                "content": [
-                                    *last_content,
-                                    {"type": "text", "text": throttle_message.strip()},
-                                ],
-                            }
-                    else:
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": throttle_message.strip(),
-                            }
-                        )
+                if (
+                    workspace_generation == 0
+                    and not agent_state.budget_escalation_active
+                    and exploration_monitor.should_trigger()
+                ):
+                    exploration_monitor.mark_triggered()
+                    checkpoint_message = EXPLORATION_CHECKPOINT_MESSAGE
+                    # The OpenAI adapter only forwards tool_result blocks in a user
+                    # content list. Attach the checkpoint to the final tool result so
+                    # the model actually sees it and tool-call pairing stays intact.
+                    model_results = messages[-1]["content"]
+                    if isinstance(model_results, list):
+                        for block in reversed(model_results):
+                            if block.get("type") == "tool_result":
+                                block["content"] += "\n\n" + checkpoint_message
+                                break
                     trace.steps.append(
                         TraceStep(
                             step_index=len(trace.steps) + 1,
-                            action_type="read_throttle",
+                            action_type="exploration_checkpoint",
                             tool_name=None,
                             tool_input={
-                                "consecutive_reads": consecutive_reads,
-                                "threshold": READ_THROTTLE_THRESHOLD,
+                                "consecutive_calls": exploration_monitor.consecutive_calls,
+                                "repeated_calls": exploration_monitor.repeated_calls,
                             },
-                            tool_output_summary=f"连续读取 {consecutive_reads} 次，注入节流提醒。",
-                            observation=throttle_message,
-                            decision="打断模型的读惯性，推动从探索切换到行动。",
+                            tool_output_summary="探索连续进行且出现重复或过长，触发假设复盘。",
+                            observation=checkpoint_message,
+                            decision="让模型基于已有证据决定修改、验证或切换定位方向。",
                             timestamp=self._utc_timestamp(),
-                            duration_sec=None,
                             phase=agent_state.phase,
                             state_snapshot=agent_state.snapshot(),
                             verification_strength=agent_state.verification_strength,
                             tool_metrics={
-                                "consecutive_reads": consecutive_reads,
-                                "threshold": READ_THROTTLE_THRESHOLD,
+                                "consecutive_calls": exploration_monitor.consecutive_calls,
+                                "repeated_calls": exploration_monitor.repeated_calls,
                             },
                         )
                     )
