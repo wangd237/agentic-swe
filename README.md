@@ -353,24 +353,7 @@ scripts/        # 60+ CLI 脚本：单任务运行、批量评测、本地/GitHu
 
 Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subprocess sandboxed test execution · JSON Trace · CLI
 
-## 文档导航
 
-**推荐阅读顺序**：
-
-1. 2 分钟概要：[docs/one_pager.md](docs/one_pager.md)
-2. 开发踩坑复盘（War Stories，最能体现工程能力）：[docs/war_stories.md](docs/war_stories.md)
-3. 失败归因：[docs/failure_analysis.md](docs/failure_analysis.md)
-4. 评测摘要：[docs/agent_eval_summary.md](docs/agent_eval_summary.md)
-5. 案例分析：[docs/agent_case_studies.md](docs/agent_case_studies.md)
-
-**深入阅读**：
-
-- 架构说明：[docs/architecture.md](docs/architecture.md)
-- Agent 概览：[docs/agent_overview.md](docs/agent_overview.md)
-- Agent Core 能力地图：[docs/agent_core_capability_map.md](docs/agent_core_capability_map.md)
-- 任务注册表：[docs/benchmark_registry.md](docs/benchmark_registry.md)
-- 当前任务状态：[currentTask.md](currentTask.md)
-- 历史过程文档（18 篇，已归档）：[docs/archive/](docs/archive/)
 
 ## License
 

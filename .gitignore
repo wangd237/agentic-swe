@@ -54,4 +54,4 @@ benchmarks/repos/packaging_marker_extra_repo/
 logs/run_*.log
 
 # 面试准备私有文档（不上传）
-docs/core_modules_deep_dive.md
+docs/

@@ -717,6 +717,69 @@ GRAPH (49 steps, 16 LLM calls):
 
 ---
 
+## 案例 14 <a name="案例-14"></a>
+
+## spill 收益为零的实证：给不存在的问题修路
+
+**时间**：2026-09-09 ｜ **对齐 Claude Code 的前置验证** ｜ **结论：不落地 read_spill**
+
+### 背景
+
+想对齐 Claude Code 的 `applyToolResultBudget`（工具大输出落盘 + 摘要回喂 + 模型可自行读回完整内容），设计了 read_spill 方案。落地前先验证一个第一性问题：**过往 run 里，模型是否真的因为拿不到完整大输出而付出了额外成本？** 如果答案是否定的，加 read_spill 就是在给不存在的问题修路。
+
+### 验证方法（trace 级全量审计）
+
+扫全部 185 个 trace.json，分离出 73 个 LLM agent run（剔除 112 个 rule-based），检查四类证据：
+
+1. 真实 spill 文件的工具分布与大小
+2. 61 次手动 run_tests 失败的信息充分性
+3. 失败后模型的行为序列（重跑？搜索惯性？）
+4. 摘要截断是否真实发生（`<truncated>` 出现次数）
+
+### 三个实证发现
+
+**发现 1：spill 从未在高价值输出上触发——run_tests 的完整输出根本到不了 spill 层。**
+
+4 个真实 spill 文件全是 `list_files`（43KB×3、16KB×1），零个 run_tests。原因在 `run_tests.py`：工具内部已做结构化消化——`--tb=short` 压缩 pytest 输出 + `_build_failure_summary` 提取 failed_tests/locations/exception/possible_symbols + `output_excerpt` 只留尾部 1200 字符。**大输出在工具层就被吃了，轮不到 spill。**
+
+**发现 2：模型拿到的失败信息是充分的——没有"信息不足→重跑"的证据。**
+
+- 61 次失败后，0 次同命令连续重跑，0 次"失败后 5 步内 3+ 次搜索"的探索惯性
+- 失败后的主流行为序列是 `llm_response → planning → read_file/edit_file`（17+16+6 次）——**模型看完失败信息直接行动**
+- 摘要中 `<truncated>` 出现 0 次——过往 run 的失败输出都没触发 1200 字符截断
+
+**发现 3：唯一触发 spill 的 list_files，恰恰是 read_spill 最没价值可读的东西。**
+
+模型需要的是"目录结构概览"，摘要（count + 路径）已足够。给它开一扇门去读 43KB 文件列表，信息增量趋近于零。
+
+### 结论
+
+> "read_spill 要服务的场景（模型需要完整大输出但拿不到）在当前工具链里不存在。run_tests 已在工具层结构化压缩（--tb=short + failure_summary + 1200 字符 excerpt），模型决策不依赖完整输出（61 次失败 0 重跑 0 搜索惯性）；剩下的 spill 全在低价值输出上。**加上去是给不存在的问题修路。**"
+
+与 Claude Code 对齐不能照搬的原因：Claude Code 让模型自己读 /tmp 原始文件，是因为它**没有**工具层结构化摘要层。本项目已在更靠前的位置把信息压缩好了——spill 是"设计对了但从未被需要"的兜底层。
+
+### 顺方向发现（下一轮迭代入口）
+
+1. **output_excerpt 只留尾部 1200 字符**——大仓库、长 traceback 的失败，中间关键帧可能被截断。当前 run 小没触发，规模化后是下一个风险点。留意方向不是"让模型读全文"，而是"excerpt 是否该智能定位到 traceback 中段"
+2. **list_files 不该 spill**——低价值又占审计空间，可在 spill 过滤里直接排除
+3. 真正的信息风险在**规模化后的长输出**，不在现在的短输出——等真实案例触发再设计，而不是为假设建机制
+
+### 与案例 10 对照
+
+| 维度 | 案例 10（pydicom 翻盘） | 本案例（spill 收益为零） |
+|---|---|---|
+| 动作 | 发现根因后修复 | 验证后选择不修 |
+| 决策类型 | 做正确的事 | **不做不必要的事** |
+| 共同点 | 都先归因，再动手 | 都先归因，再动手 |
+
+### 证据
+
+- 分析方法：脚本扫描 `logs/trajectories/**/trace.json`（185 个），分离 LLM 路径（73 个）
+- spill 文件：`logs/trajectories/real_tomlkit_377/run_*/tool_outputs/step_007_list_files.json` 等 4 个，全部 list_files
+- run_tests 结构化压缩：`app/tools/run_tests.py` `_build_failure_summary` / `_build_output_excerpt`（OUTPUT_EXCERPT_MAX_CHARS=1200）
+
+---
+
 ## 附：这些故事的共同模式
 
 | 案例 | 教训 |
@@ -734,5 +797,6 @@ GRAPH (49 steps, 16 LLM calls):
 | max_tokens 语义变化 | reasoning 思考计入上限，零输出 ≠ 模型罢工 |
 | tree-sitter 断言崩溃 | 外部工具的上游 bug 会丢失实验数据点——先 diagnose |
 | read_file 死循环 | 确定性约束层能缩短模型行为退化的破坏半径 |
+| spill 收益为零 | 对齐外部方案前先验证场景是否存在；不存在就选择不落地 |
 
 一句话总结这个项目的开发方法论：**每个异常都值得一条 trace；每个修复都要能回答"怎么证明修好了"；每个"模型不行"的结论都要先排除"代码有 bug"。**
