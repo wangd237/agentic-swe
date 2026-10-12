@@ -26,12 +26,8 @@ from app.agent.strategy_memory import format_strategy_memory_hints, retrieve_str
 from app.agent.tool_definitions import read_only_tool_names
 from app.agent.tool_executor import ToolExecutor
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
-from app.agent.tool_router import build_tools_for_state, tool_names
-from app.agent.verification import (
-    adjust_final_status_for_verification,
-    initial_verification_strength,
-    strength_after_test,
-)
+from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
+from app.agent.verification import initial_verification_strength, strength_after_test
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json
 from app.schemas.task_schema import load_task
