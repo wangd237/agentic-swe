@@ -16,6 +16,7 @@ from app.agent.llm_client import OpenAICompatibleChatClient
 from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.agent.llm_context import AgentContextMixin
 from app.agent.llm_prompts import build_system_prompt, build_user_prompt
+from app.agent.llm_tool_helpers import AgentToolMixin
 from app.agent.memory import AgentState, FailureSignature
 from app.agent.policy import load_policy_config
 from app.agent.reflector import build_reflection_message, reflect_after_failed_verification
@@ -28,7 +29,6 @@ from app.agent.strategy_memory import (
 )
 from app.agent.tool_definitions import read_only_tool_names
 from app.agent.tool_executor import ToolExecutor
-from app.agent.llm_tool_helpers import AgentToolMixin
 from app.agent.tool_policy import ToolPolicy, next_phase_after_tool
 from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
 from app.agent.verification import (
