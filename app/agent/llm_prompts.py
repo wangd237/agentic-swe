@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from app.schemas.task_schema import Task
 
-
 EXPLORATION_CHECKPOINT_MESSAGE = (
     "[EXPLORATION_CHECKPOINT] Several read/search calls have passed without a test "
     "or an edit. Before exploring further, briefly state: "

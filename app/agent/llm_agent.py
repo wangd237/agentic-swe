@@ -12,10 +12,10 @@ from typing import Any
 from app.agent.base import BaseAgent
 from app.agent.code_intelligence import build_code_intelligence_backend
 from app.agent.code_locator import rank_candidates
+from app.agent.exploration import ExplorationMonitor
 from app.agent.llm_client import OpenAICompatibleChatClient
 from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.agent.llm_context import AgentContextMixin
-from app.agent.exploration import ExplorationMonitor
 from app.agent.llm_finalization import AgentFinalizationMixin
 from app.agent.llm_prompts import (
     EXPLORATION_CHECKPOINT_MESSAGE,
