@@ -370,7 +370,6 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         ]
 
         final_summary = ""
-        final_status = "incomplete"
         last_test_exit_code: int | None = None
         last_test_summary = ""
         pre_test_exit_code: int | None = None
