@@ -53,7 +53,7 @@ python scripts/run_issue_agent.py \
 |---|---|---|---:|---:|---|
 | real_tomlkit_411 | python-poetry/tomlkit#411 | success / accepted_success | 25 | 388,925 | `tomlkit/api.py` |
 | real_tomlkit_377 | python-poetry/tomlkit#377 | success / accepted_success | 32 | 496,715 | `tomlkit/items.py` |
-| real_tomlkit_381_failed | python-poetry/tomlkit#381 | incomplete（max_iterations ×2，32/48 步） | 80 | 760,720 | —（定位失败，非预算不足） |
+| real_tomlkit_381_failed | python-poetry/tomlkit#381 | incomplete（max_iterations ×2，32/48 步） | 80 | 760,720 | —（定位失败，非预算不足；后于 2026-10-13 重跑成功，见下节） |
 | real_packaging_938 | pypa/packaging#938 | success / accepted_success | 9 | 73,381 | `src/packaging/markers.py` |
 | real_click_3449 | pallets/click#3449 | success / accepted_success / full_verification | 15 | 269,155 | `src/click/testing.py` |
 
@@ -63,9 +63,32 @@ python scripts/run_issue_agent.py \
 - **#377**：`is_super_table` 从“单 child 判断”改为“所有 child 均为 Table/AoT”（与官方重构方向一致）
 - **#938**：`_eval_op` 对 `extra` marker 按纯字符串比较，跳过版本解析
 - **#3449**：`CliRunner.invoke` finally 块的 `sys.stdout/stderr.flush()` 加 try/except ValueError 保护（与 click 8.4.1 官方修复同构）。此任务经历了五次 run 弧线：基线/提示式告警均探索到死 → 硬约束下发现 max_tokens 截断 bug（reasoning 思考链烧完 8000 上限被误判为“模型罢工”）→ 修复后硬约束引导模型在被拦截后自主切换到 run_tests→edit 路径完成修复。详见 `real_click_3449/` 与 [failure_analysis.md §9](../docs/failure_analysis.md)
-- **#381**（失败）：agent 两次均在 parser 侧探索，官方修复在渲染侧 `container.py`（4 处渲染点补换行）。后段重复 grep 同一符号——定位策略缺陷，加步数无用。详见 `real_tomlkit_381_failed/`
+- **#381**（2026-09-02 失败）：agent 两次均在 parser 侧探索，官方修复在渲染侧 `container.py`（4 处渲染点补换行）。后段重复 grep 同一符号——定位策略缺陷，加步数无用。详见 `real_tomlkit_381_failed/`；2026-10-13 重跑已成功，见下节。
 
 回归验证：tomlkit 858 passed（其余两个独立任务的测试失败符合预期）；packaging 全量 26,952 passed, 1 skipped，零回归。
+
+## #381 重跑补齐（2026-10-13）
+
+`real_tomlkit_381_failed/` 记录的是 2026-09-02 的定位失败。2026-10-13 在同策略（`llm_real_issue_48steps`）下重跑，成功命中渲染侧：
+
+- 模型：`deepseek-flash`（OpenAI-compatible，DeepSeek 官方端点）
+- policy：`optimization/policy_versions/llm_real_issue_48steps.json`（48 步）
+- code intelligence：`codebase-memory-mcp 0.8.1`（上次为 `binary_not_found` fallback，本次 751 文件成功索引）
+
+| Task | 来源 Issue | 状态 | 工具调用 | 耗时 | 修改文件 |
+|---|---|---|---|---|---:|---|
+| real_tomlkit_381 | python-poetry/tomlkit#381 | success / accepted_success / full_verification | 38 | 129.9 s | `tomlkit/container.py` |
+
+修复语义与官方 fix commit 同构（`container.py` 的 AoT 渲染循环补换行，覆盖 issue 描述的 round-trip 损坏）。与上次失败对比：
+
+| 维度 | 2026-09-02 | 2026-10-13 |
+|---|---|---|
+| LLM 调用 | 48（顶到 max） | 38 |
+| patch | 无 | `tomlkit/container.py` |
+| 定位侧 | parser 侧反复 grep | 渲染侧一次命中 |
+| 验证 | missing | pre 1 → post 0，full_verification_success |
+
+关键变化：graph backend 从 fallback 变为可用（提供渲染侧候选排序）、P3 阶段跳转提示 + `edit_file` 描述优化降低了写入犹豫。产物见 `real_tomlkit_381/`，失败轨迹仍保留在 `real_tomlkit_381_failed/` 作为对照。
 
 ## 说明
 

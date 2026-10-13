@@ -1,0 +1,17 @@
+diff --git a/tomlkit/container.py b/tomlkit/container.py
+index da4f2db..c66db51 100644
+--- a/tomlkit/container.py
++++ b/tomlkit/container.py
+@@ -558,6 +558,12 @@ class Container(_CustomDict):
+         _key = decode(_key)
+         for table in aot.body:
+             cur += self._render_aot_table(table, prefix=_key)
++            # A table in an array of tables may be the last item in the
++            # document and thus lack a trailing newline, but it can still be
++            # rendered before other tables (all AoT entries are grouped
++            # together), so make sure they are separated by a newline.
++            if not cur.endswith("\n"):
++                cur += "\n"
+ 
+         return cur
+ 

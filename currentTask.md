@@ -67,6 +67,8 @@ Claude Code 的 microCompact 做的是更激进的事：直接把工具结果 co
 关键结论：16 步不够，32 步是真实 issue 合理基准；#381 属定位策略缺陷，加步数无用。
 产物已归档至 `evidence/real_*`，详见 `evidence/README.md`。新增 policy：`llm_real_issue_32steps` / `llm_real_issue_48steps`。
 
+**2026-10-13 补充**：#381 在同策略（48 步）下重跑成功。上次失败的两个真实原因是 graph backend 不可用（`binary_not_found` fallback，无渲染侧候选排序）+ P3 前的写入犹豫；本次 `codebase-memory-mcp 0.8.1` 可用（751 文件索引）+ 阶段跳转提示，38 步一次命中 `tomlkit/container.py`，full_verification_success。产物 `evidence/real_tomlkit_381/`，失败轨迹保留在 `evidence/real_tomlkit_381_failed/` 作为对照。
+
 ### 不做的（审查后排除）
 
 | 原项 | 原因 |
