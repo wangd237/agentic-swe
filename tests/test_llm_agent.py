@@ -3832,3 +3832,69 @@ def test_compress_messages_never_breaks_tool_calls_pairing() -> None:
             )
         prev_role = message.get("role")
         prev_has_tool_calls = "tool_calls" in message
+
+
+def test_llm_agent_exploration_checkpoint_reaches_model(tmp_path: Path) -> None:
+    """Checkpoint should be visible in the *tool result*, not a dropped text block."""
+    repo_root = tmp_path / "repo_root"
+    benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
+    task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
+    policy_path = repo_root / "optimization" / "policy_versions" / "llm_demo.json"
+    _write_text(benchmark_repo / "demo_pkg" / "__init__.py", "")
+    _write_text(benchmark_repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    _write_json(task_path, {
+        "task_id": "task_demo",
+        "repo_name": "demo_repo",
+        "repo_path": "benchmarks/repos/demo_repo",
+        "issue_title": "demo issue",
+        "issue_text": "value() should return 1",
+        "test_command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
+        "success_criteria": "tests pass",
+        "difficulty": "easy",
+        "tags": ["demo"],
+        "target_files_hint": ["demo_pkg/app.py"],
+        "source_type": "semi_real",
+        "metadata": {},
+    })
+    _write_json(policy_path, {
+        "policy_id": "llm_demo",
+        "description": "demo",
+        "agent_type": "llm",
+        "patch_strategy": "baseline",
+        "llm_provider": "openai_compatible",
+        "pytest_additional_flags": [],
+    })
+
+    class ReadingClient:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.saw_checkpoint = False
+
+        def create_message(self, *, system_prompt: str, messages: list[dict], tools: list[dict]) -> dict:
+            self.calls += 1
+            if self.calls >= 7:
+                self.saw_checkpoint = any(
+                    "EXPLORATION_CHECKPOINT" in str(block.get("content", ""))
+                    for msg in messages if isinstance(msg.get("content"), list)
+                    for block in msg["content"] if block.get("type") == "tool_result"
+                )
+            if self.calls <= 6:
+                return {"content": [
+                    {"type": "tool_use", "id": f"r{self.calls}", "name": "read_file",
+                     "input": {"relative_path": "demo_pkg/app.py"}},
+                ]}
+            return {"content": [{"type": "text", "text": "Need more evidence."}]}
+
+    client = ReadingClient()
+    agent = LLMCodeAgent(
+        llm_config=LLMConfig(model="fake-model", max_iterations=16),
+        client=client,
+    )
+    output = agent.run(task_path=task_path, repo_root=repo_root, policy_path=policy_path)
+    checkpoints = [
+        step for step in output["trace"]["steps"]
+        if step["action_type"] == "exploration_checkpoint"
+    ]
+    assert len(checkpoints) == 1
+    assert client.saw_checkpoint
+    assert not any(step["action_type"] == "read_throttle" for step in output["trace"]["steps"])

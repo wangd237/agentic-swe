@@ -4,6 +4,16 @@ from __future__ import annotations
 
 from app.schemas.task_schema import Task
 
+EXPLORATION_CHECKPOINT_MESSAGE = (
+    "[EXPLORATION_CHECKPOINT] Several read/search calls have passed without a test "
+    "or an edit. Before exploring further, briefly state: "
+    "(1) the most likely root cause, (2) evidence supporting or contradicting it, "
+    "(3) ONE next action: make a minimal patch, run a focused verification, or "
+    "switch to a different hypothesis/subsystem. "
+    "Do not repeat a search or read that has already failed to add information. "
+    "If evidence is insufficient, verify a hypothesis instead of patching blindly."
+)
+
 
 def build_system_prompt() -> str:
     """构建系统提示词。"""
