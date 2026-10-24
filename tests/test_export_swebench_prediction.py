@@ -74,7 +74,7 @@ def test_build_prediction_row_rejects_non_swebench_task(tmp_path: Path) -> None:
     run_dir.mkdir()
     (run_dir / "patch.diff").write_text("diff --git a/demo.py b/demo.py\n", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="不是 SWE-bench Lite"):
+    with pytest.raises(RuntimeError, match="不是 SWE-bench"):
         build_prediction_row(
             task_path=task_path,
             run_dir=run_dir,
@@ -95,3 +95,17 @@ def test_build_prediction_row_rejects_empty_patch(tmp_path: Path) -> None:
             run_dir=run_dir,
             model_name_or_path="local-agent",
         )
+
+
+
+def test_build_prediction_row_accepts_verified(tmp_path: Path) -> None:
+    task_path = tmp_path / "task_verified.json"
+    run_dir = tmp_path / "run_verified"
+    write_json(task_path, task_payload(source_type="swe_bench_verified"))
+    run_dir.mkdir()
+    (run_dir / "patch.diff").write_text("diff --git a/demo.py b/demo.py\\n", encoding="utf-8")
+    row = build_prediction_row(
+        task_path=task_path, run_dir=run_dir, model_name_or_path="agentic-swe"
+    )
+    assert row["instance_id"] == "demo__project-123"
+    assert row["model_patch"].startswith("diff --git")

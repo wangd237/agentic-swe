@@ -1,4 +1,4 @@
-"""Import one SWE-bench Lite instance as a lightweight local agent task."""
+"""Import an official SWE-bench Lite or Verified instance without answer leakage."""
 
 from __future__ import annotations
 
@@ -17,11 +17,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.runtime.logger import write_json, write_text
+from app.runtime.logger import write_json
 from app.schemas.task_schema import build_task
 
 
-DATASET_NAME = "princeton-nlp/SWE-bench_Lite"
+DATASET_NAME = "princeton-nlp/SWE-bench_Lite"  # backward-compatible Lite default
+DATASET_NAMES = {
+    "lite": DATASET_NAME,
+    "verified": "SWE-bench/SWE-bench_Verified",
+}
 DEFAULT_CONFIG = "default"
 DEFAULT_SPLIT = "dev"
 
@@ -90,77 +94,72 @@ def load_instance_from_hf_rows_api(
     index: int,
     instance_id: str | None = None,
     config: str = DEFAULT_CONFIG,
+    dataset_name: str = DATASET_NAME,
 ) -> dict[str, Any]:
-    if instance_id:
-        # rows API does not provide direct lookup; fetch a small dev split window and filter.
-        offset = 0
-        length = 100
-    else:
-        offset = index
-        length = 1
-
-    query = urlencode(
-        {
-            "dataset": DATASET_NAME,
-            "config": config,
-            "split": split,
-            "offset": offset,
-            "length": length,
-        }
-    )
-    url = f"https://datasets-server.huggingface.co/rows?{query}"
-    with urlopen(url, timeout=60) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-
-    rows = [item["row"] for item in payload.get("rows", [])]
-    if instance_id:
+    # The rows API does not support direct instance-id lookup. Page through
+    # the full official split instead of silently searching its first 100 rows.
+    offset = 0 if instance_id else index
+    while True:
+        length = 100 if instance_id else 1
+        query = urlencode(
+            {
+                "dataset": dataset_name,
+                "config": config,
+                "split": split,
+                "offset": offset,
+                "length": length,
+            }
+        )
+        url = f"https://datasets-server.huggingface.co/rows?{query}"
+        with urlopen(url, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        rows = [item["row"] for item in payload.get("rows", [])]
+        if not instance_id:
+            if not rows:
+                raise RuntimeError(f"未从 HuggingFace rows API 读取到数据: {url}")
+            return rows[0]
         for row in rows:
             if row.get("instance_id") == instance_id:
                 return row
-        raise RuntimeError(f"{split} split 前 {length} 条中未找到 instance_id={instance_id}")
-    if not rows:
-        raise RuntimeError(f"未从 HuggingFace rows API 读取到 SWE-bench Lite 数据: {url}")
-    return rows[0]
+        total = int(payload.get("num_rows_total", offset + len(rows)))
+        offset += len(rows)
+        if not rows or offset >= total:
+            raise RuntimeError(f"{dataset_name} {split} split 中未找到 instance_id={instance_id}")
 
 
-def build_task_payload(instance: dict[str, Any], *, repo_relative_path: str, task_id: str) -> dict[str, Any]:
+def build_task_payload(
+    instance: dict[str, Any], *, repo_relative_path: str, task_id: str, dataset: str = "lite"
+) -> dict[str, Any]:
     instance_id = str(instance["instance_id"])
     repo_full_name = str(instance["repo"])
     problem_statement = str(instance.get("problem_statement", "")).strip()
-    hints_text = str(instance.get("hints_text", "") or "").strip()
-    patch_text = str(instance.get("patch", "") or "")
-    test_patch_text = str(instance.get("test_patch", "") or "")
-    fail_to_pass = parse_json_list(instance.get("FAIL_TO_PASS"))
-    pass_to_pass = parse_json_list(instance.get("PASS_TO_PASS"))
-    target_files_hint = diff_paths(patch_text) or diff_paths(test_patch_text)
+    # Never extract hints from the gold patch, test patch or hidden test IDs.
+    # The Agent may only see the public issue and the repo at base_commit.
     issue_text = problem_statement
-    if hints_text:
-        issue_text = f"{issue_text}\n\nHints from SWE-bench:\n{hints_text}"
-
     return {
         "task_id": task_id,
         "repo_name": slugify(repo_full_name),
         "repo_path": repo_relative_path.replace("\\", "/"),
-        "issue_title": f"SWE-bench Lite: {instance_id}",
+        "issue_title": f"SWE-bench {dataset.title()}: {instance_id}",
         "issue_text": issue_text,
-        "test_command": build_pytest_command(instance),
+        "test_command": "python -m pytest -q",
         "success_criteria": (
-            "Lightweight smoke run: generate a patch for this SWE-bench Lite instance. "
+            "Local smoke only: generate a patch for this SWE-bench instance. "
             "Official scoring still requires SWE-bench harness evaluation."
         ),
         "difficulty": "medium",
-        "tags": ["swe-bench", "swe-bench-lite", "real-issue", "python"],
-        "target_files_hint": target_files_hint,
-        "source_type": "swe_bench_lite",
+        "tags": ["swe-bench", f"swe-bench-{dataset}", "real-issue", "python"],
+        "target_files_hint": [],
+        "source_type": f"swe_bench_{dataset}",
         "metadata": {
-            "swebench_dataset": DATASET_NAME,
+            "swebench_dataset": DATASET_NAMES[dataset],
             "swebench_instance_id": instance_id,
             "repo_full_name": repo_full_name,
             "base_commit": instance.get("base_commit"),
             "version": instance.get("version"),
             "created_at": instance.get("created_at"),
-            "fail_to_pass": fail_to_pass,
-            "pass_to_pass": pass_to_pass,
+            "test_command_source": "pytest_fallback",
+            "verification_strength": "weak",
             "official_harness_required": True,
         },
     }
@@ -196,7 +195,8 @@ def clone_repo_at_base_commit(instance: dict[str, Any], destination: Path) -> No
 
 def import_swebench_lite_task(
     *,
-    split: str = DEFAULT_SPLIT,
+    split: str | None = None,
+    dataset: str = "lite",
     index: int = 0,
     instance_id: str | None = None,
     dataset_path: Path | None = None,
@@ -205,17 +205,23 @@ def import_swebench_lite_task(
     artifacts_dir: Path | None = None,
     clone: bool = True,
 ) -> dict[str, Any]:
+    if dataset not in DATASET_NAMES:
+        raise ValueError(f"Unsupported SWE-bench dataset: {dataset}")
+    resolved_split = split or ("test" if dataset == "verified" else DEFAULT_SPLIT)
     instance = (
         load_instance_from_json_path(dataset_path, index=index, instance_id=instance_id)
         if dataset_path
-        else load_instance_from_hf_rows_api(split=split, index=index, instance_id=instance_id)
+        else load_instance_from_hf_rows_api(
+            split=resolved_split, index=index, instance_id=instance_id,
+            dataset_name=DATASET_NAMES[dataset],
+        )
     )
     swebench_id = str(instance["instance_id"])
     slug = slugify(swebench_id)
-    task_id = f"swe_lite_{slug}"
-    output_dir = output_dir or REPO_ROOT / "benchmarks" / "tasks" / "swebench_lite"
-    repos_dir = repos_dir or REPO_ROOT / "benchmarks" / "repos" / "swebench_lite"
-    artifacts_dir = artifacts_dir or REPO_ROOT / "benchmarks" / "swebench_lite"
+    task_id = f"swe_{dataset}_{slug}"
+    output_dir = output_dir or REPO_ROOT / "benchmarks" / "tasks" / f"swebench_{dataset}"
+    repos_dir = repos_dir or REPO_ROOT / "benchmarks" / "repos" / f"swebench_{dataset}"
+    artifacts_dir = artifacts_dir or REPO_ROOT / "benchmarks" / f"swebench_{dataset}"
     repo_dir = repos_dir / slug
     try:
         repo_task_path = str(repo_dir.resolve().relative_to(REPO_ROOT))
@@ -226,6 +232,7 @@ def import_swebench_lite_task(
         instance,
         repo_relative_path=repo_task_path,
         task_id=task_id,
+        dataset=dataset,
     )
     build_task(task_payload)
 
@@ -235,11 +242,13 @@ def import_swebench_lite_task(
     task_path = output_dir / f"{task_id}.json"
     write_json(task_path, task_payload)
     instance_artifacts_dir = artifacts_dir / slug
-    write_json(instance_artifacts_dir / "instance.json", instance)
-    if instance.get("patch"):
-        write_text(instance_artifacts_dir / "gold.patch", str(instance["patch"]))
-    if instance.get("test_patch"):
-        write_text(instance_artifacts_dir / "test.patch", str(instance["test_patch"]))
+    # Keep a minimal audit record, not the reference solution or hidden tests.
+    # Official SWE-bench Harness owns all scoring artifacts.
+    public_instance = {
+        key: instance.get(key)
+        for key in ("instance_id", "repo", "base_commit", "problem_statement", "version", "created_at")
+    }
+    write_json(instance_artifacts_dir / "instance.json", public_instance)
 
     return {
         "task_path": str(task_path),
@@ -252,14 +261,15 @@ def import_swebench_lite_task(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="导入一个 SWE-bench Lite instance 为本项目轻量 task。")
-    parser.add_argument("--split", default=DEFAULT_SPLIT, help="HuggingFace split，默认 dev。")
+    parser = argparse.ArgumentParser(description="导入官方 SWE-bench Lite / Verified instance。")
+    parser.add_argument("--dataset", choices=sorted(DATASET_NAMES), default="lite")
+    parser.add_argument("--split", default=None, help="HuggingFace split：Lite 默认 dev，Verified 默认 test。")
     parser.add_argument("--index", type=int, default=0, help="split 内的行号，默认 0。")
     parser.add_argument("--instance-id", default=None, help="指定 SWE-bench instance_id。")
     parser.add_argument("--dataset-path", type=Path, default=None, help="可选本地 JSON/JSONL 数据文件。")
     parser.add_argument("--output-dir", type=Path, default=None, help="task JSON 输出目录。")
     parser.add_argument("--repos-dir", type=Path, default=None, help="repo clone 输出目录。")
-    parser.add_argument("--artifacts-dir", type=Path, default=None, help="instance/gold patch/test patch 输出目录。")
+    parser.add_argument("--artifacts-dir", type=Path, default=None, help="不含答案的 instance 元数据输出目录。")
     parser.add_argument("--no-clone", action="store_true", help="只生成 task/artifacts，不 clone GitHub repo。")
     return parser
 
@@ -268,6 +278,7 @@ def main() -> int:
     args = build_parser().parse_args()
     result = import_swebench_lite_task(
         split=args.split,
+        dataset=args.dataset,
         index=args.index,
         instance_id=args.instance_id,
         dataset_path=args.dataset_path,
@@ -276,7 +287,7 @@ def main() -> int:
         artifacts_dir=args.artifacts_dir,
         clone=not args.no_clone,
     )
-    print("=== SWE-bench Lite Import Summary ===")
+    print("=== SWE-bench Import Summary ===")
     print(f"instance_id: {result['instance_id']}")
     print(f"repo_full_name: {result['repo_full_name']}")
     print(f"base_commit: {result['base_commit']}")

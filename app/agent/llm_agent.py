@@ -41,21 +41,6 @@ from app.schemas.trace_schema import Trace, TraceStep
 READ_ONLY_TOOL_NAMES = read_only_tool_names()
 
 
-def _resolve_test_patch_path(
-    *,
-    source_repo_path: str | Path,
-    source_type: str = "",
-) -> Path | None:
-    """Return the test.patch path for a SWE-bench Lite task, or None."""
-    if source_type != "swe_bench_lite":
-        return None
-    repo = Path(source_repo_path).resolve()
-    slug = repo.name
-    artifacts_dir = repo.parent.parent / slug
-    candidate = artifacts_dir / "test.patch"
-    return candidate if candidate.exists() else None
-
-
 ANTI_LOOP_MESSAGE = (
     "You appear to be looping on the same fix direction: you have recently edited the same file "
     "multiple times with highly similar edit patterns. Step back and re-read the relevant code or tests; "
@@ -223,15 +208,9 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         run_paths.tool_outputs_dir.mkdir(parents=True, exist_ok=True)
 
         workspace_copy_started_at = perf_counter()
-        _test_patch_path = _resolve_test_patch_path(
-            source_repo_path=source_repo_path,
-            source_type=task.source_type,
-        )
-        copy_repo_to_workspace(
-            source_repo_path,
-            run_paths.workspace_dir,
-            test_patch_path=_test_patch_path,
-        )
+        # Official test.patch is held exclusively by the SWE-bench Harness.
+        # Never inject hidden evaluation tests into the Agent's working tree.
+        copy_repo_to_workspace(source_repo_path, run_paths.workspace_dir)
         workspace_copy_duration_sec = round(perf_counter() - workspace_copy_started_at, 4)
 
         trace = Trace(task_id=task.task_id, run_id=run_id, started_at=self._utc_timestamp())
