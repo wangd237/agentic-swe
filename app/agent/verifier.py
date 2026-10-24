@@ -76,7 +76,7 @@ def build_verification_evidence(
 
     metadata = task_metadata or {}
     official_resolved = bool(metadata.get("official_resolved"))
-    official_required = source_type == "swe_bench_lite" or bool(
+    official_required = source_type in {"swe_bench_lite", "swe_bench_verified"} or bool(
         metadata.get("official_harness_required") or metadata.get("swebench_instance_id")
     )
 
@@ -164,7 +164,7 @@ def build_verifier_report(
     metadata = task_metadata or {}
     caveats: list[str] = []
     recommendations: list[str] = []
-    is_swebench_lite = source_type == "swe_bench_lite" or bool(metadata.get("swebench_instance_id"))
+    is_swebench = source_type in {"swe_bench_lite", "swe_bench_verified"} or bool(metadata.get("swebench_instance_id"))
     official_resolved = bool(metadata.get("official_resolved"))
     evidence_quality: EvidenceQuality = "missing"
     missing_evidence: list[str] = []
@@ -216,11 +216,11 @@ def build_verifier_report(
         caveats.append("The repair did not reach a trusted verification state.")
         recommendations.append("Inspect trace, patch, and test output before accepting the result.")
 
-    if is_swebench_lite and verification_level == "full_verification_success":
+    if is_swebench and verification_level == "full_verification_success":
         verification_level = "local_smoke_success"
         risk_level = "medium"
         accepted = False
-        caveats.append("SWE-bench Lite local smoke success is not the same as official resolved.")
+        caveats.append("SWE-bench local smoke success is not the same as official resolved.")
         caveats.append("Official SWE-bench Docker harness was not run.")
         if metadata.get("official_harness_required", True):
             recommendations.append("Evaluate the exported prediction JSONL with the official SWE-bench harness.")

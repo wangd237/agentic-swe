@@ -25,8 +25,8 @@ def build_prediction_row(
 ) -> dict[str, Any]:
     task = load_task(task_path)
     instance_id = task.metadata.get("swebench_instance_id")
-    if task.source_type != "swe_bench_lite" or not instance_id:
-        raise RuntimeError(f"任务不是 SWE-bench Lite 导入任务，缺少 metadata.swebench_instance_id: {task_path}")
+    if task.source_type not in {"swe_bench_lite", "swe_bench_verified"} or not instance_id:
+        raise RuntimeError(f"任务不是 SWE-bench 导入任务，缺少 metadata.swebench_instance_id: {task_path}")
 
     resolved_patch_path = patch_path or run_dir / "patch.diff"
     if not resolved_patch_path.exists():
