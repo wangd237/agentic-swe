@@ -326,28 +326,40 @@ result_path:
 
 ## 项目结构
 
+按职责拆分，`app/agent/` 只保留 Agent 决策、规划与编排；工具权限和验证逻辑分别由独立模块维护：
+
 ```text
 app/
-  agent/        # LLM agent、state、policy、tool routing、verification、reflection、code intelligence
-    verifier.py       # Verification Quality Layer：evidence / report / assessment
-    run_metrics.py    # 行为指标计算（phase completion、pre-repro、undo recovery 等）
-    summary.py        # CLI 摘要格式化
-  runtime/      # workspace 隔离、run paths、日志落盘、git 工作区管理
-  schemas/      # Task / Trace / Result schema
-  tools/        # 文件、搜索、测试、写入、diff、python REPL 工具
-benchmarks/
-  tasks/        # 132 条 semi-real + 10 条 SWE-bench Lite task 定义
-  repos/        # benchmark repos（含 swebench_lite 子目录）
-  manifests/    # frozen set / evaluation manifests（9 个）
-optimization/
-  policy_versions/  # 80 个 policy 版本（baseline v1 ~ v72 + LLM 配置模板）
-evidence/       # 可审计运行证据：13 条代表 run + SWE-bench 官方评测报告
-patches/        # 第三方库兼容补丁（swebench Windows 修复）
-docs/           # 架构、评测、案例、踩坑复盘（历史文档在 docs/archive/）
-evals/          # 批量评测、错误分类、指标计算、对比脚本
-scripts/        # 60+ CLI 脚本：单任务运行、批量评测、本地/GitHub repo 修复、AB 实验、分析
-.logs/          # 运行轨迹、结果、patch、agent memory（gitignore）
+  agent/         # Agent 主循环、规划、反思、工具调用编排、规则式 baseline
+    llm_agent.py # LLM Agent 主流程
+    tool_loop.py # Tool Call 校验、权限检查与执行的衔接
+    finalization.py
+  core/          # AgentState 等共享状态、PolicyConfig 配置
+  llm/           # LLM Client、配置、提示词、上下文管理
+  codebase/      # 代码定位、结构搜索与代码智能后端
+  tools/         # 工具定义、注册、路由、Schema 校验、权限、分发
+    definitions.py
+    registry.py
+    router.py
+    validator.py
+    policy.py    # ToolPolicy，唯一的工具权限决策点
+    executor.py
+    builtin/     # read_file、edit_file、grep、run_tests 等实际工具
+  verification/  # 自动验证、证据、最终结果判定、行为指标
+  runtime/       # Agent 入口、workspace、日志、Git 工作区、CLI 摘要
+  schemas/       # Task / Trace / Result 数据结构
+benchmarks/      # semi-real 与 SWE-bench Lite 测试任务和仓库
+optimization/    # 各版本策略配置
+evidence/        # 可审计运行证据
+patches/         # 第三方兼容补丁
+docs/            # 架构、评测、案例、复盘
+evals/           # 批量评测与对比分析
+scripts/         # CLI 脚本与实验工具
+.logs/           # 运行轨迹和结果（gitignore）
 ```
+
+**工具执行边界：** Registry 负责工具注册与查找，不授予执行权限。Agent 调用工具时，依次经过 Schema Validator、ToolPolicy 和 ToolExecutor；阶段限制、PATCH 前置证据以及验证顺序仍由 ToolPolicy 决定。MCP 动态发现暂未实现。
+
 
 ## 技术栈
 
