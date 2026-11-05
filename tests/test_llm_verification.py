@@ -2,9 +2,9 @@
 
 from types import SimpleNamespace
 
-from app.agent.llm_verification import execute_auto_verification
-from app.agent.memory import AgentState
-from app.agent.policy import PolicyConfig
+from app.verification.runner import execute_auto_verification
+from app.core.state import AgentState
+from app.core.policy_config import PolicyConfig
 
 
 class FakeExecutor:

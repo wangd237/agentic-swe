@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.tools.edit_file import edit_file
+from app.tools.builtin.edit_file import edit_file
 
 
 def test_edit_file_replaces_unique_old_string(tmp_path: Path) -> None:

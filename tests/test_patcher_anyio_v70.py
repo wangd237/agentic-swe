@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from app.agent.patcher import apply_rule_based_patch
-from app.agent.policy import PolicyConfig
+from app.core.policy_config import PolicyConfig
 from app.schemas.task_schema import Task
 
 

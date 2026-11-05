@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.tools.grep import grep
+from app.tools.builtin.grep import grep
 
 
 def test_grep_finds_regex_matches_with_glob(tmp_path: Path) -> None:
