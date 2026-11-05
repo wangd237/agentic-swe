@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.agent.run_metrics import compute_agent_run_metrics
+from app.verification.metrics import compute_agent_run_metrics
 from app.schemas.trace_schema import Trace, TraceStep
 
 

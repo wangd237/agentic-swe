@@ -11,7 +11,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.runtime.task_runner import run_observation_task
-from app.tools.run_tests import _build_failure_summary, _inject_pytest_flags, run_tests
+from app.tools.builtin.run_tests import _build_failure_summary, _inject_pytest_flags, run_tests
 
 
 def test_inject_pytest_flags_only_appends_for_pytest_commands() -> None:
