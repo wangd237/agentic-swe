@@ -6,7 +6,7 @@ import re
 import shlex
 from typing import Any
 
-from app.agent.memory import VerificationStrength
+from app.core.state import VerificationStrength
 
 WEAK_VERIFICATION_METADATA_VALUES = {"weak", "none"}
 FAILED_TEST_DETAIL_SEPARATOR = " - "

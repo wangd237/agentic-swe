@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from app.agent.llm_agent import LLMCodeAgent
-from app.agent.policy import load_policy_config
+from app.core.policy_config import load_policy_config
 from app.agent.rule_based_agent import RuleBasedAgent
 
 

@@ -5,11 +5,11 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Any
 
-from app.agent.run_metrics import compute_agent_run_metrics
+from app.verification.metrics import compute_agent_run_metrics
 from app.agent.strategy_memory import append_strategy_memory, distill_strategy_memory_entry
-from app.agent.tool_router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED
-from app.agent.verification import adjust_final_status_for_verification
-from app.agent.verifier import (
+from app.tools.router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED
+from app.verification.evidence import adjust_final_status_for_verification
+from app.verification.verifier import (
     accepted_final_status_from_report,
     build_verification_evidence,
     build_verifier_report,
