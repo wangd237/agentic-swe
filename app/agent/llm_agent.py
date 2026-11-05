@@ -10,33 +10,33 @@ from time import perf_counter
 from typing import Any
 
 from app.agent.base import BaseAgent
+from app.agent.exploration import ExplorationMonitor
+from app.agent.finalization import AgentFinalizationMixin
+from app.agent.reflector import build_reflection_message, reflect_after_failed_verification
+from app.agent.strategy_memory import format_strategy_memory_hints, retrieve_strategy_memories
+from app.agent.tool_loop import AgentToolMixin
 from app.codebase.intelligence import build_code_intelligence_backend
 from app.codebase.locator import rank_candidates
-from app.agent.exploration import ExplorationMonitor
+from app.core.policy_config import load_policy_config
+from app.core.state import AgentState, FailureSignature
 from app.llm.client import OpenAICompatibleChatClient
 from app.llm.config import DEFAULT_LLM_CONFIG, LLMConfig
 from app.llm.context import AgentContextMixin
-from app.agent.finalization import AgentFinalizationMixin
 from app.llm.prompts import (
     EXPLORATION_CHECKPOINT_MESSAGE,
     build_system_prompt,
     build_user_prompt,
 )
-from app.agent.tool_loop import AgentToolMixin
-from app.verification.runner import execute_auto_verification
-from app.core.state import AgentState, FailureSignature
-from app.core.policy_config import load_policy_config
-from app.agent.reflector import build_reflection_message, reflect_after_failed_verification
-from app.agent.strategy_memory import format_strategy_memory_hints, retrieve_strategy_memories
+from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
+from app.runtime.logger import write_json
+from app.schemas.task_schema import load_task
+from app.schemas.trace_schema import Trace, TraceStep
 from app.tools.definitions import read_only_tool_names
 from app.tools.executor import ToolExecutor
 from app.tools.policy import ToolPolicy, next_phase_after_tool
 from app.tools.router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
 from app.verification.evidence import initial_verification_strength, strength_after_test
-from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
-from app.runtime.logger import write_json
-from app.schemas.task_schema import load_task
-from app.schemas.trace_schema import Trace, TraceStep
+from app.verification.runner import execute_auto_verification
 
 READ_ONLY_TOOL_NAMES = read_only_tool_names()
 

@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from app.core.policy_config import PolicyConfig
-from app.tools.registry import get_tool_registry
 from app.runtime.git_workspace import commit_workspace_path, undo_last_workspace_commit
 from app.tools.builtin.edit_file import edit_file
 from app.tools.builtin.grep import grep
@@ -18,6 +17,7 @@ from app.tools.builtin.run_tests import run_tests
 from app.tools.builtin.search_code import search_code
 from app.tools.builtin.show_diff import show_diff
 from app.tools.builtin.write_file import write_file
+from app.tools.registry import get_tool_registry
 
 SCRATCH_FILE_NAMES = {"debug.py", "tmp.py", "scratch.py", "probe.py"}
 SCRATCH_FILE_REJECTION_MESSAGE = (
