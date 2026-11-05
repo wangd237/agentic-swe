@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.agent.llm_config import LLMConfig
+from app.llm.config import LLMConfig
 from app.runtime.batch_runner import load_task_paths, run_batch
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
