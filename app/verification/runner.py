@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Callable, Literal
 
-from app.agent.memory import AgentState, FailureSignature
-from app.agent.policy import PolicyConfig
 from app.agent.reflector import build_reflection_message, reflect_after_failed_verification
-from app.agent.tool_executor import ToolExecutor
-from app.agent.verification import build_targeted_pytest_command, strength_after_test
+from app.core.policy_config import PolicyConfig
+from app.core.state import AgentState, FailureSignature
 from app.schemas.task_schema import Task
 from app.schemas.trace_schema import Trace, TraceStep
+from app.tools.executor import ToolExecutor
+from app.verification.evidence import build_targeted_pytest_command, strength_after_test
 
 VerificationSource = Literal[
     "immediate_auto_verification", "auto_verification", "final_pending_verification"

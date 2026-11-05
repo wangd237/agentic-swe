@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.agent.memory import AgentState, PhaseName
-from app.agent.tool_definitions import write_tool_names
+from app.core.state import AgentState, PhaseName
+from app.tools.definitions import write_tool_names
 
 WRITE_TOOLS = write_tool_names()
 MIN_LOCALIZATION_OVERRIDE_REASON_CHARS = 20

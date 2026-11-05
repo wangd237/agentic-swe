@@ -1,6 +1,6 @@
 """代码搜索工具实现。"""
 
-from app.tools.common import is_likely_text_file, resolve_repo_path, should_skip_path
+from app.tools.builtin.common import is_likely_text_file, resolve_repo_path, should_skip_path
 
 
 def search_code(repo_path: str, query: str) -> dict:

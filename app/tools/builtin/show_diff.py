@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from app.runtime.git_workspace import diff_since_initial
-from app.tools.common import resolve_repo_path
+from app.tools.builtin.common import resolve_repo_path
 
 
 def show_diff(repo_path: str, original_repo_path: str | None = None) -> dict:

@@ -1,8 +1,8 @@
 """Tests for lightweight exploration stagnation detection and checkpoint delivery."""
 
 from app.agent.exploration import ExplorationMonitor
-from app.agent.llm_client import OpenAICompatibleChatClient
-from app.agent.llm_prompts import EXPLORATION_CHECKPOINT_MESSAGE
+from app.llm.client import OpenAICompatibleChatClient
+from app.llm.prompts import EXPLORATION_CHECKPOINT_MESSAGE
 
 
 def _observe(monitor: ExplorationMonitor, name: str, **kwargs: object) -> None:

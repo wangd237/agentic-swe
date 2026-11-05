@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.agent.verification import (
+from app.verification.evidence import (
     adjust_final_status_for_verification,
     build_targeted_pytest_command,
     extract_pytest_node_ids,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.agent.memory import AgentState
+from app.core.state import AgentState
 
 
 def test_agent_state_remembers_deduped_trimmed_hypotheses() -> None:

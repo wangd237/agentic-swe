@@ -1,6 +1,6 @@
 """读取文件工具实现。"""
 
-from app.tools.common import resolve_repo_path, resolve_repo_relative_path
+from app.tools.builtin.common import resolve_repo_path, resolve_repo_relative_path
 
 
 class InvalidLineRangeError(ValueError):

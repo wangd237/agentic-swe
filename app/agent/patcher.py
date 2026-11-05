@@ -8,10 +8,10 @@ improved_v70/v71/v72（anyio 并发与 rich Windows 分支）。
 
 from __future__ import annotations
 
-from app.agent.policy import PolicyConfig
+from app.core.policy_config import PolicyConfig
 from app.schemas.task_schema import Task
-from app.tools.common import resolve_repo_relative_path
-from app.tools.write_file import write_file
+from app.tools.builtin.common import resolve_repo_relative_path
+from app.tools.builtin.write_file import write_file
 
 
 def _insert_empty_input_guard(content: str) -> str | None:

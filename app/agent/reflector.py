@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from app.agent.memory import AgentState, FailureSignature, ReflectionDecision
+from app.core.state import AgentState, FailureSignature, ReflectionDecision
 
 
 def compare_failure_signatures(

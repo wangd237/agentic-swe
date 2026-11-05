@@ -15,7 +15,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
-from app.tools.search_code import search_code
+from app.tools.builtin.search_code import search_code
 
 
 def _utc_timestamp() -> str:

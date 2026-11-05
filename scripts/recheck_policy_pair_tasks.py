@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.agent.executor import run_agent
+from app.runtime.agent_entry import run_agent
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
 from scripts.analyze_trace_hotspots import infer_step_duration_sec

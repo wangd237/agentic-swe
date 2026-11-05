@@ -17,8 +17,8 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.agent.code_locator import implementation_candidates_for_test_path
-from app.agent.memory import LocalizationCandidate
+from app.codebase.locator import implementation_candidates_for_test_path
+from app.core.state import LocalizationCandidate
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
 CODE_SPAN_PATTERN = re.compile(r"`([^`]+)`")

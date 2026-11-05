@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.tools.read_file import read_file
+from app.tools.builtin.read_file import read_file
 
 
 def test_read_file_returns_requested_line_range(tmp_path: Path) -> None:

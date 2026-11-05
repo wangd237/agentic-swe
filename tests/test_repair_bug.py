@@ -10,7 +10,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.agent.llm_agent import LLMCodeAgent
-from app.agent.llm_config import LLMConfig
+from app.llm.config import LLMConfig
 from scripts import repair_bug
 
 

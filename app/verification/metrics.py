@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from app.agent.tool_definitions import write_tool_names
 from app.schemas.trace_schema import Trace
+from app.tools.definitions import write_tool_names
 
 PHASE_ORDER = ["understand", "reproduce", "localize", "patch", "verify", "final"]
 WRITE_TOOLS = write_tool_names()

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from time import perf_counter
 
-from app.tools.common import resolve_repo_path
+from app.tools.builtin.common import resolve_repo_path
 
 FAILED_TEST_PATTERN = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
 FAILURE_LOCATION_PATTERN = re.compile(r"^(?P<path>.+?):(?P<line>\d+): (?P<error>.+)$", re.MULTILINE)

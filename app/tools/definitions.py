@@ -245,7 +245,7 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
 
 def build_tool_definitions() -> list[dict]:
     """Return model-facing schemas derived from the central tool registry."""
-    from app.agent.tool_registry import get_tool_registry
+    from app.tools.registry import get_tool_registry
 
     return get_tool_registry().model_definitions()
 

@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from app.agent.memory import LocalizationCandidate
-from app.tools.common import resolve_repo_path, should_skip_path
+from app.core.state import LocalizationCandidate
+from app.tools.builtin.common import resolve_repo_path, should_skip_path
 
 PYTHON_SUFFIX = ".py"
 TEST_DIR_PARTS = {"test", "tests", "testing"}

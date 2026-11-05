@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from app.agent.policy import DEFAULT_POLICY
-from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_executor import ToolExecutor
+from app.core.policy_config import DEFAULT_POLICY
 from app.runtime.git_workspace import initialize_git_workspace, run_git
+from app.tools.definitions import build_tool_definitions
+from app.tools.executor import ToolExecutor
 
 
 def _executor(
@@ -119,7 +119,7 @@ def test_tool_executor_failed_write_does_not_create_undoable_commit(tmp_path: Pa
         "error": {"type": "unknown_error", "message": "boom"},
     }
 
-    with patch("app.agent.tool_executor.write_file", return_value=failed_result):
+    with patch("app.tools.executor.write_file", return_value=failed_result):
         write_result = executor.execute(
             "write_file",
             {"relative_path": "pkg/app.py", "content": "value = 2\n"},

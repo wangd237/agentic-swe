@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app.agent.executor import run_agent
+from app.runtime.agent_entry import run_agent
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
 

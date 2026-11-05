@@ -17,7 +17,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.runtime.logger import write_json, write_text
 from app.schemas.task_schema import load_task
-from app.tools.run_tests import run_tests
+from app.tools.builtin.run_tests import run_tests
 
 
 COPY_IGNORE_DIR_NAMES = {

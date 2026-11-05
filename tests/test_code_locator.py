@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.agent.code_locator import build_symbol_index, implementation_candidates_for_test_path, rank_candidates
+from app.codebase.locator import build_symbol_index, implementation_candidates_for_test_path, rank_candidates
 
 
 def write_text(path: Path, content: str) -> None:

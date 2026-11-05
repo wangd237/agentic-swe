@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.agent.memory import AgentState
-from app.agent.tool_policy import ToolPolicy
+from app.core.state import AgentState
+from app.tools.policy import ToolPolicy
 
 
 def test_tool_policy_blocks_write_before_patch_gate() -> None:

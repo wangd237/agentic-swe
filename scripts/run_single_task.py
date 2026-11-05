@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.agent.executor import run_agent
+from app.runtime.agent_entry import run_agent
 
 
 def build_parser() -> argparse.ArgumentParser:

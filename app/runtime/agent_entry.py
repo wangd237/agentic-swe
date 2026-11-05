@@ -3,8 +3,8 @@
 from pathlib import Path
 
 from app.agent.llm_agent import LLMCodeAgent
-from app.agent.policy import load_policy_config
 from app.agent.rule_based_agent import RuleBasedAgent
+from app.core.policy_config import load_policy_config
 
 
 def run_agent(task_path: str | Path, repo_root: str | Path, policy_path: str | Path | None = None) -> dict:
