@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.core.state import AgentState, FailureSignature, LocalizationCandidate
 from app.agent.strategy_memory import (
     StrategyMemoryEntry,
     append_strategy_memory,
@@ -11,6 +10,7 @@ from app.agent.strategy_memory import (
     format_strategy_memory_hints,
     retrieve_strategy_memories,
 )
+from app.core.state import AgentState, FailureSignature, LocalizationCandidate
 from app.schemas.result_schema import Result
 from app.schemas.trace_schema import Trace, TraceStep
 

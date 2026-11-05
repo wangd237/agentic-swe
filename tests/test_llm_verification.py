@@ -2,9 +2,9 @@
 
 from types import SimpleNamespace
 
-from app.verification.runner import execute_auto_verification
-from app.core.state import AgentState
 from app.core.policy_config import PolicyConfig
+from app.core.state import AgentState
+from app.verification.runner import execute_auto_verification
 
 
 class FakeExecutor:

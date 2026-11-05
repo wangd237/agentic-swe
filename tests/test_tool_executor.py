@@ -5,9 +5,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 from app.core.policy_config import DEFAULT_POLICY
+from app.runtime.git_workspace import initialize_git_workspace, run_git
 from app.tools.definitions import build_tool_definitions
 from app.tools.executor import ToolExecutor
-from app.runtime.git_workspace import initialize_git_workspace, run_git
 
 
 def _executor(

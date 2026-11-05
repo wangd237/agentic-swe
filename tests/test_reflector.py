@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from app.core.state import AgentState, FailureSignature
 from app.agent.reflector import (
     build_reflection_message,
     compare_failure_signatures,
     reflect_after_failed_verification,
 )
+from app.core.state import AgentState, FailureSignature
 
 
 def make_signature(output_hash: str) -> FailureSignature:

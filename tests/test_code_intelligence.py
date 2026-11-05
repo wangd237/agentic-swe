@@ -11,8 +11,8 @@ from app.codebase.intelligence import (
     NullCodeIntelligenceBackend,
     build_code_intelligence_backend,
 )
-from app.core.state import LocalizationCandidate
 from app.core.policy_config import PolicyConfig
+from app.core.state import LocalizationCandidate
 
 
 def test_null_code_intelligence_backend_is_disabled(tmp_path: Path) -> None:

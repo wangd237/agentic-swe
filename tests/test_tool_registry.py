@@ -9,8 +9,8 @@ from unittest.mock import Mock
 import pytest
 
 from app.agent.tool_loop import AgentToolMixin
-from app.core.state import AgentState
 from app.core.policy_config import PolicyConfig
+from app.core.state import AgentState
 from app.tools.definitions import build_tool_definitions
 from app.tools.executor import ToolExecutor
 from app.tools.policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy

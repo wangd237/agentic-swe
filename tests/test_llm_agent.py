@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from app.codebase.intelligence import CodeIntelligenceResult
 from app.agent.llm_agent import EDIT_RECOVERY_MESSAGE, LLMCodeAgent, OpenAICompatibleChatClient
+from app.codebase.intelligence import CodeIntelligenceResult
+from app.core.policy_config import PolicyConfig
+from app.core.state import LocalizationCandidate
 from app.llm.config import LLMConfig
 from app.llm.prompts import build_system_prompt
-from app.core.state import LocalizationCandidate
-from app.core.policy_config import PolicyConfig
 
 
 class FakeLLMClient:
