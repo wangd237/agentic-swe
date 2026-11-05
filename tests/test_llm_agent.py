@@ -35,7 +35,6 @@ class FakeLLMClient:
                         "id": "tool_1",
                         "name": "run_tests",
                         "input": {
-                            "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                             "timeout_sec": 30,
                         },
                     }
@@ -67,7 +66,6 @@ class FakeWriteThenStopClient:
                         "id": "tool_1",
                         "name": "run_tests",
                         "input": {
-                            "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                             "timeout_sec": 30,
                         },
                     }
@@ -112,7 +110,6 @@ class FakeReproduceThenWriteClient:
                         "id": "tool_1",
                         "name": "run_tests",
                         "input": {
-                            "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                             "timeout_sec": 30,
                         },
                     }
@@ -355,7 +352,6 @@ class FakeOverrideWriteThenStopClient:
                         "id": "tool_1",
                         "name": "run_tests",
                         "input": {
-                            "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                             "timeout_sec": 30,
                         },
                     }
@@ -402,7 +398,6 @@ class FakeEditThenStopClient:
                         "id": "tool_1",
                         "name": "run_tests",
                         "input": {
-                            "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                             "timeout_sec": 30,
                         },
                     }
@@ -1062,7 +1057,6 @@ def test_llm_agent_aggregates_prompt_token_usage_in_result(tmp_path: Path) -> No
                             "id": "tool_1",
                             "name": "run_tests",
                             "input": {
-                                "command": f'"{sys.executable}" -m pytest tests/test_app.py -q',
                                 "timeout_sec": 30,
                             },
                         }
@@ -2857,10 +2851,11 @@ def test_llm_agent_ignores_model_supplied_test_command(tmp_path: Path) -> None:
         step for step in output["trace"]["steps"]
         if step["tool_name"] == "run_tests"
     ]
-    assert output["result"]["pre_test_exit_code"] == 0
+    assert output["result"]["pre_test_exit_code"] is None
     assert output["result"]["post_test_exit_code"] is None
     assert run_test_steps[0]["tool_input"]["command"] == unsafe_command
-    assert run_test_steps[0]["tool_metrics"]["ok"] is True
+    assert run_test_steps[0]["tool_metrics"]["ok"] is False
+    assert run_test_steps[0]["tool_metrics"]["error_type"] == "schema_validation_error"
     assert not marker_path.exists()
 
 
