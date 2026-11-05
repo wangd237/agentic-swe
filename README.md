@@ -1,371 +1,146 @@
 # Agentic SWE
 
-<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python"></a>
-<a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-purple?logo=pydantic&logoColor=white" alt="Pydantic"></a>
-<a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/pytest-tested-blue?logo=pytest&logoColor=white" alt="pytest"></a>
-<a href="https://platform.openai.com/"><img src="https://img.shields.io/badge/OpenAI_Compatible-API-purple?logo=openai&logoColor=white" alt="OpenAI Compatible"></a>
-<a href="#"><img src="https://img.shields.io/badge/Tool_Calling-enabled-green" alt="Tool Calling"></a>
-<a href="#"><img src="https://img.shields.io/badge/CLI-supported-gray" alt="CLI"></a>
-<a href="#"><img src="https://img.shields.io/badge/JSON_Trace-auditable-orange" alt="JSON Trace"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
+面向真实 Python 代码仓库的 **Coding Agent**。输入 Bug 描述或 GitHub Issue，Agent 在独立工作区中完成代码定位、补丁修改和测试验证，输出可审计的修复结果。
 
-面向真实代码仓库的 **AI Bug Repair Agent**。输入一个 issue 或本地 repo 的 bug 描述，Agent 会在隔离 workspace 中完成问题理解、失败复现、代码定位、补丁生成、测试验证，并输出可审计的修复结果。
+项目重点在 **Agent Harness / Runtime**：工具调用约束、阶段状态管理、自动验证、上下文管理与执行轨迹，而非单次代码生成。
 
-核心目标是把 LLM 从“直接生成代码”约束进可控的工程闭环：**tool use、workflow control、state management、verification、traceability、evaluation**。
-
-## 项目亮点
-
-- 构建阶段化 Coding Agent workflow：`UNDERSTAND -> REPRODUCE -> LOCALIZE -> PATCH -> VERIFY -> FINAL`。
-- 实现 phase-aware tool policy，限制不同阶段可调用工具，避免过早改文件、跳过复现或弱验证误报成功。
-- 实现 phase/state-aware tool routing，LLM 每轮只接收当前阶段必要工具 Schema；在 `task_010` 上 token 从 `30,510` 降至 `18,553`，LLM 调用从 `7` 次降至 `5` 次。
-- 实现 post-patch immediate auto-verification：代码修改后由 runtime 自动执行 `show_diff + targeted tests + full tests`，根据测试结果自动反思（reflection）并决定是否 undo，无需模型手动发起。
-- 实现 auto-finalize：diff 已观察且 full `run_tests` 通过后自动退出 LLM 循环，避免冗余工具调用。
-- 设计 Verification Quality Layer，结构化输出 `verification_evidence`、`evidence_quality`、`accepted_final_status`、`missing_evidence`，区分可信成功、本地 smoke、targeted-only、weak/static verification 和证据缺失。
-- token 预算驱动的上下文工程：以 API 实测 prompt\_tokens 为锚点估算上下文占用，超过窗口减 reserve 才触发摘要压缩；配合 microCompact（单个超大 tool result 前置截断）与超大输出落盘，实测校准后同等任务零过早压缩。
-- 接入可选 `codebase-memory-mcp` code intelligence backend，在 `LOCALIZE` 阶段提供 graph-assisted localization hints + `search_graph` agent tool（UNDERSTAND/REPRODUCE/LOCALIZE 阶段可用，单次 run 限 3 次调用，无 backend 时自动降级），并记录 graph 可用性、索引成本、候选命中、fallback 和 A/B delta。
-- 测试失败信息结构化提取 `failure_summary`（failed tests、断言位置、异常类型、possible symbols）+ 自动引导符号搜索，让模型不看完整日志也能定位根因。
-- 反循环检测：连续 3 次类似写操作时自动注入提醒，避免模型在同方向上空转。
-- 每次 run 落盘 `trace.json`、`result.json`、`summary.md`、`patch.diff`，可复盘 Agent 的工具调用、阶段状态、token 消耗、验证证据和最终验收结论。
-- 支持 OpenAI-compatible API，可接入 DeepSeek / Kimi / GLM / Ollama / llama.cpp / LM Studio 等模型；涉及私有代码的真实 A/B 建议使用本地或受信内部 endpoint。
-
-## 量化结果
-
-| 指标 | 结果 |
-| --- | --- |
-| **SWE-bench Lite 官方 harness** | **resolved `4 / 8` submitted**（10 任务中 2 条未产出 patch；官方 Docker harness 判定，含 2026-08-31 pydicom-1139 翻盘重跑，证据见 [evidence/swebench_lite_official/](evidence/swebench_lite_official/)）|
-| 任务规模 | `132` 条 semi-real 任务（真实 GitHub issue 提炼的最小复现场景）+ `10` 个 SWE-bench Lite 任务 |
-| LLM Agent 评测管道 | 4 级冻结集（15/18/20/40） + `evals/` 聚合/对比/错误分类 + `stability_recheck` flaky 验证 + `analyze_benchmark_maturity` 回归门禁 |
-| 回归测试 | `374` passes |
-| Frozen set 稳定性 | `frozen_40` 连续 `72+` 个策略版本无回归 |
-| Tool routing 优化 | `task_010` token `30,510 -> 18,553`，LLM 调用 `7 -> 5` |
-| Auto-verification & reflection | 写入后自动执行 show_diff + targeted tests + full tests；失败时自动 failure-signature 比较 + 可选 undo |
-| v16 code intelligence | graph-assisted localization 量化验证通过：token `-258` avg, source top1 `8/8`, fallback `0%` |
-| `search_graph` agent tool | 修复后：grep `-67%`，token `-22%`，总调用 `-24%` |
-
-完整评测见 [docs/agent_eval_summary.md](docs/agent_eval_summary.md)，代表案例见 [docs/agent_case_studies.md](docs/agent_case_studies.md)，开发踩坑复盘见 [docs/war_stories.md](docs/war_stories.md)。
-
-## Agent Workflow
+## 核心架构
 
 ```text
-issue / local repo bug report
-        |
-        v
-UNDERSTAND    解析问题、提取失败线索、建立初始状态
-        |
-        v
-REPRODUCE     运行测试或最小复现，记录 pre-test evidence
-              （自动提取 failure_summary + 引导符号搜索）
-        |
-        v
-LOCALIZE      搜索、读取文件、结合失败摘要和 AST symbol index 定位候选
-              可选 codebase-memory-mcp graph hints 增强候选排序
-        |
-        v
-PATCH         生成最小补丁，受 policy 限制写入范围
-        |_______ (写入后自动验证 ←→ 失败时 reflection + undo)
-        |
-        v
-VERIFY        自动 show_diff + run_tests，记录 post-test evidence
-        |
-        v
-FINAL         输出 result / trace / patch / verification summary
+Issue / Task
+     │
+     ▼
+Runtime / Harness ── 创建独立 Workspace、加载 Policy、记录 Trace
+     │
+     ▼
+LLM Agent Loop
+     │  UNDERSTAND → REPRODUCE → LOCALIZE → PATCH → VERIFY → FINAL
+     │
+     ├── AgentState / ToolPolicy ── 阶段约束、写入门禁、工具权限
+     ├── Tool Router / Validator ── 按阶段暴露工具、校验调用参数
+     ├── Tool Executor ─────────── 读文件、搜索、编辑、测试、Diff、Undo
+     ├── Verification / Reflection ── 补丁后验证、失败反馈、必要时回滚
+     └── Context Manager ──────── Token 预算、工具结果裁剪、历史摘要
+     │
+     ▼
+Patch + Result + Trace + Message Journal
 ```
 
-核心设计不是让模型“自由聊天式修代码”，而是把修复任务拆成可约束、可验证、可审计的阶段。
+**关键机制**
 
-## 核心能力
-
-**1. Agent State & Control**
-
-- 显式维护 `AgentState`：阶段、issue summary、failure signature、localization candidates、modified files、verification strength。
-- `ToolPolicy` 约束工具调用顺序，禁止没有复现或定位证据时直接改文件。
-- 测试失败、定位低置信、修改过宽或弱验证时记录 reflection，用于后续修复决策。
-- 反循环检测：连续 3 次相似写操作时注入提醒，防止模型在同一方向上空转。
-- 阶段跳转提示：进入 PATCH 阶段时自动注入提示，提醒模型从”搜索理解”切换到”动手修改”。
-
-**2. Tool Use & Routing**
-
-- 工具包括文件读取、代码搜索、测试执行、patch 写入、diff 查看、undo、**代码结构搜索（search_graph）**、**受控 Python REPL（python_repl）**等。
-- 根据阶段和状态动态筛选 tool schema，减少无关工具暴露，降低 token 成本和工具选择噪音。
-- 工具属性（只读、并发安全、写入）在 `tool_definitions.py` 中单一数据源声明，`llm_agent`、`tool_policy`、`run_metrics` 从此导出，加新工具无需修改多个文件。
-- 记录每次 run 的 tool calls、schema routing、LLM token usage，支持量化优化。
-
-**3. 上下文工程**
-
-- **token 预算驱动的上下文压缩**：压缩触发判定基于 `estimated_tokens > context_window_tokens - reserve_tokens`，估算优先用最近一次 API 实测 `prompt_tokens` 做锚点（天然覆盖 system prompt 与工具 schema 开销），无锚点时退回 chars/2.5 保守估算。实测校准（3 任务 46 调用）发现旧字符阈值仅占实际窗口 3.7%，在长任务里人为触发过早压缩、丢失 PATCH 阶段上下文；替换后同等任务零压缩、上下文完整保留。
-- microCompact：单个超大工具结果在进入上下文前前置截断，与全量摘要压缩配合。
-- 工具大输出落盘：超过 12K 字符的完整结果写入 `tool_outputs/`，计入 trace `evidence_ids`，审计链不因截断而断裂。
-- 测试失败信息内置 `failure_summary` 结构化提取（failed tests、断言位置、异常类型、possible symbols），让模型不看完整日志也能定位失败根因。
-- 自动引导失败搜索：从测试失败输出中提取符号名自动执行补充搜索，无需模型主动发起。
-
-**4. Verification Quality**
-
-项目不会只依赖模型说”修好了”，而是输出结构化验收结论：
-
-```text
-final_status: success
-accepted_final_status: accepted_success
-verification_level: full_verification_success
-evidence_quality: strong
-missing_evidence: none
-```
-
-对于 SWE-bench Lite local smoke，系统会明确标记：
-
-```text
-accepted_final_status: local_smoke_success
-evidence_quality: partial
-missing_evidence: official_harness
-```
-
-这避免把本地 smoke 误报成 official benchmark resolved，也避免把 weak/static verification 包装成可信成功。
-
-### Verifier judgment pipeline
-
-- `build_verification_evidence()`：收集 patch、pre-test、post-test、official harness 等维度
-- `assess_evidence_quality()`：分类 evidence_quality 为 strong / partial / weak / missing
-- `build_verifier_report()`：综合 verdict（risk_level + acceptance + caveats）
-- `accepted_final_status_from_report()`：映射为产品可读的最终状态
-
-### Auto-verification loop
-
-写入工具成功后，runtime 自动执行三级验证链：
-
-1. `show_diff` — 立即查看当前改动
-2. `targeted run_tests` — 只跑之前失败过的测试（符号级定位）
-3. `full run_tests` — 跑完整测试套件
-
-验证结果与写入结果在同一轮回喂给模型。如果失败，系统自动比较 failure signature delta：
-
-| delta | 判定 | 行为 |
-|-------|------|------|
-| unchanged | wrong_hypothesis / wrong_file | 自动 undo + 回 LOCALIZE |
-| changed | partial_fix | 保留 patch，继续 PATCH |
-| 新失败 | overfit / low_confidence | 建议缩小范围 |
-
-**5. Code Intelligence / Graph-assisted Localization**
-
-- 默认关闭，不影响 baseline agent 行为。
-- 开启后通过 `codebase-memory-mcp` CLI 对隔离 workspace 建索引，并用 `search_graph` 生成定位候选；同时向 agent 暴露 `search_graph` tool，允许在 UNDERSTAND/REPRODUCE/LOCALIZE 阶段主动查询代码结构图（单次 run 限 3 次调用，无 backend 时自动降级）。
-- graph hints 只作为 localization prior，不替代源码阅读和测试验证。
-- trace/result 会记录 backend、binary、version、index/query cost、fallback reason、candidate rank、compact hints 和 graph hint 是否被 patch 使用。
-- 当前 v16 评测已完成：graph-assisted localization 可降低 token（avg -258）、read_file（avg 0），tool call 无系统性增加，定位质量保持 source top1 8/8，无成功退化。
-
-**6. Auditability**
-
-每次运行都会输出：
-
-- `trace.json`：完整工具调用、阶段状态、证据 id、reflection 信息。
-- `result.json`：最终状态、测试结果、token 消耗、verification evidence。
-- `summary.md`：面向用户的简洁结果。
-- `patch.diff`：本次修改内容。
+- **受控工具调用**：根据阶段和状态筛选工具 Schema；通过参数校验和 `ToolPolicy` 执行权限、写入前证据及验证顺序约束。
+- **修复—验证闭环**：代码修改后由 Runtime 检查 Diff、运行测试；失败时结合错误签名生成 Reflection，支持 Undo；验证充分时可自动结束。
+- **上下文管理**：按 Token 预算触发压缩；对较早历史使用 LLM 结构化摘要（失败时规则降级），保留最近消息和工具调用/结果配对。
+- **可追溯执行**：`messages.jsonl` 追加记录模型可见消息的变化及压缩事件，`trace.json` 保存执行与验证信息，完整的大工具结果可单独落盘。
+- **可选代码结构检索**：支持接入 `codebase-memory-mcp` 辅助定位；非必需，未配置时可使用普通文件检索。
 
 ## 快速开始
 
-### 1. 安装与模型配置
+**环境要求**：Python 3.10+、Git；LLM 需提供兼容 OpenAI Chat Completions 的接口。目标项目的测试依赖需要提前安装。
+
+### 1. 安装依赖
 
 ```bash
-# 安装依赖
+git clone https://github.com/wangd237/agentic-swe.git
+cd agentic-swe
 python -m pip install -r requirements.txt
-
-# 配置模型
-cp .env.example .env
-# 填入 API key / base URL / model
 ```
 
-默认策略使用 OpenAI-compatible API，示例策略为：
+复制配置模板为 `.env`（Windows PowerShell：`Copy-Item .env.example .env`；Linux/macOS：`cp .env.example .env`），填写：
 
-```text
-optimization/policy_versions/llm_deepseek_minimal.json
+```dotenv
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
+LLM_CONTEXT_WINDOW_TOKENS=65536
 ```
 
-模型连接信息（`LLM_API_KEY / LLM_BASE_URL / LLM_MODEL`）只从 `.env` 读取，policy 不提供兑底值；未配置时启动即报明确错误。
+以上是配置格式示例。请根据所用模型填写实际地址、名称和**真实上下文窗口**；不要提交 `.env` 或 API Key 到仓库。
 
-如果要处理私有代码或运行真实 A/B，建议使用本地或受信内部 OpenAI-compatible endpoint。外部公网 provider 可能会因代码、trace、diff 外发而被安全策略阻断。
+### 2. 修复 Bug
 
-本机 Ollama / llama.cpp / LM Studio 示例：
-
-```env
-LLM_BASE_URL=http://127.0.0.1:11434/v1
-LLM_MODEL=qwen2.5-coder:7b-instruct
-LLM_API_KEY=local
-```
-
-所有 OpenAI-compatible 提供商（DeepSeek / Kimi / GLM / Ollama 等）共用 `LLM_API_KEY / LLM_BASE_URL / LLM_MODEL` 三个环境变量，切换提供商只需修改 `.env` 中的值，无需改动 policy 文件。
-
-当前普通 32GB 内存、无独显机器建议先用 `Qwen2.5-Coder-7B-Instruct` 跑通流程；`14B` 更接近真实修复能力，但 CPU-only 会明显占用电脑资源，适合夜间或低负载时尝试。
-
-### 2. 跑一个内置 benchmark task
-
-适合快速验证 Agent 的完整链路是否可运行：
+**方式 A：本地仓库**（当前 CLI 要求目标仓库位于本项目目录内）：
 
 ```bash
-python scripts/run_issue_agent.py \
-  --task benchmarks/tasks/task_010.json \
-  --policy optimization/policy_versions/llm_deepseek_minimal.json
+python scripts/repair_bug.py --repo path/to/repo --issue "描述问题及预期行为" --test "python -m pytest -q" --policy optimization/policy_versions/llm_openai_compatible_template.json
 ```
 
-### 3. 运行 code intelligence A/B preflight
-
-`codebase-memory-mcp` 是可选增强后端。正式 A/B 会调用 LLM 并可能发送 issue、代码片段、tool outputs、diff 和 trace；请先确认 `.env` 指向本地或受信内部 endpoint。
+**方式 B：公开 GitHub Issue**（自动获取 Issue 并 Clone 目标仓库）：
 
 ```bash
-python scripts/run_code_intelligence_ab.py \
-  --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json \
-  --tasks-dir benchmarks/tasks \
-  --baseline-policy optimization/policy_versions/llm_deepseek_minimal.json \
-  --cohort-label v16_frozen15_local_preflight \
-  --codebase-memory-binary .tools/codebase-memory-mcp/codebase-memory-mcp.exe \
-  --limit 8 \
-  --preflight-only \
-  --confirm-external-llm-data
+python scripts/repair_bug.py --issue-url https://github.com/owner/repo/issues/123 --test "python -m pytest -q" --policy optimization/policy_versions/llm_openai_compatible_template.json
 ```
 
-正式 A/B 通过 `--require-v16-acceptance` 启用验收 gate：
+`--test` 可省略，程序会尝试发现 pytest；缺少有效测试时可能只能进行较弱验证。正式使用建议传入准确的测试命令。
+
+`repair_bug.py` 会对 pytest 做依赖/测试收集预检。Agent 修改的是隔离 Workspace，**不会自动 Push、创建 PR 或直接修改上游仓库**。运行前请确认模型服务的数据处理要求，代码和工具结果可能发送给配置的 LLM 服务商。
+
+### 3. 运行内置任务（可选）
 
 ```bash
-python scripts/run_code_intelligence_ab.py \
-  --manifest benchmarks/manifests/real_issue_tasks_frozen_15_v1.json \
-  --tasks-dir benchmarks/tasks \
-  --baseline-policy optimization/policy_versions/llm_deepseek_minimal.json \
-  --cohort-label v16_frozen15_local \
-  --codebase-memory-binary .tools/codebase-memory-mcp/codebase-memory-mcp.exe \
-  --limit 8 \
-  --confirm-external-llm-data \
-  --require-v16-acceptance
+python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/llm_openai_compatible_template.json
 ```
 
-exit code 语义：
+## 配置
 
-```text
-0: 真实 A/B 已完成，且 v16_acceptance.accepted == true
-2: preflight 阻断，未启动真实 A/B
-3: 真实 A/B 已完成，但 v16_acceptance.accepted != true
+- **模型连接**：在 `.env` 设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` 和 `LLM_CONTEXT_WINDOW_TOKENS`。
+- **运行策略**：在 `optimization/policy_versions/*.json` 设置 `max_steps`、工具/验证策略及上下文压缩参数。入门建议使用 `llm_openai_compatible_template.json`，无需代码图后端。
+- **摘要压缩（可选）**：可以在已有 Policy JSON 中加入以下字段：
+
+```json
+{
+  "llm_compaction_mode": "llm",
+  "llm_compaction_trigger_tokens": 32000,
+  "llm_compaction_max_output_tokens": 2048
+}
 ```
 
-### 4. 修复本地 repo
+三个参数分别表示：使用 LLM 摘要、达到约 32K 输入 Token 时尝试压缩、单次摘要最多输出 2048 Token。有效触发阈值还受模型窗口和预留 Token 限制；如不指定软阈值，则主要依据窗口预算判断。设置 `"llm_compaction_mode": "rules"` 可改用规则压缩。配置详情见 [上下文管理说明](docs/session_context_compaction.md)。
 
-如果代码仓库已经在本机，直接传本地路径：
+## 运行产物
 
-```bash
-python scripts/repair_bug.py \
-  --repo path/to/local_repo \
-  --issue "AttributeError: 'NoneType' object has no attribute 'apply'" \
-  --test "python -m pytest -q"
-```
+每次运行创建 `logs/trajectories/<task_id>/<run_id>/`：
 
-`--test` 是验证命令。若不传，脚本会尝试自动发现 pytest；如果没有测试目录或 pytest 配置，会进入 weak/static verification 路径，并在 CLI 中明确标出验证强度不足。
+| 文件 | 用途 |
+| --- | --- |
+| `task.json` | 任务输入 |
+| `result.json` | 最终状态与验证结论 |
+| `trace.json` | 阶段、工具调用、证据与指标 |
+| `messages.jsonl` | 追加式消息日志、上下文替换与压缩记录（LLM Agent） |
+| `patch.diff` | 代码变更 |
+| `summary.md` | 人类可读的运行总结 |
+| `tool_outputs/` | 超大工具结果的完整记录（如有） |
 
-### 5. 修复 GitHub 远程 repo
-
-如果要让 Agent 处理公开 GitHub 仓库，有两种常用方式。
-
-第一种是手动提供 repo URL 和 bug 描述。脚本会先把远程仓库 clone 到 `logs/github_repos/` 下的临时目录，然后基于这份本地副本创建隔离 workspace，再执行理解、复现、定位、修改和验证流程：
-
-```bash
-python scripts/repair_bug.py \
-  --repo https://github.com/owner/repo \
-  --issue "Describe the bug and expected behavior" \
-  --test "python -m pytest -q"
-```
-
-第二种是直接提供公开 GitHub issue URL。此时不需要额外传 `--repo`，脚本会自动：
-
-- 解析 issue 对应的 owner / repo；
-- clone 对应 GitHub repo；
-- 通过 GitHub public API 拉取 issue title/body；
-- 生成一次用户 repair task；
-- 运行 Agent 并输出 trace/result/patch。
-
-```bash
-python scripts/repair_bug.py \
-  --issue-url https://github.com/owner/repo/issues/123 \
-  --test "python -m pytest -q"
-```
-
-这两种方式都不会直接 push 到原始远程仓库。修复结果会以本地运行产物的形式输出，包括 `summary.md`、`result.json`、`trace.json` 和 `patch.diff`；你可以先审查 patch，再决定是否手动提交到自己的分支或 PR。
-
-如果 issue 描述还不够具体，也可以同时追加 `--issue` 作为额外上下文：
-
-```bash
-python scripts/repair_bug.py \
-  --issue-url https://github.com/owner/repo/issues/123 \
-  --issue "Additional reproduction notes or expected behavior" \
-  --test "python -m pytest -q"
-```
-
-运行结束后，CLI 会打印 verification quality 字段，用户无需打开 JSON 也能判断本次结果是否可信：
-
-```text
-final_status:
-accepted_final_status:
-verification_strength:
-verification_level:
-evidence_quality:
-missing_evidence:
-verifier_accepted:
-risk_level:
-llm_total_tokens:
-summary_path:
-trace_path:
-result_path:
-```
-
-## 代表案例
-
-- `task_010` `Textualize/rich#4090`：CRLF 跨平台换行符归一化，ANSI 行解析修复。
-- `task_024` `pallets/jinja#2069`：模板变量在分支赋值场景下的控制流语义分析。
-- `task_036` `python-jsonschema/jsonschema#1121`：从测试失败到异常回落语义修复。
-- `task_048` `pypa/packaging#886`：从 `max_iterations` 失败到成功，Agent 通过受控 `python_repl` 查询真实行为后生成最小 patch。
-- `task_093` `pallets/click#3572`：`color=False` 时复用 ANSI 清理逻辑，修复 confirm 输出泄漏控制码。
-- `task_122` `fsspec/filesystem_spec#979`：`unstrip_protocol()` 在前缀保护场景下错误返回原路径。
-- `task_128` `agronholm/anyio#82`：嵌套 task group 场景下 asyncio/curio backend 取消异常泄漏。
-- `task_054` `pydantic/pydantic#9582`：edit_file + 结构化失败摘要帮助模型从中间错误收敛到正确 patch（`incomplete/max_iterations` → `success`）。
-
-完整案例列表见 [docs/agent_case_studies.md](docs/agent_case_studies.md)。
+`messages.jsonl` 可以回放模型可见的消息历史，**但目前不支持进程中断后完整恢复 Agent 的工作区与执行状态**。修复是否可信应以 `result.json` 中的验证证据为准，而不只是模型报告成功。
 
 ## 项目结构
 
-按职责拆分，`app/agent/` 只保留 Agent 决策、规划与编排；工具权限和验证逻辑分别由独立模块维护：
-
 ```text
 app/
-  agent/         # Agent 主循环、规划、反思、工具调用编排、规则式 baseline
-    llm_agent.py # LLM Agent 主流程
-    tool_loop.py # Tool Call 校验、权限检查与执行的衔接
-    finalization.py
-  core/          # AgentState 等共享状态、PolicyConfig 配置
-  llm/           # LLM Client、配置、提示词、上下文管理
-  codebase/      # 代码定位、结构搜索与代码智能后端
-  tools/         # 工具定义、注册、路由、Schema 校验、权限、分发
-    definitions.py
-    registry.py
-    router.py
-    validator.py
-    policy.py    # ToolPolicy，唯一的工具权限决策点
-    executor.py
-    builtin/     # read_file、edit_file、grep、run_tests 等实际工具
-  verification/  # 自动验证、证据、最终结果判定、行为指标
-  runtime/       # Agent 入口、workspace、日志、Git 工作区、CLI 摘要
-  schemas/       # Task / Trace / Result 数据结构
-benchmarks/      # semi-real 与 SWE-bench Lite 测试任务和仓库
-optimization/    # 各版本策略配置
-evidence/        # 可审计运行证据
-patches/         # 第三方兼容补丁
-docs/            # 架构、评测、案例、复盘
-evals/           # 批量评测与对比分析
-scripts/         # CLI 脚本与实验工具
-.logs/           # 运行轨迹和结果（gitignore）
+  agent/          # LLM Agent Loop、阶段编排、Reflection、终结处理
+  core/           # AgentState、PolicyConfig
+  llm/            # API 适配、模型配置、上下文压缩
+  tools/          # Tool Schema、Router、Validator、Policy、Executor、内置工具
+  verification/   # 自动验证、证据质量与最终判定
+  runtime/        # Workspace、Git 操作、消息日志、任务生命周期
+  codebase/       # 代码定位与可选结构检索
+  schemas/        # Task / Trace / Result 类型
+scripts/          # CLI 入口与评测脚本
+optimization/     # Policy 配置
+benchmarks/       # 测试任务及数据
+evals/            # 批量评测与对比
+docs/             # 设计与使用文档
 ```
 
-**工具执行边界：** Registry 负责工具注册与查找，不授予执行权限。Agent 调用工具时，依次经过 Schema Validator、ToolPolicy 和 ToolExecutor；阶段限制、PATCH 前置证据以及验证顺序仍由 ToolPolicy 决定。MCP 动态发现暂未实现。
+## 开发与测试
 
+```bash
+python -m pip install -e ".[dev]"
+ruff check .
+pytest -q
+```
 
-## 技术栈
-
-Python · Pydantic · pytest · OpenAI-compatible API · Tool Calling · subprocess sandboxed test execution · JSON Trace · CLI
-
-
+评测与回归实验详见 [评测说明](docs/agent_eval_summary.md)。
 
 ## License
 
