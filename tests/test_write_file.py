@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.tools.write_file import write_file
+from app.tools.builtin.write_file import write_file
 
 
 def test_write_file_removes_parent_pycache(tmp_path: Path) -> None:

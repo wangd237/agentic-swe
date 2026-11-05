@@ -8,15 +8,15 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.agent.llm_tool_helpers import AgentToolMixin
-from app.agent.memory import AgentState
-from app.agent.policy import PolicyConfig
-from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_executor import ToolExecutor
-from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy
-from app.agent.tool_registry import ToolRegistry, get_tool_registry
-from app.agent.tool_router import build_tools_for_state
-from app.agent.tool_validator import validate_tool_call
+from app.agent.tool_loop import AgentToolMixin
+from app.core.state import AgentState
+from app.core.policy_config import PolicyConfig
+from app.tools.definitions import build_tool_definitions
+from app.tools.executor import ToolExecutor
+from app.tools.policy import ALLOWED_TOOLS_BY_PHASE, ToolPolicy
+from app.tools.registry import ToolRegistry, get_tool_registry
+from app.tools.router import build_tools_for_state
+from app.tools.validator import validate_tool_call
 
 
 def test_registry_has_one_handler_for_every_model_tool() -> None:

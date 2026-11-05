@@ -6,9 +6,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.agent.llm_tool_helpers import AgentToolMixin
-from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_validator import validate_tool_call
+from app.agent.tool_loop import AgentToolMixin
+from app.tools.definitions import build_tool_definitions
+from app.tools.validator import validate_tool_call
 
 
 @pytest.mark.parametrize(

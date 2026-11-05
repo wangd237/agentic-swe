@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.agent.verifier import (
+from app.verification.verifier import (
     accepted_final_status_from_report,
     assess_evidence_quality,
     build_verification_evidence,

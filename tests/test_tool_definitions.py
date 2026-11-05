@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from app.agent.memory import AgentState
-from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE
-from app.agent.tool_router import build_tools_for_phase, build_tools_for_state
+from app.core.state import AgentState
+from app.tools.definitions import build_tool_definitions
+from app.tools.policy import ALLOWED_TOOLS_BY_PHASE
+from app.tools.router import build_tools_for_phase, build_tools_for_state
 
 
 def test_tool_definitions_include_python_repl_boundaries() -> None:
