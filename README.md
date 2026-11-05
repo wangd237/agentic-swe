@@ -6,7 +6,7 @@
 
 ## 核心架构
 
-\`\`\`text
+```text
 Issue / Task
      │
      ▼
@@ -24,15 +24,15 @@ LLM Agent Loop
      │
      ▼
 Patch + Result + Trace + Message Journal
-\`\`\`
+```
 
 **关键机制**
 
-- **受控工具调用**：根据阶段和状态筛选工具 Schema；通过参数校验和 \`ToolPolicy\` 执行权限、写入前证据及验证顺序约束。
+- **受控工具调用**：根据阶段和状态筛选工具 Schema；通过参数校验和 `ToolPolicy` 执行权限、写入前证据及验证顺序约束。
 - **修复—验证闭环**：代码修改后由 Runtime 检查 Diff、运行测试；失败时结合错误签名生成 Reflection，支持 Undo；验证充分时可自动结束。
 - **上下文管理**：按 Token 预算触发压缩；对较早历史使用 LLM 结构化摘要（失败时规则降级），保留最近消息和工具调用/结果配对。
-- **可追溯执行**：\`messages.jsonl\` 追加记录模型可见消息的变化及压缩事件，\`trace.json\` 保存执行与验证信息，完整的大工具结果可单独落盘。
-- **可选代码结构检索**：支持接入 \`codebase-memory-mcp\` 辅助定位；非必需，未配置时可使用普通文件检索。
+- **可追溯执行**：`messages.jsonl` 追加记录模型可见消息的变化及压缩事件，`trace.json` 保存执行与验证信息，完整的大工具结果可单独落盘。
+- **可选代码结构检索**：支持接入 `codebase-memory-mcp` 辅助定位；非必需，未配置时可使用普通文件检索。
 
 ## 快速开始
 
@@ -40,82 +40,82 @@ Patch + Result + Trace + Message Journal
 
 ### 1. 安装依赖
 
-\`\`\`bash
+```bash
 git clone https://github.com/wangd237/agentic-swe.git
 cd agentic-swe
 python -m pip install -r requirements.txt
-\`\`\`
+```
 
-复制配置模板为 \`.env\`（Windows PowerShell：\`Copy-Item .env.example .env\`；Linux/macOS：\`cp .env.example .env\`），填写：
+复制配置模板为 `.env`（Windows PowerShell：`Copy-Item .env.example .env`；Linux/macOS：`cp .env.example .env`），填写：
 
-\`\`\`dotenv
+```dotenv
 LLM_API_KEY=your_api_key
 LLM_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-chat
 LLM_CONTEXT_WINDOW_TOKENS=65536
-\`\`\`
+```
 
-以上是配置格式示例。请根据所用模型填写实际地址、名称和**真实上下文窗口**；不要提交 \`.env\` 或 API Key 到仓库。
+以上是配置格式示例。请根据所用模型填写实际地址、名称和**真实上下文窗口**；不要提交 `.env` 或 API Key 到仓库。
 
 ### 2. 修复 Bug
 
 **方式 A：本地仓库**（当前 CLI 要求目标仓库位于本项目目录内）：
 
-\`\`\`bash
+```bash
 python scripts/repair_bug.py --repo path/to/repo --issue "描述问题及预期行为" --test "python -m pytest -q" --policy optimization/policy_versions/llm_openai_compatible_template.json
-\`\`\`
+```
 
 **方式 B：公开 GitHub Issue**（自动获取 Issue 并 Clone 目标仓库）：
 
-\`\`\`bash
+```bash
 python scripts/repair_bug.py --issue-url https://github.com/owner/repo/issues/123 --test "python -m pytest -q" --policy optimization/policy_versions/llm_openai_compatible_template.json
-\`\`\`
+```
 
-\`--test\` 可省略，程序会尝试发现 pytest；缺少有效测试时可能只能进行较弱验证。正式使用建议传入准确的测试命令。
+`--test` 可省略，程序会尝试发现 pytest；缺少有效测试时可能只能进行较弱验证。正式使用建议传入准确的测试命令。
 
-\`repair_bug.py\` 会对 pytest 做依赖/测试收集预检。Agent 修改的是隔离 Workspace，**不会自动 Push、创建 PR 或直接修改上游仓库**。运行前请确认模型服务的数据处理要求，代码和工具结果可能发送给配置的 LLM 服务商。
+`repair_bug.py` 会对 pytest 做依赖/测试收集预检。Agent 修改的是隔离 Workspace，**不会自动 Push、创建 PR 或直接修改上游仓库**。运行前请确认模型服务的数据处理要求，代码和工具结果可能发送给配置的 LLM 服务商。
 
 ### 3. 运行内置任务（可选）
 
-\`\`\`bash
+```bash
 python scripts/run_issue_agent.py --task benchmarks/tasks/task_010.json --policy optimization/policy_versions/llm_openai_compatible_template.json
-\`\`\`
+```
 
 ## 配置
 
-- **模型连接**：在 \`.env\` 设置 \`LLM_API_KEY\`、\`LLM_BASE_URL\`、\`LLM_MODEL\` 和 \`LLM_CONTEXT_WINDOW_TOKENS\`。
-- **运行策略**：在 \`optimization/policy_versions/*.json\` 设置 \`max_steps\`、工具/验证策略及上下文压缩参数。入门建议使用 \`llm_openai_compatible_template.json\`，无需代码图后端。
+- **模型连接**：在 `.env` 设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` 和 `LLM_CONTEXT_WINDOW_TOKENS`。
+- **运行策略**：在 `optimization/policy_versions/*.json` 设置 `max_steps`、工具/验证策略及上下文压缩参数。入门建议使用 `llm_openai_compatible_template.json`，无需代码图后端。
 - **摘要压缩（可选）**：可以在已有 Policy JSON 中加入以下字段：
 
-\`\`\`json
+```json
 {
   "llm_compaction_mode": "llm",
   "llm_compaction_trigger_tokens": 32000,
   "llm_compaction_max_output_tokens": 2048
 }
-\`\`\`
+```
 
-三个参数分别表示：使用 LLM 摘要、达到约 32K 输入 Token 时尝试压缩、单次摘要最多输出 2048 Token。有效触发阈值还受模型窗口和预留 Token 限制；如不指定软阈值，则主要依据窗口预算判断。设置 \`"llm_compaction_mode": "rules"\` 可改用规则压缩。配置详情见 [上下文管理说明](docs/session_context_compaction.md)。
+三个参数分别表示：使用 LLM 摘要、达到约 32K 输入 Token 时尝试压缩、单次摘要最多输出 2048 Token。有效触发阈值还受模型窗口和预留 Token 限制；如不指定软阈值，则主要依据窗口预算判断。设置 `"llm_compaction_mode": "rules"` 可改用规则压缩。配置详情见 [上下文管理说明](docs/session_context_compaction.md)。
 
 ## 运行产物
 
-每次运行创建 \`logs/trajectories/<task_id>/<run_id>/\`：
+每次运行创建 `logs/trajectories/<task_id>/<run_id>/`：
 
 | 文件 | 用途 |
 | --- | --- |
-| \`task.json\` | 任务输入 |
-| \`result.json\` | 最终状态与验证结论 |
-| \`trace.json\` | 阶段、工具调用、证据与指标 |
-| \`messages.jsonl\` | 追加式消息日志、上下文替换与压缩记录（LLM Agent） |
-| \`patch.diff\` | 代码变更 |
-| \`summary.md\` | 人类可读的运行总结 |
-| \`tool_outputs/\` | 超大工具结果的完整记录（如有） |
+| `task.json` | 任务输入 |
+| `result.json` | 最终状态与验证结论 |
+| `trace.json` | 阶段、工具调用、证据与指标 |
+| `messages.jsonl` | 追加式消息日志、上下文替换与压缩记录（LLM Agent） |
+| `patch.diff` | 代码变更 |
+| `summary.md` | 人类可读的运行总结 |
+| `tool_outputs/` | 超大工具结果的完整记录（如有） |
 
-\`messages.jsonl\` 可以回放模型可见的消息历史，**但目前不支持进程中断后完整恢复 Agent 的工作区与执行状态**。修复是否可信应以 \`result.json\` 中的验证证据为准，而不只是模型报告成功。
+`messages.jsonl` 可以回放模型可见的消息历史，**但目前不支持进程中断后完整恢复 Agent 的工作区与执行状态**。修复是否可信应以 `result.json` 中的验证证据为准，而不只是模型报告成功。
 
 ## 项目结构
 
-\`\`\`text
+```text
 app/
   agent/          # LLM Agent Loop、阶段编排、Reflection、终结处理
   core/           # AgentState、PolicyConfig
@@ -130,15 +130,15 @@ optimization/     # Policy 配置
 benchmarks/       # 测试任务及数据
 evals/            # 批量评测与对比
 docs/             # 设计与使用文档
-\`\`\`
+```
 
 ## 开发与测试
 
-\`\`\`bash
+```bash
 python -m pip install -e ".[dev]"
 ruff check .
 pytest -q
-\`\`\`
+```
 
 评测与回归实验详见 [评测说明](docs/agent_eval_summary.md)。
 
