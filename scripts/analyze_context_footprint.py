@@ -27,7 +27,9 @@ PROMPT_COLUMNS = [
     "run", "task_id", "step_index", "prompt_tokens", "prompt_delta",
     "tool_calls_since_previous", "tool_names_since_previous",
     "model_visible_chars_since_previous", "compressions_since_previous",
-    "tool_schema_count", "context_char_estimate",
+    "tool_schema_count", "context_char_estimate", "request_tool_result_count",
+    "request_tool_result_chars", "request_message_chars",
+    "request_tool_result_chars_by_tool",
 ]
 RUN_COLUMNS = [
     "run", "task_id", "final_status", "llm_model", "tool_calls",
@@ -198,6 +200,14 @@ def analyze(
                 "compressions_since_previous": sum(s.get("action_type") == "context_compression" for s in gap),
                 "tool_schema_count": _positive_int(metrics.get("tool_schema_count")),
                 "context_char_estimate": _positive_int(metrics.get("context_char_estimate")),
+                "request_tool_result_count": _positive_int(metrics.get("request_tool_result_count")),
+                "request_tool_result_chars": _positive_int(metrics.get("request_tool_result_chars")),
+                "request_message_chars": _positive_int(metrics.get("request_message_chars")),
+                "request_tool_result_chars_by_tool": (
+                    json.dumps(metrics["request_tool_result_chars_by_tool"], sort_keys=True)
+                    if isinstance(metrics.get("request_tool_result_chars_by_tool"), dict)
+                    else ""
+                ),
             }
             local_prompts.append(row)
             prompt_rows.append(row)
@@ -218,6 +228,18 @@ def analyze(
             "known_model_visible_calls": sum(t["model_visible_chars"] is not None for t in local_tools),
             "known_raw_size_calls": sum(t["raw_result_chars"] is not None for t in local_tools),
         })
+    # Repeated historical messages count again on each outbound request.
+    # Only new telemetry can measure this footprint; unknown old runs are excluded.
+    request_tool_chars_by_name: dict[str, int] = defaultdict(int)
+    request_footprint_samples = 0
+    for prompt in prompt_rows:
+        encoded = prompt["request_tool_result_chars_by_tool"]
+        if not encoded:
+            continue
+        request_footprint_samples += 1
+        for name, chars in json.loads(encoded).items():
+            if isinstance(name, str) and isinstance(chars, int) and chars >= 0:
+                request_tool_chars_by_name[name] += chars
     by_tool: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for tool in tool_rows:
         by_tool[str(tool["tool"])].append(tool)
@@ -232,6 +254,9 @@ def analyze(
             "visible_coverage": len(visible), "visible_p50": _percentile(visible, 0.5),
             "visible_p95": _percentile(visible, 0.95), "visible_max": max(visible, default=None),
             "visible_sum_known": sum(visible) if visible else None,
+            "repeated_request_context_chars_known": (
+                request_tool_chars_by_name[name] if request_footprint_samples else None
+            ),
             "spill_count": sum(x["spilled"] for x in items),
             "source_truncated_known": sum(x["source_truncated"] is not None for x in items),
             "source_truncated_true": sum(x["source_truncated"] is True for x in items),
@@ -259,6 +284,7 @@ def analyze(
             "raw_size_coverage": sum(t["raw_result_chars"] is not None for t in tool_rows),
             "model_visible_coverage": sum(t["model_visible_chars"] is not None for t in tool_rows),
             "prompt_samples": len(valid_prompt_rows),
+            "request_footprint_samples": request_footprint_samples,
             "context_window_tokens": context_window_tokens,
             "threshold_ratio": threshold_ratio,
             "threshold_tokens": limit,
@@ -289,20 +315,22 @@ def _markdown(data: dict[str, Any]) -> str:
         f"- Runs: {summary['runs']}; tool calls: {summary['tool_calls']}; prompt samples: {summary['prompt_samples']}",
         f"- Raw result size coverage: {summary['raw_size_coverage']}/{summary['tool_calls']}",
         f"- Model-visible size coverage: {summary['model_visible_coverage']}/{summary['tool_calls']}",
+        f"- Outbound request tool-footprint samples: {summary['request_footprint_samples']}/{len(data['prompt_deltas'])}",
         f"- Context threshold: {summary['threshold_tokens'] if summary['threshold_tokens'] is not None else 'not configured'}",
         f"- Prompt samples at/above threshold: {summary['prompt_samples_above_threshold'] if summary['prompt_samples_above_threshold'] is not None else 'N/A'}",
         "",
         "## Tools (characters, available samples only)",
         "",
-        "| Tool | Calls | Raw known | Raw P95 | Model-visible known | Model-visible P95 | Spills |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| Tool | Calls | Raw known | Raw P95 | Model-visible known | Model-visible P95 | Repeated chars in requests | Spills |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in data["tools"]:
         lines.append(
             f"| {row['tool']} | {row['calls']} | {row['raw_coverage']} | "
             f"{row['raw_p95'] if row['raw_p95'] is not None else 'N/A'} | "
             f"{row['visible_coverage']} | "
-            f"{row['visible_p95'] if row['visible_p95'] is not None else 'N/A'} | {row['spill_count']} |"
+            f"{row['visible_p95'] if row['visible_p95'] is not None else 'N/A'} | "
+            f"{row['repeated_request_context_chars_known'] if row['repeated_request_context_chars_known'] is not None else 'N/A'} | {row['spill_count']} |"
         )
     lines.extend([
         "",
@@ -323,6 +351,7 @@ def _markdown(data: dict[str, Any]) -> str:
         "",
         "- trace.observation is a SHORT audit preview, not the actual tool message sent to the LLM. It is never used as model-visible size.",
         "- Old traces usually lack full raw/model-visible sizes. Raw size may be recovered from referenced spill files; missing values remain null.",
+        "- Repeated chars in requests counts history re-sent over multiple LLM calls; it is NOT the number of tokens attributed to tools.",
         "- A prompt-token delta includes prior assistant messages, tool schemas, system text and other changes; it cannot be attributed solely to tools.",
         "- A provided context window applies to all runs in this report; do not compare window utilization across models with different limits.",
         "- Success/failure summaries are observational and do not demonstrate that truncation caused the outcome.",
