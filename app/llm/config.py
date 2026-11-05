@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -36,6 +37,11 @@ class LLMConfig(BaseModel):
     # 行为参数，给最终输出与验证轮留余量，policy 可覆盖。
     context_window_tokens: int = 1_000_000
     reserve_tokens: int = 16_000
+    # "llm" is used when the client exposes create_compaction_summary;
+    # injected fake clients and unavailable summarizers fall back to rules.
+    compaction_mode: Literal["llm", "rules"] = "llm"
+    compaction_trigger_tokens: int | None = None  # optional cost-oriented soft cap
+    compaction_max_output_tokens: int = 2048
     timeout_sec: float = 60.0
     client_max_retries: int = 2
     max_empty_response_retries: int = 2
@@ -91,6 +97,11 @@ class LLMConfig(BaseModel):
             or cls().max_output_tokens,
             max_iterations=getattr(policy_config, "max_steps", None)
             or cls().max_iterations,
+            compaction_mode=getattr(policy_config, "llm_compaction_mode", None)
+            or cls().compaction_mode,
+            compaction_trigger_tokens=getattr(policy_config, "llm_compaction_trigger_tokens", None),
+            compaction_max_output_tokens=getattr(policy_config, "llm_compaction_max_output_tokens", None)
+            or cls().compaction_max_output_tokens,
             max_context_chars=getattr(policy_config, "llm_max_context_chars", None)
             or cls().max_context_chars,
             timeout_sec=getattr(policy_config, "llm_timeout_sec", None)
