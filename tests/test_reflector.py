@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.agent.memory import AgentState, FailureSignature
+from app.core.state import AgentState, FailureSignature
 from app.agent.reflector import (
     build_reflection_message,
     compare_failure_signatures,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.tools.python_repl import python_repl
+from app.tools.builtin.python_repl import python_repl
 
 
 def test_python_repl_evaluates_single_safe_expression() -> None:
