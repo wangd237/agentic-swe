@@ -18,3 +18,14 @@ New runs record raw_result_chars, prepared_tool_result_chars and model_visible_c
 Older traces often lack the raw result and actual model-visible size; unknown data remains empty instead of substituting the limited trace preview. Full raw output may be recovered from referenced tool_outputs spills. Prompt deltas are not tool-specific token cost, because other messages and schemas can also change. Outcome associations are observational, not causal.
 
 Only provide a window size if it matches the model(s) under analysis; otherwise cross-model utilization is misleading.
+
+## Preliminary repository evidence observation (2026-11-05)
+
+The GitHub connector successfully parsed 17 of the 19 checked-in trace files in this review (13 semi-real and 4 real-issue runs; two other large traces were not fully available through the connector). The local script can read those files directly from a checkout.
+
+- 236 recorded tool calls: read_file 82, run_tests 55, grep 26, edit_file 26, list_files 22, show_diff 20, search_code 3, undo 1, python_repl 1.
+- Four accessible real-issue runs had 118 tool calls; read_file alone represented 54 calls. This is a frequency observation, not a token-cost ranking.
+- The 4 real-issue runs provide 74 prompt_tokens measurements; their largest prompt was 40,600 tokens. None recorded a context_compression event.
+- The 13 older semi-real traces have 66 LLM response events but no recorded prompt_tokens values. They cannot support precise usage-threshold evaluation.
+
+Do not infer tool-result size from these counts. In particular, legacy traces contain only short audit previews and often lack the full model-visible result. To rank tools by actual returned volume, run this analyzer on fresh telemetry-bearing local logs and inspect its coverage columns.
