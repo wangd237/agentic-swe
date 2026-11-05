@@ -3051,11 +3051,12 @@ def test_llm_agent_compresses_context_when_message_budget_is_exceeded(tmp_path: 
     ]
     assert compression_steps
     assert output["result"]["tool_stats"]["context_compression_count"] >= 1
-    assert any(
-        message.get("role") == "system"
-        and "Earlier context has been summarized" in message.get("content", "")
-        for message in client.observed_final_call_messages
-    )
+    # Compression can happen after the final LLM request. The durable journal
+    # records the checkpoint even if the current run needs no further call.
+    journals = list((repo_root / "logs" / "trajectories" / "task_demo").glob("*/messages.jsonl"))
+    assert len(journals) == 1
+    events = [json.loads(row) for row in journals[0].read_text(encoding="utf-8").splitlines()]
+    assert any(event.get("reason") == "context_compaction" for event in events)
 
 
 def test_llm_config_uses_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -3750,15 +3751,18 @@ def test_compress_messages_uses_measured_prompt_tokens_as_anchor() -> None:
     )
     assert not did_compress
 
-    # 有实测锚点 1500 > 预算 1000，必须压缩。
-    _, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
+    # 有实测锚点 1500 > 预算 1000，且可生成更短的摘要时应压缩。
+    # 较短的历史若被规则摘要扩写，则应保留原文而不是无效压缩。
+    _, did_compress, before_chars, after_chars = LLMCodeAgent._compress_messages_if_needed(
         messages,
         max_context_chars=80000,
         context_window_tokens=1000,
         reserve_tokens=0,
         measured_prompt_tokens=1500,
+        summary_builder=lambda prefix: "## Findings\n- Read the relevant source file.",
     )
     assert did_compress
+    assert after_chars < before_chars
 
 
 def test_compress_messages_skips_compression_under_large_window() -> None:
