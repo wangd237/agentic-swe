@@ -1,5 +1,14 @@
 # Agentic SWE
 
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python"></a>
+<a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-purple?logo=pydantic&logoColor=white" alt="Pydantic"></a>
+<a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/pytest-tested-blue?logo=pytest&logoColor=white" alt="pytest"></a>
+<a href="https://platform.openai.com/"><img src="https://img.shields.io/badge/OpenAI_Compatible-API-purple?logo=openai&logoColor=white" alt="OpenAI Compatible"></a>
+<a href="#"><img src="https://img.shields.io/badge/Tool_Calling-enabled-green" alt="Tool Calling"></a>
+<a href="#"><img src="https://img.shields.io/badge/CLI-supported-gray" alt="CLI"></a>
+<a href="#"><img src="https://img.shields.io/badge/JSON_Trace-auditable-orange" alt="JSON Trace"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
+
 面向真实 Python 代码仓库的 **Coding Agent**。输入 Bug 描述或 GitHub Issue，Agent 在独立工作区中完成代码定位、补丁修改和测试验证，输出可审计的修复结果。
 
 项目重点在 **Agent Harness / Runtime**：工具调用约束、阶段状态管理、自动验证、上下文管理与执行轨迹，而非单次代码生成。
