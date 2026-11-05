@@ -10,6 +10,7 @@ from typing import Any
 from app.agent.memory import AgentState
 from app.agent.tool_definitions import read_only_tool_names
 from app.agent.tool_executor import ToolExecutor
+from app.agent.tool_validator import validate_tool_call
 from app.agent.tool_policy import ToolPolicy
 from app.schemas.trace_schema import Trace, TraceStep
 
@@ -148,12 +149,16 @@ class AgentToolMixin:
         tool_name = block["name"]
         tool_input = block.get("input", {})
         tool_started_at = perf_counter()
-        policy_result = tool_policy.validate(
-            state=state,
-            tool_name=tool_name,
-            tool_input=tool_input,
-        )
-        tool_result = policy_result or tool_executor.execute(tool_name, tool_input)
+        schema_result = validate_tool_call(tool_name, tool_input)
+        if schema_result is not None:
+            tool_result = schema_result
+        else:
+            policy_result = tool_policy.validate(
+                state=state,
+                tool_name=tool_name,
+                tool_input=tool_input,
+            )
+            tool_result = policy_result or tool_executor.execute(tool_name, tool_input)
         tool_duration_sec = round(perf_counter() - tool_started_at, 4)
         return {
             "block": block,
