@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.agent.policy import PolicyConfig
+from app.agent.tool_registry import get_tool_registry
 from app.runtime.git_workspace import commit_workspace_path, undo_last_workspace_commit
 from app.tools.edit_file import edit_file
 from app.tools.grep import grep
@@ -27,7 +28,7 @@ SCRATCH_FILE_REJECTION_MESSAGE = (
 
 
 class ToolExecutor:
-    """把字符串工具名分发到现有工具实现。"""
+    """Execute registered tools; phase permission checks remain in ToolPolicy."""
 
     def __init__(
         self,
@@ -43,6 +44,10 @@ class ToolExecutor:
         self.policy_config = policy_config
         self.test_command = test_command
         self.code_intelligence_backend = code_intelligence_backend
+        self.tool_registry = get_tool_registry()
+        for tool in self.tool_registry.all_specs():
+            if not callable(getattr(self, tool.handler_name, None)):
+                raise ValueError(f"Missing handler for registered tool: {tool.name}")
         # 搜索去重缓存：同一 (pattern/query, glob) 的重复搜索直接返回提醒，
         # 不再消耗 token 重跑。背景：jsonschema#1328 run3 中同一 pattern
         # `ErrorTree|_contents` 在相同 glob 下搜了 2 次、不同 glob 下共 4 次。
@@ -104,103 +109,18 @@ class ToolExecutor:
                 return self._duplicate_search_result(tool_name, tool_input, cached)
 
         try:
-            if tool_name == "list_files":
-                return list_files(
-                    self.repo_path,
-                    recursive=bool(tool_input.get("recursive", True)),
+            spec = self.tool_registry.get(tool_name)
+            if spec is None:
+                return self._tool_error_result(
+                    tool_name=tool_name,
+                    tool_input=tool_input,
+                    error_type="unknown_tool",
+                    message=f"未知工具：{tool_name}",
                 )
-            if tool_name == "search_code":
-                result = search_code(
-                    self.repo_path,
-                    query=str(tool_input.get("query", "")),
-                )
-                self._remember_search_result(cache_key, result)
-                return result
-            if tool_name == "grep":
-                result = grep(
-                    self.repo_path,
-                    pattern=str(tool_input.get("pattern", "")),
-                    glob=tool_input.get("glob"),
-                    max_results=int(tool_input.get("max_results", 20)),
-                )
-                self._remember_search_result(cache_key, result)
-                return result
-            if tool_name == "read_file":
-                return read_file(
-                    self.repo_path,
-                    relative_path=str(tool_input.get("relative_path", "")),
-                    max_chars=int(tool_input.get("max_chars", 6000)),
-                    start_line=(
-                        int(tool_input["start_line"])
-                        if tool_input.get("start_line") is not None
-                        else None
-                    ),
-                    end_line=(
-                        int(tool_input["end_line"])
-                        if tool_input.get("end_line") is not None
-                        else None
-                    ),
-                )
-            if tool_name == "run_tests":
-                return run_tests(
-                    self.repo_path,
-                    command=self.test_command,
-                    timeout_sec=int(tool_input.get("timeout_sec", 120)),
-                    additional_pytest_flags=self.policy_config.pytest_additional_flags,
-                )
-            if tool_name == "python_repl":
-                return python_repl(
-                    expression=str(tool_input.get("expression", "")),
-                )
-            if tool_name == "write_file":
-                relative_path = str(tool_input.get("relative_path", ""))
-                if self._is_scratch_file(relative_path):
-                    return self._tool_error_result(
-                        tool_name=tool_name,
-                        tool_input=tool_input,
-                        error_type="scratch_file_not_allowed",
-                        message=SCRATCH_FILE_REJECTION_MESSAGE,
-                    )
-                result = write_file(
-                    self.repo_path,
-                    relative_path=relative_path,
-                    content=str(tool_input.get("content", "")),
-                )
-                if result.get("ok"):
-                    result = result | {
-                        "commit": self._commit_write(
-                            tool_name=tool_name,
-                            relative_path=relative_path,
-                        )
-                    }
-                return result
-            if tool_name == "edit_file":
-                relative_path = str(tool_input.get("relative_path", ""))
-                result = edit_file(
-                    self.repo_path,
-                    relative_path=relative_path,
-                    old_string=str(tool_input.get("old_string", "")),
-                    new_string=str(tool_input.get("new_string", "")),
-                )
-                if result.get("ok"):
-                    result = result | {
-                        "commit": self._commit_write(
-                            tool_name=tool_name,
-                            relative_path=relative_path,
-                        )
-                    }
-                return result
-            if tool_name == "show_diff":
-                return show_diff(
-                    self.repo_path,
-                    original_repo_path=self.original_repo_path,
-                )
-            if tool_name == "undo":
-                return self._undo_last_write()
-            if tool_name == "search_graph":
-                result = self._execute_search_graph(tool_input)
-                self._remember_search_result(cache_key, result)
-                return result
+            handler = getattr(self, spec.handler_name)
+            result = handler(tool_input)
+            self._remember_search_result(cache_key, result)
+            return result
         except Exception as error:
             return self._tool_error_result(
                 tool_name=tool_name,
@@ -208,12 +128,97 @@ class ToolExecutor:
                 error_type="tool_exception",
                 message=str(error),
             )
-        return self._tool_error_result(
-            tool_name=tool_name,
-            tool_input=tool_input,
-            error_type="unknown_tool",
-            message=f"未知工具：{tool_name}",
+
+    def _handle_list_files(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return list_files(self.repo_path, recursive=bool(tool_input.get("recursive", True)))
+
+    def _handle_search_code(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return search_code(self.repo_path, query=str(tool_input.get("query", "")))
+
+    def _handle_grep(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return grep(
+            self.repo_path,
+            pattern=str(tool_input.get("pattern", "")),
+            glob=tool_input.get("glob"),
+            max_results=int(tool_input.get("max_results", 20)),
         )
+
+    def _handle_read_file(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return read_file(
+            self.repo_path,
+            relative_path=str(tool_input.get("relative_path", "")),
+            max_chars=int(tool_input.get("max_chars", 6000)),
+            start_line=(
+                int(tool_input["start_line"])
+                if tool_input.get("start_line") is not None
+                else None
+            ),
+            end_line=(
+                int(tool_input["end_line"])
+                if tool_input.get("end_line") is not None
+                else None
+            ),
+        )
+
+    def _handle_run_tests(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return run_tests(
+            self.repo_path,
+            command=self.test_command,
+            timeout_sec=int(tool_input.get("timeout_sec", 120)),
+            additional_pytest_flags=self.policy_config.pytest_additional_flags,
+        )
+
+    def _handle_python_repl(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return python_repl(expression=str(tool_input.get("expression", "")))
+
+    def _handle_write_file(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        relative_path = str(tool_input.get("relative_path", ""))
+        if self._is_scratch_file(relative_path):
+            return self._tool_error_result(
+                tool_name="write_file",
+                tool_input=tool_input,
+                error_type="scratch_file_not_allowed",
+                message=SCRATCH_FILE_REJECTION_MESSAGE,
+            )
+        result = write_file(
+            self.repo_path,
+            relative_path=relative_path,
+            content=str(tool_input.get("content", "")),
+        )
+        if result.get("ok"):
+            result = result | {
+                "commit": self._commit_write(
+                    tool_name="write_file",
+                    relative_path=relative_path,
+                )
+            }
+        return result
+
+    def _handle_edit_file(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        relative_path = str(tool_input.get("relative_path", ""))
+        result = edit_file(
+            self.repo_path,
+            relative_path=relative_path,
+            old_string=str(tool_input.get("old_string", "")),
+            new_string=str(tool_input.get("new_string", "")),
+        )
+        if result.get("ok"):
+            result = result | {
+                "commit": self._commit_write(
+                    tool_name="edit_file",
+                    relative_path=relative_path,
+                )
+            }
+        return result
+
+    def _handle_show_diff(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return show_diff(self.repo_path, original_repo_path=self.original_repo_path)
+
+    def _handle_undo(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return self._undo_last_write()
+
+    def _handle_search_graph(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        return self._execute_search_graph(tool_input)
 
     @staticmethod
     def _tool_error_result(

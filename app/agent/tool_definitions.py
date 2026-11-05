@@ -7,6 +7,8 @@ from typing import Any
 _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         {
             "name": "list_files",
+            "handler_name": "_handle_list_files",
+            "risk_level": "read",
             "description": "列出当前仓库中的文件，帮助快速了解项目结构。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -23,6 +25,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "search_graph",
+            "handler_name": "_handle_search_graph",
+            "risk_level": "read",
             "description": "搜索代码结构图，返回符号（函数/类/方法/变量）的定义位置及置信度。优先于 grep 使用。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -44,6 +48,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "search_code",
+            "handler_name": "_handle_search_code",
+            "risk_level": "read",
             "description": "在仓库中搜索代码字符串，用于定位相关函数、测试或错误信息。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -60,6 +66,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "grep",
+            "handler_name": "_handle_grep",
+            "risk_level": "read",
             "description": "使用正则表达式搜索代码，返回 file:line:content 风格的匹配行。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -85,6 +93,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "read_file",
+            "handler_name": "_handle_read_file",
+            "risk_level": "read",
             "description": "读取指定文件内容，适合查看代码、测试或配置文件；定位到失败行后优先使用 start_line/end_line 读取局部上下文。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -116,6 +126,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "run_tests",
+            "handler_name": "_handle_run_tests",
+            "risk_level": "execute",
             "description": "执行任务自带的测试命令，观察失败信息或确认修复是否成功。",
             "is_read_only": False,
             "is_concurrency_safe": False,
@@ -132,6 +144,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "python_repl",
+            "handler_name": "_handle_python_repl",
+            "risk_level": "execute",
             "description": "受控 Python 单表达式求值工具，用于查询第三方库对象行为；不允许 import、分号、多行、dunder 或文件操作。",
             "is_read_only": False,
             "is_concurrency_safe": False,
@@ -148,6 +162,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "write_file",
+            "handler_name": "_handle_write_file",
+            "risk_level": "modify",
             "description": "覆写仓库内文件内容，用于写入 patch 后的完整文件。",
             "is_read_only": False,
             "is_concurrency_safe": False,
@@ -172,6 +188,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "edit_file",
+            "handler_name": "_handle_edit_file",
+            "risk_level": "modify",
             "description": "通过精确 old_string/new_string 替换编辑仓库内文件，适合小范围修改。",
             "is_read_only": False,
             "is_concurrency_safe": False,
@@ -200,6 +218,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "show_diff",
+            "handler_name": "_handle_show_diff",
+            "risk_level": "read",
             "description": "查看当前 workspace 相对原始仓库的 diff。",
             "is_read_only": True,
             "is_concurrency_safe": True,
@@ -210,6 +230,8 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
         },
         {
             "name": "undo",
+            "handler_name": "_handle_undo",
+            "risk_level": "modify",
             "description": "回滚最近一次 write_file 或 edit_file 写操作影响的文件。",
             "is_read_only": False,
             "is_concurrency_safe": False,
@@ -222,8 +244,10 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
 
 
 def build_tool_definitions() -> list[dict]:
-    """返回给 LLM 的工具 JSON Schema。"""
-    return _SINGLE_SOURCE_DATA
+    """Return model-facing schemas derived from the central tool registry."""
+    from app.agent.tool_registry import get_tool_registry
+
+    return get_tool_registry().model_definitions()
 
 
 def read_only_tool_names() -> set[str]:
