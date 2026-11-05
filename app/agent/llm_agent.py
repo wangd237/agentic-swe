@@ -813,13 +813,14 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             tools_by_phase.setdefault(agent_state.phase, current_tool_names)
             # Record the exact tool-result text that survives compaction
             # and is present in this outgoing request (no content is logged).
-            pending_steps = {
+            known_tool_steps = {
                 str(step.tool_metrics["tool_result_id"]): step
                 for step in trace.steps
-                if step.action_type == "tool_call"
-                and step.tool_metrics.get("tool_result_id")
-                and "model_visible_chars" not in step.tool_metrics
+                if step.action_type == "tool_call" and step.tool_metrics.get("tool_result_id")
             }
+            request_tool_result_chars = 0
+            request_tool_result_chars_by_tool: dict[str, int] = {}
+            request_tool_result_count = 0
             for message in messages:
                 content = message.get("content")
                 if not isinstance(content, list):
@@ -827,9 +828,16 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 for block in content:
                     if block.get("type") != "tool_result":
                         continue
-                    trace_step = pending_steps.get(str(block.get("tool_use_id", "")))
-                    if trace_step is not None:
-                        trace_step.tool_metrics["model_visible_chars"] = len(str(block.get("content", "")))
+                    result_chars = len(str(block.get("content", "")))
+                    request_tool_result_chars += result_chars
+                    request_tool_result_count += 1
+                    trace_step = known_tool_steps.get(str(block.get("tool_use_id", "")))
+                    tool_label = trace_step.tool_name if trace_step is not None else "unknown"
+                    request_tool_result_chars_by_tool[tool_label] = (
+                        request_tool_result_chars_by_tool.get(tool_label, 0) + result_chars
+                    )
+                    if trace_step is not None and "model_visible_chars" not in trace_step.tool_metrics:
+                        trace_step.tool_metrics["model_visible_chars"] = result_chars
             response_started_at = perf_counter()
             response = self.client.create_message(
                 system_prompt=system_prompt,
@@ -866,6 +874,12 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 "tool_schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
                 "tool_schema_count": len(tools),
                 "tool_schema_names": current_tool_names,
+                # Counts tool-result payloads repeatedly included in outgoing
+                # requests; this is a character footprint, not token attribution.
+                "request_tool_result_count": request_tool_result_count,
+                "request_tool_result_chars": request_tool_result_chars,
+                "request_tool_result_chars_by_tool": request_tool_result_chars_by_tool,
+                "request_message_chars": self._message_char_estimate(messages),
             }
             # finish_reason 落 trace（failure_analysis.md §9）：截断与主动停止必须可区分。
             response_finish_reason = response.get("finish_reason")
