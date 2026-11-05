@@ -13,9 +13,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.runtime.logger import write_json, write_text
-from app.agent.policy import load_policy_config
+from app.core.policy_config import load_policy_config
 from app.schemas.task_schema import load_task
-from app.tools.run_tests import run_tests
+from app.tools.builtin.run_tests import run_tests
 
 
 def _utc_timestamp() -> str:
