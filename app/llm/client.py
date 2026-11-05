@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from app.agent.llm_config import DEFAULT_LLM_CONFIG, LLMConfig
+from app.llm.config import DEFAULT_LLM_CONFIG, LLMConfig
 
 
 class OpenAICompatibleChatClient:
