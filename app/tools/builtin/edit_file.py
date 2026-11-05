@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from difflib import SequenceMatcher
 
-from app.tools.common import resolve_repo_path, resolve_repo_relative_path
-from app.tools.write_file import _remove_parent_pycache_dirs
+from app.tools.builtin.common import resolve_repo_path, resolve_repo_relative_path
+from app.tools.builtin.write_file import _remove_parent_pycache_dirs
 
 
 def _line_number_for_index(content: str, index: int) -> int:

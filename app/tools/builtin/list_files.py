@@ -1,6 +1,6 @@
 """列出仓库文件工具实现。"""
 
-from app.tools.common import resolve_repo_path, should_skip_path
+from app.tools.builtin.common import resolve_repo_path, should_skip_path
 
 
 def list_files(repo_path: str, recursive: bool = True) -> dict:

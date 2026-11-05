@@ -6,7 +6,7 @@ import fnmatch
 import re
 from pathlib import Path
 
-from app.tools.common import is_likely_text_file, resolve_repo_path, should_skip_path
+from app.tools.builtin.common import is_likely_text_file, resolve_repo_path, should_skip_path
 
 
 def _matches_glob(relative_path: str, glob_pattern: str | None) -> bool:
