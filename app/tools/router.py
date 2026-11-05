@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from app.agent.code_intelligence import CodeIntelligenceBackend
-from app.agent.memory import AgentState, PhaseName
-from app.agent.tool_definitions import build_tool_definitions
-from app.agent.tool_policy import ALLOWED_TOOLS_BY_PHASE, BUDGET_ESCALATION_TOOLS, ToolPolicy
+from app.codebase.intelligence import CodeIntelligenceBackend
+from app.core.state import AgentState, PhaseName
+from app.tools.definitions import build_tool_definitions
+from app.tools.policy import ALLOWED_TOOLS_BY_PHASE, BUDGET_ESCALATION_TOOLS, ToolPolicy
 
 SCHEMA_STRATEGY_PHASE_FILTERED = "phase_filtered"
 SCHEMA_STRATEGY_PHASE_STATE_FILTERED = "phase_state_filtered"

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Literal
 
-from app.agent.tool_definitions import _SINGLE_SOURCE_DATA
+from app.tools.definitions import _SINGLE_SOURCE_DATA
 
 RiskLevel = Literal["read", "execute", "modify"]
 _VALID_RISK_LEVELS = {"read", "execute", "modify"}

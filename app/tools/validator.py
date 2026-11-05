@@ -7,7 +7,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from app.agent.tool_definitions import build_tool_definitions
+from app.tools.definitions import build_tool_definitions
 
 
 @lru_cache(maxsize=1)
