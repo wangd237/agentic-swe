@@ -3740,9 +3740,11 @@ def test_compress_messages_uses_measured_prompt_tokens_as_anchor() -> None:
         {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": "result " * 50}]},
         {"role": "assistant", "content": [{"type": "tool_use", "id": "t2", "name": "read_file", "input": {}}]},
         {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t2", "content": "result " * 50}]},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "t3", "name": "grep", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t3", "content": "result " * 50}]},
     ]
 
-    # 无锚点：chars/2.5 估算（约 800/2.5=320）低于预算 1000，不压缩。
+    # 无锚点：chars/2.5 估算（小于预算）低于预算 1000，不压缩。
     _, did_compress, _, _ = LLMCodeAgent._compress_messages_if_needed(
         messages,
         max_context_chars=80000,
