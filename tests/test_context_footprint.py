@@ -110,3 +110,15 @@ def test_context_audit_percentile_uses_nearest_rank() -> None:
     assert _percentile([], 0.95) is None
     assert _percentile([100, 20, 300, 40, 50], 0.5) == 50
     assert _percentile([100, 20, 300, 40, 50], 0.95) == 300
+
+
+def test_context_audit_parses_committed_evidence_end_to_end(tmp_path: Path) -> None:
+    """Use actual checked-in traces, not just synthetic fixtures."""
+    repo = Path(__file__).resolve().parents[1]
+    data = analyze([repo / "evidence"])
+    assert data["summary"]["runs"] >= 15
+    assert data["summary"]["tool_calls"] > 0
+    assert data["summary"]["prompt_samples"] > 0
+    write_report(data, tmp_path / "audit")
+    assert (tmp_path / "audit" / "report.md").is_file()
+    assert (tmp_path / "audit" / "tool_summary.csv").is_file()
