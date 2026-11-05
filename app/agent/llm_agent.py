@@ -811,6 +811,33 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             current_tool_names = tool_names(tools)
             total_tool_schema_sent += len(tools)
             tools_by_phase.setdefault(agent_state.phase, current_tool_names)
+            # Record the exact tool-result text that survives compaction
+            # and is present in this outgoing request (no content is logged).
+            known_tool_steps = {
+                str(step.tool_metrics["tool_result_id"]): step
+                for step in trace.steps
+                if step.action_type == "tool_call" and step.tool_metrics.get("tool_result_id")
+            }
+            request_tool_result_chars = 0
+            request_tool_result_chars_by_tool: dict[str, int] = {}
+            request_tool_result_count = 0
+            for message in messages:
+                content = message.get("content")
+                if not isinstance(content, list):
+                    continue
+                for block in content:
+                    if block.get("type") != "tool_result":
+                        continue
+                    result_chars = len(str(block.get("content", "")))
+                    request_tool_result_chars += result_chars
+                    request_tool_result_count += 1
+                    trace_step = known_tool_steps.get(str(block.get("tool_use_id", "")))
+                    tool_label = trace_step.tool_name if trace_step is not None else "unknown"
+                    request_tool_result_chars_by_tool[tool_label] = (
+                        request_tool_result_chars_by_tool.get(tool_label, 0) + result_chars
+                    )
+                    if trace_step is not None and "model_visible_chars" not in trace_step.tool_metrics:
+                        trace_step.tool_metrics["model_visible_chars"] = result_chars
             response_started_at = perf_counter()
             response = self.client.create_message(
                 system_prompt=system_prompt,
@@ -847,6 +874,12 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 "tool_schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
                 "tool_schema_count": len(tools),
                 "tool_schema_names": current_tool_names,
+                # Counts tool-result payloads repeatedly included in outgoing
+                # requests; this is a character footprint, not token attribution.
+                "request_tool_result_count": request_tool_result_count,
+                "request_tool_result_chars": request_tool_result_chars,
+                "request_tool_result_chars_by_tool": request_tool_result_chars_by_tool,
+                "request_message_chars": self._message_char_estimate(messages),
             }
             # finish_reason 落 trace（failure_analysis.md §9）：截断与主动停止必须可区分。
             response_finish_reason = response.get("finish_reason")
@@ -1139,8 +1172,22 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         decision="将工具结果回喂给模型继续决策。",
                         parallel_group_id=parallel_group_id,
                     )
+                    tool_trace_step = trace.steps[-1]
                     if spill_path:
-                        trace.steps[-1].evidence_ids.append(f"spill:{spill_path}")
+                        tool_trace_step.evidence_ids.append(f"spill:{spill_path}")
+                    raw_data = tool_result.get("data")
+                    tool_trace_step.tool_metrics.update(
+                        {
+                            "tool_result_id": str(block.get("id", "")),
+                            "raw_result_chars": len(json.dumps(tool_result, ensure_ascii=False)),
+                            "tool_payload_truncated": (
+                                raw_data.get("truncated")
+                                if isinstance(raw_data, dict) and isinstance(raw_data.get("truncated"), bool)
+                                else None
+                            ),
+                            "spilled_full_output": bool(spill_path),
+                        }
+                    )
 
                     reflection_message_for_model = ""
                     if (
@@ -1246,20 +1293,35 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                             f"\n\n[完整输出({result_chars}字符)已落盘至 {spill_path}。"
                             "以上为摘要预览。如需查看更多匹配行，请用 grep 重新搜索并缩小范围。]"
                         )
+                    model_summary = ToolExecutor.summarize_for_model(
+                        tool_result,
+                        max_chars=self.llm_config.max_tool_chars,
+                    )
+                    model_result_content = (
+                        model_summary
+                        + phase_hint_for_model
+                        + immediate_auto_verification_message
+                        + reflection_message_for_model
+                        + anti_loop_message_for_model
+                        + edit_recovery_message_for_model
+                        + spill_hint_for_model
+                    )
+                    # Pure telemetry. A later context compaction may shorten this
+                    # payload before the next request; record actual exposure at send.
+                    tool_trace_step.tool_metrics.update(
+                        {
+                            "prepared_tool_result_chars": len(model_result_content),
+                            "model_summary_truncated": any(
+                                marker in model_summary
+                                for marker in ("...<truncated>", "<diff truncated;", "<large file;")
+                            ),
+                        }
+                    )
                     tool_results_for_model.append(
                         {
                             "type": "tool_result",
                             "tool_use_id": block.get("id", ""),
-                            "content": ToolExecutor.summarize_for_model(
-                                tool_result,
-                                max_chars=self.llm_config.max_tool_chars,
-                            )
-                            + phase_hint_for_model
-                            + immediate_auto_verification_message
-                            + reflection_message_for_model
-                            + anti_loop_message_for_model
-                            + edit_recovery_message_for_model
-                            + spill_hint_for_model,
+                            "content": model_result_content,
                         }
                     )
 
