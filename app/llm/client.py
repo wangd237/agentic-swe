@@ -7,6 +7,21 @@ from typing import Any
 
 from app.llm.config import DEFAULT_LLM_CONFIG, LLMConfig
 
+COMPACTION_INSTRUCTION = """Act only as a context compaction engine for a coding agent.
+Produce a concise, accurate checkpoint so the agent can resume the task.
+Use these Markdown headings and short bullets:
+## Task and constraints
+## Confirmed findings and evidence
+## Files and relevant symbols
+## Fixes attempted and test outcomes
+## Rejected hypotheses and reasons
+## Current state and next action
+Preserve exact file paths, commands, test identifiers, error types, and the
+distinction between verified facts and hypotheses. Retain still-valid information
+from any prior checkpoint. Do not propose a new fix or call tools.
+Output only the checkpoint, without code fences."""
+
+
 
 class OpenAICompatibleChatClient:
     """OpenAI-compatible Chat Completions 轻量适配器。"""
@@ -175,6 +190,32 @@ class OpenAICompatibleChatClient:
         if usage:
             normalized["usage"] = usage
         return normalized
+
+    def create_compaction_summary(
+        self,
+        *,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        max_output_tokens: int,
+    ) -> str:
+        """One-shot summary of a complete older prefix, with no tool execution."""
+        request_messages = self._messages_to_openai(
+            system_prompt=system_prompt,
+            messages=messages,
+        )
+        request_messages.append({"role": "user", "content": COMPACTION_INSTRUCTION})
+        response = self._ensure_client().chat.completions.create(
+            model=self.llm_config.model,
+            temperature=self.llm_config.temperature,
+            max_tokens=max_output_tokens,
+            messages=request_messages,
+        )
+        if response.choices[0].finish_reason == "length":
+            raise ValueError("Compaction summary truncated by output-token limit")
+        content = response.choices[0].message.content or ""
+        if not content.strip():
+            raise ValueError("Compaction summary was empty")
+        return content
 
     def create_message(
         self,

@@ -29,6 +29,7 @@ from app.llm.prompts import (
 )
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json
+from app.runtime.message_journal import MessageJournal
 from app.schemas.task_schema import load_task
 from app.schemas.trace_schema import Trace, TraceStep
 from app.tools.definitions import read_only_tool_names
@@ -353,6 +354,8 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 "content": user_prompt,
             }
         ]
+        message_journal = MessageJournal(run_paths.messages_jsonl_path)
+        message_journal.sync(messages)
 
         final_summary = ""
         last_test_exit_code: int | None = None
@@ -381,6 +384,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         llm_missing_usage_count = 0
         llm_missing_prompt_usage_count = 0
         last_measured_prompt_tokens: int | None = None
+        last_measured_message_chars: int | None = None
         total_tool_schema_sent = 0
         tools_by_phase: dict[str, list[str]] = {}
 
@@ -531,16 +535,50 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
 
         def compress_context_if_needed(reason: str) -> None:
             nonlocal messages
+            # Persist unpruned model-visible messages before any in-place rewrite.
+            message_journal.sync(messages)
             messages = self._microcompact_messages(messages, max_chars=self.llm_config.max_tool_chars)
+            message_journal.sync(messages, reason="tool_result_prune")
+            method = "rules"
+            fallback_error: str | None = None
+
+            def summarize(prefix: list[dict[str, Any]]) -> str:
+                nonlocal method, fallback_error
+                if self.llm_config.compaction_mode != "llm":
+                    return ""
+                summarizer = getattr(self.client, "create_compaction_summary", None)
+                if not callable(summarizer):
+                    return ""
+                try:
+                    summary = summarizer(
+                        system_prompt=system_prompt,
+                        messages=prefix,
+                        max_output_tokens=self.llm_config.compaction_max_output_tokens,
+                    )
+                    if not isinstance(summary, str) or not summary.strip():
+                        raise ValueError("Empty summary")
+                    method = "llm"
+                    return summary
+                except Exception as error:
+                    fallback_error = f"{type(error).__name__}: {error}"
+                    return ""
+
             messages, compressed, before_chars, after_chars = self._compress_messages_if_needed(
                 messages,
                 max_context_chars=self.llm_config.max_context_chars,
                 context_window_tokens=self.llm_config.context_window_tokens,
                 reserve_tokens=self.llm_config.reserve_tokens,
                 measured_prompt_tokens=last_measured_prompt_tokens,
+                measured_message_chars=last_measured_message_chars,
+                trigger_tokens=self.llm_config.compaction_trigger_tokens,
+                summary_builder=summarize,
             )
             if not compressed:
                 return
+            message_journal.sync(messages, reason="context_compaction", metadata={
+                "method": method, "before_chars": before_chars, "after_chars": after_chars,
+                "fallback_error": fallback_error,
+            })
             trace.steps.append(
                 TraceStep(
                     step_index=len(trace.steps) + 1,
@@ -558,6 +596,9 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                     tool_metrics={
                         "before_chars": before_chars,
                         "after_chars": after_chars,
+                        "method": method,
+                        "fallback_error": fallback_error,
+                        "messages_jsonl_path": str(run_paths.messages_jsonl_path),
                         "max_context_chars": self.llm_config.max_context_chars,
                         # ADR-0002 Step 2：token 判定依据。
                         "context_window_tokens": self.llm_config.context_window_tokens,
@@ -565,6 +606,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         "estimated_tokens_at_compression": self._estimate_context_tokens(
                             messages,
                             measured_prompt_tokens=last_measured_prompt_tokens,
+                            measured_message_chars=last_measured_message_chars,
                         ),
                         "last_measured_prompt_tokens": last_measured_prompt_tokens,
                     },
@@ -811,6 +853,9 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             current_tool_names = tool_names(tools)
             total_tool_schema_sent += len(tools)
             tools_by_phase.setdefault(agent_state.phase, current_tool_names)
+            # Capture budget notices and other in-place edits before the request.
+            message_journal.sync(messages)
+            measured_message_chars_this_call = self._message_char_estimate(messages)
             response_started_at = perf_counter()
             response = self.client.create_message(
                 system_prompt=system_prompt,
@@ -830,6 +875,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             else:
                 llm_prompt_tokens += response_prompt_tokens
                 last_measured_prompt_tokens = response_prompt_tokens
+                last_measured_message_chars = measured_message_chars_this_call
             assistant_blocks = self._normalize_assistant_blocks(response)
             assistant_text = self._extract_text(assistant_blocks)
             tool_blocks = self._tool_use_blocks(assistant_blocks)
@@ -1424,6 +1470,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
 
         if pending_auto_verification and verified_generation != workspace_generation:
             apply_auto_verification("final_pending_verification")
+        message_journal.sync(messages)
 
         return self._finalize_run(
             tool_executor=tool_executor,

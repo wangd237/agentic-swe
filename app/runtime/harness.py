@@ -48,6 +48,7 @@ class RunPaths:
     task_json_path: Path
     result_json_path: Path
     trace_json_path: Path
+    messages_jsonl_path: Path
     patch_diff_path: Path
     summary_md_path: Path
     test_stdout_path: Path
@@ -87,6 +88,7 @@ def build_run_paths(log_root: str | Path, task_id: str, run_id: str) -> RunPaths
         task_json_path=base_dir / "task.json",
         result_json_path=base_dir / "result.json",
         trace_json_path=base_dir / "trace.json",
+        messages_jsonl_path=base_dir / "messages.jsonl",
         patch_diff_path=base_dir / "patch.diff",
         summary_md_path=base_dir / "summary.md",
         test_stdout_path=base_dir / "test_stdout.txt",

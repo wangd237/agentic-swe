@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Callable
 
 
 class AgentContextMixin:
@@ -68,6 +68,7 @@ class AgentContextMixin:
         messages: list[dict[str, Any]],
         *,
         measured_prompt_tokens: int | None,
+        measured_message_chars: int | None = None,
     ) -> int:
         """估算当前上下文 token 数。
 
@@ -77,9 +78,15 @@ class AgentContextMixin:
         2.45（范围 1.93~3.10），2.5 居中且偏保守（高估 token → 提前压缩，
         安全方向）。
         """
+        current_chars = cls._message_char_estimate(messages)
         if measured_prompt_tokens is not None:
-            return measured_prompt_tokens
-        return round(cls._message_char_estimate(messages) / 2.5)
+            if measured_message_chars is None:
+                return measured_prompt_tokens
+            # An old prompt_tokens reading cannot remain constant as messages grow.
+            # Anchor fixed system/schema overhead to the last API observation,
+            # and price the changed message suffix with the calibrated heuristic.
+            return max(0, round(measured_prompt_tokens + (current_chars - measured_message_chars) / 2.5))
+        return round(current_chars / 2.5)
 
     @classmethod
     def _compress_messages_if_needed(
@@ -90,6 +97,9 @@ class AgentContextMixin:
         context_window_tokens: int = 1_000_000,
         reserve_tokens: int = 16_000,
         measured_prompt_tokens: int | None = None,
+        measured_message_chars: int | None = None,
+        trigger_tokens: int | None = None,
+        summary_builder: Callable[[list[dict[str, Any]]], str] | None = None,
         keep_recent: int = 3,
     ) -> tuple[list[dict[str, Any]], bool, int, int]:
         before_chars = cls._message_char_estimate(messages)
@@ -99,8 +109,11 @@ class AgentContextMixin:
         estimated_tokens = cls._estimate_context_tokens(
             messages,
             measured_prompt_tokens=measured_prompt_tokens,
+            measured_message_chars=measured_message_chars,
         )
         token_budget = context_window_tokens - reserve_tokens
+        if trigger_tokens is not None:
+            token_budget = min(token_budget, trigger_tokens)
         if (
             estimated_tokens <= token_budget
             or len(messages) <= keep_recent + 1
@@ -123,19 +136,28 @@ class AgentContextMixin:
             split_index -= 1
         recent_messages = messages[split_index:]
         middle_messages = messages[1:split_index]
-        summary_lines = [
-            cls._summarize_message_for_context(message)
-            for message in middle_messages
-        ]
-        summary_message = {
-            "role": "system",
-            "content": (
+        # The summary builder receives a complete prefix, including the task and
+        # any previous checkpoint. No dangling tool result crosses this boundary.
+        summary = ""
+        if summary_builder is not None:
+            summary = summary_builder([leading_message, *middle_messages]).strip()
+        if summary:
+            summary_content = "Earlier context has been summarized. Key findings so far:\n" + summary
+        else:
+            summary_lines = [
+                cls._summarize_message_for_context(message)
+                for message in middle_messages
+            ]
+            summary_content = (
                 "Earlier context has been summarized. Key findings so far:\n"
                 + "\n".join(f"- {line}" for line in summary_lines)
-            ),
-        }
+            )
+        summary_message = {"role": "system", "content": summary_content}
         compressed_messages = [leading_message, summary_message, *recent_messages]
         after_chars = cls._message_char_estimate(compressed_messages)
+        # Never replace history with a checkpoint that actually expands context.
+        if after_chars >= before_chars:
+            return messages, False, before_chars, before_chars
         return compressed_messages, True, before_chars, after_chars
 
     @staticmethod
