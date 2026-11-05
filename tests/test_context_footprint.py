@@ -37,7 +37,12 @@ def test_context_audit_preserves_unknown_sizes_and_prompt_gaps(tmp_path: Path) -
              "evidence_ids": ["spill:tool_outputs/step_003_run_tests.json"]},
             {"step_index": 4, "action_type": "context_compression"},
             {"step_index": 5, "action_type": "llm_response",
-             "tool_metrics": {"llm_prompt_tokens": 1200, "tool_schema_count": 5}},
+             "tool_metrics": {
+                 "llm_prompt_tokens": 1200, "tool_schema_count": 5,
+                 "request_tool_result_count": 2, "request_tool_result_chars": 500,
+                 "request_message_chars": 1500,
+                 "request_tool_result_chars_by_tool": {"grep": 400, "run_tests": 100},
+             }},
         ],
     })
     data = analyze([tmp_path / "logs" / "trajectories"], context_window_tokens=1400)
@@ -54,6 +59,11 @@ def test_context_audit_preserves_unknown_sizes_and_prompt_gaps(tmp_path: Path) -
     assert data["prompt_deltas"][1]["tool_calls_since_previous"] == 2
     assert data["prompt_deltas"][1]["model_visible_chars_since_previous"] is None
     assert data["prompt_deltas"][1]["compressions_since_previous"] == 1
+    assert data["prompt_deltas"][1]["request_tool_result_chars"] == 500
+    assert data["summary"]["request_footprint_samples"] == 1
+    tool_totals = {row["tool"]: row for row in data["tools"]}
+    assert tool_totals["grep"]["repeated_request_context_chars_known"] == 400
+    assert tool_totals["run_tests"]["repeated_request_context_chars_known"] == 100
     out = tmp_path / "reports"
     write_report(data, out)
     assert "SENSITIVE-DONT-COPY" not in (out / "report.md").read_text(encoding="utf-8")

@@ -990,6 +990,8 @@ def test_llm_agent_marks_test_only_run_as_no_patch(tmp_path: Path) -> None:
     # 第 2 轮 schema 从 7 收窄到 5：预算硬约束生效（见上文 tool_routing 断言注释）
     assert [step["tool_metrics"]["tool_schema_count"] for step in llm_steps] == [5, 5]
     assert llm_steps[0]["tool_metrics"]["tool_schema_strategy"] == "phase_state_filtered"
+    assert llm_steps[1]["tool_metrics"]["request_tool_result_count"] == 1
+    assert llm_steps[1]["tool_metrics"]["request_tool_result_chars_by_tool"]["run_tests"] == footprint["model_visible_chars"]
     assert all("phase" in step for step in output["trace"]["steps"])
     assert output["trace"]["steps"][0]["phase"] == "understand"
 
