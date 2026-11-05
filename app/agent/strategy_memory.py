@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.agent.memory import AgentState
+from app.core.state import AgentState
 from app.schemas.result_schema import Result
 from app.schemas.trace_schema import Trace
 

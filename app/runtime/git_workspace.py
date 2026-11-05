@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from app.tools.common import resolve_repo_path
+from app.tools.builtin.common import resolve_repo_path
 
 GIT_IDENTITY_ARGS = [
     "-c",

@@ -8,18 +8,18 @@ from time import perf_counter
 
 from app.agent.patcher import apply_rule_based_patch
 from app.agent.planner import create_initial_plan, derive_search_queries
-from app.agent.policy import load_policy_config
+from app.core.policy_config import load_policy_config
 from app.runtime.git_workspace import commit_workspace_path
 from app.runtime.harness import COPY_IGNORE_DIR_NAMES, build_run_paths, copy_repo_to_workspace, next_run_id
 from app.runtime.logger import write_json, write_text
 from app.schemas.result_schema import Result
 from app.schemas.task_schema import Task, load_task
 from app.schemas.trace_schema import Trace, TraceStep
-from app.tools.list_files import list_files
-from app.tools.read_file import read_file
-from app.tools.run_tests import run_tests
-from app.tools.search_code import search_code
-from app.tools.show_diff import show_diff
+from app.tools.builtin.list_files import list_files
+from app.tools.builtin.read_file import read_file
+from app.tools.builtin.run_tests import run_tests
+from app.tools.builtin.search_code import search_code
+from app.tools.builtin.show_diff import show_diff
 
 
 def _resolve_test_patch_path(
