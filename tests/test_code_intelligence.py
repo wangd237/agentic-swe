@@ -5,14 +5,14 @@ import os
 import subprocess
 from pathlib import Path
 
-from app.agent.code_intelligence import (
+from app.codebase.intelligence import (
     SHADOW_COPY_PATH_LENGTH_THRESHOLD,
     CodebaseMemoryCliBackend,
     NullCodeIntelligenceBackend,
     build_code_intelligence_backend,
 )
-from app.agent.memory import LocalizationCandidate
-from app.agent.policy import PolicyConfig
+from app.core.state import LocalizationCandidate
+from app.core.policy_config import PolicyConfig
 
 
 def test_null_code_intelligence_backend_is_disabled(tmp_path: Path) -> None:
@@ -103,7 +103,7 @@ def test_codebase_memory_cli_backend_compacts_search_results(tmp_path: Path, mon
             )
         raise AssertionError(args)
 
-    monkeypatch.setattr("app.agent.code_intelligence.shutil.which", fake_which)
+    monkeypatch.setattr("app.codebase.intelligence.shutil.which", fake_which)
     backend = CodebaseMemoryCliBackend(binary="codebase-memory-mcp", runner=fake_runner)
 
     result = backend.collect_localization_hints(
@@ -183,7 +183,7 @@ def test_codebase_memory_cli_backend_reranks_source_files_before_tests(tmp_path:
             )
         raise AssertionError(args)
 
-    monkeypatch.setattr("app.agent.code_intelligence.shutil.which", fake_which)
+    monkeypatch.setattr("app.codebase.intelligence.shutil.which", fake_which)
     backend = CodebaseMemoryCliBackend(binary="codebase-memory-mcp", runner=fake_runner)
 
     result = backend.collect_localization_hints(
@@ -238,7 +238,7 @@ def test_codebase_memory_cli_backend_augments_test_candidate_with_implementation
             )
         raise AssertionError(args)
 
-    monkeypatch.setattr("app.agent.code_intelligence.shutil.which", fake_which)
+    monkeypatch.setattr("app.codebase.intelligence.shutil.which", fake_which)
     backend = CodebaseMemoryCliBackend(binary="codebase-memory-mcp", runner=fake_runner)
 
     result = backend.collect_localization_hints(
@@ -351,7 +351,7 @@ def test_codebase_memory_cli_backend_uses_shadow_copy_for_long_repo_path(
             )
         raise AssertionError(args)
 
-    monkeypatch.setattr("app.agent.code_intelligence.shutil.which", fake_which)
+    monkeypatch.setattr("app.codebase.intelligence.shutil.which", fake_which)
     backend = CodebaseMemoryCliBackend(binary="codebase-memory-mcp", runner=fake_runner)
 
     result = backend.collect_localization_hints(
@@ -405,7 +405,7 @@ def test_codebase_memory_cli_backend_uses_json_hint_for_failed_tool(tmp_path: Pa
             stderr="level=error msg=pipeline.err phase=dump\n",
         )
 
-    monkeypatch.setattr("app.agent.code_intelligence.shutil.which", fake_which)
+    monkeypatch.setattr("app.codebase.intelligence.shutil.which", fake_which)
     backend = CodebaseMemoryCliBackend(binary="codebase-memory-mcp", runner=fake_runner)
 
     result = backend.collect_localization_hints(
@@ -428,7 +428,7 @@ def test_codebase_memory_cli_backend_falls_back_when_home_root_unwritable(
             return None
         raise PermissionError("blocked")
 
-    monkeypatch.setattr("app.agent.code_intelligence.gettempdir", lambda: str(tmp_path))
+    monkeypatch.setattr("app.codebase.intelligence.gettempdir", lambda: str(tmp_path))
     monkeypatch.setattr(Path, "mkdir", fake_mkdir)
 
     env = CodebaseMemoryCliBackend._default_env(tmp_path / "blocked_home")
