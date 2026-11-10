@@ -228,6 +228,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             agent_state.reproduction_evidence_kind = "weak_static"
         latest_failure_summary: dict[str, Any] | None = None
         search_match_files: list[str] = []
+        search_symbol_files: set[str] = set()
         searched_queries: set[str] = set()
         code_intelligence_backend = build_code_intelligence_backend(policy_config)
         code_intelligence_result = code_intelligence_backend.collect_localization_hints(
@@ -427,7 +428,10 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                     target_files_hint=task.target_files_hint,
                     failure_summary=latest_failure_summary,
                     search_match_files=search_match_files,
-                    existing_candidates=agent_state.localization_candidates,
+                    search_symbol_files=sorted(search_symbol_files),
+                    read_files=agent_state.read_files,
+                    # Reuse the original graph evidence, not previous ranking scores.
+                    existing_candidates=code_intelligence_result.candidates,
                 )
             )
 
@@ -459,6 +463,11 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                 search_result = tool_executor.execute("search_code", tool_input)
                 duration_sec = round(perf_counter() - started_at, 4)
                 matches = search_result.get("data", {}).get("matches", [])[:10]
+                for match in matches:
+                    if match.get("symbol") and match.get("symbol_range"):
+                        hit_path = str(match.get("relative_path", "")).replace("\\", "/")
+                        if hit_path:
+                            search_symbol_files.add(hit_path)
                 match_files = [
                     str(path).replace("\\", "/")
                     for path in search_result.get("data", {}).get("match_files", [])[:5]
@@ -1044,6 +1053,11 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         ).strip()
                         if query_text:
                             searched_queries.add(query_text.casefold())
+                        for match in tool_result.get("data", {}).get("matches", []):
+                            if match.get("symbol") and match.get("symbol_range"):
+                                hit_path = str(match.get("relative_path", "")).replace("\\", "/")
+                                if hit_path:
+                                    search_symbol_files.add(hit_path)
                         for relative_path in tool_result.get("data", {}).get("match_files", [])[:5]:
                             normalized_path = str(relative_path).replace("\\", "/")
                             if normalized_path and normalized_path not in search_match_files:
