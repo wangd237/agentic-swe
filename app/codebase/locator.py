@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -40,25 +40,28 @@ LOW_VALUE_TOKENS = {
 @dataclass(slots=True)
 class CandidateScore:
     relative_path: str
-    score: float = 0.0
-    reasons: list[str] | None = None
-    evidence: list[str] | None = None
+    # Independent evidence channels: repeated frames/calls cannot add weight.
+    signals: dict[str, float] = field(default_factory=dict)
+    reasons: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
-    def add(self, *, score: float, reason: str, evidence: str) -> None:
-        self.score += score
-        self.reasons = self.reasons or []
-        self.evidence = self.evidence or []
+    def add(self, *, signal: str, score: float, reason: str, evidence: str) -> None:
+        self.signals[signal] = max(self.signals.get(signal, 0.0), score)
         if reason not in self.reasons:
             self.reasons.append(reason)
         if evidence and evidence not in self.evidence:
             self.evidence.append(evidence)
 
     def to_candidate(self) -> LocalizationCandidate:
-        confidence = min(round(self.score / 5.0, 3), 1.0)
+        # A ranking heuristic, NOT a calibrated probability. The rational
+        # transform avoids 1.0 saturation while preserving the existing
+        # reflector's >=0.4 threshold for a direct issue-symbol match.
+        raw_score = sum(self.signals.values())
+        confidence = round(raw_score / (raw_score + 2.5), 3)
         return LocalizationCandidate(
             relative_path=self.relative_path,
-            reason=", ".join(self.reasons or []),
-            evidence=self.evidence or [],
+            reason=", ".join(self.reasons),
+            evidence=self.evidence,
             confidence=confidence,
         )
 
@@ -174,77 +177,118 @@ def rank_candidates(
     target_files_hint: list[str] | None = None,
     failure_summary: dict[str, Any] | None = None,
     search_match_files: list[str] | None = None,
+    search_symbol_files: list[str] | None = None,
+    read_files: list[str] | None = None,
     existing_candidates: list[LocalizationCandidate] | None = None,
     max_candidates: int = 5,
 ) -> list[LocalizationCandidate]:
+    """Rank files from independent evidence, without feeding rankings back as priors.
+
+    `existing_candidates` is intended for initial external graph hints; callers
+    must pass the ORIGINAL graph candidates on subsequent refreshes, rather than
+    this function's output. Tool results from repeated runs share evidence
+    channels and therefore cannot inflate their own confidence.
+    """
     scores: dict[str, CandidateScore] = {}
 
-    def score_path(relative_path: str, *, score: float, reason: str, evidence: str) -> None:
-        normalized = normalize_relative_path(relative_path)
+    def score_path(
+        relative_path: str, *, signal: str, score: float, reason: str, evidence: str
+    ) -> None:
+        normalized = normalize_relative_path(relative_path).strip()
         if not normalized:
             return
         scores.setdefault(normalized, CandidateScore(relative_path=normalized)).add(
+            signal=signal,
             score=score,
             reason=reason,
             evidence=evidence,
         )
 
-    for path in target_files_hint or []:
-        score_path(path, score=3.0, reason="task_hint", evidence="Task listed this file as a hint.")
+    for path in set(target_files_hint or []):
+        score_path(path, signal="task_hint", score=3.0, reason="task_hint",
+                   evidence="Task listed this file as a hint.")
 
+    # Graph candidates are stable priors, not the previous ranking's confidence.
     for candidate in existing_candidates or []:
-        # 不重复包裹 existing: 前缀——每次刷新都会重走这里，叠加前缀会让
-        # reason 字符串互不相同，既污染 trace 可读性也让 add() 的去重失效
-        # （failure_analysis.md §1 附带小 bug，24 次叠加实测）。
-        base_reason = candidate.reason or "candidate"
-        reason = base_reason if base_reason.startswith("existing:") else f"existing:{base_reason}"
         score_path(
             candidate.relative_path,
-            score=max(candidate.confidence * 3.0, 0.5),
-            reason=reason,
-            evidence="Existing agent state already tracked this candidate.",
+            signal="graph_prior",
+            score=0.5 + 2.0 * max(0.0, min(candidate.confidence, 1.0)),
+            reason=candidate.reason or "graph_prior",
+            evidence="Initial external localization candidate.",
         )
 
     failure_summary = failure_summary or {}
-    for location in failure_summary.get("locations", []) or []:
+    locations = failure_summary.get("locations", []) or []
+    # A failure stack generally starts in the failing test and enters project
+    # code before descending to generic parsing/exception helpers. Prefer its
+    # first implementation file, without assuming the final throw site is root.
+    first_implementation = next(
+        (
+            normalize_relative_path(str(location.get("path", "")))
+            for location in locations
+            if location.get("path")
+            and not is_test_path(normalize_relative_path(str(location["path"])))
+        ),
+        None,
+    )
+    for location in locations:
         path = str(location.get("path", ""))
         if not path:
             continue
-        score = 2.0 if is_test_path(path) else 4.0
-        score_path(
-            path,
-            score=score,
-            reason="failure_location",
-            evidence=f"Test output pointed at {path}:{location.get('line')}.",
-        )
-        if is_test_path(path):
-            for implementation_path in implementation_candidates_for_test_path(path, repo_path):
+        normalized = normalize_relative_path(path)
+        if is_test_path(normalized):
+            score_path(
+                normalized, signal="failing_test_location", score=0.4,
+                reason="failure_location",
+                evidence=f"Test output pointed at {normalized}:{location.get('line')}.",
+            )
+            for implementation_path in implementation_candidates_for_test_path(normalized, repo_path):
                 score_path(
-                    implementation_path,
-                    score=3.5,
+                    implementation_path, signal="test_import_mapping", score=2.5,
                     reason="test_import_mapping",
-                    evidence=f"Inferred implementation from failing test {path}.",
+                    evidence=f"Inferred implementation from failing test {normalized}.",
                 )
+        else:
+            # Only one score per file across all stack frames and failed tests.
+            direct = normalized == first_implementation
+            score_path(
+                normalized,
+                signal="traceback_location",
+                score=3.3 if direct else 1.1,
+                reason="failure_location",
+                evidence=f"Test traceback includes {normalized}:{location.get('line')} "
+                         f"({'first application frame' if direct else 'downstream frame'}).",
+            )
 
     for failed_test in failure_summary.get("failed_tests", []) or []:
-        test_path = str(failed_test).split("::", 1)[0].split(" - ", 1)[0]
+        test_path = normalize_relative_path(
+            str(failed_test).split("::", 1)[0].split(" - ", 1)[0]
+        )
         if test_path.endswith(PYTHON_SUFFIX):
             score_path(
-                test_path,
-                score=1.5,
+                test_path, signal="failed_test", score=0.4,
                 reason="failed_test",
                 evidence=f"Pytest reported failed test {failed_test}.",
             )
             for implementation_path in implementation_candidates_for_test_path(test_path, repo_path):
                 score_path(
-                    implementation_path,
-                    score=3.0,
+                    implementation_path, signal="test_import_mapping", score=2.5,
                     reason="failed_test_import_mapping",
                     evidence=f"Inferred implementation from failed test {test_path}.",
                 )
 
-    for path in search_match_files or []:
-        score_path(path, score=1.5, reason="search_hit", evidence="Search/grep matched this file.")
+    for path in set(search_match_files or []):
+        score_path(path, signal="search_hit", score=1.25, reason="search_hit",
+                   evidence="Search or grep matched this file.")
+    for path in set(search_symbol_files or []):
+        score_path(path, signal="symbol_search_hit", score=1.6,
+                   reason="symbol_search_hit",
+                   evidence="Search matched an enclosing Python symbol with line range.")
+    # Reading a file is weak evidence: the LLM may inspect the wrong candidate.
+    for path in set(read_files or []):
+        score_path(path, signal="file_read", score=0.35,
+                   reason="file_read", evidence="Agent inspected this file.")
 
     issue_tokens = extract_issue_tokens(issue_text)
     if issue_tokens:
@@ -253,15 +297,18 @@ def rank_candidates(
             overlaps = sorted(issue_tokens & symbols)
             if overlaps:
                 score_path(
-                    path,
-                    score=min(2.0 + len(overlaps) * 0.4, 4.0),
+                    path, signal="issue_symbol", score=min(1.5 + len(overlaps) * 0.2, 2.1),
                     reason="symbol_match",
                     evidence=f"Issue tokens matched symbols: {', '.join(overlaps[:5])}.",
                 )
 
     ranked = sorted(
         (score.to_candidate() for score in scores.values()),
-        key=lambda candidate: (candidate.confidence, not is_test_path(candidate.relative_path), candidate.relative_path),
+        key=lambda candidate: (
+            candidate.confidence,
+            not is_test_path(candidate.relative_path),
+            candidate.relative_path,
+        ),
         reverse=True,
     )
     return ranked[:max_candidates]
