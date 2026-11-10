@@ -25,9 +25,37 @@ def _normalize_line_range(
     return normalized_start, min(normalized_end, total_lines)
 
 
-def _slice_lines(content: str, *, start_line: int, end_line: int) -> str:
+# Keep a single read_file tool result bounded, even when the model asks for more.
+MAX_READ_CHARS = 16000
+
+
+def _page_lines(
+    content: str, *, start_line: int, end_line: int, max_chars: int
+) -> tuple[str, int | None, int | None, bool]:
+    """Return complete lines that fit the budget and an explicit continuation point.
+
+    A single oversized line is returned partially and flagged; it is never silently
+    treated as a complete line.
+    """
     lines = content.splitlines(keepends=True)
-    return "".join(lines[start_line - 1:end_line])
+    parts: list[str] = []
+    returned_end_line: int | None = None
+    next_start_line: int | None = None
+    partial_line = False
+    used_chars = 0
+    for line_number in range(start_line, min(end_line, len(lines)) + 1):
+        line = lines[line_number - 1]
+        if used_chars + len(line) > max_chars:
+            next_start_line = line_number
+            if not parts:
+                parts.append(line[:max_chars])
+                returned_end_line = line_number
+                partial_line = True
+            break
+        parts.append(line)
+        used_chars += len(line)
+        returned_end_line = line_number
+    return "".join(parts), returned_end_line, next_start_line, partial_line
 
 
 def read_file(
@@ -53,13 +81,15 @@ def read_file(
             end_line=end_line,
             total_lines=total_line_count,
         )
-        readable_content = (
-            _slice_lines(content, start_line=line_range[0], end_line=line_range[1])
-            if line_range
-            else content
+        effective_max_chars = min(max(int(max_chars), 1), MAX_READ_CHARS)
+        selected_start, selected_end = line_range or (1, total_line_count)
+        returned_content, returned_end_line, next_start_line, partial_line = _page_lines(
+            content,
+            start_line=selected_start,
+            end_line=selected_end,
+            max_chars=effective_max_chars,
         )
-        truncated = len(readable_content) > max_chars
-        returned_content = readable_content[:max_chars] if truncated else readable_content
+        truncated = next_start_line is not None
         line_range_summary = (
             f" 第 {line_range[0]}-{line_range[1]} 行"
             if line_range
@@ -79,6 +109,11 @@ def read_file(
                 "end_line": line_range[1] if line_range else None,
                 "char_count": len(content),
                 "returned_line_count": len(returned_content.splitlines()),
+                "returned_start_line": selected_start if returned_end_line is not None else None,
+                "returned_end_line": returned_end_line,
+                "next_start_line": next_start_line,
+                "partial_line": partial_line,
+                "effective_max_chars": effective_max_chars,
                 "truncated": truncated,
                 "returned_char_count": len(returned_content),
             },
