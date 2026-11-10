@@ -95,7 +95,7 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
             "name": "read_file",
             "handler_name": "_handle_read_file",
             "risk_level": "read",
-            "description": "读取指定文件内容，适合查看代码、测试或配置文件；定位到失败行后优先使用 start_line/end_line 读取局部上下文。",
+            "description": "读取指定文件内容，适合查看代码、测试或配置文件；定位到失败行后优先使用 start_line/end_line 读取局部上下文；截断时按 next_start_line/next_start_char 续读。",
             "is_read_only": True,
             "is_concurrency_safe": True,
             "input_schema": {
@@ -119,6 +119,12 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
                         "type": "integer",
                         "description": "可选，按 1 开始的结束行号，必须大于等于 start_line。",
                         "minimum": 1,
+                    },
+                    "start_char": {
+                        "type": "integer",
+                        "description": "可选，首行从第几个字符开始（0-based），用于继续读取超长单行；按 next_start_char 续读。",
+                        "minimum": 0,
+                        "default": 0,
                     },
                 },
                 "required": ["relative_path"],
