@@ -184,3 +184,15 @@ def test_ranking_distinguishes_symbol_search_from_plain_text_hit(
     )
     assert candidates[0].relative_path == "pkg/b.py"
     assert candidates[0].confidence > candidates[1].confidence
+
+
+def test_issue_symbol_only_candidate_preserves_reflector_confidence_floor(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    write_text(repo / "demo_pkg" / "app.py", "def value():\n    return 0\n")
+    ranked = rank_candidates(repo_path=repo, issue_text="value() should return 1")
+
+    assert ranked[0].relative_path == "demo_pkg/app.py"
+    # The existing reflection gate treats a modified candidate <0.4 as weak.
+    assert 0.4 <= ranked[0].confidence < 1.0
