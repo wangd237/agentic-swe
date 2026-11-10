@@ -52,6 +52,9 @@ def build_initial_repo_map(
 
     root = Path(repo_path).resolve()
     issue_tokens = extract_issue_tokens(issue_text)
+    header = "REPO_MAP (navigation hints only; confirm with grep/read_file/tests):\n"
+    if len(header) >= max_chars:
+        return ""
     sections: list[str] = []
 
     for candidate in candidates[:max_files]:
@@ -63,13 +66,10 @@ def build_initial_repo_map(
         if target.suffix == ".py":
             lines.extend(_outlined_symbols(target, issue_tokens, max_symbols_per_file))
         section = "\n".join(lines)
-        if len("\n".join(sections + [section])) > max_chars:
+        if len(header) + len("\n".join(sections + [section])) > max_chars:
             break
         sections.append(section)
 
     if not sections:
         return ""
-    return (
-        "REPO_MAP (navigation hints only; confirm with grep/read_file/tests):\n"
-        + "\n".join(sections)
-    )[:max_chars]
+    return header + "\n".join(sections)
