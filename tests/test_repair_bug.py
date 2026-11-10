@@ -293,7 +293,23 @@ def test_run_repair_bug_smoke_reports_weak_fallback_verification(
 
     assert output["fallback_warning"] is True
     assert output["test_command_source"] == "pytest_fallback"
-    assert output["final_status"] == "success_weak_verification"
+    assert output["final_status"] == "success_weak_verification", {
+        "result_status": output["result"]["final_status"],
+        "incomplete_reason": output["result"]["incomplete_reason"],
+        "steps": [
+            {
+                "tool": step["tool_name"],
+                "action": step["action_type"],
+                "summary": step["tool_output_summary"],
+                "candidates": [
+                    item["relative_path"]
+                    for item in step["state_snapshot"]["localization_candidates"]
+                ],
+            }
+            for step in output["run_output"]["trace"]["steps"]
+            if step["action_type"] in {"tool_call", "llm_response"}
+        ],
+    }
     assert output["result"]["incomplete_reason"] == "weak_verification"
     assert output["result"]["patch_applied"] is True
     assert output["result"]["tool_stats"]["verification_strength"] == "weak"
