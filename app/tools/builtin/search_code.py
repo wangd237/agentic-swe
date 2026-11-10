@@ -36,7 +36,7 @@ def search_code(
         if not search_root.resolve().is_relative_to(root):
             raise ValueError("path_prefix resolves outside the repository")
         candidates = sorted(search_root.rglob("*")) if search_root.is_dir() else [search_root]
-        max_results = max(1, int(max_results))
+        max_results = min(max(1, int(max_results)), 200)
         matches: list[dict] = []
         total_match_count = 0
 
