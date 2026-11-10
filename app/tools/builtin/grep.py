@@ -47,11 +47,13 @@ def grep(
         max_results = max(int(max_results), 1)
         normalized_prefix = normalize_search_prefix(path_prefix)
         search_root = resolved_repo_path / normalized_prefix if normalized_prefix else resolved_repo_path
+        if not search_root.resolve().is_relative_to(resolved_repo_path):
+            raise ValueError("path_prefix resolves outside the repository")
         candidates = sorted(search_root.rglob("*")) if search_root.is_dir() else [search_root]
         matches: list[dict] = []
         total_match_count = 0
         for path in candidates:
-            if not path.is_file():
+            if not path.is_file() or not path.resolve().is_relative_to(resolved_repo_path):
                 continue
             relative_path = path.relative_to(resolved_repo_path)
             normalized_relative_path = str(relative_path).replace("\\", "/")
