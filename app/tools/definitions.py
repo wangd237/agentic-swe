@@ -50,7 +50,7 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
             "name": "search_code",
             "handler_name": "_handle_search_code",
             "risk_level": "read",
-            "description": "在仓库中搜索代码字符串，用于定位相关函数、测试或错误信息。",
+            "description": "精确字符串搜索，返回路径、行号及 Python 所属类/函数。可使用 path_prefix/glob 缩小范围，按需扩大。",
             "is_read_only": True,
             "is_concurrency_safe": True,
             "input_schema": {
@@ -58,8 +58,22 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "要搜索的代码关键字或错误文本。",
-                    }
+                        "description": "要搜索的代码关键字、接口路径或错误文本。",
+                    },
+                    "glob": {
+                        "type": "string",
+                        "description": "可选文件模式，例如 *.py 或 tests/*.py。",
+                    },
+                    "path_prefix": {
+                        "type": "string",
+                        "description": "可选仓库相对目录/文件路径，如 app/agent；优先搜索已知候选目录。",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "最多返回的匹配行数；命中总数仍会统计。",
+                        "minimum": 1,
+                        "default": 50,
+                    },
                 },
                 "required": ["query"],
             },
@@ -68,7 +82,7 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
             "name": "grep",
             "handler_name": "_handle_grep",
             "risk_level": "read",
-            "description": "使用正则表达式搜索代码，返回 file:line:content 风格的匹配行。",
+            "description": "使用正则搜索代码，返回 file:line 及所属类/函数范围；支持 path_prefix/glob 缩小搜索范围。",
             "is_read_only": True,
             "is_concurrency_safe": True,
             "input_schema": {
@@ -81,6 +95,10 @@ _SINGLE_SOURCE_DATA: list[dict[str, Any]] = [
                     "glob": {
                         "type": "string",
                         "description": "可选文件过滤，例如 *.py 或 tests/*.py。",
+                    },
+                    "path_prefix": {
+                        "type": "string",
+                        "description": "可选仓库相对目录/文件路径，限定搜索子树。",
                     },
                     "max_results": {
                         "type": "integer",
