@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ast
-import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -54,10 +53,11 @@ class CandidateScore:
             self.evidence.append(evidence)
 
     def to_candidate(self) -> LocalizationCandidate:
-        # Confidence is a bounded ranking heuristic, NOT a calibrated probability.
-        # The soft saturation preserves order without pegging unrelated files at 1.
+        # A ranking heuristic, NOT a calibrated probability. The rational
+        # transform avoids 1.0 saturation while preserving the existing
+        # reflector's >=0.4 threshold for a direct issue-symbol match.
         raw_score = sum(self.signals.values())
-        confidence = min(round(1.0 - math.exp(-raw_score / 5.0), 3), 0.99)
+        confidence = round(raw_score / (raw_score + 2.5), 3)
         return LocalizationCandidate(
             relative_path=self.relative_path,
             reason=", ".join(self.reasons),
