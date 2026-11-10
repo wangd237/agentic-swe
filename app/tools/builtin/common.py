@@ -1,5 +1,6 @@
 """工具层公共辅助函数。"""
 
+import fnmatch
 from pathlib import Path
 
 DEFAULT_IGNORED_DIRS = {
@@ -54,3 +55,20 @@ def should_skip_path(path: Path) -> bool:
 def is_likely_text_file(path: Path) -> bool:
     # 观察型 Agent 当前只需要优先处理常见文本文件。
     return path.suffix.lower() in TEXT_FILE_EXTENSIONS or path.suffix == ""
+
+
+def normalize_search_prefix(path_prefix: str | None) -> str | None:
+    """Normalize a repository-relative search subtree; never widen unsafe scopes."""
+    if not path_prefix:
+        return None
+    raw = str(path_prefix).strip().replace("\\", "/")
+    if raw.startswith("/") or ":" in raw.split("/")[0] or ".." in raw.split("/"):
+        raise ValueError("path_prefix must be a repository-relative path without '..'")
+    normalized = raw.removeprefix("./").strip("/")
+    return normalized or None
+
+
+def matches_search_glob(relative_path: str, glob: str | None) -> bool:
+    if not glob:
+        return True
+    return fnmatch.fnmatch(relative_path, glob) or fnmatch.fnmatch(Path(relative_path).name, glob)
