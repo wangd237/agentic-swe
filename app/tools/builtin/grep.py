@@ -2,20 +2,25 @@
 
 from __future__ import annotations
 
-import fnmatch
 import re
-from pathlib import Path
 
-from app.tools.builtin.common import is_likely_text_file, resolve_repo_path, should_skip_path
+from app.codebase.symbol_context import annotate_python_matches
+from app.tools.builtin.common import (
+    is_likely_text_file,
+    matches_search_glob,
+    normalize_search_prefix,
+    resolve_repo_path,
+    should_skip_path,
+)
 
 
-def _matches_glob(relative_path: str, glob_pattern: str | None) -> bool:
-    if not glob_pattern:
-        return True
-    return fnmatch.fnmatch(relative_path, glob_pattern) or fnmatch.fnmatch(Path(relative_path).name, glob_pattern)
-
-
-def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int = 20) -> dict:
+def grep(
+    repo_path: str,
+    pattern: str,
+    glob: str | None = None,
+    max_results: int = 20,
+    path_prefix: str | None = None,
+) -> dict:
     # 使用 Python re 实现跨平台正则搜索，避免依赖 GNU grep 或 ripgrep。
     try:
         resolved_repo_path = resolve_repo_path(repo_path)
@@ -40,9 +45,12 @@ def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int
             }
 
         max_results = max(int(max_results), 1)
+        normalized_prefix = normalize_search_prefix(path_prefix)
+        search_root = resolved_repo_path / normalized_prefix if normalized_prefix else resolved_repo_path
+        candidates = sorted(search_root.rglob("*")) if search_root.is_dir() else [search_root]
         matches: list[dict] = []
         total_match_count = 0
-        for path in sorted(resolved_repo_path.rglob("*")):
+        for path in candidates:
             if not path.is_file():
                 continue
             relative_path = path.relative_to(resolved_repo_path)
@@ -50,15 +58,17 @@ def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int
             if (
                 should_skip_path(relative_path)
                 or not is_likely_text_file(path)
-                or not _matches_glob(normalized_relative_path, glob)
+                or not matches_search_glob(normalized_relative_path, glob)
             ):
                 continue
 
             try:
-                lines = path.read_text(encoding="utf-8").splitlines()
+                source = path.read_text(encoding="utf-8")
+                lines = source.splitlines()
             except UnicodeDecodeError:
                 continue
 
+            first_match_index = len(matches)
             for line_number, line_text in enumerate(lines, start=1):
                 if not compiled_pattern.search(line_text):
                     continue
@@ -72,6 +82,8 @@ def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int
                         "line_text": line_text.strip(),
                     }
                 )
+            if path.suffix == ".py" and len(matches) > first_match_index:
+                annotate_python_matches(source, matches[first_match_index:])
 
         match_files = sorted({match["relative_path"] for match in matches})
         truncated = total_match_count > len(matches)
@@ -86,6 +98,7 @@ def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int
                 "repo_path": str(resolved_repo_path),
                 "pattern": normalized_pattern,
                 "glob": glob,
+                "path_prefix": normalized_prefix,
                 "matches": matches,
                 "match_count": total_match_count,
                 "returned_match_count": len(matches),
@@ -93,6 +106,12 @@ def grep(repo_path: str, pattern: str, glob: str | None = None, max_results: int
                 "truncated": truncated,
             },
             "error": None,
+        }
+    except ValueError as error:
+        return {
+            "ok": False, "tool_name": "grep", "summary": "搜索范围无效。",
+            "data": {"pattern": pattern, "path_prefix": path_prefix},
+            "error": {"type": "invalid_scope", "message": str(error)},
         }
     except FileNotFoundError as error:
         return {
