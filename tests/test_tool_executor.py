@@ -233,7 +233,7 @@ def test_read_file_pages_without_losing_lines(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     target_path = repo_path / "large.py"
     repo_path.mkdir()
-    target_path.write_text("".join(f"line_{i:04d}\\n" for i in range(3000)), encoding="utf-8")
+    target_path.write_text("".join(f"line_{i:04d}\n" for i in range(3000)), encoding="utf-8")
     executor = _executor(repo_path)
 
     first = executor.execute("read_file", {
@@ -254,7 +254,7 @@ def test_read_file_pages_without_losing_lines(tmp_path: Path) -> None:
         "max_chars": 16000,
     })
     assert second["ok"]
-    expected = "".join(f"line_{i:04d}\\n" for i in range(2299, 2500))
+    expected = "".join(f"line_{i:04d}\n" for i in range(2299, 2500))
     # The file lines are numbered from zero, so line 2300 is line_2299.
     assert first["data"]["content"] + second["data"]["content"] == expected
     payload = json.loads(ToolExecutor.summarize_for_model(second, max_chars=80))
@@ -264,7 +264,7 @@ def test_read_file_pages_without_losing_lines(tmp_path: Path) -> None:
 def test_read_file_can_resume_oversized_single_line(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     repo_path.mkdir()
-    (repo_path / "one_line.py").write_text("x" * 120 + "\\nlast\\n", encoding="utf-8")
+    (repo_path / "one_line.py").write_text("x" * 120 + "\nlast\n", encoding="utf-8")
     executor = _executor(repo_path)
 
     first = executor.execute("read_file", {
@@ -281,7 +281,7 @@ def test_read_file_can_resume_oversized_single_line(tmp_path: Path) -> None:
         "start_char": first["data"]["next_start_char"],
         "max_chars": 160,
     })
-    assert first["data"]["content"] + second["data"]["content"] == "x" * 120 + "\\nlast\\n"
+    assert first["data"]["content"] + second["data"]["content"] == "x" * 120 + "\nlast\n"
     assert second["data"]["truncated"] is False
 
 
