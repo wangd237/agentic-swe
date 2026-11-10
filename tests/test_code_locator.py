@@ -101,3 +101,86 @@ def test_initial_repo_map_outlines_symbols_and_obeys_budget(tmp_path: Path) -> N
     assert "../outside.py" not in outline
     assert build_initial_repo_map(repo, candidates, "bug", max_chars=20) == ""
     assert len(build_initial_repo_map(repo, candidates, "bug", max_chars=300)) <= 300
+
+
+def test_ranking_prioritizes_first_application_frame_over_downstream_exceptions(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    write_text(repo / "src" / "packaging" / "markers.py", "def _eval_op():\n    pass\n")
+    write_text(repo / "src" / "packaging" / "specifiers.py", "def contains():\n    pass\n")
+    write_text(repo / "src" / "packaging" / "version.py", "class InvalidVersion(Exception):\n    pass\n")
+    write_text(repo / "src" / "packaging" / "metadata.py", "def parse_email():\n    pass\n")
+    write_text(
+        repo / "tests" / "test_issue.py",
+        "from src.packaging.markers import _eval_op\n"
+        "def test_invalid_extra():\n    _eval_op()\n",
+    )
+    graph = [
+        LocalizationCandidate(relative_path="src/packaging/metadata.py", confidence=0.99),
+        LocalizationCandidate(relative_path="src/packaging/markers.py", confidence=0.99),
+    ]
+    traceback = [
+        {"path": "tests\\test_issue.py", "line": 3},
+        {"path": "src\\packaging\\markers.py", "line": 180},
+        {"path": "src\\packaging\\specifiers.py", "line": 552},
+        {"path": "src\\packaging\\version.py", "line": 202},
+    ]
+    kwargs = dict(
+        repo_path=repo,
+        issue_text="InvalidVersion while evaluating extra marker",
+        existing_candidates=graph,
+        search_match_files=["src/packaging/markers.py"],
+        search_symbol_files=["src/packaging/markers.py"],
+        read_files=["src/packaging/markers.py"],
+    )
+    first = rank_candidates(**kwargs, failure_summary={"locations": traceback})
+    repeated = rank_candidates(
+        **kwargs, failure_summary={"locations": traceback * 5}
+    )
+
+    assert first[0].relative_path == "src/packaging/markers.py"
+    assert first[0].confidence < 1.0
+    assert [item.relative_path for item in first] == [
+        item.relative_path for item in repeated
+    ]
+    assert [item.confidence for item in first] == [
+        item.confidence for item in repeated
+    ]
+    assert "failure_location" in first[0].reason
+    assert "symbol_search_hit" in first[0].reason
+
+
+def test_ranking_is_stable_across_refreshes_using_original_graph_hints(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    write_text(repo / "pkg" / "first.py", "def process():\n    pass\n")
+    write_text(repo / "pkg" / "second.py", "def helper():\n    pass\n")
+    graph = [LocalizationCandidate(relative_path="pkg/second.py", confidence=0.85)]
+    kwargs = {
+        "repo_path": repo,
+        "issue_text": "process fails",
+        "existing_candidates": graph,
+        "search_match_files": ["pkg/first.py"],
+    }
+    first = rank_candidates(**kwargs)
+    second = rank_candidates(**kwargs)
+    assert first == second
+    assert all(item.confidence < 1 for item in first)
+    assert all("existing:existing:" not in item.reason for item in first)
+    assert any(item.relative_path == "pkg/second.py" for item in first)
+
+
+def test_ranking_distinguishes_symbol_search_from_plain_text_hit(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    write_text(repo / "pkg" / "a.py", "needle = 1\n")
+    write_text(repo / "pkg" / "b.py", "def handle():\n    needle = 2\n")
+    candidates = rank_candidates(
+        repo_path=repo, search_match_files=["pkg/a.py", "pkg/b.py"],
+        search_symbol_files=["pkg/b.py"],
+    )
+    assert candidates[0].relative_path == "pkg/b.py"
+    assert candidates[0].confidence > candidates[1].confidence
