@@ -30,32 +30,36 @@ MAX_READ_CHARS = 16000
 
 
 def _page_lines(
-    content: str, *, start_line: int, end_line: int, max_chars: int
-) -> tuple[str, int | None, int | None, bool]:
-    """Return complete lines that fit the budget and an explicit continuation point.
-
-    A single oversized line is returned partially and flagged; it is never silently
-    treated as a complete line.
-    """
+    content: str, *, start_line: int, end_line: int, max_chars: int, start_char: int = 0
+) -> tuple[str, int | None, int | None, int, bool]:
+    """Page by complete lines when possible; resume oversized lines by char offset."""
     lines = content.splitlines(keepends=True)
     parts: list[str] = []
     returned_end_line: int | None = None
     next_start_line: int | None = None
+    next_start_char = 0
     partial_line = False
-    used_chars = 0
-    for line_number in range(start_line, min(end_line, len(lines)) + 1):
-        line = lines[line_number - 1]
-        if used_chars + len(line) > max_chars:
-            next_start_line = line_number
-            if not parts:
-                parts.append(line[:max_chars])
-                returned_end_line = line_number
-                partial_line = True
+    remaining = max_chars
+    for number in range(start_line, min(end_line, len(lines)) + 1):
+        line = lines[number - 1]
+        offset = start_char if number == start_line else 0
+        if offset >= len(line):
+            continue
+        chunk = line[offset:]
+        if len(chunk) > remaining:
+            if parts:
+                next_start_line = number
+                break
+            parts.append(chunk[:remaining])
+            returned_end_line = number
+            next_start_line = number
+            next_start_char = offset + remaining
+            partial_line = True
             break
-        parts.append(line)
-        used_chars += len(line)
-        returned_end_line = line_number
-    return "".join(parts), returned_end_line, next_start_line, partial_line
+        parts.append(chunk)
+        remaining -= len(chunk)
+        returned_end_line = number
+    return "".join(parts), returned_end_line, next_start_line, next_start_char, partial_line
 
 
 def read_file(
@@ -64,6 +68,7 @@ def read_file(
     max_chars: int = 6000,
     start_line: int | None = None,
     end_line: int | None = None,
+    start_char: int = 0,
 ) -> dict:
     # 第一版允许对长文件做截断，避免观察阶段一次读入过多内容。
     try:
@@ -74,6 +79,8 @@ def read_file(
         if not target_path.is_file():
             raise IsADirectoryError(f"目标不是文件: {relative_path}")
 
+        if start_char < 0:
+            raise InvalidLineRangeError("start_char must be >= 0")
         content = target_path.read_text(encoding="utf-8")
         total_line_count = len(content.splitlines())
         line_range = _normalize_line_range(
@@ -83,11 +90,12 @@ def read_file(
         )
         effective_max_chars = min(max(int(max_chars), 1), MAX_READ_CHARS)
         selected_start, selected_end = line_range or (1, total_line_count)
-        returned_content, returned_end_line, next_start_line, partial_line = _page_lines(
+        returned_content, returned_end_line, next_start_line, next_start_char, partial_line = _page_lines(
             content,
             start_line=selected_start,
             end_line=selected_end,
             max_chars=effective_max_chars,
+            start_char=start_char,
         )
         truncated = next_start_line is not None
         line_range_summary = (
@@ -112,6 +120,7 @@ def read_file(
                 "returned_start_line": selected_start if returned_end_line is not None else None,
                 "returned_end_line": returned_end_line,
                 "next_start_line": next_start_line,
+                "next_start_char": next_start_char,
                 "partial_line": partial_line,
                 "effective_max_chars": effective_max_chars,
                 "truncated": truncated,
