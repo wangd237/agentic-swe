@@ -44,7 +44,7 @@ def grep(
                 "error": {"type": "invalid_pattern", "message": str(error)},
             }
 
-        max_results = max(int(max_results), 1)
+        max_results = min(max(int(max_results), 1), 200)
         normalized_prefix = normalize_search_prefix(path_prefix)
         search_root = resolved_repo_path / normalized_prefix if normalized_prefix else resolved_repo_path
         if not search_root.resolve().is_relative_to(resolved_repo_path):
