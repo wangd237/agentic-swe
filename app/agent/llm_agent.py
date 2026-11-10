@@ -17,6 +17,7 @@ from app.agent.strategy_memory import format_strategy_memory_hints, retrieve_str
 from app.agent.tool_loop import AgentToolMixin
 from app.codebase.intelligence import build_code_intelligence_backend
 from app.codebase.locator import rank_candidates
+from app.codebase.repo_map import build_initial_repo_map
 from app.core.policy_config import load_policy_config
 from app.core.state import AgentState, FailureSignature
 from app.llm.client import OpenAICompatibleChatClient
@@ -319,6 +320,13 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         )
         memory_hints = format_strategy_memory_hints(retrieved_memories)
         user_prompt = build_user_prompt(task)
+        repo_map = build_initial_repo_map(
+            run_paths.workspace_dir,
+            agent_state.localization_candidates,
+            agent_state.issue_summary,
+        )
+        if repo_map:
+            user_prompt = f"{user_prompt}\n\n{repo_map}"
         if memory_hints:
             user_prompt = f"{user_prompt}\n\n{memory_hints}"
             trace.steps.append(
