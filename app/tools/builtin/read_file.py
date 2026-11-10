@@ -25,9 +25,41 @@ def _normalize_line_range(
     return normalized_start, min(normalized_end, total_lines)
 
 
-def _slice_lines(content: str, *, start_line: int, end_line: int) -> str:
+# Keep a single read_file tool result bounded, even when the model asks for more.
+MAX_READ_CHARS = 16000
+
+
+def _page_lines(
+    content: str, *, start_line: int, end_line: int, max_chars: int, start_char: int = 0
+) -> tuple[str, int | None, int | None, int, bool]:
+    """Page by complete lines when possible; resume oversized lines by char offset."""
     lines = content.splitlines(keepends=True)
-    return "".join(lines[start_line - 1:end_line])
+    parts: list[str] = []
+    returned_end_line: int | None = None
+    next_start_line: int | None = None
+    next_start_char = 0
+    partial_line = False
+    remaining = max_chars
+    for number in range(start_line, min(end_line, len(lines)) + 1):
+        line = lines[number - 1]
+        offset = start_char if number == start_line else 0
+        if offset >= len(line):
+            continue
+        chunk = line[offset:]
+        if len(chunk) > remaining:
+            if parts:
+                next_start_line = number
+                break
+            parts.append(chunk[:remaining])
+            returned_end_line = number
+            next_start_line = number
+            next_start_char = offset + remaining
+            partial_line = True
+            break
+        parts.append(chunk)
+        remaining -= len(chunk)
+        returned_end_line = number
+    return "".join(parts), returned_end_line, next_start_line, next_start_char, partial_line
 
 
 def read_file(
@@ -36,6 +68,7 @@ def read_file(
     max_chars: int = 6000,
     start_line: int | None = None,
     end_line: int | None = None,
+    start_char: int = 0,
 ) -> dict:
     # 第一版允许对长文件做截断，避免观察阶段一次读入过多内容。
     try:
@@ -46,6 +79,8 @@ def read_file(
         if not target_path.is_file():
             raise IsADirectoryError(f"目标不是文件: {relative_path}")
 
+        if start_char < 0:
+            raise InvalidLineRangeError("start_char must be >= 0")
         content = target_path.read_text(encoding="utf-8")
         total_line_count = len(content.splitlines())
         line_range = _normalize_line_range(
@@ -53,13 +88,16 @@ def read_file(
             end_line=end_line,
             total_lines=total_line_count,
         )
-        readable_content = (
-            _slice_lines(content, start_line=line_range[0], end_line=line_range[1])
-            if line_range
-            else content
+        effective_max_chars = min(max(int(max_chars), 1), MAX_READ_CHARS)
+        selected_start, selected_end = line_range or (1, total_line_count)
+        returned_content, returned_end_line, next_start_line, next_start_char, partial_line = _page_lines(
+            content,
+            start_line=selected_start,
+            end_line=selected_end,
+            max_chars=effective_max_chars,
+            start_char=start_char,
         )
-        truncated = len(readable_content) > max_chars
-        returned_content = readable_content[:max_chars] if truncated else readable_content
+        truncated = next_start_line is not None
         line_range_summary = (
             f" 第 {line_range[0]}-{line_range[1]} 行"
             if line_range
@@ -79,6 +117,12 @@ def read_file(
                 "end_line": line_range[1] if line_range else None,
                 "char_count": len(content),
                 "returned_line_count": len(returned_content.splitlines()),
+                "returned_start_line": selected_start if returned_end_line is not None else None,
+                "returned_end_line": returned_end_line,
+                "next_start_line": next_start_line,
+                "next_start_char": next_start_char,
+                "partial_line": partial_line,
+                "effective_max_chars": effective_max_chars,
                 "truncated": truncated,
                 "returned_char_count": len(returned_content),
             },

@@ -45,9 +45,12 @@ def test_read_file_line_range_respects_max_chars(tmp_path: Path) -> None:
     )
 
     assert result["ok"] is True
-    assert result["data"]["content"] == "alpha\nbe"
+    # The new contract preserves complete lines and provides a resume cursor.
+    assert result["data"]["content"] == "alpha\n"
     assert result["data"]["truncated"] is True
-    assert result["data"]["returned_char_count"] == 8
+    assert result["data"]["returned_char_count"] == 6
+    assert result["data"]["next_start_line"] == 2
+    assert result["data"]["next_start_char"] == 0
 
 
 def test_read_file_rejects_invalid_line_range(tmp_path: Path) -> None:

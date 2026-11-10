@@ -229,6 +229,62 @@ def test_tool_executor_dispatches_read_file_line_range(tmp_path: Path) -> None:
     assert result["data"]["end_line"] == 3
 
 
+def test_read_file_pages_without_losing_lines(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    target_path = repo_path / "large.py"
+    repo_path.mkdir()
+    target_path.write_text("".join(f"line_{i:04d}\n" for i in range(3000)), encoding="utf-8")
+    executor = _executor(repo_path)
+
+    first = executor.execute("read_file", {
+        "relative_path": "large.py",
+        "start_line": 2300,
+        "end_line": 2500,
+        "max_chars": 150,
+    })
+    assert first["ok"]
+    assert first["data"]["truncated"]
+    assert first["data"]["next_start_line"] > 2300
+    assert first["data"]["partial_line"] is False
+
+    second = executor.execute("read_file", {
+        "relative_path": "large.py",
+        "start_line": first["data"]["next_start_line"],
+        "end_line": 2500,
+        "max_chars": 16000,
+    })
+    assert second["ok"]
+    expected = "".join(f"line_{i:04d}\n" for i in range(2299, 2500))
+    # The file lines are numbered from zero, so line 2300 is line_2299.
+    assert first["data"]["content"] + second["data"]["content"] == expected
+    payload = json.loads(ToolExecutor.summarize_for_model(second, max_chars=80))
+    assert payload["data"]["content"] == second["data"]["content"]
+
+
+def test_read_file_can_resume_oversized_single_line(tmp_path: Path) -> None:
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    (repo_path / "one_line.py").write_text("x" * 120 + "\nlast\n", encoding="utf-8")
+    executor = _executor(repo_path)
+
+    first = executor.execute("read_file", {
+        "relative_path": "one_line.py", "start_line": 1,
+        "max_chars": 50,
+    })
+    assert first["data"]["partial_line"] is True
+    assert first["data"]["next_start_line"] == 1
+    assert first["data"]["next_start_char"] == 50
+
+    second = executor.execute("read_file", {
+        "relative_path": "one_line.py",
+        "start_line": first["data"]["next_start_line"],
+        "start_char": first["data"]["next_start_char"],
+        "max_chars": 160,
+    })
+    assert first["data"]["content"] + second["data"]["content"] == "x" * 120 + "\nlast\n"
+    assert second["data"]["truncated"] is False
+
+
 def test_tool_executor_dispatches_python_repl(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     repo_path.mkdir()

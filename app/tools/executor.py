@@ -158,6 +158,7 @@ class ToolExecutor:
                 if tool_input.get("end_line") is not None
                 else None
             ),
+            start_char=int(tool_input.get("start_char", 0)),
         )
 
     def _handle_run_tests(self, tool_input: dict[str, Any]) -> dict[str, Any]:
@@ -330,25 +331,21 @@ class ToolExecutor:
             )
 
         if tool_name == "read_file" and result.get("ok", False):
-            char_count = int(data.get("char_count", 0) or 0)
-            content = data.get("content", "")
+            # The read tool already paginates at a hard limit. Never re-truncate
+            # a requested slice based on the size of its original file.
             payload["data"] = {
-                "relative_path": data.get("relative_path"),
-                "line_count": data.get("line_count"),
-                "start_line": data.get("start_line"),
-                "end_line": data.get("end_line"),
-                "char_count": char_count,
-                "returned_line_count": data.get("returned_line_count"),
-                "truncated": data.get("truncated", False),
-                "content": content if char_count <= 20000 else (
-                    str(content)[:2000]
-                    + "\n...<large file; ask read_file for a smaller range after adding offset/limit support>"
-                ),
+                key: data.get(key)
+                for key in (
+                    "relative_path", "line_count", "start_line", "end_line",
+                    "char_count", "returned_line_count", "returned_start_line",
+                    "returned_end_line", "next_start_line", "next_start_char",
+                    "partial_line", "effective_max_chars", "truncated", "content",
+                )
+                if key in data
             }
-            return ToolExecutor._json_for_model(
-                payload,
-                max_chars=max(max_chars, min(char_count + 1000, 24000)),
-            )
+            # Preserve the entire tool response as valid JSON. This is bounded
+            # by read_file.MAX_READ_CHARS, rather than a separate size heuristic.
+            return json.dumps(payload, ensure_ascii=False)
 
         if tool_name == "list_files" and result.get("ok", False):
             payload["data"] = {

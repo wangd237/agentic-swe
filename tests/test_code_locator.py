@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.codebase.locator import build_symbol_index, implementation_candidates_for_test_path, rank_candidates
+from app.codebase.repo_map import build_initial_repo_map
+from app.core.state import LocalizationCandidate
 
 
 def write_text(path: Path, content: str) -> None:
@@ -75,3 +77,27 @@ def test_rank_candidates_uses_symbol_matches_and_search_hits(tmp_path: Path) -> 
     assert "hostnamevalidator" in symbol_index["demo_pkg/hostname.py"]
     assert candidates[0].relative_path == "demo_pkg/hostname.py"
     assert any(candidate.relative_path == "demo_pkg/utils.py" for candidate in candidates)
+
+def test_initial_repo_map_outlines_symbols_and_obeys_budget(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    write_text(
+        repo / "pkg" / "service.py",
+        "class Service:\n"
+        "    def process_request(self, data):\n"
+        "        return data\n"
+        "    def validate(self, data):\n"
+        "        return True\n",
+    )
+    candidates = [
+        LocalizationCandidate(relative_path="pkg/service.py", confidence=0.8),
+        LocalizationCandidate(relative_path="../outside.py", confidence=0.7),
+    ]
+    outline = build_initial_repo_map(repo, candidates, "process_request fails")
+
+    assert "REPO_MAP" in outline
+    assert "pkg/service.py" in outline
+    assert "Service.process_request: L2-L3" in outline
+    assert "Service.validate: L4-L5" in outline
+    assert "../outside.py" not in outline
+    assert build_initial_repo_map(repo, candidates, "bug", max_chars=20) == ""
+    assert len(build_initial_repo_map(repo, candidates, "bug", max_chars=300)) <= 300
