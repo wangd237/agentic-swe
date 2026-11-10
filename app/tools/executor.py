@@ -51,21 +51,28 @@ class ToolExecutor:
         # 搜索去重缓存：同一 (pattern/query, glob) 的重复搜索直接返回提醒，
         # 不再消耗 token 重跑。背景：jsonschema#1328 run3 中同一 pattern
         # `ErrorTree|_contents` 在相同 glob 下搜了 2 次、不同 glob 下共 4 次。
-        self._search_cache: dict[tuple[str, str, str], dict[str, Any]] = {}
+        self._search_cache: dict[tuple[str, str, str, str, int], dict[str, Any]] = {}
 
-    def _search_cache_key(self, tool_name: str, tool_input: dict[str, Any]) -> tuple[str, str, str] | None:
-        """搜索类工具的缓存键；非搜索工具返回 None。"""
+    def _search_cache_key(
+        self, tool_name: str, tool_input: dict[str, Any]
+    ) -> tuple[str, str, str, str, int] | None:
+        """Only identical search scopes and limits count as duplicates."""
         if tool_name not in {"search_code", "grep", "search_graph"}:
             return None
-        query = str(tool_input.get("query") or tool_input.get("pattern") or "").strip().casefold()
+        query = str(
+            tool_input.get("query") or tool_input.get("pattern") or tool_input.get("symbol_name") or ""
+        ).strip()
         if not query:
             return None
         glob = str(tool_input.get("glob") or "").strip()
-        return (tool_name, query, glob)
+        prefix = str(tool_input.get("path_prefix") or "").strip().replace("\\", "/").rstrip("/")
+        default_limit = 20 if tool_name == "grep" else (10 if tool_name == "search_graph" else 50)
+        limit = int(tool_input.get("max_results", default_limit))
+        return (tool_name, query if tool_name == "search_code" else query.casefold(), glob, prefix, limit)
 
     def _remember_search_result(
         self,
-        cache_key: tuple[str, str, str] | None,
+        cache_key: tuple[str, str, str, str, int] | None,
         result: dict[str, Any],
     ) -> None:
         """成功的搜索结果进缓存，供重复调用拦截。"""
@@ -133,7 +140,13 @@ class ToolExecutor:
         return list_files(self.repo_path, recursive=bool(tool_input.get("recursive", True)))
 
     def _handle_search_code(self, tool_input: dict[str, Any]) -> dict[str, Any]:
-        return search_code(self.repo_path, query=str(tool_input.get("query", "")))
+        return search_code(
+            self.repo_path,
+            query=str(tool_input.get("query", "")),
+            glob=tool_input.get("glob"),
+            max_results=int(tool_input.get("max_results", 50)),
+            path_prefix=tool_input.get("path_prefix"),
+        )
 
     def _handle_grep(self, tool_input: dict[str, Any]) -> dict[str, Any]:
         return grep(
@@ -141,6 +154,7 @@ class ToolExecutor:
             pattern=str(tool_input.get("pattern", "")),
             glob=tool_input.get("glob"),
             max_results=int(tool_input.get("max_results", 20)),
+            path_prefix=tool_input.get("path_prefix"),
         )
 
     def _handle_read_file(self, tool_input: dict[str, Any]) -> dict[str, Any]:
@@ -356,15 +370,36 @@ class ToolExecutor:
             return ToolExecutor._json_for_model(payload, max_chars=max(max_chars, 8000))
 
         if tool_name in {"search_code", "grep", "search_graph"} and result.get("ok", False):
-            matches = data.get("matches", [])
+            matches = data.get("matches", [])[:50]
+            match_files = list(data.get("match_files", []))
             payload["data"] = {
                 "query": data.get("query") or data.get("pattern"),
+                "glob": data.get("glob"),
+                "path_prefix": data.get("path_prefix"),
                 "match_count": data.get("match_count", len(matches)),
-                "match_files": data.get("match_files", []),
-                "matches": matches[:50],
-                "truncated_matches": max(len(matches) - 50, 0),
+                "match_files": match_files,
+                "matches": matches,
+                "truncated": data.get("truncated", False),
+                "truncated_matches": max(
+                    int(data.get("match_count", len(data.get("matches", [])))) - len(matches), 0
+                ),
             }
-            return ToolExecutor._json_for_model(payload, max_chars=max_chars)
+            # Preserve parseable JSON instead of cutting a match in the middle.
+            serialized = json.dumps(payload, ensure_ascii=False)
+            while matches and len(serialized) > max_chars:
+                matches = matches[:-1]
+                payload["data"]["matches"] = matches
+                payload["data"]["truncated_matches"] = max(
+                    int(payload["data"]["match_count"]) - len(matches), 0
+                )
+                serialized = json.dumps(payload, ensure_ascii=False)
+            while match_files and len(serialized) > max_chars:
+                match_files = match_files[:-1]
+                payload["data"]["match_files"] = match_files
+                serialized = json.dumps(payload, ensure_ascii=False)
+            return serialized if len(serialized) <= max_chars else ToolExecutor._json_for_model(
+                payload, max_chars=max_chars
+            )
 
         if tool_name == "python_repl" and result.get("ok", False):
             payload["data"] = {

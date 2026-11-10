@@ -32,6 +32,8 @@ def test_grep_finds_regex_matches_with_glob(tmp_path: Path) -> None:
             "relative_path": "tests/test_app.py",
             "line_number": 1,
             "line_text": "def test_value():",
+            "symbol": "test_value",
+            "symbol_range": [1, 2],
         }
     ]
 
@@ -58,3 +60,34 @@ def test_grep_rejects_invalid_regex(tmp_path: Path) -> None:
 
     assert result["ok"] is False
     assert result["error"]["type"] == "invalid_pattern"
+
+
+def test_grep_scopes_to_package_and_returns_enclosing_function(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    (repo / "pkg").mkdir(parents=True)
+    (repo / "tests").mkdir()
+    (repo / "pkg" / "service.py").write_text(
+        "class Service:\n"
+        "    def process(self):\n"
+        "        needle = 1\n"
+        "        return needle\n",
+        encoding="utf-8",
+    )
+    (repo / "tests" / "test_service.py").write_text(
+        "needle = 2\n", encoding="utf-8"
+    )
+    result = grep(str(repo), "needle", path_prefix="pkg", glob="*.py", max_results=2)
+
+    assert result["ok"]
+    assert result["data"]["match_count"] == 2
+    assert result["data"]["match_files"] == ["pkg/service.py"]
+    assert result["data"]["matches"][0]["symbol"] == "Service.process"
+    assert result["data"]["matches"][0]["symbol_range"] == [2, 4]
+
+
+def test_grep_rejects_unsafe_scope(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    result = grep(str(repo), "needle", path_prefix="../outside")
+    assert not result["ok"]
+    assert result["error"]["type"] == "invalid_scope"

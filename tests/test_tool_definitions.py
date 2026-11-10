@@ -112,3 +112,13 @@ def test_state_tool_router_exposes_write_tools_during_patch_recovery() -> None:
     assert "write_file" in routed_tool_names
     assert "show_diff" in routed_tool_names
     assert "undo" in routed_tool_names
+
+
+def test_progressive_search_tool_schemas_expose_scope_and_result_limit() -> None:
+    tools = {tool["name"]: tool for tool in build_tool_definitions()}
+    for name in ("grep", "search_code"):
+        params = tools[name]["input_schema"]["properties"]
+        assert "glob" in params
+        assert "path_prefix" in params
+        assert "max_results" in params
+        assert params["max_results"]["maximum"] == 200
