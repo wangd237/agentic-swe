@@ -1270,6 +1270,8 @@ def test_llm_agent_injects_retrieved_strategy_memory_into_initial_prompt(tmp_pat
         if step["action_type"] == "memory_retrieval"
     ]
     assert "STRATEGY_MEMORY_HINTS" in client.initial_user_prompt
+    assert "REPO_MAP" in client.initial_user_prompt
+    assert "def parse_items: L1-L2" in client.initial_user_prompt
     assert "demo_pkg/parser.py" in client.initial_user_prompt
     assert len(memory_steps) == 1
     assert memory_steps[0]["tool_metrics"]["memory_task_ids"] == ["old_task"]
