@@ -207,6 +207,57 @@ def test_tool_executor_dispatches_grep(tmp_path: Path) -> None:
     assert result["data"]["matches"][0]["line_number"] == 1
 
 
+def test_progressive_search_cache_distinguishes_scope_and_result_limit(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    (repo / "pkg").mkdir(parents=True)
+    (repo / "tests").mkdir()
+    (repo / "pkg" / "app.py").write_text("needle = 1\n", encoding="utf-8")
+    (repo / "tests" / "test_app.py").write_text("needle = 2\n", encoding="utf-8")
+    executor = _executor(repo)
+
+    first = executor.execute("search_code", {
+        "query": "needle", "path_prefix": "pkg", "max_results": 1,
+    })
+    other_scope = executor.execute("search_code", {
+        "query": "needle", "path_prefix": "tests", "max_results": 1,
+    })
+    wider_limit = executor.execute("search_code", {
+        "query": "needle", "path_prefix": "pkg", "max_results": 5,
+    })
+    repeated = executor.execute("search_code", {
+        "query": "needle", "path_prefix": "pkg", "max_results": 1,
+    })
+
+    assert first["data"]["match_files"] == ["pkg/app.py"]
+    assert other_scope["data"]["match_files"] == ["tests/test_app.py"]
+    assert "duplicate_search" not in wider_limit["data"]
+    assert repeated["data"]["duplicate_search"] is True
+
+
+def test_search_summary_returns_valid_json_in_small_budget() -> None:
+    matches = [
+        {"relative_path": "pkg/service.py", "line_number": i + 1,
+         "line_text": "needle_" + ("x" * 70),
+         "symbol": "Service.process", "symbol_range": [1, 99]}
+        for i in range(20)
+    ]
+    result = {
+        "ok": True, "tool_name": "search_code", "summary": "many hits",
+        "data": {
+            "query": "needle", "path_prefix": "pkg", "glob": "*.py",
+            "matches": matches, "match_count": 20,
+            "match_files": ["pkg/service.py"], "truncated": False,
+        },
+        "error": None,
+    }
+    summary = ToolExecutor.summarize_for_model(result, max_chars=600)
+    parsed = json.loads(summary)
+    assert len(summary) <= 600
+    assert parsed["data"]["path_prefix"] == "pkg"
+    assert parsed["data"]["truncated_matches"] > 0
+    assert parsed["data"]["matches"][0]["symbol"] == "Service.process"
+
+
 def test_tool_executor_dispatches_read_file_line_range(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     target_path = repo_path / "pkg" / "app.py"
