@@ -47,6 +47,14 @@ class ToolPolicy:
     """Small gatekeeper that turns agent phases into enforceable constraints."""
 
     def validate(self, *, state: AgentState, tool_name: str, tool_input: dict[str, Any]) -> dict[str, Any] | None:
+        if state.weak_constraints:
+            if tool_name not in set().union(*ALLOWED_TOOLS_BY_PHASE.values()):
+                return tool_policy_error(tool_name=tool_name, message="Unknown tool.", tool_input=tool_input)
+            if tool_name == "undo" and state.workspace_generation <= 0:
+                return tool_policy_error(tool_name=tool_name, message="No prior workspace write to undo.", tool_input=tool_input)
+            if tool_name == "search_graph":
+                state.record_search_graph_call()
+            return None
         allowed_tools = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
         if self.is_patch_recovery_state(state):
             allowed_tools.update(WRITE_TOOLS)

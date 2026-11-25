@@ -15,8 +15,23 @@ EXPLORATION_CHECKPOINT_MESSAGE = (
 )
 
 
-def build_system_prompt() -> str:
+def build_system_prompt(*, weak_constraints: bool = False) -> str:
     """构建系统提示词。"""
+
+    if weak_constraints:
+        return (
+            "You are a first-principles Python coding agent fixing a real issue in an isolated workspace.\n"
+            "Understand the expected behavior, gather evidence, form hypotheses, make minimal edits, "
+            "and verify the fix. Choose the order and number of search, read, edit and test calls yourself. "
+            "Reproduce the bug when practical; explain uncertainty when reproduction is unavailable. "
+            "Treat ranked candidates, graph results, and reflection messages as advisory, not ground truth. "
+            "Use search_graph for plain symbols when available, grep for regex and search_code for exact terms; "
+            "read relevant ranges and expand when needed. Use python_repl for safe single-expression probes. "
+            "Prefer edit_file for small changes; undo or revise incorrect edits. Do not create scratch/debug files. "
+            "Review the final diff and run the configured tests after the final change. "
+            "Only report success with a real patch, reviewed diff and passing verification. "
+            "If the evidence is insufficient, report the limitation rather than claiming success."
+        )
 
     return (
         # ================================================================

@@ -196,8 +196,9 @@ def execute_auto_verification(
             changed_files=changed_files,
             max_patch_files=policy_config.max_patch_files,
         )
-        agent_state.phase = reflection.next_phase
-        reflection_message = build_reflection_message(reflection)
+        if not agent_state.weak_constraints:
+            agent_state.phase = reflection.next_phase
+        reflection_message = build_reflection_message(reflection, advisory=agent_state.weak_constraints)
         reflection_decisions = {
             "immediate_auto_verification": f"立即自动验证失败后反思，转入 {reflection.next_phase} 阶段。",
             "auto_verification": f"自动验证失败后反思，转入 {reflection.next_phase} 阶段。",
@@ -211,7 +212,7 @@ def execute_auto_verification(
                 tool_input={"changed_files": changed_files, "source": source},
                 tool_output_summary=reflection.likely_cause,
                 observation=reflection_message,
-                decision=reflection_decisions[source],
+                decision=("反思仅提供建议。" if agent_state.weak_constraints else reflection_decisions[source]),
                 timestamp=agent._utc_timestamp(),
                 duration_sec=None,
                 phase=agent_state.phase,
@@ -225,7 +226,7 @@ def execute_auto_verification(
                 tool_metrics=reflection.model_dump(mode="json"),
             )
         )
-        if reflection.should_undo:
+        if reflection.should_undo and not agent_state.weak_constraints:
             undo_result = auto_undo_after_reflection(reflection.likely_cause)
             if not final_pending:
                 reflection_message += (

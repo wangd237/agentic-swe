@@ -218,6 +218,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         trace = Trace(task_id=task.task_id, run_id=run_id, started_at=self._utc_timestamp())
         agent_state = AgentState(
             phase="understand",
+            weak_constraints=policy_config.harness_mode == "weak",
             issue_summary=f"{task.issue_title}\n{task.issue_text}".strip(),
             verification_strength=initial_verification_strength(task.metadata),
         )
@@ -312,7 +313,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             code_intelligence_backend=code_intelligence_backend,
         )
         tool_policy = ToolPolicy()
-        system_prompt = build_system_prompt()
+        system_prompt = build_system_prompt(weak_constraints=True) if agent_state.weak_constraints else build_system_prompt()
         strategy_memory_path = repository_root / "logs" / "agent_memory" / "strategy_memory.jsonl"
         retrieved_memories = retrieve_strategy_memories(
             memory_path=strategy_memory_path,
@@ -784,7 +785,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         budget_escalation_injected = False
 
         def budget_escalation_needed() -> bool:
-            if budget_escalation_injected:
+            if agent_state.weak_constraints or budget_escalation_injected:
                 return False
             if workspace_generation > 0:
                 return False
@@ -794,7 +795,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             return iteration_index + 1 >= threshold
 
         for iteration_index in range(self.llm_config.max_iterations):
-            if can_auto_finalize_current_generation():
+            if not agent_state.weak_constraints and can_auto_finalize_current_generation():
                 append_auto_finalize_trace("loop_start")
                 final_summary = "自动验证已通过，当前任务完成。"
                 max_iterations_reached = False
@@ -907,7 +908,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                     tool_blocks = recovered_text_tool_blocks
             llm_response_metrics: dict[str, Any] = {
                 "content_block_count": len(assistant_blocks),
-                "tool_schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
+                "tool_schema_strategy": ("weak_constraints" if agent_state.weak_constraints else SCHEMA_STRATEGY_PHASE_STATE_FILTERED),
                 "tool_schema_count": len(tools),
                 "tool_schema_names": current_tool_names,
             }
@@ -1172,7 +1173,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         tool_result=tool_result,
                     )
                     phase_hint_for_model = ""
-                    if agent_state.phase == "patch" and agent_state.phase != old_phase:
+                    if not agent_state.weak_constraints and agent_state.phase == "patch" and agent_state.phase != old_phase:
                         # Inject phase transition hint when entering PATCH.
                         # 注意：不能作为独立 user 消息插入——那会隔断 assistant(tool_calls)
                         # 与 tool_result 的配对，违反 OpenAI 协议（DeepSeek 官方 API 严格校验）。
@@ -1226,7 +1227,8 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                             changed_files=changed_files,
                             max_patch_files=policy_config.max_patch_files,
                         )
-                        agent_state.phase = reflection_decision.next_phase
+                        if not agent_state.weak_constraints:
+                            agent_state.phase = reflection_decision.next_phase
                         trace.steps.append(
                             TraceStep(
                                 step_index=len(trace.steps) + 1,
@@ -1234,8 +1236,8 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                                 tool_name=None,
                                 tool_input={"changed_files": changed_files},
                                 tool_output_summary=reflection_decision.likely_cause,
-                                observation=build_reflection_message(reflection_decision),
-                                decision=f"反思后转入 {reflection_decision.next_phase} 阶段。",
+                                observation=build_reflection_message(reflection_decision, advisory=agent_state.weak_constraints),
+                                decision=("反思仅提供建议。" if agent_state.weak_constraints else f"反思后转入 {reflection_decision.next_phase} 阶段。"),
                                 timestamp=self._utc_timestamp(),
                                 duration_sec=None,
                                 phase=agent_state.phase,
@@ -1249,8 +1251,8 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                                 tool_metrics=reflection_decision.model_dump(mode="json"),
                             )
                         )
-                        reflection_message_for_model = "\n\n" + build_reflection_message(reflection_decision)
-                        if reflection_decision.should_undo:
+                        reflection_message_for_model = "\n\n" + build_reflection_message(reflection_decision, advisory=agent_state.weak_constraints)
+                        if reflection_decision.should_undo and not agent_state.weak_constraints:
                             undo_result = auto_undo_after_reflection(reflection_decision.likely_cause)
                             reflection_message_for_model += (
                                 "\n\nAUTO_UNDO_RESULT:\n"
@@ -1300,7 +1302,8 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
 
                     immediate_auto_verification_message = ""
                     if (
-                        tool_name in {"write_file", "edit_file"}
+                        not agent_state.weak_constraints
+                        and tool_name in {"write_file", "edit_file"}
                         and tool_result.get("ok")
                         and pending_auto_verification
                         and verified_generation != workspace_generation
@@ -1403,7 +1406,10 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
 
                 continue
 
-            if pending_auto_verification and verified_generation != workspace_generation:
+            if (pending_auto_verification and verified_generation != workspace_generation) or (
+                agent_state.weak_constraints and pending_auto_verification and workspace_generation > 0
+                and last_full_verified_generation != workspace_generation
+            ):
                 verification_message = apply_auto_verification("auto_verification")
                 if can_auto_finalize_current_generation():
                     append_auto_finalize_trace("auto_verification_after_model_stop")
@@ -1490,7 +1496,10 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             max_iterations_reached = False
             break
 
-        if pending_auto_verification and verified_generation != workspace_generation:
+        if (pending_auto_verification and verified_generation != workspace_generation) or (
+            agent_state.weak_constraints and workspace_generation > 0
+            and not already_full_verified_current_generation()
+        ):
             apply_auto_verification("final_pending_verification")
         message_journal.sync(messages)
 

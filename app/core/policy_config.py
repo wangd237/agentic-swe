@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -19,6 +20,7 @@ class PolicyConfig(BaseModel):
     max_patch_files: int = 1
     agent_type: str = "rule_based"
     patch_strategy: str = "baseline"
+    harness_mode: Literal["strict", "weak"] = "strict"
     llm_provider: str | None = None
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None

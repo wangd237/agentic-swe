@@ -80,6 +80,7 @@ class AgentState(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     phase: PhaseName = "understand"
+    weak_constraints: bool = False
     issue_summary: str = ""
     failure_signature: FailureSignature | None = None
     localization_candidates: list[LocalizationCandidate] = Field(default_factory=list)

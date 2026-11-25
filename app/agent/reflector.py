@@ -114,10 +114,11 @@ def reflect_after_failed_verification(
     )
 
 
-def build_reflection_message(decision: ReflectionDecision) -> str:
+def build_reflection_message(decision: ReflectionDecision, *, advisory: bool = False) -> str:
     payload = decision.model_dump(mode="json")
     return (
         "REFLECTION_DECISION:\n"
         f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
-        "Follow this decision before making another patch. If next_phase is localize, gather evidence before editing."
+        + ("This is a heuristic suggestion, not a command; assess the evidence and choose your next action."
+           if advisory else "Follow this decision before making another patch. If next_phase is localize, gather evidence before editing.")
     )

@@ -39,18 +39,21 @@ def build_tools_for_state(
     no graph backend is configured.
     """
 
-    visible_tool_names = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
+    visible_tool_names = (
+        set().union(*ALLOWED_TOOLS_BY_PHASE.values())
+        if state.weak_constraints else set(ALLOWED_TOOLS_BY_PHASE[state.phase])
+    )
     if ToolPolicy.is_patch_recovery_state(state):
         visible_tool_names.update({"edit_file", "write_file", "show_diff", "undo"})
     if state.workspace_generation <= 0:
         visible_tool_names.discard("undo")
-    if state.phase == "verify" and ToolPolicy.requires_diff_before_tests(state):
+    if not state.weak_constraints and state.phase == "verify" and ToolPolicy.requires_diff_before_tests(state):
         visible_tool_names.discard("run_tests")
 
     # 预算硬约束：探索工具从 schema 层物理移除，模型只能写入或验证。
     # 直接替换而非求交集：escalation 集合含 python_repl（验证现实），
     # 但 patch phase 的默认集合不含它，交集会把最短修复路径一并挡掉。
-    if state.budget_escalation_active:
+    if state.budget_escalation_active and not state.weak_constraints:
         visible_tool_names = set(BUDGET_ESCALATION_TOOLS)
 
     # Adaptive gate: only expose search_graph when the backend is actually usable.
