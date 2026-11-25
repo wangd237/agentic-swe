@@ -21,6 +21,7 @@ class PolicyConfig(BaseModel):
     agent_type: str = "rule_based"
     patch_strategy: str = "baseline"
     harness_mode: Literal["strict", "weak"] = "strict"
+    run_log_root: str | None = None
     llm_provider: str | None = None
     llm_max_output_tokens: int | None = None
     llm_max_context_chars: int | None = None

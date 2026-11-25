@@ -49,10 +49,11 @@ def run_batch(
     task_paths: list[str | Path],
     policy_path: str | Path | None = None,
     run_label: str | None = None,
+    summary_dir: str | Path | None = None,
 ) -> dict:
     # 复用单任务闭环，把多条任务结果组织成批量汇总。
     repository_root = Path(repo_root).resolve()
-    summaries_dir = repository_root / "logs" / "summaries"
+    summaries_dir = Path(summary_dir).resolve() if summary_dir is not None else repository_root / "logs" / "summaries"
     summaries_dir.mkdir(parents=True, exist_ok=True)
 
     batch_run_id = _next_batch_run_id(summaries_dir, run_label=run_label)

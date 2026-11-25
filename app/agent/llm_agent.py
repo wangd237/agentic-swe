@@ -203,9 +203,10 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         if not source_repo_path.exists():
             raise FileNotFoundError(f"任务 repo 不存在: {source_repo_path}")
 
-        task_runs_dir = repository_root / "logs" / "trajectories" / task.task_id
+        log_root = (repository_root / policy_config.run_log_root).resolve() if policy_config.run_log_root else repository_root / "logs"
+        task_runs_dir = log_root / "trajectories" / task.task_id
         run_id = next_run_id(task_runs_dir)
-        run_paths = build_run_paths(repository_root / "logs" / "trajectories", task.task_id, run_id)
+        run_paths = build_run_paths(log_root / "trajectories", task.task_id, run_id)
         run_paths.run_dir.mkdir(parents=True, exist_ok=True)
         run_paths.tool_outputs_dir.mkdir(parents=True, exist_ok=True)
 
@@ -314,7 +315,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
         )
         tool_policy = ToolPolicy()
         system_prompt = build_system_prompt(weak_constraints=True) if agent_state.weak_constraints else build_system_prompt()
-        strategy_memory_path = repository_root / "logs" / "agent_memory" / "strategy_memory.jsonl"
+        strategy_memory_path = log_root / "agent_memory" / "strategy_memory.jsonl"
         retrieved_memories = retrieve_strategy_memories(
             memory_path=strategy_memory_path,
             issue_text=agent_state.issue_summary,

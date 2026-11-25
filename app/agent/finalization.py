@@ -228,6 +228,7 @@ class AgentFinalizationMixin:
             tool_stats={
                 "policy_id": policy_config.policy_id,
                 "agent_type": policy_config.agent_type,
+                "harness_mode": policy_config.harness_mode,
                 "llm_provider": self.llm_config.provider,
                 "llm_model": self.llm_config.model,
                 "total_tool_calls": trace.total_tool_calls,
@@ -253,7 +254,7 @@ class AgentFinalizationMixin:
                     "missing_prompt_usage_count": llm_missing_prompt_usage_count,
                 },
                 "tool_routing": {
-                    "schema_strategy": SCHEMA_STRATEGY_PHASE_STATE_FILTERED,
+                    "schema_strategy": ("weak_constraints" if agent_state.weak_constraints else SCHEMA_STRATEGY_PHASE_STATE_FILTERED),
                     "total_tool_schema_sent": total_tool_schema_sent,
                     "avg_tool_schema_count": round(
                         total_tool_schema_sent / llm_call_count,
