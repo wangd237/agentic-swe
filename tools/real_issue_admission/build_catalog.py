@@ -1,0 +1,42 @@
+import json
+from pathlib import Path
+# repository, issue, PR, observed PR base, merge, difficulty, test file(s), public behavior
+ROWS = [
+('pypa/packaging',938,939,'b20096ccce1ca389fa1d3c4290065ab4ede370cc','b002be54d39b675840ebbe725345a28195492bd4','medium','tests/test_markers.py','Evaluating an extra marker with a version-like name such as v2 must not raise InvalidVersion; version comparisons must retain their semantics.'),
+('python-poetry/tomlkit',377,378,'168cb22352b5928bfc2b36df4b9ad76c146ca34b','28fe6ec7386e3923a3e87efae8ab580138f6fcbc','medium','tests/test_items.py','Dumping a parent table containing multiple subtables must not emit a spurious empty parent header.'),
+('python-poetry/tomlkit',381,422,'d4e1ecda48c6b8ae772a46af07d2cb5781d7f2bd','fcb82ae1d9bd531e6c7c4a1f7fd6ddea5e41cf7b','medium','tests/test_toml_document.py','A document with multiple array-of-tables entries and no final newline must dump to valid TOML and round-trip without data loss.'),
+('python-poetry/tomlkit',411,419,'62a67082374af1c34944aecf917d5fa454a09cd3','bd31dbd8e2762c88af534ac72cb5c48644d3b4af','medium','tests/test_api.py','Dumping a deeply nested dotted-key subtable must preserve all nesting levels.'),
+('agronholm/anyio',1466,1468,'49cb0203fa9f8f6961543d8fbb6a93a934fe06db','706f8c675b6a2f298cd5111c9a9c55b1ea8542b4','medium','tests/test_sockets.py','After explicit socket stream closure, receive must reject the operation even if unread data is buffered.'),
+('agronholm/anyio',1391,1443,'02ff4f85650413b1c4d12aeafa0a4f9290766393','576892e9f1ffd5417dec3bebfe9d8c3cbf5d47dc','hard','tests/streams/test_memory.py','Closing a memory object receive stream must wake a task blocked on that same stream.'),
+('agronholm/anyio',1479,1482,'4d53ea15daec445b2bf368285f6ef60297b8f4ab','37ba52b9137d72764d3bcbd31842b58a1e1ea992','medium','tests/test_pytest_plugin.py','When an asyncio callback fails under the pytest plugin, the resulting diagnostic must preserve its callback context.'),
+('pytest-dev/pytest',15436,15439,'718929265449ca33040264152ba5e7022e766a52','02576a56db88956f75a581dfbabce978b62211ca','hard','testing/python/fixtures.py','Indirect parametrization that widens fixture scope must not reuse a finalized parent resource after the parent parameter changes.'),
+('pytest-dev/pytest',15370,15374,'1b6f4419c6fe9371a8d8c52c12ed0a1577c2504a','fc9a7ef678f64d17f1c03b619f3842ea1d127e74','medium','testing/python/metafunc.py','Explicit parametrization IDs shared by multiple tests must not be escaped repeatedly.'),
+('pytest-dev/pytest',15337,15342,'08017d9ada4c72a7b6a78f7873c238070e24c982','50234b4e670064c42a4c29cb6258115a2079ba4c','easy','testing/test_nodeid.py','pytest must start and stringify node identifiers on CPython 3.10.0 without AttributeError.'),
+('fsspec/filesystem_spec',2311,2312,'f7b0302f1efe8eeca7126a93c211f0c0e48b6a2c','884ca3130a7ffa48b7fe39c6705fa2d1f6bb5e70','hard','fsspec/implementations/tests/test_zip.py','Explicitly closing a ZIP filesystem that owns a cached archive must publish the archive without requiring garbage collection.'),
+('fsspec/filesystem_spec',2456,2457,'12c823bc90e237b063b12d313c2c5b87dd4803ac','594d254a033a1f6a87ecdfdd6fe44d6d24dc6e37','medium','fsspec/implementations/tests/test_cached.py','A failed simplecache transaction upload must not leave subsequent writes silently deferred.'),
+('fsspec/filesystem_spec',2266,2267,'46c05cbdf1dde8b1d51618aa02a177506a4125d2','cd9713e9fad04e9a55362c577a308ad8e89754e5','easy','fsspec/implementations/tests/test_memory.py','MemoryFileSystem.makedirs must reject an existing ordinary file even when exist_ok is true.'),
+('python-trio/trio',3261,3394,'6deaf2a94d3d54437606ba031a06be79362c82f6','2fd138e4c6e3c44bf4e598f37e418feacc25107b','medium','src/trio/_core/_tests/test_run.py','Exceptions raised before task_status.started must preserve their cause and context.'),
+('python-trio/trio',3578,3590,'93e6b2e276652ed3f1912b253ad9cdeef7b2711a','7e0dc2d192f81a5033b740bba165de2fb243ab19','easy','src/trio/_core/_tests/test_mock_clock.py','MockClock.jump must reject NaN without corrupting its current time.'),
+('python-attrs/attrs',1575,1593,'6851ab593cd25f3c14393e9355d57d22bec2a074','97f8d175656bc03c373a1c9038048a4d312c307c','hard','tests/test_annotations.py','On Python 3.14, a ClassVar imported only under TYPE_CHECKING must not be treated as a required instance field.'),
+('pallets/click',3362,3902,'8abb77a8432e03ed14a95f972b44f905279415a7','a46a95c733d0ed72f63cd2915f2bc4a09a7179f9','medium','tests/test_formatting.py','HelpFormatter.write_usage must not split hyphenated option names across lines at the wrapping boundary.'),
+('marshmallow-code/marshmallow',2869,2909,'070dde08bad456e743a0d2e1842c142a799a9568','65374df0c31cdc45acc4435741779298201306a2','easy','tests/test_validate.py','OneOf.options must not produce phantom choices when supplied more labels than choices.'),
+('marshmallow-code/marshmallow',2900,2901,'fea5428567960f15be0c9a3a4b99c0d9bb63848c','070dde08bad456e743a0d2e1842c142a799a9568','easy','tests/test_deserialization.py','A Constant field with required=True must support its intended required-field behavior without an invalid load_default error.'),
+('pydantic/pydantic',14310,14324,'fbd35416d17eae59806f003f7c2017aed131a248','c62a22c51199aba4dd6e8a021621a3cb9ef5e71d','hard','tests/test_type_alias_type.py','Schema generation for a generic type alias with omitted trailing defaulted type parameters must succeed and use those defaults.'),
+]
+RISK={15337:'Requires CPython 3.10.0 or independently validated reproduction; original report gives root cause.',15370:'AI-generated report; verify genuine usage and exclude if synthetic.',1575:'Python 3.14 required for original reproduction.',3261:'Original report links exact source line; review leakage.',2456:'Original report provides root cause; use documented symptom-only derivative or replace.',3578:'PR includes additional NaN changes outside reported MockClock scope; split relevant hunks.',3362:'PR includes broader formatting changes; scope tests to issue.',1391:'PR addresses multiple issues; scope tests to original receive-side closure.',2869:'Original report describes implementation; review leakage.',2900:'Original report proposes fix; review leakage.',938:'Existing task text includes explicit root cause; replace with symptom-only statement.',14310:'Verify Python version and pydantic-core dependency.'}
+SELECT={938:'test_version_like_equality',377:'test_not_showing_parent_header_for_super_table',381:'test_parse_aot_without_ending_newline',411:'test_dump_nested_dotted_table',1466:'test_receive_buffered_after_close',1391:'test_close_receive_while_receiving',1479:'test_asyncio_callback_exception_message',15436:'test_indirect_scope_override_finalized_by_parametrized_dependency',15370:'test_parametrize_ids_shared_mark_resolved_once',15337:'test_str_missing_str_cache',2311:'test_close_publishes_cached_archive',2456:'test_write_transaction_failed_upload_ends_transaction',2266:'test_makedirs_existing_file',3261:'test_start_exception_preserves_cause_and_context',1575:'test_missing_classvar_import',3362:'test_help_formatter_write_usage_keeps_arguments_whole',2900:'test_constant_with_required',14310:'test_generic_type_alias_type_param_defaults'}
+# Verified first parent of each merge SHA via GitHub commits API, 2026-11-26.
+PARENT_OVERRIDE={
+ ('agronholm/anyio',1466):'b2a495f687cc1c3d366e3f4bc89952dee0214b0c',
+ ('agronholm/anyio',1479):'71f5af9dbdc5b4e44a3b665270ff036197187b6a',
+ ('pytest-dev/pytest',15337):'fc9a7ef678f64d17f1c03b619f3842ea1d127e74',
+ ('pytest-dev/pytest',15436):'27fd96a202cd17bbe97acca47cb3dfa10787875f',
+ ('fsspec/filesystem_spec',2456):'290ce94cb1029ad96c446a678d328bdf7eadea7b',
+ ('fsspec/filesystem_spec',2266):'2c6b5c185f4bf8c8ff708463af38fa1eab132118',
+ ('python-trio/trio',3578):'6da4d428268c5ef8eeaf3a2b4c92c957cdc31ad8',
+}
+items=[]
+for repo,i,p,b,m,d,t,s in ROWS:
+    name=repo.split('/')[-1]; name='fsspec' if name=='filesystem_spec' else name
+    items.append(dict(task_id=f'real_{name}_{i}',repo_full_name=repo,issue_number=i,fix_pr=p,observed_pr_base=b,base_commit=PARENT_OVERRIDE.get((repo,i),b),merge_commit=m,difficulty=d,upstream_test_files=t.split(),upstream_test_name_hint=SELECT.get(i),behavior=s,python_hint='3.14' if i==1575 else '3.10.0' if i==15337 else None,risk=RISK.get(i,'Review original report and test scope.'),status='pending_admission'))
+Path(__file__).with_name('catalog.evaluator.json').write_text(json.dumps({'status':'candidate_only','tasks':items},indent=2)+'\n')

@@ -1,0 +1,1 @@
+PASS: catalog (20 tasks / 10 repositories), 7 base corrections, synthetic git archive + source/test patch separation + local pytest F2P/P2P. This is infrastructure smoke testing only, not real task validation.
