@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_fsspec_2266",
+  "repo_name": "filesystem_spec",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_fsspec_2266",
+  "issue_title": "Memory filesystem accepts a file as an existing directory",
+  "issue_text": "MemoryFileSystem.makedirs can return successfully with exist_ok=True even when the target path is an existing file. Reproduce by storing bytes at a path and then asking makedirs to ensure that same path is a directory. It should raise FileExistsError and leave the file unchanged.",
+  "test_command": "python -m pytest -q fsspec/implementations/tests/test_admission_visible.py",
+  "success_criteria": "An existing file cannot satisfy makedirs, while existing directory behavior remains valid.",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "fsspec/implementations/tests/test_admission_visible.py::test_existing_file_is_not_treated_as_directory",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

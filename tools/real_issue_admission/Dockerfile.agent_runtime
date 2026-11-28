@@ -1,0 +1,10 @@
+ARG TASK_IMAGE=python:3.12
+FROM ${TASK_IMAGE}
+
+RUN python -m pip install --no-cache-dir \
+    pydantic==2.12.3 \
+    jsonschema==4.25.1 \
+    openai==2.8.1
+
+COPY sitecustomize.py /bootstrap/sitecustomize.py
+ENV PYTHONPATH=/bootstrap:/run

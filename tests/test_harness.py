@@ -38,3 +38,17 @@ def test_copy_repo_to_workspace_ignores_runtime_artifacts(tmp_path: Path, monkey
     assert not (workspace / "__pycache__").exists()
     assert not (workspace / ".ruff_cache").exists()
     assert initialized == [workspace]
+
+
+def test_locked_container_copy_does_not_install_with_process_python(tmp_path: Path, monkeypatch) -> None:
+    source_repo = tmp_path / "source"
+    workspace = tmp_path / "workspace"
+    write_text(source_repo / "package" / "module.py", "VALUE = 1\n")
+    monkeypatch.setattr(harness, "initialize_git_workspace", lambda path: None)
+
+    def reject_process_install(path: str | Path) -> None:
+        raise AssertionError("unexpected process-wide editable install")
+
+    monkeypatch.setattr(harness, "_pip_install_editable", reject_process_install)
+    harness.copy_repo_to_workspace(source_repo, workspace, install_editable=False)
+    assert (workspace / "package" / "module.py").read_text() == "VALUE = 1\n"

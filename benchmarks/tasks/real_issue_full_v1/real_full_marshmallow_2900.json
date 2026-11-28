@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_marshmallow_2900",
+  "repo_name": "marshmallow",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_marshmallow_2900",
+  "issue_title": "Required Constant field rejects a missing input",
+  "issue_text": "A schema with a Constant field marked required can fail to load an input that omits that field, even though the field has a fixed value. Reproduce with a required Constant and an empty input. Loading should supply the constant value.",
+  "test_command": "python -m pytest -q tests/test_admission_visible.py",
+  "success_criteria": "The required Constant loads with its fixed value and existing Constant behavior remains intact.",
+  "difficulty": "easy",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "tests/test_admission_visible.py::test_required_constant_supplies_its_value_on_load",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

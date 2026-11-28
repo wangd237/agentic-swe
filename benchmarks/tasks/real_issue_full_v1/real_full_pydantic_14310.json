@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_pydantic_14310",
+  "repo_name": "pydantic",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_pydantic_14310",
+  "issue_title": "Generic type alias loses an omitted defaulted parameter",
+  "issue_text": "A generic type alias with an optional trailing type parameter can fail schema generation when the caller supplies only its required parameter. The omitted parameter's default should be used when validating data.",
+  "test_command": "/usr/local/bin/python -m pytest -o addopts= -q tests/test_admission_visible.py",
+  "success_criteria": "The omitted trailing type defaults correctly and existing type alias validation passes.",
+  "difficulty": "hard",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "tests/test_admission_visible.py::test_omitted_trailing_alias_type_uses_its_default",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

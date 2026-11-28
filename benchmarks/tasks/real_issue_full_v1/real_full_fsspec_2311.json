@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_fsspec_2311",
+  "repo_name": "filesystem_spec",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_fsspec_2311",
+  "issue_title": "Closing a cached ZIP archive delays publication",
+  "issue_text": "A ZIP filesystem writing to a cached destination can return from close before the destination archive is available. Reproduce by writing a ZIP member through simplecache to a memory destination, closing the writer, and checking the destination while retaining the writer object. The archive should already exist.",
+  "test_command": "python -m pytest -q fsspec/implementations/tests/test_admission_visible.py",
+  "success_criteria": "The visible symptom no longer occurs and relevant existing behavior passes.",
+  "difficulty": "hard",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "fsspec/implementations/tests/test_admission_visible.py::test_cached_archive_published_when_writer_closes",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

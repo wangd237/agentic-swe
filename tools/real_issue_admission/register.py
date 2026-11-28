@@ -1,7 +1,7 @@
 """Register only reviewed/admitted tasks using the existing Task schema.
 Do not invoke until real validation, environment locking and isolation are audited.
 """
-import argparse, json, pathlib, shutil, tempfile
+import argparse, json, os, pathlib, shutil, tempfile
 from admission import CAT, dump, sha
 from validate import apply
 P=pathlib.Path
@@ -43,8 +43,19 @@ def main():
             with tempfile.TemporaryDirectory(dir=root) as td:
                 staged=P(td)/'repo'; shutil.copytree(root/'base_snapshot',staged,symlinks=True)
                 apply(staged,root/cfg['visible_test_patch'])
-                shutil.copytree(staged,target,symlinks=True)
-            payload={'task_id':tid,'repo_name':t['repo_full_name'].split('/')[-1],'repo_path':target.relative_to(project).as_posix(),'issue_title':cfg['issue_title'],'issue_text':cfg['issue_text'],'test_command':cfg['public_test_command'],'success_criteria':cfg.get('public_success_criteria',t['behavior']),'difficulty':t['difficulty'],'tags':['bugfix','python','real-issue'],'target_files_hint':[],'expected_failure_test':cfg.get('visible_failure_test'),'max_retries':2,'source_type':'real_issue','metadata':{'test_command_source':'reviewed_visible_reproducer'}}
+                if os.name == 'nt':
+                    # Pydantic includes deep benchmark corpus paths beyond MAX_PATH.
+                    source_long=P('\\\\?\\'+str(staged.resolve()))
+                    target_long=P('\\\\?\\'+str(target.resolve()))
+                    shutil.copytree(source_long,target_long,symlinks=True)
+                else:
+                    shutil.copytree(staged,target,symlinks=True)
+            command=cfg['public_test_command']
+            if t['repo_full_name']=='agronholm/anyio' and 'anyio.pytest_plugin' not in command:
+                command=command.replace('python -m pytest','python -m pytest -p anyio.pytest_plugin',1)
+            if t['repo_full_name']=='pydantic/pydantic':
+                command=command.replace('python -m pytest','/usr/local/bin/python -m pytest -o addopts=',1)
+            payload={'task_id':tid,'repo_name':t['repo_full_name'].split('/')[-1],'repo_path':target.relative_to(project).as_posix(),'issue_title':cfg['issue_title'],'issue_text':cfg['issue_text'],'test_command':command,'success_criteria':cfg.get('public_success_criteria',t['behavior']),'difficulty':t['difficulty'],'tags':['bugfix','python','real-issue'],'target_files_hint':[],'expected_failure_test':cfg.get('visible_failure_test'),'max_retries':2,'source_type':'real_issue','metadata':{'test_command_source':'reviewed_visible_reproducer'}}
             path=task_dir/(tid+'.json'); dump(path,payload); task_paths.append(path.relative_to(project).as_posix())
         dump(manifest,{'manifest_id':'real_issue_full_frozen_20_v1','description':'20 independently admitted full real-repository tasks; external evaluator acceptance required.','tasks':task_paths})
     except Exception:

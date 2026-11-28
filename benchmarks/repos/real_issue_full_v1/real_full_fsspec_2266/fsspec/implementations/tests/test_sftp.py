@@ -1,0 +1,428 @@
+import os
+import shlex
+import subprocess
+import time
+from datetime import datetime, timezone
+from tarfile import TarFile
+
+import pytest
+
+import fsspec
+
+paramiko = pytest.importorskip("paramiko")
+
+
+def stop_docker(name):
+    cmd = shlex.split(f'docker ps -a -q --filter "name={name}"')
+    cid = subprocess.check_output(cmd).strip().decode()
+    if cid:
+        subprocess.call(["docker", "rm", "-f", cid])
+
+
+@pytest.fixture(scope="module")
+def ssh():
+    try:
+        pchk = ["docker", "run", "--name", "fsspec_test_sftp", "hello-world"]
+        subprocess.check_call(pchk)
+        stop_docker("fsspec_test_sftp")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pytest.skip("docker run not available")
+        return
+
+    # requires docker
+    cmds = [
+        r"apt-get update",
+        r"apt-get install -y openssh-server",
+        r"mkdir /var/run/sshd",
+        "bash -c \"echo 'root:pass' | chpasswd\"",
+        (
+            r"sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' "
+            r"/etc/ssh/sshd_config"
+        ),
+        (
+            r"sed 's@session\s*required\s*pam_loginuid.so@session optional "
+            r"pam_loginuid.so@g' -i /etc/pam.d/sshd"
+        ),
+        r'bash -c "echo \"export VISIBLE=now\" >> /etc/profile"',
+        r"/usr/sbin/sshd",
+    ]
+    name = "fsspec_sftp"
+    stop_docker(name)
+    cmd = f"docker run -d -p 9200:22 --name {name} ubuntu:16.04 sleep 9000"
+    try:
+        cid = subprocess.check_output(shlex.split(cmd)).strip().decode()
+        for cmd in cmds:
+            subprocess.call(["docker", "exec", cid] + shlex.split(cmd))
+        time.sleep(1)
+        yield {
+            "host": "localhost",
+            "port": 9200,
+            "username": "root",
+            "password": "pass",
+        }
+    finally:
+        stop_docker(name)
+
+
+@pytest.fixture(scope="module")
+def root_path():
+    return "/home/someuser/"
+
+
+def test_simple(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    f.mkdirs(root_path + "deeper")
+    try:
+        f.touch(root_path + "deeper/afile")
+        assert f.find(root_path) == [root_path + "deeper/afile"]
+        assert f.ls(root_path + "deeper/") == [root_path + "deeper/afile"]
+        assert f.info(root_path + "deeper/afile")["type"] == "file"
+        assert f.info(root_path + "deeper/afile")["size"] == 0
+        assert f.exists(root_path)
+    finally:
+        f.rm(root_path, recursive=True)
+        assert not f.exists(root_path)
+
+
+@pytest.mark.parametrize("protocol", ["sftp", "ssh"])
+def test_with_url(protocol, ssh):
+    fo = fsspec.open(
+        protocol
+        + "://{username}:{password}@{host}:{port}/home/someuserout".format(**ssh),
+        "wb",
+    )
+    with fo as f:
+        f.write(b"hello")
+    fo = fsspec.open(
+        protocol
+        + "://{username}:{password}@{host}:{port}/home/someuserout".format(**ssh),
+        "rb",
+    )
+    with fo as f:
+        assert f.read() == b"hello"
+
+
+@pytest.mark.parametrize("protocol", ["sftp", "ssh"])
+def test_get_dir(protocol, ssh, root_path, tmpdir):
+    path = str(tmpdir)
+    f = fsspec.filesystem(protocol, **ssh)
+    f.mkdirs(root_path + "deeper", exist_ok=True)
+    f.touch(root_path + "deeper/afile")
+    f.get(root_path, path, recursive=True)
+
+    assert os.path.isdir(f"{path}/deeper")
+    assert os.path.isfile(f"{path}/deeper/afile")
+
+    f.get(
+        protocol
+        + "://{username}:{password}@{host}:{port}{root_path}".format(
+            root_path=root_path, **ssh
+        ),
+        f"{path}/test2",
+        recursive=True,
+    )
+
+    assert os.path.isdir(f"{path}/test2/deeper")
+    assert os.path.isfile(f"{path}/test2/deeper/afile")
+
+
+@pytest.fixture(scope="module")
+def netloc(ssh):
+    username = ssh.get("username")
+    password = ssh.get("password")
+    host = ssh.get("host")
+    port = ssh.get("port")
+    userpass = (
+        f"{username}:{password if password is not None else ''}@"
+        if username is not None
+        else ""
+    )
+    netloc = f"{host}:{port if port is not None else ''}"
+    return userpass + netloc
+
+
+def test_put_file(ssh, tmp_path, root_path):
+    tmp_file = tmp_path / "a.txt"
+    with open(tmp_file, mode="w") as fd:
+        fd.write("blabla")
+
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    f.put_file(lpath=tmp_file, rpath=root_path + "a.txt")
+    assert f.exists(root_path + "a.txt")
+
+
+def test_put_many_files(ssh, tmp_path, root_path):
+    tmp_file_a = tmp_path / "a.txt"
+    with open(tmp_file_a, mode="w") as fd:
+        fd.write("blabla")
+    tmp_file_b = tmp_path / "b.txt"
+    with open(tmp_file_b, mode="w") as fd:
+        fd.write("blabla")
+
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    f.put(lpath=[tmp_file_a, tmp_file_b], rpath=root_path)
+    assert f.exists(root_path + "a.txt")
+    assert f.exists(root_path + "b.txt")
+
+
+def test_simple_with_tar(ssh, netloc, tmp_path, root_path):
+    files_to_pack = ["a.txt", "b.txt"]
+
+    tar_filename = make_tarfile(files_to_pack, tmp_path)
+
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    f.mkdirs(f"{root_path}deeper", exist_ok=True)
+    try:
+        remote_tar_filename = f"{root_path}deeper/somefile.tar"
+        with f.open(remote_tar_filename, mode="wb") as wfd:
+            with open(tar_filename, mode="rb") as rfd:
+                wfd.write(rfd.read())
+        fs = fsspec.open(f"tar::ssh://{netloc}{remote_tar_filename}").fs
+        files = fs.find("/")
+        assert files == files_to_pack
+    finally:
+        f.rm(root_path, recursive=True)
+
+
+def make_tarfile(files_to_pack, tmp_path):
+    """Create a tarfile with some files."""
+    tar_filename = tmp_path / "sometarfile.tar"
+    for filename in files_to_pack:
+        with open(tmp_path / filename, mode="w") as fd:
+            fd.write("")
+    with TarFile(tar_filename, mode="w") as tf:
+        for filename in files_to_pack:
+            tf.add(tmp_path / filename, arcname=filename)
+    return tar_filename
+
+
+def test_transaction(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    f.mkdirs(root_path + "deeper", exist_ok=True)
+    try:
+        f.start_transaction()
+        f.touch(root_path + "deeper/afile")
+        assert f.find(root_path) == []
+        f.end_transaction()
+        assert f.find(root_path) == [root_path + "deeper/afile"]
+
+        with f.transaction:
+            assert f._intrans
+            f.touch(root_path + "deeper/afile2")
+            assert f.find(root_path) == [root_path + "deeper/afile"]
+        assert f.find(root_path) == [
+            root_path + "deeper/afile",
+            root_path + "deeper/afile2",
+        ]
+    finally:
+        f.rm(root_path, recursive=True)
+
+
+@pytest.mark.parametrize("path", ["/a/b/c", "a/b/c"])
+def test_mkdir_create_parent(ssh, path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+
+    with pytest.raises(FileNotFoundError):
+        f.mkdir(path, create_parents=False)
+
+    f.mkdir(path)
+    assert f.exists(path)
+
+    with pytest.raises(FileExistsError, match=path):
+        f.mkdir(path)
+
+    f.rm(path, recursive=True)
+    assert not f.exists(path)
+
+
+@pytest.mark.parametrize("path", ["/a/b/c", "a/b/c"])
+def test_makedirs_exist_ok(ssh, path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+
+    f.makedirs(path, exist_ok=False)
+
+    with pytest.raises(FileExistsError, match=path):
+        f.makedirs(path, exist_ok=False)
+
+    f.makedirs(path, exist_ok=True)
+    f.rm(path, recursive=True)
+    assert not f.exists(path)
+
+
+def test_modified_nonexistent_path(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+
+    nonexistent_path = root_path + "nonexistent_file.txt"
+
+    with pytest.raises(FileNotFoundError):
+        f.modified(nonexistent_path)
+
+
+def test_modified_time(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    dir_path = root_path + "modified_dir/"
+    file_path = dir_path + "testfile_modified.txt"
+
+    f.mkdir(dir_path)
+
+    # Check first modified time for directories
+    modified_dir_date: datetime = f.modified(dir_path)
+
+    # I think it is the only thing we can assume, but I'm not sure if the server has a different time
+    assert modified_dir_date <= datetime.now(timezone.utc)
+
+    # Create a file and check modified time again
+    with f.open(file_path, "wb") as wf:
+        wf.write(b"test content")
+
+    modified_file_date: datetime = f.modified(file_path)
+    assert modified_file_date >= modified_dir_date
+    assert modified_file_date <= datetime.now(timezone.utc)
+
+
+# NOTE: These following two tests are a copy of the modified ones, as we are using
+# modified as a proxy for created. This is due to paramiko only returning st_atime
+# and st_mtime.
+
+
+def test_created_nonexistent_path(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+
+    nonexistent_path = root_path + "nonexistent_file.txt"
+
+    with pytest.raises(FileNotFoundError):
+        f.created(nonexistent_path)
+
+
+def test_created_time(ssh, root_path):
+    f = fsspec.get_filesystem_class("sftp")(**ssh)
+    dir_path = root_path + "created_dir/"
+    file_path = dir_path + "testfile_created.txt"
+
+    f.mkdir(dir_path)
+
+    # Check first created time for directories
+    created_dir_date: datetime = f.created(dir_path)
+
+    # I think it is the only thing we can assume, but I'm not sure if the server has a different time
+    assert created_dir_date <= datetime.now(timezone.utc)
+
+    # Create a file and check modified time again
+    with f.open(file_path, "wb") as wf:
+        wf.write(b"test content")
+
+    created_file_date: datetime = f.created(file_path)
+    assert created_file_date >= created_dir_date
+    assert created_file_date <= datetime.now(timezone.utc)
+
+
+# The tests below do not need a server: they check how the client is set up
+# before connecting, using a stand-in for ``paramiko.SSHClient``.
+
+
+class _FakeSSHClient:
+    """Record what is requested from ``paramiko.SSHClient``."""
+
+    def __init__(self):
+        self.policy = None
+        self.host = None
+        self.connect_kwargs = None
+
+    def set_missing_host_key_policy(self, policy):
+        self.policy = policy
+
+    def connect(self, host, **kwargs):
+        self.host = host
+        self.connect_kwargs = kwargs
+
+    def open_sftp(self):
+        return object()
+
+
+@pytest.fixture
+def fake_client(monkeypatch):
+    monkeypatch.setattr(paramiko, "SSHClient", _FakeSSHClient)
+    return _FakeSSHClient
+
+
+@pytest.mark.parametrize("protocol", ["sftp", "ssh"])
+def test_makedirs_with_url(fake_client, tmp_path, protocol):
+    class LocalSFTP:
+        def stat(self, path):
+            return (tmp_path / path.lstrip("/")).stat()
+
+        def mkdir(self, path, mode=0o777):
+            (tmp_path / path.lstrip("/")).mkdir(mode=mode)
+
+    fs = fsspec.filesystem("sftp", host="host", skip_instance_cache=True)
+    fs.ftp = LocalSFTP()
+    url = f"{protocol}://host/parent/child"
+    fs.makedirs(url)
+    assert (tmp_path / "parent/child").is_dir()
+    assert {path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob("*")} == {
+        "parent",
+        "parent/child",
+    }
+    fs.makedirs(url, exist_ok=True)
+    with pytest.raises(FileExistsError):
+        fs.makedirs(url)
+
+
+def test_host_key_policy_default(fake_client):
+    fs = fsspec.filesystem("sftp", host="host", skip_instance_cache=True)
+
+    assert isinstance(fs.client.policy, paramiko.AutoAddPolicy)
+
+
+@pytest.mark.parametrize(
+    ("name", "cls"),
+    [
+        ("auto_add", paramiko.AutoAddPolicy),
+        ("reject", paramiko.RejectPolicy),
+        ("warning", paramiko.WarningPolicy),
+    ],
+)
+def test_host_key_policy_by_name(fake_client, name, cls):
+    fs = fsspec.filesystem(
+        "sftp", host="host", host_key_policy=name, skip_instance_cache=True
+    )
+
+    assert isinstance(fs.client.policy, cls)
+
+
+@pytest.mark.parametrize("as_instance", [False, True])
+def test_host_key_policy_passed_through(fake_client, as_instance):
+    policy = paramiko.RejectPolicy() if as_instance else paramiko.RejectPolicy
+    fs = fsspec.filesystem(
+        "sftp", host="host", host_key_policy=policy, skip_instance_cache=True
+    )
+
+    assert isinstance(fs.client.policy, paramiko.RejectPolicy)
+
+
+def test_host_key_policy_not_passed_to_connect(fake_client):
+    fs = fsspec.filesystem(
+        "sftp",
+        host="host",
+        host_key_policy="reject",
+        username="user",
+        port=2222,
+        skip_instance_cache=True,
+    )
+
+    assert fs.client.host == "host"
+    assert fs.client.connect_kwargs == {"username": "user", "port": 2222}
+
+
+def test_host_key_policy_unknown_name(fake_client):
+    with pytest.raises(ValueError, match="Unknown host_key_policy 'letmein'"):
+        fsspec.filesystem(
+            "sftp", host="host", host_key_policy="letmein", skip_instance_cache=True
+        )
+
+
+def test_host_key_policy_wrong_type(fake_client):
+    with pytest.raises(TypeError, match="host_key_policy must be one of"):
+        fsspec.filesystem(
+            "sftp", host="host", host_key_policy=42, skip_instance_cache=True
+        )

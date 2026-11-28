@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_pytest_15436",
+  "repo_name": "pytest",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_pytest_15436",
+  "issue_title": "Indirect fixture scope can outlive a parameterized parent",
+  "issue_text": "When indirect parametrization widens the scope of a fixture that depends on a parameterized parent, changing the parent parameter can finalize the child too late. Reproduce with a parent that marks its resource closed on teardown and a child that checks it is still open during its own teardown. The child should finalize first.",
+  "test_command": "python -m pytest -q testing/test_admission_visible.py",
+  "success_criteria": "Child teardown happens before the parent resource closes, and existing fixture invalidation behavior passes.",
+  "difficulty": "hard",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "testing/test_admission_visible.py::test_widened_child_fixture_finishes_before_parent",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_pytest_15370",
+  "repo_name": "pytest",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_pytest_15370",
+  "issue_title": "Shared parametrization mark escapes IDs more than once",
+  "issue_text": "When a parametrization mark with an ID needing escaping is shared by multiple tests, later tests can receive different node IDs. Each test should receive the same escaped ID so it can be selected by name.",
+  "test_command": "python -m pytest -q testing/test_admission_visible.py",
+  "success_criteria": "Shared tests collect with identical escaped parameter IDs and unrelated iterator IDs remain valid.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "testing/test_admission_visible.py::test_shared_mark_keeps_escaped_ids_stable",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

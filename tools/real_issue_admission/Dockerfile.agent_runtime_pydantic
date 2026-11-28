@@ -1,0 +1,7 @@
+FROM real-issue-pydantic:py312
+
+# Keep the evaluated system Python and pydantic-core 2.50.0 intact.
+RUN python -m venv /harness && /harness/bin/pip install --no-cache-dir \
+    pydantic==2.12.3 jsonschema==4.25.1 openai==2.8.1
+COPY sitecustomize.py /bootstrap/sitecustomize.py
+ENV PYTHONPATH=/bootstrap:/run

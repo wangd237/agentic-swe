@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_anyio_1391",
+  "repo_name": "anyio",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_anyio_1391",
+  "issue_title": "Closing a receive stream leaves its reader blocked",
+  "issue_text": "A task waiting for an item from a memory object receive stream can remain blocked after that same receive stream is closed by another task. Reproduce with an empty memory stream, a waiting receiver, and a close from a second task. The waiting call should finish with ClosedResourceError.",
+  "test_command": "python -m pytest -p anyio.pytest_plugin -q tests/streams/test_admission_visible.py",
+  "success_criteria": "The waiting receive call finishes on closure and relevant existing stream behavior still passes.",
+  "difficulty": "hard",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "tests/streams/test_admission_visible.py::test_closing_receive_stream_wakes_its_blocked_reader",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

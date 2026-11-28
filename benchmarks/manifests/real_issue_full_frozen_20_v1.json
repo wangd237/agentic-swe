@@ -1,0 +1,26 @@
+{
+  "manifest_id": "real_issue_full_frozen_20_v1",
+  "description": "20 independently admitted full real-repository tasks; external evaluator acceptance required.",
+  "tasks": [
+    "benchmarks/tasks/real_issue_full_v1/real_full_requests_6711.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_tomlkit_377.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_tomlkit_381.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_tomlkit_411.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_anyio_1466.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_anyio_1391.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_anyio_1479.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_pytest_15436.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_pytest_15370.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_pytest_15337.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_fsspec_2311.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_fsspec_2456.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_fsspec_2266.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_trio_3261.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_trio_3578.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_attrs_1575.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_click_3362.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_marshmallow_2869.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_marshmallow_2900.json",
+    "benchmarks/tasks/real_issue_full_v1/real_full_pydantic_14310.json"
+  ]
+}

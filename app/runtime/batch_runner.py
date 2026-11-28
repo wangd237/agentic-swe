@@ -61,8 +61,13 @@ def run_batch(
     task_results: list[dict] = []
     policy_id = None
     for task_path in task_paths:
-        run_output = run_agent(task_path=task_path, repo_root=repository_root, policy_path=policy_path)
         task_definition = load_task(task_path)
+        if task_definition.task_id.startswith("real_full_"):
+            raise RuntimeError(
+                "Frozen Real Issue tasks require the isolated Agent runner and "
+                "independent Evaluator verdict; legacy batch scoring is disabled."
+            )
+        run_output = run_agent(task_path=task_path, repo_root=repository_root, policy_path=policy_path)
         policy_id = run_output["result"]["tool_stats"].get("policy_id")
         task_results.append(
             {

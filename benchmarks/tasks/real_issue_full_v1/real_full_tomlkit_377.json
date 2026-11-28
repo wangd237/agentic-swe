@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_tomlkit_377",
+  "repo_name": "tomlkit",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_tomlkit_377",
+  "issue_title": "Empty parent header appears with multiple subtables",
+  "issue_text": "When an empty parent table contains two named child tables, serializing the document emits a standalone parent header. Reproduce by adding two child tables beneath one parent and dumping the document. The output should contain the child headers without a standalone empty parent header.",
+  "test_command": "python -m pytest -q tests/test_admission_visible.py",
+  "success_criteria": "The visible reproducer passes and existing table serialization behavior remains intact.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "tests/test_admission_visible.py::test_multiple_empty_children_do_not_emit_parent_header",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

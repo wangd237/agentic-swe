@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_trio_3261",
+  "repo_name": "trio",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_trio_3261",
+  "issue_title": "Nursery start discards exception cause",
+  "issue_text": "When a child task raises during nursery.start before signaling startup, the caller receives the error but its explicit exception cause can be lost. The raised error should retain its cause and context.",
+  "test_command": "python -m pytest -q src/trio/_core/_tests/test_admission_visible.py",
+  "success_criteria": "A startup error retains its explicit cause and existing nursery startup behavior passes.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "src/trio/_core/_tests/test_admission_visible.py::test_start_error_retains_explicit_cause",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

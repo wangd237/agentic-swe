@@ -1,0 +1,22 @@
+{
+  "task_id": "real_full_anyio_1466",
+  "repo_name": "anyio",
+  "repo_path": "benchmarks/repos/real_issue_full_v1/real_full_anyio_1466",
+  "issue_title": "Closed socket stream returns buffered bytes",
+  "issue_text": "A TCP stream can return unread bytes after it has been explicitly closed. Reproduce by receiving only part of a message, closing the stream, then calling receive again. The second receive should raise ClosedResourceError even if bytes remain unread.",
+  "test_command": "python -m pytest -p anyio.pytest_plugin -q tests/test_sockets.py::TestTCPStream::test_closed_stream_rejects_queued_bytes",
+  "success_criteria": "A closed stream rejects further receives while existing close behavior remains intact.",
+  "difficulty": "medium",
+  "tags": [
+    "bugfix",
+    "python",
+    "real-issue"
+  ],
+  "target_files_hint": [],
+  "expected_failure_test": "tests/test_sockets.py::TestTCPStream::test_closed_stream_rejects_queued_bytes",
+  "max_retries": 2,
+  "source_type": "real_issue",
+  "metadata": {
+    "test_command_source": "reviewed_visible_reproducer"
+  }
+}

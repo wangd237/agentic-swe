@@ -106,6 +106,7 @@ def copy_repo_to_workspace(
     workspace_path: str | Path,
     *,
     test_patch_path: str | Path | None = None,
+    install_editable: bool = True,
 ) -> None:
     # 复制 benchmark repo 时显式忽略缓存目录，并为 agent 写入建立本地 git baseline。
     shutil.copytree(
@@ -116,7 +117,8 @@ def copy_repo_to_workspace(
     )
     initialize_git_workspace(workspace_path)
     _apply_test_patch(workspace_path, test_patch_path)
-    _pip_install_editable(workspace_path)
+    if install_editable:
+        _pip_install_editable(workspace_path)
 
 
 def _apply_test_patch(workspace_path: str | Path, test_patch_path: str | Path | None) -> None:

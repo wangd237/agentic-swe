@@ -2,21 +2,21 @@
   "status": "candidate_only",
   "tasks": [
     {
-      "task_id": "real_packaging_938",
-      "repo_full_name": "pypa/packaging",
-      "issue_number": 938,
-      "fix_pr": 939,
-      "observed_pr_base": "b20096ccce1ca389fa1d3c4290065ab4ede370cc",
-      "base_commit": "b20096ccce1ca389fa1d3c4290065ab4ede370cc",
-      "merge_commit": "b002be54d39b675840ebbe725345a28195492bd4",
+      "task_id": "real_requests_6711",
+      "repo_full_name": "psf/requests",
+      "issue_number": 6711,
+      "fix_pr": 7315,
+      "observed_pr_base": "e8d2c015eecda8273612dd4562425e00cd164ba5",
+      "base_commit": "e8d2c015eecda8273612dd4562425e00cd164ba5",
+      "merge_commit": "fd628095d7b9ddbf3e987d8a4bf0e6062768916f",
       "difficulty": "medium",
       "upstream_test_files": [
-        "tests/test_markers.py"
+        "tests/test_adapters.py"
       ],
-      "upstream_test_name_hint": "test_version_like_equality",
-      "behavior": "Evaluating an extra marker with a version-like name such as v2 must not raise InvalidVersion; version comparisons must retain their semantics.",
+      "upstream_test_name_hint": "test_request_url_handles_leading_path_separators",
+      "behavior": "An HTTPS request path with two leading slashes must preserve both for signed URLs.",
       "python_hint": null,
-      "risk": "Existing task text includes explicit root cause; replace with symptom-only statement.",
+      "risk": "Check overlap with #6643 direct HTTP behavior.",
       "status": "pending_admission"
     },
     {
