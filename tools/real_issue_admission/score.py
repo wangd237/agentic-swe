@@ -12,6 +12,10 @@ from validate import apply, container_tests
 P = pathlib.Path
 
 
+class CandidateRejected(ValueError):
+    """Invalid candidate, distinct from evaluator or infrastructure drift."""
+
+
 def changed_paths(patch):
     data = subprocess.check_output(['git', 'apply', '--numstat', '-z', str(patch)])
     paths = []
@@ -19,7 +23,7 @@ def changed_paths(patch):
         if record:
             fields = record.decode('utf-8').split('\t')
             if len(fields) != 3:
-                raise ValueError('unsupported patch path or rename')
+                raise CandidateRejected('unsupported patch path or rename')
             paths.append(fields[2])
     return paths
 
@@ -44,7 +48,9 @@ def score(root, patch):
     source_roots = {p.split('/')[0] if not p.startswith('src/') else '/'.join(p.split('/')[:2])
                     for p in prep['source_files']}
     if not paths or any(not any(p.startswith(prefix+'/') for prefix in source_roots) for p in paths):
-        raise ValueError('candidate patch changes files outside production source roots')
+        raise CandidateRejected('candidate patch changes files outside production source roots')
+    if any(set(P(p).parts[:-1]) & {'tests', 'testing', '_tests'} or P(p).name.startswith('test_') or P(p).name == 'conftest.py' for p in paths):
+        raise CandidateRejected('candidate patch changes protected test paths')
     out = root/'scoring'; out.mkdir(exist_ok=True)
     results={}
     module=cfg.get('import_module') or prep['repo_full_name'].split('/')[-1]
@@ -53,13 +59,19 @@ def score(root, patch):
         with tempfile.TemporaryDirectory(dir=root) as td:
             work=P(td)/'repo'
             shutil.copytree(root/'base_snapshot',work,symlinks=True)
-            apply(work,patch)
+            try:
+                apply(work,patch)
+            except subprocess.CalledProcessError as exc:
+                raise CandidateRejected('candidate patch does not apply to clean baseline') from exc
             if test_patch:
                 apply(work,root/test_patch)
             results[mode]=container_tests(image,module,work,cfg[mode+'_args'],out/(mode+'.log'),runner)
     hidden=results['hidden']
     p2p=results['p2p']
-    accepted=all(s=='pass' for s in (*hidden.values(),*p2p.values()))
+    expected = validated['results']
+    accepted = all(results[mode].keys() == expected[mode+'_after'].keys()
+                   and all(s == 'pass' for s in results[mode].values())
+                   for mode in ('hidden', 'p2p'))
     result={'task_id':prep['task_id'],'accepted':accepted,'candidate_patch_sha256':sha(patch),
             'hidden_count':len(hidden),'p2p_count':len(p2p),'container_image_id':image_id}
     dump(out/('result_'+result['candidate_patch_sha256'][:16]+'.json'),result)
