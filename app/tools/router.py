@@ -5,7 +5,7 @@ from __future__ import annotations
 from app.codebase.intelligence import CodeIntelligenceBackend
 from app.core.state import AgentState, PhaseName
 from app.tools.definitions import build_tool_definitions
-from app.tools.policy import ALLOWED_TOOLS_BY_PHASE, BUDGET_ESCALATION_TOOLS, ToolPolicy
+from app.tools.policy import ALLOWED_TOOLS_BY_PHASE, BUDGET_ESCALATION_TOOLS, RECOVERY_TOOLS, ToolPolicy
 
 SCHEMA_STRATEGY_PHASE_FILTERED = "phase_filtered"
 SCHEMA_STRATEGY_PHASE_STATE_FILTERED = "phase_state_filtered"
@@ -42,6 +42,8 @@ def build_tools_for_state(
     visible_tool_names = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
     if ToolPolicy.is_patch_recovery_state(state):
         visible_tool_names.update({"edit_file", "write_file", "show_diff", "undo"})
+    if state.evidence_reflection and state.recovery_active:
+        visible_tool_names.update(RECOVERY_TOOLS)
     if state.workspace_generation <= 0:
         visible_tool_names.discard("undo")
     if state.phase == "verify" and ToolPolicy.requires_diff_before_tests(state):

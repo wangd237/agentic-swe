@@ -1985,7 +1985,8 @@ def test_llm_agent_classifies_failed_tests_after_patch(tmp_path: Path) -> None:
     assert "REFLECTION_DECISION" in reflection_steps[0]["observation"]
 
 
-def test_llm_agent_auto_undoes_when_reflection_requests_it(tmp_path: Path) -> None:
+@pytest.mark.parametrize("reflection_mode", ["rules", "evidence"])
+def test_llm_agent_auto_undoes_when_reflection_requests_it(tmp_path: Path, reflection_mode: str) -> None:
     repo_root = tmp_path / "repo_root"
     benchmark_repo = repo_root / "benchmarks" / "repos" / "demo_repo"
     task_path = repo_root / "benchmarks" / "tasks" / "task_demo.json"
@@ -2026,6 +2027,7 @@ def test_llm_agent_auto_undoes_when_reflection_requests_it(tmp_path: Path) -> No
             "policy_id": "llm_demo",
             "description": "demo",
             "max_patch_files": 0,
+            "reflection_mode": reflection_mode,
             "agent_type": "llm",
             "patch_strategy": "baseline",
             "llm_provider": "openai_compatible",
@@ -2052,6 +2054,12 @@ def test_llm_agent_auto_undoes_when_reflection_requests_it(tmp_path: Path) -> No
         step for step in output["trace"]["steps"]
         if step["tool_name"] == "undo"
     ]
+    if reflection_mode == "evidence":
+        assert not reflection_steps
+        assert not undo_steps
+        assert output["result"]["patch_applied"] is True
+        assert any(step["action_type"] == "test_evidence" for step in output["trace"]["steps"])
+        return
     assert reflection_steps
     assert reflection_steps[0]["reflection_type"] == "overfit"
     assert reflection_steps[0]["tool_metrics"]["should_undo"] is True

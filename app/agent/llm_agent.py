@@ -39,6 +39,7 @@ from app.tools.policy import ToolPolicy, next_phase_after_tool
 from app.tools.router import SCHEMA_STRATEGY_PHASE_STATE_FILTERED, build_tools_for_state, tool_names
 from app.verification.evidence import initial_verification_strength, strength_after_test
 from app.verification.runner import execute_auto_verification
+from app.verification.test_feedback import record_test_evidence, evidence_message, is_non_product_signal
 
 READ_ONLY_TOOL_NAMES = read_only_tool_names()
 
@@ -312,7 +313,15 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
             code_intelligence_backend=code_intelligence_backend,
         )
         tool_policy = ToolPolicy()
+        agent_state.evidence_reflection = policy_config.reflection_mode == "evidence"
         system_prompt = build_system_prompt()
+        if agent_state.evidence_reflection:
+            system_prompt += (
+                "\nWhen TEST_EVIDENCE is present, infer failure causes from observations, "
+                "not from a fixed reflection label. Startup errors do not invalidate a patch. "
+                "After failed verification, choose the next useful recovery tool yourself. "
+                "Phase hints are workflow context, not a diagnosis. Preserve valid changes."
+            )
         strategy_memory_path = repository_root / "logs" / "agent_memory" / "strategy_memory.jsonl"
         retrieved_memories = retrieve_strategy_memories(
             memory_path=strategy_memory_path,
@@ -1075,7 +1084,14 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                                 confidence=0.45,
                             )
                         refresh_localization_candidates()
+                    test_evidence = None
                     if tool_name == "run_tests":
+                        if agent_state.evidence_reflection and not tool_result.get("data", {}).get("deduped"):
+                            test_evidence = record_test_evidence(
+                                agent_state, tool_result,
+                                scope=str(tool_input.get("verification_scope", "full")),
+                                generation=workspace_generation,
+                            )
                         last_test_exit_code = tool_result.get("data", {}).get("exit_code")
                         last_test_summary = tool_result.get("summary", "")
                         policy_blocked = bool(tool_result.get("data", {}).get("policy_blocked"))
@@ -1103,7 +1119,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                             )
                         diff_result_for_failure: dict[str, Any] | None = None
                         failure_summary = tool_result.get("data", {}).get("failure_summary")
-                        if failure_summary:
+                        if failure_summary and not (test_evidence and is_non_product_signal(test_evidence)):
                             if last_test_exit_code not in {0, None}:
                                 run_guided_failure_search(failure_summary, source="agent_run_tests")
                             latest_failure_summary = failure_summary
@@ -1172,7 +1188,7 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         tool_result=tool_result,
                     )
                     phase_hint_for_model = ""
-                    if agent_state.phase == "patch" and agent_state.phase != old_phase:
+                    if agent_state.phase == "patch" and agent_state.phase != old_phase and not (agent_state.evidence_reflection and (agent_state.recovery_active or (test_evidence and is_non_product_signal(test_evidence)))):
                         # Inject phase transition hint when entering PATCH.
                         # 注意：不能作为独立 user 消息插入——那会隔断 assistant(tool_calls)
                         # 与 tool_result 的配对，违反 OpenAI 协议（DeepSeek 官方 API 严格校验）。
@@ -1211,7 +1227,21 @@ class LLMCodeAgent(AgentContextMixin, AgentToolMixin, AgentFinalizationMixin, Ba
                         trace.steps[-1].evidence_ids.append(f"spill:{spill_path}")
 
                     reflection_message_for_model = ""
-                    if (
+                    if test_evidence is not None:
+                        changed_files = (
+                            diff_result_for_failure.get("data", {}).get("changed_files", [])
+                            if diff_result_for_failure else None
+                        )
+                        reflection_message_for_model = "\n\n" + evidence_message(test_evidence, changed_files)
+                        trace.steps.append(TraceStep(
+                            step_index=len(trace.steps) + 1, action_type="test_evidence",
+                            tool_input={"source": "agent_run_tests"},
+                            observation=reflection_message_for_model,
+                            decision="Report observations; leave repair choice to model.",
+                            timestamp=self._utc_timestamp(), phase=agent_state.phase,
+                            state_snapshot=agent_state.snapshot(), tool_metrics=test_evidence,
+                        ))
+                    elif not agent_state.evidence_reflection and (
                         tool_name == "run_tests"
                         and last_test_exit_code not in {0, None}
                         and workspace_generation > 0

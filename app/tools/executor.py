@@ -180,7 +180,10 @@ class ToolExecutor:
             self.repo_path,
             command=self.test_command,
             timeout_sec=int(tool_input.get("timeout_sec", 120)),
-            additional_pytest_flags=self.policy_config.pytest_additional_flags,
+            additional_pytest_flags=[
+                *self.policy_config.pytest_additional_flags,
+                *(["-rfEp"] if self.policy_config.reflection_mode == "evidence" else []),
+            ],
         )
 
     def _handle_python_repl(self, tool_input: dict[str, Any]) -> dict[str, Any]:

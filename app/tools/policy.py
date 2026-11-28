@@ -27,6 +27,9 @@ ALLOWED_TOOLS_BY_PHASE: dict[PhaseName, set[str]] = {
 }
 
 
+RECOVERY_TOOLS = {"list_files", "grep", "search_code", "search_graph", "read_file", "python_repl", "show_diff", "run_tests", "undo", *WRITE_TOOLS}
+
+
 def tool_policy_error(*, tool_name: str, message: str, tool_input: dict[str, Any]) -> dict[str, Any]:
     return {
         "ok": False,
@@ -50,6 +53,8 @@ class ToolPolicy:
         allowed_tools = set(ALLOWED_TOOLS_BY_PHASE[state.phase])
         if self.is_patch_recovery_state(state):
             allowed_tools.update(WRITE_TOOLS)
+        if state.evidence_reflection and state.recovery_active:
+            allowed_tools.update(RECOVERY_TOOLS)
         if state.budget_escalation_active and tool_name not in BUDGET_ESCALATION_TOOLS:
             return tool_policy_error(
                 tool_name=tool_name,
@@ -126,10 +131,11 @@ class ToolPolicy:
             or state.reproduction_evidence_kind == "weak_static"
         )
         return (
-            state.phase in {"patch", "localize"}
+            (state.phase in {"patch", "localize"} or (state.evidence_reflection and state.recovery_active))
             and has_patch_entry_evidence
             and bool(state.localization_candidates)
-            and (state.phase == "patch" or ToolPolicy.is_patch_recovery_state(state))
+            and (state.phase == "patch" or ToolPolicy.is_patch_recovery_state(state)
+                 or (state.evidence_reflection and state.recovery_active))
         )
 
     @staticmethod

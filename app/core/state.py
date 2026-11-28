@@ -93,6 +93,9 @@ class AgentState(BaseModel):
     diff_observed_generation: int | None = None
     search_graph_calls: int = 0
     budget_escalation_active: bool = False
+    evidence_reflection: bool = False
+    recovery_active: bool = False
+    test_observations: dict[str, dict[str, Any]] = Field(default_factory=dict, exclude=True)
 
     def snapshot(self) -> dict[str, Any]:
         return self.model_dump(mode="json")

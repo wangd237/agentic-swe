@@ -12,6 +12,7 @@ from app.core.state import AgentState, FailureSignature
 from app.schemas.task_schema import Task
 from app.schemas.trace_schema import Trace, TraceStep
 from app.tools.executor import ToolExecutor
+from app.verification.test_feedback import record_test_evidence, is_non_product_signal, evidence_message
 from app.verification.evidence import build_targeted_pytest_command, strength_after_test
 
 VerificationSource = Literal[
@@ -108,6 +109,14 @@ def execute_auto_verification(
                     "模型停止前存在未验证改动，先运行失败节点的 targeted test。"
                 ),
             )
+            if agent_state.evidence_reflection:
+                targeted_evidence = record_test_evidence(agent_state, targeted_result, scope="targeted", generation=workspace_generation)
+                trace.steps.append(TraceStep(
+                    step_index=len(trace.steps) + 1, action_type="test_evidence",
+                    tool_input={"source": source}, observation=evidence_message(targeted_evidence),
+                    decision="Report targeted observations.", timestamp=agent._utc_timestamp(),
+                    phase=agent_state.phase, state_snapshot=agent_state.snapshot(), tool_metrics=targeted_evidence,
+                ))
             agent_state.verification_strength = strength_after_test(
                 current=agent_state.verification_strength,
                 exit_code=targeted_result.get("data", {}).get("exit_code"),
@@ -147,8 +156,11 @@ def execute_auto_verification(
         workspace_generation=workspace_generation,
         command_source=str(task.metadata.get("test_command_source", "")),
     )
+    test_evidence = None
+    if agent_state.evidence_reflection:
+        test_evidence = record_test_evidence(agent_state, full_result, scope="full", generation=workspace_generation)
     failure_summary = full_result.get("data", {}).get("failure_summary")
-    if failure_summary:
+    if failure_summary and not (test_evidence and is_non_product_signal(test_evidence)):
         if immediate and test_exit_code not in {0, None}:
             run_guided_failure_search(failure_summary, source=source)
         latest_failure_summary = failure_summary
@@ -187,7 +199,17 @@ def execute_auto_verification(
     )
 
     reflection_message = ""
-    if test_exit_code not in {0, None}:
+    if test_evidence is not None:
+        changed_files = diff_result.get("data", {}).get("changed_files", [])
+        reflection_message = evidence_message(test_evidence, changed_files)
+        trace.steps.append(TraceStep(
+            step_index=len(trace.steps) + 1, action_type="test_evidence",
+            tool_input={"source": source}, observation=reflection_message,
+            decision="Report observations; leave repair choice to model.",
+            timestamp=agent._utc_timestamp(), phase=agent_state.phase,
+            state_snapshot=agent_state.snapshot(), tool_metrics=test_evidence,
+        ))
+    elif test_exit_code not in {0, None}:
         changed_files = diff_result.get("data", {}).get("changed_files", [])
         reflection = reflect_after_failed_verification(
             state=agent_state,
@@ -250,6 +272,8 @@ def execute_auto_verification(
             ),
         ]
         if targeted_result:
+            if agent_state.evidence_reflection:
+                parts.append(evidence_message(targeted_evidence))
             parts.append(
                 "targeted_run_tests:\n" + ToolExecutor.summarize_for_model(
                     targeted_result, max_chars=agent.llm_config.max_tool_chars,
